@@ -37,11 +37,12 @@
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
                                 <TextBlock Text="Название"/>
-                                <TextBox Width="250" Margin="8 0 0 0"/>
+                                <TextBox Text="{Binding IndicatorName}" Width="250" Margin="8 0 0 0"/>
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                            <TextBlock Text="(только английскими буквами)"/>
+                            <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
                                 <TextBlock Text="Описание"/>
-                                <TextBox Width="250" TextWrapping="Wrap" Margin="6 0 0 0"/>
+                                <TextBox Text="{Binding IndicatorDescription}" Width="462" TextWrapping="Wrap" Margin="6 0 0 0"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
                                 <TextBlock Text="Оптимизируемые параметры"/>
@@ -105,7 +106,14 @@
                             </StackPanel>
                             <TextBox x:Name="indiactorScriptText" Text="{Binding IndicatorScript, Mode=TwoWay}" TextWrapping="Wrap" AcceptsReturn="True"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 5 0 0">
-                                <Button Content="Сохранить" Command="{Binding IndicatorSave_Click}" Width="110" Margin="0 0 10 0"/>
+                                <Button Content="Проверить на ошибки" Command="{Binding IndicatorCancel_Click}" Width="134" Margin="0 0 7 0"/>
+                                <Button Content="Сохранить" Command="{Binding IndicatorSave_Click}" Width="110" ToolTipService.ShowOnDisabled="True" Margin="0 0 7 0">
+                                    <Button.ToolTip>
+                                        <ToolTip>
+                                            <ListView ItemsSource="{Binding TooltipAddAddIndicator}" IsEnabled="False"/>
+                                        </ToolTip>
+                                    </Button.ToolTip>
+                                </Button>
                                 <Button Content="Отменить" Command="{Binding IndicatorCancel_Click}" Width="110"/>
                             </StackPanel>
                         </StackPanel>

@@ -425,6 +425,70 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        private ObservableCollection<string> _tooltipAddAddIndicator = new ObservableCollection<string>();
+        public ObservableCollection<string> TooltipAddAddIndicator //подсказка, показываемая при наведении на кнопку добавить
+        {
+            get { return _tooltipAddAddIndicator; }
+            set
+            {
+                _tooltipAddAddIndicator = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool IsFieldsAddIndicatorCorrect()
+        {
+            bool result = true;
+            TooltipAddAddIndicator.Clear(); //очищаем подсказку кнопки добавить
+
+            string name = "";
+            if (IndicatorName != null)
+            {
+                name = IndicatorName.Replace(" ", "");
+            }
+
+            //проверка на пустое значение
+            if (name == "")
+            {
+                result = false;
+                TooltipAddAddIndicator.Add("Не заполнены все поля.");
+            }
+
+            //проверка на допустимые символы
+            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            bool isNotFind = false;
+            for(int i = 0; i < name.Length; i++)
+            {
+                if(letters.IndexOf(name[i]) == -1)
+                {
+                    isNotFind = true;
+                }
+
+            }
+            if (isNotFind)
+            {
+                result = false;
+                TooltipAddAddIndicator.Add("Допустимо использование только английского алфавита.");
+            }
+
+            //проверка на уникальность названия
+            bool isUnique = true;
+            foreach (IndicatorView item in IndicatorsView)
+            {
+                if (name == item.Name) //проверяем имя на уникальность среди всех записей
+                {
+                    isUnique = false;
+                }
+            }
+            if (isUnique == false)
+            {
+                result = false;
+                TooltipAddAddIndicator.Add("Данное название уже используется.");
+            }
+
+            return result;
+        }
+
         public ICommand IndicatorSave_Click
         {
             get
@@ -464,7 +528,7 @@ return a.ToString();
 
 
 
-                }, (obj) => IsAddOrEditIndicator());
+                }, (obj) => IsAddOrEditIndicator() && IsFieldsAddIndicatorCorrect() );
             }
         }
 
@@ -567,6 +631,23 @@ return a.ToString();
                 TooltipAddAddIndicatorParameterTemplate.Add("Не заполнены все поля.");
             }
 
+            //проверка на допустимые символы
+            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            bool isNotFind = false;
+            for (int i = 0; i < name.Length; i++)
+            {
+                if (letters.IndexOf(name[i]) == -1)
+                {
+                    isNotFind = true;
+                }
+
+            }
+            if (isNotFind)
+            {
+                result = false;
+                TooltipAddAddIndicatorParameterTemplate.Add("Допустимо использование только английского алфавита.");
+            }
+
             //проверка на уникальность названия
             bool isUnique = true;
             foreach (string item in IndicatorParameterTemplates)
@@ -626,6 +707,23 @@ return a.ToString();
             {
                 result = false;
                 TooltipAddAddIndicatorParameterTemplate.Add("Не заполнены все поля.");
+            }
+            
+            //проверка на допустимые символы
+            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            bool isNotFind = false;
+            for (int i = 0; i < name.Length; i++)
+            {
+                if (letters.IndexOf(name[i]) == -1)
+                {
+                    isNotFind = true;
+                }
+
+            }
+            if (isNotFind)
+            {
+                result = false;
+                TooltipAddAddIndicatorParameterTemplate.Add("Допустимо использование только английского алфавита.");
             }
 
             //проверка на уникальность названия

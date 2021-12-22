@@ -1,0 +1,28 @@
+﻿<Window x:Class="ktradesystem.Views.ViewAddIndicatorParameterTemplate"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ktradesystem.Views"
+        mc:Ignorable="d"
+        Title="Добавить параметр индикатора" Height="125" Width="266">
+    <Grid>
+        <StackPanel Orientation="Vertical" Margin="10">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Название"/>
+                <TextBox Text="{Binding AddIndicatorParameterTemplateName, Mode=OneWayToSource}" Margin="10 0 0 0" Width="167"/>
+            </StackPanel>
+            <TextBlock Text="(Пробелы будут удалены)"/>
+            <StackPanel Orientation="Horizontal" Margin="0 10 0 0" HorizontalAlignment="Right">
+                <Button Content="Добавить" Command="{Binding AddAddIndicatorParameterTemplate_Click}" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000" Width="70">
+                    <Button.ToolTip>
+                        <ToolTip>
+                            <ListView ItemsSource="{Binding TooltipAddAddIndicatorParameterTemplate}" IsEnabled="False"/>
+                        </ToolTip>
+                    </Button.ToolTip>
+                </Button>
+                <Button Content="Отменить" Command="{Binding CloseAddIndicatorParameterTemplate_Click}" Width="70" Margin="5 0 0 0"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

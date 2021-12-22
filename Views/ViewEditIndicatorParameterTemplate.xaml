@@ -1,0 +1,32 @@
+﻿<Window x:Class="ktradesystem.Views.ViewEditIndicatorParameterTemplate"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ktradesystem.Views"
+        mc:Ignorable="d"
+        Title="Изменить параметр индикатора" Height="144" Width="266">
+    <Grid>
+        <StackPanel Orientation="Vertical" Margin="10">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Текущее название:"/>
+                <TextBlock Text="{Binding SelectedIndicatorParameterTemplate}" Margin="5 0 0 0"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                <TextBlock Text="Название"/>
+                <TextBox Text="{Binding AddIndicatorParameterTemplateName, Mode=TwoWay}" Margin="10 0 0 0" Width="167"/>
+            </StackPanel>
+            <TextBlock Text="(Пробелы будут удалены)"/>
+            <StackPanel Orientation="Horizontal" Margin="0 10 0 0" HorizontalAlignment="Right">
+                <Button Content="Сохранить" Command="{Binding EditSaveIndicatorParameterTemplate_Click}" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000" Width="70">
+                    <Button.ToolTip>
+                        <ToolTip>
+                            <ListView ItemsSource="{Binding TooltipAddAddIndicatorParameterTemplate}" IsEnabled="False"/>
+                        </ToolTip>
+                    </Button.ToolTip>
+                </Button>
+                <Button Content="Отменить" Command="{Binding CloseAddIndicatorParameterTemplate_Click}" Width="70" Margin="5 0 0 0"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

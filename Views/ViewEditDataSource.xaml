@@ -1,0 +1,90 @@
+﻿<Window x:Class="ktradesystem.Views.ViewEditDataSource"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ktradesystem.Views"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
+        Title="Редактировать источник данных" Height="703" Width="550">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="205"/>
+            <RowDefinition Height="26"/>
+            <RowDefinition Height="26"/>
+            <RowDefinition Height="1*"/>
+            <RowDefinition Height="22"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="207"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <Label Content="Название" Height="26"/>
+                <Label Content="Тип инструмента" Height="26"/>
+                <Label Content="Валюта" Height="26"/>
+                <Label Content="Стоимость фьючерсного контракта" Height="26"/>
+                <Label Content="Эквивалент комиссии" Height="26"/>
+                <Label Content="Комиссия за одну операцию" Height="26"/>
+                <Label Content="Шаг одного пункта цены" Height="26"/>
+                <Label Content="Стоимость одного пункта цены" Height="26"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+                <TextBox Text="{Binding AddDsName, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
+                <ComboBox ItemsSource="{Binding InstrumentsView}" SelectedItem="{Binding AddDsInstrument, Mode=TwoWay}" SelectedIndex="0" Height="22" Margin="0,2,0,2"/>
+                <ComboBox ItemsSource="{Binding CurrenciesView}" SelectedItem="{Binding AddDsCurrency, Mode=TwoWay}" SelectedIndex="0" Height="22" Margin="0,2,0,2"/>
+                <TextBox Text="{Binding AddDsCost, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
+                <ComboBox ItemsSource="{Binding ComissiontypesView}" SelectedItem="{Binding AddDsComissiontype, Mode=TwoWay}" SelectedIndex="0" Height="22" Margin="0,2,0,2"/>
+                <TextBox Text="{Binding AddDsComission, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
+                <TextBox Text="{Binding AddDsPriceStep, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
+                <TextBox Text="{Binding AddDsCostPriceStep, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
+            </StackPanel>
+        </Grid>
+        <StackPanel Grid.Row="1" Orientation="Horizontal">
+            <Button Content="Выбрать папку с файлами котировок" Command="{Binding OpenFolder_Click}" Width="216" Height="20" VerticalAlignment="Center"/>
+            <TextBlock Text="{Binding AddDataSourceFolder}" Margin="3,3,0,3"/>
+        </StackPanel>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0" Content="Невыбранные файлы:" HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
+            <Label Grid.Column="1" Content="Выбранные файлы:" HorizontalAlignment="Center"/>
+        </Grid>
+        <Grid Grid.Row="3" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="26"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <ScrollViewer Grid.Column="0">
+                <ListView ItemsSource="{Binding FilesUnselected}" SelectedItem="{Binding FilesUnselectedSelectedItem, Mode=OneWayToSource}" SelectionMode="Single"></ListView>
+            </ScrollViewer>
+            <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center">
+                <Button Content=">" Command="{Binding MoveSingleItemToSelected_Click}"/>
+                <Button Content=">>" Command="{Binding MoveAllItemsToSelected_Click}" Margin="0,3,0,0"/>
+                <Button Content="&lt;" Command="{Binding MoveSingleItemToUnselected_Click}" Margin="0,3,0,0"/>
+                <Button Content="&lt;&lt;" Command="{Binding MoveAllItemsToUnselected_Click}" Margin="0,3,0,0"/>
+            </StackPanel>
+            <ScrollViewer Grid.Column="2">
+                <ListView ItemsSource="{Binding FilesSelected}" SelectedItem="{Binding FilesSelectedSelectedItem, Mode=OneWayToSource}" SelectionMode="Single"></ListView>
+            </ScrollViewer>
+        </Grid>
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Content="Сохранить" Command="{Binding SaveEditDataSource_Click}" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000" Margin="0,0,5,0">
+                <Button.ToolTip>
+                    <ToolTip>
+                        <ListView ItemsSource="{Binding TooltipSaveEditDataSource}" IsEnabled="False"/>
+                    </ToolTip>
+                </Button.ToolTip>
+            </Button>
+            <Button Grid.Column="1" Content="Отмена" Command="{Binding CloseAddDataSource_Click}" Margin="5,0,0,0"/>
+        </Grid>
+    </Grid>
+</Window>

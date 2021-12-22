@@ -1,0 +1,73 @@
+﻿<Page x:Class="ktradesystem.Views.Pages.PageDataSource"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:ktradesystem.Views.Pages"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="1280"
+      Title="PageDataSource" Background="White">
+    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid Grid.Row="0" Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="20"/>
+                <RowDefinition Height="20"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Text="Источники данных" HorizontalAlignment="Center" Margin="0,0,20,0"/>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="3,0,20,0">
+                <Button Content="Добавить" Command="{Binding AddDataSource_Click}" Width="100" HorizontalAlignment="Left"/>
+                <Button Content="Редактировать" Command="{Binding EditDataSource_Click}" Margin="7,0,0,0" Width="100" HorizontalAlignment="Left"/>
+                <Button Content="Удалить" Command="{Binding DeleteDataSource_Click}" Margin="7,0,0,0" Width="100" HorizontalAlignment="Left"/>
+            </StackPanel>
+            <ListView Grid.Row="2" ItemsSource="{Binding DataSourcesView}" SelectedItem="{Binding SelectedDataSource, Mode=OneWayToSource}" SelectionMode="Single">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="{Binding ElementName=helperDs0, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="{Binding ElementName=helperDs1, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Interval}" Header="Интервал" Width="{Binding ElementName=helperDs2, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Instrument}" Header="Тип инструмента" Width="{Binding ElementName=helperDs3, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Currency}" Header="Валюта" Width="{Binding ElementName=helperDs4, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Cost}" Header="Стоимость 1 фьючерса" Width="{Binding ElementName=helperDs54, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding ComissionView}" Header="Комиссия за 1 операцию" Width="{Binding ElementName=helperDs6, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding PriceStep}" Header="Шаг 1 пункта цены" Width="{Binding ElementName=helperDs7, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding CostPriceStep}" Header="Стоимость 1 пункта цены" Width="{Binding ElementName=helperDs8, Path=ActualWidth}"/>
+                        <GridViewColumn Header="Файлы с котировками" Width="{Binding ElementName=helperDs9, Path=ActualWidth}">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TreeView>
+                                        <TreeViewItem Focusable="False" ItemsSource="{Binding Files}"></TreeViewItem>
+                                    </TreeView>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+            <Grid Visibility="Visible"  Margin="0,0,70,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="37"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="70"/>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="47"/>
+                    <ColumnDefinition Width="135"/>
+                    <ColumnDefinition Width="145"/>
+                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0" x:Name="helperDs0"/>
+                <Grid Grid.Column="1" x:Name="helperDs1"/>
+                <Grid Grid.Column="2" x:Name="helperDs2"/>
+                <Grid Grid.Column="3" x:Name="helperDs3"/>
+                <Grid Grid.Column="4" x:Name="helperDs4"/>
+                <Grid Grid.Column="5" x:Name="helperDs5"/>
+                <Grid Grid.Column="6" x:Name="helperDs6"/>
+                <Grid Grid.Column="7" x:Name="helperDs7"/>
+                <Grid Grid.Column="8" x:Name="helperDs8"/>
+                <Grid Grid.Column="9" x:Name="helperDs9"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</Page>

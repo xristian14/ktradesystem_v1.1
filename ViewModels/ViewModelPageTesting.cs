@@ -27,6 +27,8 @@ namespace ktradesystem.ViewModels
 
             _modelData.Indicators.CollectionChanged += modelData_IndicatorsCollectionChanged;
             Indicators = _modelData.Indicators;
+
+            _modelTesting = ModelTesting.getInstance();
         }
 
         public static ViewModelPageTesting getInstance()
@@ -39,6 +41,7 @@ namespace ktradesystem.ViewModels
         }
 
         private ModelData _modelData;
+        private ModelTesting _modelTesting;
 
         private void Model_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -64,7 +67,6 @@ namespace ktradesystem.ViewModels
 
 
 
-
         #region view add edit delete Indicators
 
         public System.Windows.Controls.TextBox IndicatorScriptTextBox; //ссылка на textBox с текстом скрипта, для обращения к свойству CaretIndex
@@ -77,18 +79,6 @@ namespace ktradesystem.ViewModels
             {
                 _indicators = value;
                 OnPropertyChanged();
-                CreateIndicatorsView(); //вызвает метод формирования списка источников данных для отображения
-            }
-        }
-
-        private ObservableCollection<IndicatorView> _indicatorsView = new ObservableCollection<IndicatorView>(); //индикаторы
-        public ObservableCollection<IndicatorView> IndicatorsView
-        {
-            get { return _indicatorsView; }
-            private set
-            {
-                _indicatorsView = value;
-                OnPropertyChanged();
             }
         }
 
@@ -97,15 +87,14 @@ namespace ktradesystem.ViewModels
             Indicators = (ObservableCollection<Indicator>)sender;
         }
 
-        private void CreateIndicatorsView() //создает IndicatorsView на основе Indicators
+        private Indicator _selectedIndicator = new Indicator();
+        public Indicator SelectedIndicator //выбранный индикатор
         {
-            IndicatorsView.Clear();
-            foreach (Indicator indicator in Indicators)
+            get { return _selectedIndicator; }
+            set
             {
-                IndicatorView indicatorView = new IndicatorView();
-
-
-                IndicatorsView.Add(indicatorView);
+                _selectedIndicator = value;
+                OnPropertyChanged();
             }
         }
 
@@ -473,7 +462,7 @@ namespace ktradesystem.ViewModels
 
             //проверка на уникальность названия
             bool isUnique = true;
-            foreach (IndicatorView item in IndicatorsView)
+            foreach (Indicator item in Indicators)
             {
                 if (name == item.Name) //проверяем имя на уникальность среди всех записей
                 {
@@ -495,10 +484,20 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    TestSerialize testSerialize = new TestSerialize { Id = 1, Name = "name1", Description = "desc1", ParameterTemplates = new List<ParameterTemplate> { new ParameterTemplate { Name = "param1" }, new ParameterTemplate { Name = "param2" } } };
-                    //testSerialize.Ca
+                    List<ParameterTemplate> insertParameterTemplates = new List<ParameterTemplate>();
+                    foreach(ParameterTemplate item in IndicatorParameterTemplates)
+                    {
+                        insertParameterTemplates.Add(item);
+                    }
 
-
+                    if (IsIndicatorAdded)
+                    {
+                        _modelTesting.IndicatorInsertUpdate(IndicatorName, IndicatorDescription, insertParameterTemplates, IndicatorScript);
+                    }
+                    else if(IsIndicatorEdited)
+                    {
+                        _modelTesting.IndicatorInsertUpdate(IndicatorName, IndicatorDescription, insertParameterTemplates, IndicatorScript, SelectedIndicatorParameterTemplate.Id);
+                    }
 
 
                     /*
@@ -532,6 +531,19 @@ return a.ToString();
             }
         }
 
+        public ICommand IndicatorCancel_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    
+                }, (obj) => IsAddOrEditIndicator() && IsFieldsAddIndicatorCorrect());
+            }
+        }
+
+        //IndicatorCancel_Click
+
         #endregion
 
 
@@ -541,19 +553,19 @@ return a.ToString();
 
         #region add edit delete select IndicatorParameterTemplate
 
-        private ObservableCollection<string> _indicatorParameterTemplates = new ObservableCollection<string>();
-        public ObservableCollection<string> IndicatorParameterTemplates //шаблоны параметров индикатора
+        private ObservableCollection<ParameterTemplate> _indicatorParameterTemplates = new ObservableCollection<ParameterTemplate>();
+        public ObservableCollection<ParameterTemplate> IndicatorParameterTemplates //шаблоны параметров индикатора
         {
             get { return _indicatorParameterTemplates; }
-            set
+            private set
             {
                 _indicatorParameterTemplates = value;
                 OnPropertyChanged();
             }
         }
 
-        private string _selectedIndicatorParameterTemplate;
-        public string SelectedIndicatorParameterTemplate //выбранный шаблон параметра индикатора
+        private ParameterTemplate _selectedIndicatorParameterTemplate;
+        public ParameterTemplate SelectedIndicatorParameterTemplate //выбранный шаблон параметра индикатора
         {
             get { return _selectedIndicatorParameterTemplate; }
             set
@@ -583,6 +595,17 @@ return a.ToString();
             set
             {
                 _addIndicatorParameterTemplateName = value;
+                OnPropertyChanged();
+            }
+        }
+        
+        private string _addIndicatorParameterTemplateDescription;
+        public string AddIndicatorParameterTemplateDescription //описание добавляемого параметра
+        {
+            get { return _addIndicatorParameterTemplateDescription; }
+            set
+            {
+                _addIndicatorParameterTemplateDescription = value;
                 OnPropertyChanged();
             }
         }
@@ -650,9 +673,9 @@ return a.ToString();
 
             //проверка на уникальность названия
             bool isUnique = true;
-            foreach (string item in IndicatorParameterTemplates)
+            foreach (ParameterTemplate item in IndicatorParameterTemplates)
             {
-                if (name == item) //проверяем имя на уникальность среди всех записей
+                if (name == item.Name) //проверяем имя на уникальность среди всех записей
                 {
                     isUnique = false;
                 }
@@ -673,7 +696,8 @@ return a.ToString();
                 return new DelegateCommand((obj) =>
                 {
                     string name = AddIndicatorParameterTemplateName.Replace(" ", "");
-                    IndicatorParameterTemplates.Add(name);
+                    ParameterTemplate parameterTemplate = new ParameterTemplate { Name = name, Description = AddIndicatorParameterTemplateDescription };
+                    IndicatorParameterTemplates.Add(parameterTemplate);
 
                     CloseAddIndicatorParameterTemplateAction?.Invoke();
                 }, (obj) => IsFieldsAddIndicatorParameterTemplateCorrect() );
@@ -686,7 +710,8 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AddIndicatorParameterTemplateName = SelectedIndicatorParameterTemplate;
+                    AddIndicatorParameterTemplateName = SelectedIndicatorParameterTemplate.Name;
+                    AddIndicatorParameterTemplateDescription = SelectedIndicatorParameterTemplate.Description;
 
                     viewmodelData.IsMainWindowEnabled = false;
                     ViewEditIndicatorParameterTemplate viewEditIndicatorParameterTemplate = new ViewEditIndicatorParameterTemplate();
@@ -728,11 +753,14 @@ return a.ToString();
 
             //проверка на уникальность названия
             bool isUnique = true;
-            foreach (string item in IndicatorParameterTemplates)
+            foreach (ParameterTemplate item in IndicatorParameterTemplates)
             {
-                if (name == item && name != SelectedIndicatorParameterTemplate) //проверяем имя на уникальность среди всех записей кроме редактируемой
+                if(SelectedIndicatorParameterTemplate != null) //без этой проверки ошибка на обращение null полю, после сохранения
                 {
-                    isUnique = false;
+                    if (name == item.Name && name != SelectedIndicatorParameterTemplate.Name) //проверяем имя на уникальность среди всех записей кроме редактируемой
+                    {
+                        isUnique = false;
+                    }
                 }
             }
             if (isUnique == false)
@@ -752,7 +780,9 @@ return a.ToString();
                 {
                     string name = AddIndicatorParameterTemplateName.Replace(" ", "");
                     int index = IndicatorParameterTemplates.IndexOf(SelectedIndicatorParameterTemplate);
-                    IndicatorParameterTemplates[index] = name;
+                    ParameterTemplate parameterTemplate = new ParameterTemplate { Name = name, Description = AddIndicatorParameterTemplateDescription };
+                    IndicatorParameterTemplates.RemoveAt(index);
+                    IndicatorParameterTemplates.Insert(index, parameterTemplate);
 
                     CloseAddIndicatorParameterTemplateAction?.Invoke();
                 }, (obj) => IsFieldsEditIndicatorParameterTemplateCorrect());
@@ -766,7 +796,7 @@ return a.ToString();
                 return new DelegateCommand((obj) =>
                 {
                     int index = IndicatorParameterTemplates.IndexOf(SelectedIndicatorParameterTemplate); //находим индекс выбранного элемента
-                    string msg = "Название: " + SelectedIndicatorParameterTemplate;
+                    string msg = "Название: " + SelectedIndicatorParameterTemplate.Name;
                     string caption = "Удалить?";
                     MessageBoxButton messageBoxButton = MessageBoxButton.YesNo;
                     var result = MessageBox.Show(msg, caption, messageBoxButton);

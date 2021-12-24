@@ -28,7 +28,7 @@
                         <GridViewColumn DisplayMemberBinding="{Binding Interval}" Header="Интервал" Width="{Binding ElementName=helperDs2, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding Instrument}" Header="Тип инструмента" Width="{Binding ElementName=helperDs3, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding Currency}" Header="Валюта" Width="{Binding ElementName=helperDs4, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Cost}" Header="Стоимость 1 фьючерса" Width="{Binding ElementName=helperDs54, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Cost}" Header="Стоимость 1 фьючерса" Width="{Binding ElementName=helperDs5, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding ComissionView}" Header="Комиссия за 1 операцию" Width="{Binding ElementName=helperDs6, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding PriceStep}" Header="Шаг 1 пункта цены" Width="{Binding ElementName=helperDs7, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding CostPriceStep}" Header="Стоимость 1 пункта цены" Width="{Binding ElementName=helperDs8, Path=ActualWidth}"/>
@@ -44,7 +44,7 @@
                     </GridView>
                 </ListView.View>
             </ListView>
-            <Grid Visibility="Visible"  Margin="0,0,70,0">
+            <Grid Visibility="Hidden"  Margin="0,0,70,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="37"/>
                     <ColumnDefinition Width="1*"/>

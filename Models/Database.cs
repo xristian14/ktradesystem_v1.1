@@ -142,5 +142,60 @@ namespace ktradesystem.Models
             command.Parameters.AddWithValue("id", id);
             command.ExecuteNonQuery();
         }
+
+        public void UpdateParameterTemplate(ParameterTemplate parameterTemplate)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "UPDADE ParameterTemplates SET name = :name, description = :description WHERE id = :id";
+            command.Parameters.AddWithValue("name", parameterTemplate.Name);
+            command.Parameters.AddWithValue("description", parameterTemplate.Description);
+            command.Parameters.AddWithValue("id", parameterTemplate.Id);
+
+            command.ExecuteNonQuery();
+        }
+
+        public void InsertParameterTemplate(ParameterTemplate parameterTemplate)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "INSERT INTO ParameterTemplates (name, description, idIndicator) VALUES (:name, :description, :idIndicator)";
+            command.Parameters.AddWithValue("name", parameterTemplate.Name);
+            command.Parameters.AddWithValue("description", parameterTemplate.Description);
+            command.Parameters.AddWithValue("idIndicator", parameterTemplate.IdIndicator);
+
+            command.ExecuteNonQuery();
+        }
+
+        public void DeleteParameterTemplate(int id)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            string query = "DELETE FROM ParameterTemplates WHERE id = :id";
+            command.CommandText = query;
+            command.Parameters.AddWithValue("id", id);
+            command.ExecuteNonQuery();
+        }
+
+        public void UpdateIndicator(Indicator indicator)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "UPDADE Indicators SET name = :name, description = :description, script = :script WHERE id = :id";
+            command.Parameters.AddWithValue("name", indicator.Name);
+            command.Parameters.AddWithValue("description", indicator.Description);
+            command.Parameters.AddWithValue("description", indicator.Script);
+            command.Parameters.AddWithValue("id", indicator.Id);
+
+            command.ExecuteNonQuery();
+        }
+
+        public void InsertIndicator(Indicator indicator)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "INSERT INTO Indicators (name, description, script, isStandart) VALUES (:name, :description, :script, :isStandart)";
+            command.Parameters.AddWithValue("name", indicator.Name);
+            command.Parameters.AddWithValue("description", indicator.Description);
+            command.Parameters.AddWithValue("script", indicator.Script);
+            command.Parameters.AddWithValue("isStandart", 0);
+
+            command.ExecuteNonQuery();
+        }
     }
 }

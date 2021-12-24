@@ -59,15 +59,9 @@ namespace ktradesystem.Models
                 Comissiontypes.Add(сomissiontype);
             }
 
-            //считываем индикаторы из базы данных
-            DataTable dataIndicators = _database.QuerySelect("SELECT * FROM Indicators");
-            foreach (DataRow row in dataIndicators.Rows)
-            {
-                Indicator indicator = new Indicator { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name"), Description = row.Field<string>("description") };
-                Indicators.Add(indicator);
-            }
-
             ReadDataSources();
+
+            ReadIndicators();
         }
 
         private Database _database;
@@ -131,6 +125,17 @@ namespace ktradesystem.Models
             }
         }
 
+        private ObservableCollection<ParameterTemplate> _parameterTemplates = new ObservableCollection<ParameterTemplate>(); //шаблоны параметров (для индикаторов)
+        public ObservableCollection<ParameterTemplate> ParameterTemplates
+        {
+            get { return _parameterTemplates; }
+            private set
+            {
+                _parameterTemplates = value;
+                OnPropertyChanged();
+            }
+        }
+
         private ObservableCollection<Indicator> _indicators = new ObservableCollection<Indicator>(); //индикаторы
         public ObservableCollection<Indicator> Indicators
         {
@@ -139,6 +144,43 @@ namespace ktradesystem.Models
             {
                 _indicators = value;
                 OnPropertyChanged();
+            }
+        }
+
+        public void ReadIndicators()
+        {
+            //считываем шаблоны параметров из базы данных
+            ParameterTemplates.Clear();
+
+            DataTable dataParameterTemplates = _database.QuerySelect("SELECT * FROM ParameterTemplates");
+            foreach (DataRow row in dataParameterTemplates.Rows)
+            {
+                ParameterTemplate parameterTemplate = new ParameterTemplate { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name"), Description = row.Field<string>("description"), IdIndicator = (int)row.Field<long>("idIndicator") };
+                ParameterTemplates.Add(parameterTemplate);
+            }
+
+            //считываем индикаторы из базы данных
+            Indicators.Clear();
+
+            DataTable dataIndicators = _database.QuerySelect("SELECT * FROM Indicators");
+            foreach (DataRow row in dataIndicators.Rows)
+            {
+                int idIndicator = (int)row.Field<long>("id");
+                List<ParameterTemplate> parameterTemplates = new List<ParameterTemplate>();
+                foreach (ParameterTemplate item in ParameterTemplates)
+                {
+                    if (item.IdIndicator == idIndicator)
+                    {
+                        parameterTemplates.Add(item);
+                    }
+                }
+                bool isStandart = false;
+                if((int)row.Field<long>("isStandart") == 1)
+                {
+                    isStandart = true;
+                }
+                Indicator indicator = new Indicator { Id = idIndicator, Name = row.Field<string>("name"), Description = row.Field<string>("description"), ParameterTemplates = parameterTemplates, Script = row.Field<string>("script"), IsStandart = isStandart };
+                Indicators.Add(indicator);
             }
         }
 

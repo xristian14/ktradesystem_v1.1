@@ -10,121 +10,164 @@
 
     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 10 0 0">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="600"/>
+            <ColumnDefinition Width="637"/>
             <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
-        <StackPanel Orientation="Vertical" Grid.Column="0" Margin="10 0 0 0" Background="White">
-            <StackPanel Orientation="Horizontal">
-                <Button Content="Показать/скрыть" Command="{Binding IndicatorsVisibility_Click}" Width="105" HorizontalAlignment="Left" />
-                <TextBlock Text="Индикаторы" Margin="155, 0, 0, 0"/>
-            </StackPanel>
-            <Grid x:Name="indicatorsGrid" Visibility="{Binding IndicatorsVisibility}" Background="WhiteSmoke">
-                <StackPanel Orientation="Vertical" Background="White" Margin="0, 0, 0, 10">
-                    <StackPanel Orientation="Horizontal" Margin="0 7 0 0">
-                        <Button Content="Добавить" Command="{Binding IndicatorsAdd_Click}" Width="70"/>
-                        <Button Content="Редактировать" Command="{Binding IndicatorsEdit_Click}" Width="95" Margin="7 0 0 0"/>
-                        <Button Content="Удалить" Command="{Binding IndicatorsDelete_Click}" Width="60" Margin="7 0 0 0"/>
-                    </StackPanel>
-                    <ListView Height="105">
+        <ScrollViewer>
+            <StackPanel Orientation="Vertical" Grid.Column="0" Margin="10 0 0 0" Background="White">
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Показать/скрыть" Command="{Binding IndicatorsVisibility_Click}" Width="105" HorizontalAlignment="Left" />
+                    <TextBlock Text="Индикаторы" Margin="155, 0, 0, 0"/>
+                </StackPanel>
+                <Grid x:Name="indicatorsGrid" Visibility="{Binding IndicatorsVisibility}" Background="WhiteSmoke">
+                    <StackPanel Orientation="Vertical" Background="White" Margin="0, 0, 0, 10">
+                        <StackPanel Orientation="Horizontal" Margin="0 7 0 0">
+                            <Button Content="Добавить" Command="{Binding IndicatorsAdd_Click}" Width="70"/>
+                            <Button Content="Редактировать" Command="{Binding IndicatorsEdit_Click}" Width="95" Margin="7 0 0 0"/>
+                            <Button Content="Удалить" Command="{Binding IndicatorsDelete_Click}" Width="60" Margin="7 0 0 0"/>
+                        </StackPanel>
+                        <ListView ItemsSource="{Binding Indicators}" SelectedItem="{Binding SelectedIndicator, Mode=OneWayToSource}" SelectionMode="Single" Height="150">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="{Binding ElementName=helperInd1, Path=ActualWidth}"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="{Binding ElementName=helperInd2, Path=ActualWidth}"/>
+                                    <GridViewColumn Header="Описание" Width="{Binding ElementName=helperInd3, Path=ActualWidth}">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBox Text="{Binding Description}" TextWrapping="Wrap" IsReadOnly="True"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Стандарт." Width="{Binding ElementName=helperInd4, Path=ActualWidth}">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding IsStandart}" IsHitTestVisible="False" Focusable="False"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <Grid Visibility="Visible">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="37"/>
+                                <ColumnDefinition Width="207"/>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="57"/>
+                                <ColumnDefinition Width="30"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0" x:Name="helperInd1"/>
+                            <Grid Grid.Column="1" x:Name="helperInd2"/>
+                            <Grid Grid.Column="2" x:Name="helperInd3"/>
+                            <Grid Grid.Column="3" x:Name="helperInd4"/>
+                            <Grid Grid.Column="4" x:Name="helperInd5"/>
+                        </Grid>
 
-                    </ListView>
-                    <StackPanel Background="#FFFAFAFA">
-                        <StackPanel Background="White" Margin="10">
-                            <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
-                                <TextBlock Text="Статус:"/>
-                                <TextBlock Text="{Binding IndicatorStatusText}" Margin="5 0 0 0"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
-                                <TextBlock Text="Название"/>
-                                <TextBox Text="{Binding IndicatorName}" Width="250" Margin="8 0 0 0"/>
-                            </StackPanel>
-                            <TextBlock Text="(только английскими буквами)"/>
-                            <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
-                                <TextBlock Text="Описание"/>
-                                <TextBox Text="{Binding IndicatorDescription}" Width="462" TextWrapping="Wrap" Margin="6 0 0 0"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
-                                <TextBlock Text="Оптимизируемые параметры"/>
-                                <Button Content="Добавить" Command="{Binding AddIndicatorParameterTemplate_Click}" Width="70" Margin="7 0 0 0"/>
-                                <Button Content="Редактировать" Command="{Binding EditIndicatorParameterTemplate_Click}" Width="95" Margin="7 0 0 0"/>
-                                <Button Content="Удалить" Command="{Binding DeleteIndicatorParameterTemplate_Click}" Width="60" Margin="7 0 0 0"/>
-                            </StackPanel>
-                            <ListView Grid.Row="2" ItemsSource="{Binding IndicatorParameterTemplates}" SelectedItem="{Binding SelectedIndicatorParameterTemplate, Mode=OneWayToSource}" SelectionMode="Single" Height="83">
-                                <ListView.View>
-                                    <GridView>
-                                        <GridViewColumn Header="Название" Width="520"/>
-                                    </GridView>
-                                </ListView.View>
-                            </ListView>
-                            <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
-                                <TextBlock Text="Сценарий индикатора" Margin="224 0 0 0"/>
-                                <Button Content="Сбросить до шаблона по умолчанию" Command="{Binding IndicatorResetToTemplate_Click}" Width="215" Margin="7 0 0 0"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Vertical" Margin="0 5 0 0">
-                                <StackPanel Orientation="Horizontal">
-                                    <GroupBox Header="Базовые выражения">
-                                        <StackPanel Orientation="Vertical">
-                                            <StackPanel Orientation="Horizontal">
-                                                <Button Content="Данные графика" Command="{Binding IndicatorPasteCandles_Click}" Width="110"/>
-                                                <Button Content="Выбранный параметр" Command="{Binding IndicatorPasteSelectedParameter_Click}" Width="140"/>
-                                                <Button Content="Результат индикатора" Command="{Binding IndicatorPasteReturn_Click}" Width="138"/>
+                        <StackPanel Background="#FFFAFAFA">
+                            <StackPanel Background="White" Margin="10">
+                                <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                                    <TextBlock Text="Статус:"/>
+                                    <TextBlock Text="{Binding IndicatorStatusText}" Margin="5 0 0 0"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                                    <TextBlock Text="Название"/>
+                                    <TextBox Text="{Binding IndicatorName}" Width="250" Margin="8 0 0 0"/>
+                                </StackPanel>
+                                <TextBlock Text="(только английскими буквами)"/>
+                                <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
+                                    <TextBlock Text="Описание"/>
+                                    <TextBox Text="{Binding IndicatorDescription}" Width="462" TextWrapping="Wrap" Margin="6 0 0 0"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                                    <TextBlock Text="Оптимизируемые параметры"/>
+                                    <Button Content="Добавить" Command="{Binding AddIndicatorParameterTemplate_Click}" Width="70" Margin="7 0 0 0"/>
+                                    <Button Content="Редактировать" Command="{Binding EditIndicatorParameterTemplate_Click}" Width="95" Margin="7 0 0 0"/>
+                                    <Button Content="Удалить" Command="{Binding DeleteIndicatorParameterTemplate_Click}" Width="60" Margin="7 0 0 0"/>
+                                </StackPanel>
+                                <ListView Grid.Row="2" ItemsSource="{Binding IndicatorParameterTemplates, Mode=OneWay}" SelectedItem="{Binding SelectedIndicatorParameterTemplate, Mode=OneWayToSource}" SelectionMode="Single" Height="110">
+                                    <ListView.View>
+                                        <GridView>
+                                            <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="240"/>
+                                            <GridViewColumn Header="Описание" Width="290">
+                                                <GridViewColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding Description}" TextWrapping="Wrap" IsReadOnly="True"/>
+                                                    </DataTemplate>
+                                                </GridViewColumn.CellTemplate>
+                                            </GridViewColumn>
+                                        </GridView>
+                                    </ListView.View>
+                                </ListView>
+                                <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                                    <TextBlock Text="Сценарий индикатора" Margin="224 0 0 0"/>
+                                    <Button Content="Сбросить до шаблона по умолчанию" Command="{Binding IndicatorResetToTemplate_Click}" Width="215" Margin="7 0 0 0"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Vertical" Margin="0 5 0 0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <GroupBox Header="Базовые выражения">
+                                            <StackPanel Orientation="Vertical">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Content="Данные графика" Command="{Binding IndicatorPasteCandles_Click}" Width="110"/>
+                                                    <Button Content="Выбранный параметр" Command="{Binding IndicatorPasteSelectedParameter_Click}" Width="140"/>
+                                                    <Button Content="Результат индикатора" Command="{Binding IndicatorPasteReturn_Click}" Width="138"/>
+                                                </StackPanel>
                                             </StackPanel>
-                                        </StackPanel>
-                                    </GroupBox>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal">
-                                    <GroupBox Header="Условия и циклы">
-                                        <StackPanel Orientation="Vertical">
-                                            <StackPanel Orientation="Horizontal">
-                                                <Button Content="Условие if()" Command="{Binding IndicatorPasteCondition_Click}" Width="90"/>
-                                                <Button Content="Цикл while()" Command="{Binding IndicatorPasteWhile_Click}" Width="90"/>
+                                        </GroupBox>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <GroupBox Header="Условия и циклы">
+                                            <StackPanel Orientation="Vertical">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Content="Условие if()" Command="{Binding IndicatorPasteCondition_Click}" Width="90"/>
+                                                    <Button Content="Цикл while()" Command="{Binding IndicatorPasteWhile_Click}" Width="90"/>
+                                                </StackPanel>
                                             </StackPanel>
-                                        </StackPanel>
-                                    </GroupBox>
-                                    <GroupBox Header="Логические операторы">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Content="&gt;" Command="{Binding IndicatorPasteLogicMore_Click}" Width="30"/>
-                                            <Button Content="&lt;" Command="{Binding IndicatorPasteLogicLess_Click}" Width="30"/>
-                                            <Button Content="&gt;=" Command="{Binding IndicatorPasteLogicMoreOrEqual_Click}" Width="30"/>
-                                            <Button Content="&lt;=" Command="{Binding IndicatorPasteLogicLessOrEqual_Click}" Width="30"/>
-                                            <Button Content="равно ==" Command="{Binding IndicatorPasteLogicEqual_Click}" Width="68"/>
-                                            <Button Content="неравно !=" Command="{Binding IndicatorPasteLogicUnequal_Click}" Width="75"/>
-                                            <Button Content="И &amp;&amp;" Command="{Binding IndicatorPasteLogicAnd_Click}" Width="50"/>
-                                            <Button Content="ИЛИ ||" Command="{Binding IndicatorPasteLogicOr_Click}" Width="50"/>
-                                        </StackPanel>
-                                    </GroupBox>
+                                        </GroupBox>
+                                        <GroupBox Header="Логические операторы">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="&gt;" Command="{Binding IndicatorPasteLogicMore_Click}" Width="30"/>
+                                                <Button Content="&lt;" Command="{Binding IndicatorPasteLogicLess_Click}" Width="30"/>
+                                                <Button Content="&gt;=" Command="{Binding IndicatorPasteLogicMoreOrEqual_Click}" Width="30"/>
+                                                <Button Content="&lt;=" Command="{Binding IndicatorPasteLogicLessOrEqual_Click}" Width="30"/>
+                                                <Button Content="равно ==" Command="{Binding IndicatorPasteLogicEqual_Click}" Width="68"/>
+                                                <Button Content="неравно !=" Command="{Binding IndicatorPasteLogicUnequal_Click}" Width="75"/>
+                                                <Button Content="И &amp;&amp;" Command="{Binding IndicatorPasteLogicAnd_Click}" Width="50"/>
+                                                <Button Content="ИЛИ ||" Command="{Binding IndicatorPasteLogicOr_Click}" Width="50"/>
+                                            </StackPanel>
+                                        </GroupBox>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <GroupBox Header="Объявление переменных">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Целое число int" Command="{Binding IndicatorPasteVarInt_Click}" Width="110"/>
+                                                <Button Content="Число с дробной частью double" Command="{Binding IndicatorPasteVarDouble_Click}" Width="194"/>
+                                            </StackPanel>
+                                        </GroupBox>
+                                    </StackPanel>
                                 </StackPanel>
-                                <StackPanel Orientation="Horizontal">
-                                    <GroupBox Header="Объявление переменных">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Content="Целое число int" Command="{Binding IndicatorPasteVarInt_Click}" Width="110"/>
-                                            <Button Content="Число с дробной частью double" Command="{Binding IndicatorPasteVarDouble_Click}" Width="194"/>
-                                        </StackPanel>
-                                    </GroupBox>
+                                <TextBox x:Name="indiactorScriptText" Text="{Binding IndicatorScript, Mode=TwoWay}" TextWrapping="Wrap" AcceptsReturn="True"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 5 0 0">
+                                    <Button Content="Проверить на ошибки" Command="{Binding IndicatorCancel_Click}" Width="134" Margin="0 0 7 0"/>
+                                    <Button Content="Сохранить" Command="{Binding IndicatorSave_Click}" Width="110" ToolTipService.ShowOnDisabled="True" Margin="0 0 7 0">
+                                        <Button.ToolTip>
+                                            <ToolTip>
+                                                <ListView ItemsSource="{Binding TooltipAddAddIndicator}" IsEnabled="False"/>
+                                            </ToolTip>
+                                        </Button.ToolTip>
+                                    </Button>
+                                    <Button Content="Отменить" Command="{Binding IndicatorCancel_Click}" Width="110"/>
                                 </StackPanel>
-                            </StackPanel>
-                            <TextBox x:Name="indiactorScriptText" Text="{Binding IndicatorScript, Mode=TwoWay}" TextWrapping="Wrap" AcceptsReturn="True"/>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 5 0 0">
-                                <Button Content="Проверить на ошибки" Command="{Binding IndicatorCancel_Click}" Width="134" Margin="0 0 7 0"/>
-                                <Button Content="Сохранить" Command="{Binding IndicatorSave_Click}" Width="110" ToolTipService.ShowOnDisabled="True" Margin="0 0 7 0">
-                                    <Button.ToolTip>
-                                        <ToolTip>
-                                            <ListView ItemsSource="{Binding TooltipAddAddIndicator}" IsEnabled="False"/>
-                                        </ToolTip>
-                                    </Button.ToolTip>
-                                </Button>
-                                <Button Content="Отменить" Command="{Binding IndicatorCancel_Click}" Width="110"/>
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </Grid>
-            <TextBlock Text="Алгоритмы" HorizontalAlignment="Center"/>
-            <Grid x:Name="algorithmsGrid">
+                </Grid>
+                <TextBlock Text="Алгоритмы" HorizontalAlignment="Center"/>
+                <Grid x:Name="algorithmsGrid">
                 
-            </Grid>
-        </StackPanel>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
         <StackPanel Orientation="Vertical" Grid.Column="1" Margin="10 0 0 0" Background="White">
             <TextBlock Text="Параметры тестирования" HorizontalAlignment="Center"/>
         </StackPanel>

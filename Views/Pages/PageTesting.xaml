@@ -5,7 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:ktradesystem.Views.Pages"
       mc:Ignorable="d" 
-      d:DesignHeight="600" d:DesignWidth="1280"
+      d:DesignHeight="1300" d:DesignWidth="1280"
       Title="PageTesting" Background="WhiteSmoke">
 
     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 10 0 0">
@@ -16,9 +16,9 @@
         </Grid.ColumnDefinitions>
         <ScrollViewer>
             <StackPanel Orientation="Vertical" Grid.Column="0" Margin="10 0 0 0" Background="White">
-                <StackPanel Orientation="Horizontal">
-                    <Button Content="Показать/скрыть" Command="{Binding IndicatorsVisibility_Click}" Width="105" HorizontalAlignment="Left" />
-                    <TextBlock Text="Индикаторы" Margin="155, 0, 0, 0"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBlock Text="Индикаторы" Margin="0, 0, 160, 0"/>
+                    <Button Content="Показать/скрыть" Command="{Binding IndicatorsVisibility_Click}" Width="110" />
                 </StackPanel>
                 <Grid x:Name="indicatorsGrid" Visibility="{Binding IndicatorsVisibility}" Background="WhiteSmoke">
                     <StackPanel Orientation="Vertical" Background="White" Margin="0, 0, 0, 10">
@@ -27,7 +27,7 @@
                             <Button Content="Редактировать" Command="{Binding IndicatorsEdit_Click}" Width="95" Margin="7 0 0 0"/>
                             <Button Content="Удалить" Command="{Binding IndicatorsDelete_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView ItemsSource="{Binding Indicators}" SelectedItem="{Binding SelectedIndicator, Mode=OneWayToSource}" SelectionMode="Single" Height="150">
+                        <ListView ItemsSource="{Binding Indicators}" SelectedItem="{Binding SelectedIndicator, Mode=TwoWay}" SelectionMode="Single" Height="170">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="{Binding ElementName=helperInd1, Path=ActualWidth}"/>
@@ -52,10 +52,10 @@
                         <Grid Visibility="Visible">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="37"/>
-                                <ColumnDefinition Width="207"/>
+                                <ColumnDefinition Width="190"/>
                                 <ColumnDefinition Width="1*"/>
                                 <ColumnDefinition Width="57"/>
-                                <ColumnDefinition Width="30"/>
+                                <ColumnDefinition Width="33"/>
                             </Grid.ColumnDefinitions>
                             <Grid Grid.Column="0" x:Name="helperInd1"/>
                             <Grid Grid.Column="1" x:Name="helperInd2"/>
@@ -72,12 +72,12 @@
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
                                     <TextBlock Text="Название"/>
-                                    <TextBox Text="{Binding IndicatorName}" Width="250" Margin="8 0 0 0"/>
+                                    <TextBox Text="{Binding IndicatorName}" IsReadOnly="{Binding IsIndicatorReadOnly}" Width="250" Margin="8 0 0 0"/>
                                 </StackPanel>
                                 <TextBlock Text="(только английскими буквами)"/>
                                 <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
                                     <TextBlock Text="Описание"/>
-                                    <TextBox Text="{Binding IndicatorDescription}" Width="462" TextWrapping="Wrap" Margin="6 0 0 0"/>
+                                    <TextBox Text="{Binding IndicatorDescription}" IsReadOnly="{Binding IsIndicatorReadOnly}" Width="462" TextWrapping="Wrap" Margin="6 0 0 0"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
                                     <TextBlock Text="Оптимизируемые параметры"/>
@@ -88,8 +88,8 @@
                                 <ListView Grid.Row="2" ItemsSource="{Binding IndicatorParameterTemplates, Mode=OneWay}" SelectedItem="{Binding SelectedIndicatorParameterTemplate, Mode=OneWayToSource}" SelectionMode="Single" Height="110">
                                     <ListView.View>
                                         <GridView>
-                                            <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="240"/>
-                                            <GridViewColumn Header="Описание" Width="290">
+                                            <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="210"/>
+                                            <GridViewColumn Header="Описание" Width="340">
                                                 <GridViewColumn.CellTemplate>
                                                     <DataTemplate>
                                                         <TextBox Text="{Binding Description}" TextWrapping="Wrap" IsReadOnly="True"/>
@@ -146,9 +146,9 @@
                                         </GroupBox>
                                     </StackPanel>
                                 </StackPanel>
-                                <TextBox x:Name="indiactorScriptText" Text="{Binding IndicatorScript, Mode=TwoWay}" TextWrapping="Wrap" AcceptsReturn="True"/>
+                                <TextBox x:Name="indiactorScriptText" Text="{Binding IndicatorScript, Mode=TwoWay}" IsReadOnly="{Binding IsIndicatorReadOnly}" TextWrapping="Wrap" AcceptsReturn="True"/>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 5 0 0">
-                                    <Button Content="Проверить на ошибки" Command="{Binding IndicatorCancel_Click}" Width="134" Margin="0 0 7 0"/>
+                                    <Button Content="Проверить на ошибки" Command="{Binding IndicatorCheckScript_Click}" Width="134" Margin="0 0 7 0"/>
                                     <Button Content="Сохранить" Command="{Binding IndicatorSave_Click}" Width="110" ToolTipService.ShowOnDisabled="True" Margin="0 0 7 0">
                                         <Button.ToolTip>
                                             <ToolTip>
@@ -163,9 +163,67 @@
                     </StackPanel>
                 </Grid>
                 <TextBlock Text="Алгоритмы" HorizontalAlignment="Center"/>
-                <Grid x:Name="algorithmsGrid">
-                
+                <Grid x:Name="algorithmsGrid" Background="WhiteSmoke">
+                    <StackPanel Orientation="Vertical" Background="White">
+                        <StackPanel Orientation="Horizontal" Margin="0 7 0 0">
+                            <Button Content="Добавить" Command="{Binding AlgorithmsAdd_Click}" Width="70"/>
+                            <Button Content="Редактировать" Command="{Binding AlgorithmsEdit_Click}" Width="95" Margin="7 0 0 0"/>
+                            <Button Content="Удалить" Command="{Binding AlgorithmsDelete_Click}" Width="60" Margin="7 0 0 0"/>
+                        </StackPanel>
+                        <ListView ItemsSource="{Binding Algorithms}" SelectedItem="{Binding SelectedAlgorithm, Mode=TwoWay}" SelectionMode="Single" Height="170">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="37"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="265"/>
+                                    <GridViewColumn Header="Описание" Width="265">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBox Text="{Binding Description}" TextWrapping="Wrap" IsReadOnly="True"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </StackPanel>
                 </Grid>
+                <StackPanel Background="#FFFAFAFA">
+                    <StackPanel Background="White" Margin="10">
+                        <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                            <TextBlock Text="Статус:"/>
+                            <TextBlock Text="{Binding AlgorithmStatusText}" Margin="5 0 0 0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                            <TextBlock Text="Название"/>
+                            <TextBox Text="{Binding AlgorithmName}" IsReadOnly="{Binding IsAlgorithmReadOnly}" Width="250" Margin="8 0 0 0"/>
+                        </StackPanel>
+                        <TextBlock Text="(только английскими буквами)"/>
+                        <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
+                            <TextBlock Text="Описание"/>
+                            <TextBox Text="{Binding AlgorithmDescription}" IsReadOnly="{Binding IsAlgorithmReadOnly}" Width="462" TextWrapping="Wrap" Margin="6 0 0 0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                            <TextBlock Text="Источники данных для подстановки"/>
+                            <Button Content="Добавить" Command="{Binding AddIndicatorParameterTemplate_Click}" Width="70" Margin="7 0 0 0"/>
+                            <Button Content="Редактировать" Command="{Binding EditIndicatorParameterTemplate_Click}" Width="95" Margin="7 0 0 0"/>
+                            <Button Content="Удалить" Command="{Binding DeleteIndicatorParameterTemplate_Click}" Width="60" Margin="7 0 0 0"/>
+                        </StackPanel>
+                        <ListView Grid.Row="2" ItemsSource="{Binding IndicatorParameterTemplates, Mode=OneWay}" SelectedItem="{Binding SelectedIndicatorParameterTemplate, Mode=OneWayToSource}" SelectionMode="Single" Height="110">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="210"/>
+                                    <GridViewColumn Header="Описание" Width="340">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBox Text="{Binding Description}" TextWrapping="Wrap" IsReadOnly="True"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </StackPanel>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
         <StackPanel Orientation="Vertical" Grid.Column="1" Margin="10 0 0 0" Background="White">

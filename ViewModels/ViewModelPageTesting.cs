@@ -95,6 +95,7 @@ namespace ktradesystem.ViewModels
             {
                 _selectedIndicator = value;
                 OnPropertyChanged();
+                SelectedIndicatorChanged(); //помещяет в переменные редактора значения выбранного индикатора для просмотра данного индиктора
             }
         }
 
@@ -120,6 +121,17 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        private bool _isIndicatorReadOnly = true;
+        public bool IsIndicatorReadOnly //на эту переменную привязаны свойства readonly полей редактирования индикатора
+        {
+            get { return _isIndicatorReadOnly; }
+            set
+            {
+                _isIndicatorReadOnly = value;
+                OnPropertyChanged();
+            }
+        }
+
         private Visibility _indicatorsVisibility = Visibility.Visible;
         public Visibility IndicatorsVisibility //видимость панели индикаторов
         {
@@ -128,6 +140,28 @@ namespace ktradesystem.ViewModels
             {
                 _indicatorsVisibility = value;
                 OnPropertyChanged();
+            }
+        }
+
+        private void SelectedIndicatorChanged() //помещяет в переменные редактора значения выбранного индикатора для просмотра данного индиктора
+        {
+            if(SelectedIndicator != null)
+            {
+                IndicatorName = SelectedIndicator.Name;
+                IndicatorDescription = SelectedIndicator.Description;
+                IndicatorParameterTemplates.Clear();
+                foreach(ParameterTemplate parameterTemplate in SelectedIndicator.ParameterTemplates)
+                {
+                    IndicatorParameterTemplates.Add(parameterTemplate);
+                }
+                IndicatorScript = SelectedIndicator.Script;
+            }
+            else
+            {
+                IndicatorName = "";
+                IndicatorDescription = "";
+                IndicatorParameterTemplates.Clear();
+                IndicatorScript = "";
             }
         }
 
@@ -180,14 +214,17 @@ namespace ktradesystem.ViewModels
             if (IsIndicatorAdded == true)
             {
                 IndicatorStatusText = "Добавление";
+                IsIndicatorReadOnly = false;
             }
             else if (IsIndicatorEdited == true)
             {
                 IndicatorStatusText = "Редактирование";
+                IsIndicatorReadOnly = false;
             }
             else
             {
                 IndicatorStatusText = "Просмотр";
+                IsIndicatorReadOnly = true;
             }
         }
 
@@ -222,6 +259,8 @@ namespace ktradesystem.ViewModels
                 {
                     IsIndicatorAdded = true;
                     UpdateIndicatorStatusText();
+                    SelectedIndicator = null;
+                    SelectedIndicatorChanged();
                 }, (obj) => !IsAddOrEditIndicator());
             }
         }
@@ -234,7 +273,25 @@ namespace ktradesystem.ViewModels
                 {
                     IsIndicatorEdited = true;
                     UpdateIndicatorStatusText();
-                }, (obj) => !IsAddOrEditIndicator());
+                }, (obj) => !IsAddOrEditIndicator() && SelectedIndicator != null );
+            }
+        }
+
+        public ICommand IndicatorsDelete_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    string msg = " Id: " + SelectedIndicator.Id + "  Название: " + SelectedIndicator.Name;
+                    string caption = "Удалить индикатор?";
+                    MessageBoxButton messageBoxButton = MessageBoxButton.YesNo;
+                    var result = MessageBox.Show(msg, caption, messageBoxButton);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        _modelTesting.IndicatorDelete(SelectedIndicator.Id);
+                    }
+                }, (obj) => !IsAddOrEditIndicator() && SelectedIndicator != null );
             }
         }
 
@@ -266,7 +323,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "Parameter." + SelectedIndicatorParameterTemplate);
+                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "Parameter." + SelectedIndicatorParameterTemplate.Name);
                 }, (obj) => SelectedIndicatorParameterTemplate != null && IsAddOrEditIndicator());
             }
         }
@@ -299,7 +356,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "int i = 1;" + Environment.NewLine + "while (  ) {" + Environment.NewLine + Environment.NewLine + "i++;" + Environment.NewLine + "}");
+                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "int i = 1;" + Environment.NewLine + "while (  ) {" + Environment.NewLine + Environment.NewLine + Environment.NewLine + Environment.NewLine + "i++;" + Environment.NewLine + "}");
                 }, (obj) => IsAddOrEditIndicator());
             }
         }
@@ -462,13 +519,27 @@ namespace ktradesystem.ViewModels
 
             //проверка на уникальность названия
             bool isUnique = true;
-            foreach (Indicator item in Indicators)
+            if (IsIndicatorEdited)
             {
-                if (name == item.Name) //проверяем имя на уникальность среди всех записей
+                foreach (Indicator item in Indicators)
                 {
-                    isUnique = false;
+                    if (name == item.Name && item.Id != SelectedIndicator.Id) //проверяем имя на уникальность среди всех записей кроме редактируемой
+                    {
+                        isUnique = false;
+                    }
                 }
             }
+            else
+            {
+                foreach (Indicator item in Indicators)
+                {
+                    if (name == item.Name) //проверяем имя на уникальность среди всех записей
+                    {
+                        isUnique = false;
+                    }
+                }
+            }
+            
             if (isUnique == false)
             {
                 result = false;
@@ -496,9 +567,12 @@ namespace ktradesystem.ViewModels
                     }
                     else if(IsIndicatorEdited)
                     {
-                        _modelTesting.IndicatorInsertUpdate(IndicatorName, IndicatorDescription, insertParameterTemplates, IndicatorScript, SelectedIndicatorParameterTemplate.Id);
+                        _modelTesting.IndicatorInsertUpdate(IndicatorName, IndicatorDescription, insertParameterTemplates, IndicatorScript, SelectedIndicator.Id);
                     }
 
+                    IsIndicatorAdded = false;
+                    IsIndicatorEdited = false;
+                    UpdateIndicatorStatusText();
 
                     /*
                     Microsoft.CSharp.CSharpCodeProvider Provider = new Microsoft.CSharp.CSharpCodeProvider();
@@ -537,8 +611,11 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    
-                }, (obj) => IsAddOrEditIndicator() && IsFieldsAddIndicatorCorrect());
+                    IsIndicatorAdded = false;
+                    IsIndicatorEdited = false;
+                    UpdateIndicatorStatusText();
+                    SelectedIndicatorChanged();
+                }, (obj) => IsAddOrEditIndicator() );
             }
         }
 

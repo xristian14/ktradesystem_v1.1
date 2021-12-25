@@ -40,6 +40,7 @@ namespace ktradesystem.Models
                 int newIndicatorId = _modelData.Indicators[_modelData.Indicators.Count - 1].Id;
                 foreach(ParameterTemplate parameterTemplate in parameterTemplates)
                 {
+                    parameterTemplate.IdIndicator = newIndicatorId;
                     _database.InsertParameterTemplate(parameterTemplate);
                 }
             }
@@ -67,20 +68,22 @@ namespace ktradesystem.Models
                 //проходит по всем элементам которые есть в старом и новом списке шаблонов параметров, и определяет какие обновить, какие добавить, а какие удалить
                 for(int i = 0; i < length; i++)
                 {
-                    if(parameterTemplates[i] != null && oldIndicator.ParameterTemplates[i] != null)
+                    if(parameterTemplates.Count > i && oldIndicator.ParameterTemplates.Count > i)
                     {
                         if(parameterTemplates[i].Name != oldIndicator.ParameterTemplates[i].Name || parameterTemplates[i].Description != oldIndicator.ParameterTemplates[i].Description)
                         {
                             updateParTemp.Add(new ParameterTemplate { Id = oldIndicator.ParameterTemplates[i].Id, Name = parameterTemplates[i].Name, Description = parameterTemplates[i].Description, IdIndicator = oldIndicator.ParameterTemplates[i].IdIndicator });
                         }
-                        else if(parameterTemplates[i] != null && oldIndicator.ParameterTemplates[i] == null)
-                        {
-                            addParTemp.Add(parameterTemplates[i]);
-                        }
-                        else if(parameterTemplates[i] == null && oldIndicator.ParameterTemplates[i] != null)
-                        {
-                            deleteParTemp.Add(oldIndicator.ParameterTemplates[i].Id);
-                        }
+                        
+                    }
+                    else if(parameterTemplates.Count > i && oldIndicator.ParameterTemplates.Count <= i)
+                    {
+                        parameterTemplates[i].IdIndicator = oldIndicator.Id;
+                        addParTemp.Add(parameterTemplates[i]);
+                    }
+                    else if(parameterTemplates.Count <= i && oldIndicator.ParameterTemplates.Count > i)
+                    {
+                        deleteParTemp.Add(oldIndicator.ParameterTemplates[i].Id);
                     }
                 }
                 //обновляем шаблоны параметров
@@ -102,6 +105,13 @@ namespace ktradesystem.Models
                 //обновляем индикатор
                 _database.UpdateIndicator(new Indicator { Id = id, Name = name, Description = description, Script = script });
             }
+
+            _modelData.ReadIndicators();
+        }
+
+        public void IndicatorDelete(int id)
+        {
+            _database.DeleteIndicator(id);
 
             _modelData.ReadIndicators();
         }

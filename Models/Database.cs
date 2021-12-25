@@ -37,6 +37,8 @@ namespace ktradesystem.Models
                 _connection = new SQLiteConnection("Data Source=" + fileName + ";Version=3; FailMissing=True");
                 _connection.Open();
                 _dbStatus.Add(true); //первый элемент true означает что соединение установлено
+
+                QueryInsertUpdate("PRAGMA foreign_keys = ON;"); //включаем поддержку внешних ключей (необходимо делать это для каждого подключения)
             }
             catch (SQLiteException ex)
             {
@@ -146,7 +148,7 @@ namespace ktradesystem.Models
         public void UpdateParameterTemplate(ParameterTemplate parameterTemplate)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "UPDADE ParameterTemplates SET name = :name, description = :description WHERE id = :id";
+            command.CommandText = "UPDATE ParameterTemplates SET name = :name, description = :description WHERE id = :id";
             command.Parameters.AddWithValue("name", parameterTemplate.Name);
             command.Parameters.AddWithValue("description", parameterTemplate.Description);
             command.Parameters.AddWithValue("id", parameterTemplate.Id);
@@ -177,10 +179,10 @@ namespace ktradesystem.Models
         public void UpdateIndicator(Indicator indicator)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "UPDADE Indicators SET name = :name, description = :description, script = :script WHERE id = :id";
+            command.CommandText = "UPDATE Indicators SET name = :name, description = :description, script = :script WHERE id = :id";
             command.Parameters.AddWithValue("name", indicator.Name);
             command.Parameters.AddWithValue("description", indicator.Description);
-            command.Parameters.AddWithValue("description", indicator.Script);
+            command.Parameters.AddWithValue("script", indicator.Script);
             command.Parameters.AddWithValue("id", indicator.Id);
 
             command.ExecuteNonQuery();
@@ -195,6 +197,15 @@ namespace ktradesystem.Models
             command.Parameters.AddWithValue("script", indicator.Script);
             command.Parameters.AddWithValue("isStandart", 0);
 
+            command.ExecuteNonQuery();
+        }
+
+        public void DeleteIndicator(int id)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            string query = "DELETE FROM Indicators WHERE id = :id";
+            command.CommandText = query;
+            command.Parameters.AddWithValue("id", id);
             command.ExecuteNonQuery();
         }
     }

@@ -10,7 +10,7 @@
 
     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 10 0 0">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="637"/>
+            <ColumnDefinition Width="640"/>
             <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
@@ -103,7 +103,7 @@
                                     <TextBlock Text="Сценарий индикатора" Margin="224 0 0 0"/>
                                     <Button Content="Сбросить до шаблона по умолчанию" Command="{Binding IndicatorResetToTemplate_Click}" Width="215" Margin="7 0 0 0"/>
                                 </StackPanel>
-                                <StackPanel Orientation="Vertical" Margin="0 5 0 0">
+                                <StackPanel Orientation="Vertical">
                                     <StackPanel Orientation="Horizontal">
                                         <GroupBox Header="Базовые выражения">
                                             <StackPanel Orientation="Vertical">
@@ -242,6 +242,20 @@
                             </ListView.View>
                         </ListView>
                         <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                            <TextBlock Text="Значения оптимизируемых параметров выбранных индикаторов"/>
+                            <Button Content="Редактировать" Command="{Binding EditParameterValues_Click}" Width="95" Margin="7 0 0 0"/>
+                        </StackPanel>
+                        <ListView Grid.Row="2" ItemsSource="{Binding ParameterValuesView, Mode=OneWay}" SelectedItem="{Binding SelectedParameterValueView, Mode=OneWayToSource}" SelectionMode="Single" Height="120">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn DisplayMemberBinding="{Binding NameIndicator}" Header="Название инидкатора" Width="195"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding NameParameter}" Header="Название параметра" Width="195"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Range}" Header="Диапазон" Width="90"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Step}" Header="Шаг" Width="70"/>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
                             <TextBlock Text="Оптимизируемые параметры алгоритма"/>
                             <Button Content="Добавить" Command="{Binding AddAlgorithmParameterTemplate_Click}" Width="70" Margin="7 0 0 0"/>
                             <Button Content="Редактировать" Command="{Binding EditAlgorithmParameterTemplate_Click}" Width="95" Margin="7 0 0 0"/>
@@ -261,22 +275,97 @@
                                 </GridView>
                             </ListView.View>
                         </ListView>
+                        
                         <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
-                            <TextBlock Text="Значения оптимизируемых параметров выбранных индикаторов, и алгоритма"/>
-                            <Button Content="Редактировать" Command="{Binding EditParameterValues_Click}" Width="95" Margin="7 0 0 0"/>
+                            <TextBlock Text="Сценарий алгоритма" Margin="224 0 0 0"/>
+                            <Button Content="Сбросить до шаблона по умолчанию" Command="{Binding AlgorithmResetToTemplate_Click}" Width="215" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView Grid.Row="2" ItemsSource="{Binding ParameterValuesView, Mode=OneWay}" SelectedItem="{Binding SelectedParameterValueView, Mode=OneWayToSource}" SelectionMode="Single" Height="120">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn DisplayMemberBinding="{Binding NameIndicator}" Header="Название инидкатора" Width="195"/>
-                                    <GridViewColumn DisplayMemberBinding="{Binding NameParameter}" Header="Название параметра" Width="195"/>
-                                    <GridViewColumn DisplayMemberBinding="{Binding Range}" Header="Диапазон" Width="90"/>
-                                    <GridViewColumn DisplayMemberBinding="{Binding Step}" Header="Шаг" Width="70"/>
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal">
+                                <GroupBox Header="Счет">
+                                    <StackPanel Orientation="Vertical">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Количество купленных лотов в открытой позиции" Command="{Binding AlgorithmPasteOpenPositionBuy_Click}" Width="290"/>
+                                            <Button Content="Количество проданных лотов в открытой позиции" Command="{Binding AlgorithmPasteOpenPositionBuy_Click}" Width="290"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </GroupBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <GroupBox Header="Заявки">
+                                    <StackPanel Orientation="Vertical">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Лимитная купить" Command="{Binding AlgorithmPasteOrderLimitBuy_Click}" Width="114"/>
+                                            <Button Content="Лимитная продать" Command="{Binding AlgorithmPasteOrderLimitSell_Click}" Width="114"/>
+                                            <Button Content="Рыночная купить" Command="{Binding AlgorithmPasteOrderMarketBuy_Click}" Width="114"/>
+                                            <Button Content="Рыночная продать" Command="{Binding AlgorithmPasteOrderMarketSell_Click}" Width="114"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Стоп купить" Command="{Binding AlgorithmPasteStopOrderBuy_Click}" Width="114"/>
+                                            <Button Content="Стоп продать" Command="{Binding AlgorithmPasteStopOrderSell_Click}" Width="114"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </GroupBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <GroupBox Header="Базовые выражения">
+                                    <StackPanel Orientation="Vertical">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Выбранный источник данных" Command="{Binding AlgorithmPasteDatasource_Click}" Width="176"/>
+                                            <Button Content="Выбранный индикатор" Command="{Binding AlgorithmPasteIndicator_Click}" Width="140"/>
+                                            <Button Content="Выбранный параметр" Command="{Binding AlgorithmPasteParameter_Click}" Width="140"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </GroupBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <GroupBox Header="Условия и циклы">
+                                    <StackPanel Orientation="Vertical">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Условие if()" Command="{Binding AlgorithmPasteCondition_Click}" Width="90"/>
+                                            <Button Content="Цикл while()" Command="{Binding AlgorithmPasteWhile_Click}" Width="90"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </GroupBox>
+                                <GroupBox Header="Логические операторы">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="&gt;" Command="{Binding AlgorithmPasteLogicMore_Click}" Width="30"/>
+                                        <Button Content="&lt;" Command="{Binding AlgorithmPasteLogicLess_Click}" Width="30"/>
+                                        <Button Content="&gt;=" Command="{Binding AlgorithmPasteLogicMoreOrEqual_Click}" Width="30"/>
+                                        <Button Content="&lt;=" Command="{Binding AlgorithmPasteLogicLessOrEqual_Click}" Width="30"/>
+                                        <Button Content="равно ==" Command="{Binding AlgorithmPasteLogicEqual_Click}" Width="68"/>
+                                        <Button Content="неравно !=" Command="{Binding AlgorithmPasteLogicUnequal_Click}" Width="75"/>
+                                        <Button Content="И &amp;&amp;" Command="{Binding AlgorithmPasteLogicAnd_Click}" Width="50"/>
+                                        <Button Content="ИЛИ ||" Command="{Binding AlgorithmPasteLogicOr_Click}" Width="50"/>
+                                    </StackPanel>
+                                </GroupBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <GroupBox Header="Объявление переменных">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="Целое число int" Command="{Binding AlgorithmPasteVarInt_Click}" Width="110"/>
+                                        <Button Content="Число с дробной частью double" Command="{Binding AlgorithmPasteVarDouble_Click}" Width="194"/>
+                                    </StackPanel>
+                                </GroupBox>
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBox x:Name="algorithmScriptText" Text="{Binding AlgorithmScript, Mode=TwoWay}" IsReadOnly="{Binding IsAlgorithmReadOnly}" TextWrapping="Wrap" AcceptsReturn="True"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 5 0 0">
+                            <Button Content="Проверить на ошибки" Command="{Binding AlgorithmCheckScript_Click}" Width="134" Margin="0 0 7 0"/>
+                            <Button Content="Сохранить" Command="{Binding AlgorithmSave_Click}" Width="110" ToolTipService.ShowOnDisabled="True" Margin="0 0 7 0">
+                                <Button.ToolTip>
+                                    <ToolTip>
+                                        <ListView ItemsSource="{Binding TooltipAddAddAlgorithm}" IsEnabled="False"/>
+                                    </ToolTip>
+                                </Button.ToolTip>
+                            </Button>
+                            <Button Content="Отменить" Command="{Binding AlgorithmCancel_Click}" Width="110"/>
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
+                <Grid Height="150">
+                    
+                </Grid>
             </StackPanel>
         </ScrollViewer>
         <StackPanel Orientation="Vertical" Grid.Column="1" Margin="10 0 0 0" Background="White">

@@ -75,6 +75,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Models\Datatables\Algorithm.cs" />
+    <Compile Include="Models\Datatables\AlgorithmParamter.cs" />
+    <Compile Include="Models\Datatables\DataSourceTemplate.cs" />
     <Compile Include="Models\ModelTesting.cs" />
     <Compile Include="ViewModels\DataSourceView.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
@@ -123,7 +126,7 @@
     <Compile Include="Models\ModelBase.cs" />
     <Compile Include="Models\ModelData.cs" />
     <Compile Include="Models\ModelDataSource.cs" />
-    <Compile Include="Models\Datatables\ParameterTemplate.cs" />
+    <Compile Include="Models\Datatables\IndicatorParameterTemplate.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

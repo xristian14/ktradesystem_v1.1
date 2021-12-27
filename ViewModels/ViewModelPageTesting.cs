@@ -67,6 +67,11 @@ namespace ktradesystem.ViewModels
 
 
 
+
+
+
+
+
         #region view add edit delete Indicators
 
         public System.Windows.Controls.TextBox IndicatorScriptTextBox; //ссылка на textBox с текстом скрипта, для обращения к свойству CaretIndex
@@ -150,7 +155,7 @@ namespace ktradesystem.ViewModels
                 IndicatorName = SelectedIndicator.Name;
                 IndicatorDescription = SelectedIndicator.Description;
                 IndicatorParameterTemplates.Clear();
-                foreach(ParameterTemplate parameterTemplate in SelectedIndicator.ParameterTemplates)
+                foreach(IndicatorParameterTemplate parameterTemplate in SelectedIndicator.IndicatorParameterTemplates)
                 {
                     IndicatorParameterTemplates.Add(parameterTemplate);
                 }
@@ -555,19 +560,19 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    List<ParameterTemplate> insertParameterTemplates = new List<ParameterTemplate>();
-                    foreach(ParameterTemplate item in IndicatorParameterTemplates)
+                    List<IndicatorParameterTemplate> InsertIndicatorParameterTemplates = new List<IndicatorParameterTemplate>();
+                    foreach(IndicatorParameterTemplate item in IndicatorParameterTemplates)
                     {
-                        insertParameterTemplates.Add(item);
+                        InsertIndicatorParameterTemplates.Add(item);
                     }
 
                     if (IsIndicatorAdded)
                     {
-                        _modelTesting.IndicatorInsertUpdate(IndicatorName, IndicatorDescription, insertParameterTemplates, IndicatorScript);
+                        _modelTesting.IndicatorInsertUpdate(IndicatorName, IndicatorDescription, InsertIndicatorParameterTemplates, IndicatorScript);
                     }
                     else if(IsIndicatorEdited)
                     {
-                        _modelTesting.IndicatorInsertUpdate(IndicatorName, IndicatorDescription, insertParameterTemplates, IndicatorScript, SelectedIndicator.Id);
+                        _modelTesting.IndicatorInsertUpdate(IndicatorName, IndicatorDescription, InsertIndicatorParameterTemplates, IndicatorScript, SelectedIndicator.Id);
                     }
 
                     IsIndicatorAdded = false;
@@ -619,8 +624,6 @@ return a.ToString();
             }
         }
 
-        //IndicatorCancel_Click
-
         #endregion
 
 
@@ -628,10 +631,14 @@ return a.ToString();
 
 
 
-        #region add edit delete select IndicatorParameterTemplate
 
-        private ObservableCollection<ParameterTemplate> _indicatorParameterTemplates = new ObservableCollection<ParameterTemplate>();
-        public ObservableCollection<ParameterTemplate> IndicatorParameterTemplates //шаблоны параметров индикатора
+
+
+
+        #region view add edit delete IndicatorParameterTemplate
+
+        private ObservableCollection<IndicatorParameterTemplate> _indicatorParameterTemplates = new ObservableCollection<IndicatorParameterTemplate>();
+        public ObservableCollection<IndicatorParameterTemplate> IndicatorParameterTemplates //шаблоны параметров индикатора
         {
             get { return _indicatorParameterTemplates; }
             private set
@@ -641,8 +648,8 @@ return a.ToString();
             }
         }
 
-        private ParameterTemplate _selectedIndicatorParameterTemplate;
-        public ParameterTemplate SelectedIndicatorParameterTemplate //выбранный шаблон параметра индикатора
+        private IndicatorParameterTemplate _selectedIndicatorParameterTemplate;
+        public IndicatorParameterTemplate SelectedIndicatorParameterTemplate //выбранный шаблон параметра индикатора
         {
             get { return _selectedIndicatorParameterTemplate; }
             set
@@ -750,7 +757,7 @@ return a.ToString();
 
             //проверка на уникальность названия
             bool isUnique = true;
-            foreach (ParameterTemplate item in IndicatorParameterTemplates)
+            foreach (IndicatorParameterTemplate item in IndicatorParameterTemplates)
             {
                 if (name == item.Name) //проверяем имя на уникальность среди всех записей
                 {
@@ -773,7 +780,7 @@ return a.ToString();
                 return new DelegateCommand((obj) =>
                 {
                     string name = AddIndicatorParameterTemplateName.Replace(" ", "");
-                    ParameterTemplate parameterTemplate = new ParameterTemplate { Name = name, Description = AddIndicatorParameterTemplateDescription };
+                    IndicatorParameterTemplate parameterTemplate = new IndicatorParameterTemplate { Name = name, Description = AddIndicatorParameterTemplateDescription };
                     IndicatorParameterTemplates.Add(parameterTemplate);
 
                     CloseAddIndicatorParameterTemplateAction?.Invoke();
@@ -830,7 +837,7 @@ return a.ToString();
 
             //проверка на уникальность названия
             bool isUnique = true;
-            foreach (ParameterTemplate item in IndicatorParameterTemplates)
+            foreach (IndicatorParameterTemplate item in IndicatorParameterTemplates)
             {
                 if(SelectedIndicatorParameterTemplate != null) //без этой проверки ошибка на обращение null полю, после сохранения
                 {
@@ -857,7 +864,7 @@ return a.ToString();
                 {
                     string name = AddIndicatorParameterTemplateName.Replace(" ", "");
                     int index = IndicatorParameterTemplates.IndexOf(SelectedIndicatorParameterTemplate);
-                    ParameterTemplate parameterTemplate = new ParameterTemplate { Name = name, Description = AddIndicatorParameterTemplateDescription };
+                    IndicatorParameterTemplate parameterTemplate = new IndicatorParameterTemplate { Name = name, Description = AddIndicatorParameterTemplateDescription };
                     IndicatorParameterTemplates.RemoveAt(index);
                     IndicatorParameterTemplates.Insert(index, parameterTemplate);
 
@@ -882,6 +889,287 @@ return a.ToString();
                         IndicatorParameterTemplates.RemoveAt(index);
                     }
                 }, (obj) => SelectedIndicatorParameterTemplate != null && IsAddOrEditIndicator() );
+            }
+        }
+
+        #endregion
+
+
+
+
+
+
+
+
+
+
+        #region view add edit delete Algorithms
+
+        public System.Windows.Controls.TextBox AlgorithmScriptTextBox; //ссылка на textBox с текстом скрипта, для обращения к свойству CaretIndex
+
+        private ObservableCollection<Algorithm> _algorithms = new ObservableCollection<Algorithm>(); //алгоритмы
+        public ObservableCollection<Algorithm> Algorithms
+        {
+            get { return _algorithms; }
+            private set
+            {
+                _algorithms = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private void modelData_AlgorithmsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            Algorithms = (ObservableCollection<Algorithm>)sender;
+        }
+
+        private Algorithm _selectedAlgorithm = new Algorithm();
+        public Algorithm SelectedAlgorithm //выбранный алгоритм
+        {
+            get { return _selectedAlgorithm; }
+            set
+            {
+                _selectedAlgorithm = value;
+                OnPropertyChanged();
+                SelectedAlgorithmChanged(); //помещяет в переменные редактора значения выбранного алгоритма для просмотра данного алгоритма
+            }
+        }
+
+        private bool _isAlgorithmAdded = false;
+        public bool IsAlgorithmAdded //флаг того что в настоящий момент создается новый алгоритм
+        {
+            get { return _isAlgorithmAdded; }
+            set
+            {
+                _isAlgorithmAdded = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isAlgorithmEdited = false;
+        public bool IsAlgorithmEdited //флаг того что в настоящий момент редактируется алгоритм
+        {
+            get { return _isAlgorithmEdited; }
+            set
+            {
+                _isAlgorithmEdited = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isAlgorithmReadOnly = true;
+        public bool IsAlgorithmReadOnly //на эту переменную привязаны свойства readonly полей редактирования алгоритма
+        {
+            get { return _isAlgorithmReadOnly; }
+            set
+            {
+                _isAlgorithmReadOnly = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private void SelectedAlgorithmChanged() //помещяет в переменные редактора значения выбранного алгоритма для просмотра данного алгоритма
+        {
+            if (SelectedAlgorithm != null)
+            {
+                AlgorithmName = SelectedAlgorithm.Name;
+                AlgorithmDescription = SelectedAlgorithm.Description;
+                AlgorithmParameters.Clear();
+                foreach (AlgorithmParamter algorithmParamter in SelectedAlgorithm.AlgorithmParamters)
+                {
+                    AlgorithmParameters.Add(algorithmParamter);
+                }
+                AlgorithmScript = SelectedAlgorithm.Script;
+            }
+            else
+            {
+                AlgorithmName = "";
+                AlgorithmDescription = "";
+                AlgorithmParameters.Clear();
+                AlgorithmScript = "";
+            }
+        }
+
+        private string _algorithmScript = "";
+        public string AlgorithmScript //скрипт алгоритма
+        {
+            get { return _algorithmScript; }
+            set
+            {
+                _algorithmScript = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _algorithmStatusText = "Просмотр";
+        public string AlgorithmStatusText //статус работы с выбранным алгоритмом
+        {
+            get { return _algorithmStatusText; }
+            set
+            {
+                _algorithmStatusText = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _algorithmName;
+        public string AlgorithmName //название алгоритма
+        {
+            get { return _algorithmName; }
+            set
+            {
+                _algorithmName = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _algorithmDescription;
+        public string AlgorithmDescription //описание алгоритма
+        {
+            get { return _algorithmDescription; }
+            set
+            {
+                _algorithmDescription = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private void UpdateAlgorithmStatusText()
+        {
+            if (IsAlgorithmAdded == true)
+            {
+                AlgorithmStatusText = "Добавление";
+                IsAlgorithmReadOnly = false;
+            }
+            else if (IsAlgorithmEdited == true)
+            {
+                AlgorithmStatusText = "Редактирование";
+                IsAlgorithmReadOnly = false;
+            }
+            else
+            {
+                AlgorithmStatusText = "Просмотр";
+                IsAlgorithmReadOnly = true;
+            }
+        }
+
+        private bool IsAddOrEditAlgorithm() //добавляется ли новый алгоритм в данный момент, или редактируется ли имеющийся
+        {
+            return IsAlgorithmAdded || IsAlgorithmEdited;
+        }
+
+        public ICommand AlgorithmsAdd_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    IsAlgorithmAdded = true;
+                    UpdateAlgorithmStatusText();
+                    SelectedAlgorithm = null;
+                    SelectedAlgorithmChanged();
+                }, (obj) => !IsAddOrEditAlgorithm() );
+            }
+        }
+
+        public ICommand AlgorithmsEdit_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    IsAlgorithmEdited = true;
+                    UpdateAlgorithmStatusText();
+                }, (obj) => !IsAddOrEditAlgorithm() && SelectedAlgorithm != null);
+            }
+        }
+
+        public ICommand AlgorithmsDelete_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    string msg = " Id: " + SelectedAlgorithm.Id + "  Название: " + SelectedAlgorithm.Name;
+                    string caption = "Удалить индикатор?";
+                    MessageBoxButton messageBoxButton = MessageBoxButton.YesNo;
+                    var result = MessageBox.Show(msg, caption, messageBoxButton);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        //_modelTesting.AlgorithmDelete(SelectedAlgorithm.Id);
+                    }
+                }, (obj) => !IsAddOrEditAlgorithm() && SelectedAlgorithm != null);
+            }
+        }
+
+        public ICommand AlgorithmResetToTemplate_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = Environment.NewLine + Environment.NewLine + "return 0;";
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+
+        public ICommand AlgorithmPasteCandles_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "candles[0]");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+
+        public ICommand AlgorithmCancel_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    IsAlgorithmAdded = false;
+                    IsAlgorithmEdited = false;
+                    UpdateAlgorithmStatusText();
+                    SelectedAlgorithmChanged();
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+
+        #endregion
+
+
+
+
+
+
+
+
+
+
+        #region view add edit delete AlgorithmParameters
+
+        private ObservableCollection<AlgorithmParamter> _algorithmParameters = new ObservableCollection<AlgorithmParamter>();
+        public ObservableCollection<AlgorithmParamter> AlgorithmParameters //параметры алгоритма
+        {
+            get { return _algorithmParameters; }
+            private set
+            {
+                _algorithmParameters = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private AlgorithmParamter _selectedAlgorithmParamter;
+        public AlgorithmParamter SelectedAlgorithmParamter //выбранный параметр алгоритма
+        {
+            get { return _selectedAlgorithmParamter; }
+            set
+            {
+                _selectedAlgorithmParamter = value;
+                OnPropertyChanged();
             }
         }
 

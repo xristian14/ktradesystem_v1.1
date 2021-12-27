@@ -145,10 +145,10 @@ namespace ktradesystem.Models
             command.ExecuteNonQuery();
         }
 
-        public void UpdateParameterTemplate(ParameterTemplate parameterTemplate)
+        public void UpdateIndicatorParameterTemplate(IndicatorParameterTemplate parameterTemplate)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "UPDATE ParameterTemplates SET name = :name, description = :description WHERE id = :id";
+            command.CommandText = "UPDATE IndicatorParameterTemplates SET name = :name, description = :description WHERE id = :id";
             command.Parameters.AddWithValue("name", parameterTemplate.Name);
             command.Parameters.AddWithValue("description", parameterTemplate.Description);
             command.Parameters.AddWithValue("id", parameterTemplate.Id);
@@ -156,10 +156,10 @@ namespace ktradesystem.Models
             command.ExecuteNonQuery();
         }
 
-        public void InsertParameterTemplate(ParameterTemplate parameterTemplate)
+        public void InsertIndicatorParameterTemplate(IndicatorParameterTemplate parameterTemplate)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "INSERT INTO ParameterTemplates (name, description, idIndicator) VALUES (:name, :description, :idIndicator)";
+            command.CommandText = "INSERT INTO IndicatorParameterTemplates (name, description, idIndicator) VALUES (:name, :description, :idIndicator)";
             command.Parameters.AddWithValue("name", parameterTemplate.Name);
             command.Parameters.AddWithValue("description", parameterTemplate.Description);
             command.Parameters.AddWithValue("idIndicator", parameterTemplate.IdIndicator);
@@ -167,10 +167,10 @@ namespace ktradesystem.Models
             command.ExecuteNonQuery();
         }
 
-        public void DeleteParameterTemplate(int id)
+        public void DeleteIndicatorParameterTemplate(int id)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            string query = "DELETE FROM ParameterTemplates WHERE id = :id";
+            string query = "DELETE FROM IndicatorParameterTemplates WHERE id = :id";
             command.CommandText = query;
             command.Parameters.AddWithValue("id", id);
             command.ExecuteNonQuery();

@@ -125,13 +125,13 @@ namespace ktradesystem.Models
             }
         }
 
-        private ObservableCollection<ParameterTemplate> _parameterTemplates = new ObservableCollection<ParameterTemplate>(); //шаблоны параметров (для индикаторов)
-        public ObservableCollection<ParameterTemplate> ParameterTemplates
+        private ObservableCollection<IndicatorParameterTemplate> _indicatorParameterTemplates = new ObservableCollection<IndicatorParameterTemplate>(); //шаблоны параметров (для индикаторов)
+        public ObservableCollection<IndicatorParameterTemplate> IndicatorParameterTemplates
         {
-            get { return _parameterTemplates; }
+            get { return _indicatorParameterTemplates; }
             private set
             {
-                _parameterTemplates = value;
+                _indicatorParameterTemplates = value;
                 OnPropertyChanged();
             }
         }
@@ -150,13 +150,13 @@ namespace ktradesystem.Models
         public void ReadIndicators()
         {
             //считываем шаблоны параметров из базы данных
-            ParameterTemplates.Clear();
+            IndicatorParameterTemplates.Clear();
 
-            DataTable dataParameterTemplates = _database.QuerySelect("SELECT * FROM ParameterTemplates");
+            DataTable dataParameterTemplates = _database.QuerySelect("SELECT * FROM IndicatorParameterTemplates");
             foreach (DataRow row in dataParameterTemplates.Rows)
             {
-                ParameterTemplate parameterTemplate = new ParameterTemplate { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name"), Description = row.Field<string>("description"), IdIndicator = (int)row.Field<long>("idIndicator") };
-                ParameterTemplates.Add(parameterTemplate);
+                IndicatorParameterTemplate parameterTemplate = new IndicatorParameterTemplate { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name"), Description = row.Field<string>("description"), IdIndicator = (int)row.Field<long>("idIndicator") };
+                IndicatorParameterTemplates.Add(parameterTemplate);
             }
 
             //считываем индикаторы из базы данных
@@ -166,12 +166,12 @@ namespace ktradesystem.Models
             foreach (DataRow row in dataIndicators.Rows)
             {
                 int idIndicator = (int)row.Field<long>("id");
-                List<ParameterTemplate> parameterTemplates = new List<ParameterTemplate>();
-                foreach (ParameterTemplate item in ParameterTemplates)
+                List<IndicatorParameterTemplate> indicatorParameterTemplates = new List<IndicatorParameterTemplate>();
+                foreach (IndicatorParameterTemplate item in IndicatorParameterTemplates)
                 {
                     if (item.IdIndicator == idIndicator)
                     {
-                        parameterTemplates.Add(item);
+                        indicatorParameterTemplates.Add(item);
                     }
                 }
                 bool isStandart = false;
@@ -179,7 +179,7 @@ namespace ktradesystem.Models
                 {
                     isStandart = true;
                 }
-                Indicator indicator = new Indicator { Id = idIndicator, Name = row.Field<string>("name"), Description = row.Field<string>("description"), ParameterTemplates = parameterTemplates, Script = row.Field<string>("script"), IsStandart = isStandart };
+                Indicator indicator = new Indicator { Id = idIndicator, Name = row.Field<string>("name"), Description = row.Field<string>("description"), IndicatorParameterTemplates = indicatorParameterTemplates, Script = row.Field<string>("script"), IsStandart = isStandart };
                 Indicators.Add(indicator);
             }
         }

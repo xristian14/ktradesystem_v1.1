@@ -28,6 +28,8 @@ namespace ktradesystem.Views.Pages
             DataContext = viewModelPageTesting;
 
             viewModelPageTesting.IndicatorScriptTextBox = indiactorScriptText; //передаю в viewModel текстовое поле со скриптом индикатора, чтобы отслеживать положение курсора
+
+            viewModelPageTesting.AlgorithmScriptTextBox = algorithmScriptText; //передаю в viewModel текстовое поле со скриптом алгоритма, чтобы отслеживать положение курсора
         }
     }
 }

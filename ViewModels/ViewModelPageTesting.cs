@@ -92,7 +92,7 @@ namespace ktradesystem.ViewModels
             Indicators = (ObservableCollection<Indicator>)sender;
         }
 
-        private Indicator _selectedIndicator = new Indicator();
+        private Indicator _selectedIndicator;
         public Indicator SelectedIndicator //выбранный индикатор
         {
             get { return _selectedIndicator; }
@@ -137,7 +137,7 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private Visibility _indicatorsVisibility = Visibility.Visible;
+        private Visibility _indicatorsVisibility = Visibility.Collapsed;
         public Visibility IndicatorsVisibility //видимость панели индикаторов
         {
             get { return _indicatorsVisibility; }
@@ -923,7 +923,7 @@ return a.ToString();
             Algorithms = (ObservableCollection<Algorithm>)sender;
         }
 
-        private Algorithm _selectedAlgorithm = new Algorithm();
+        private Algorithm _selectedAlgorithm;
         public Algorithm SelectedAlgorithm //выбранный алгоритм
         {
             get { return _selectedAlgorithm; }
@@ -1137,6 +1137,669 @@ return a.ToString();
                 }, (obj) => IsAddOrEditAlgorithm());
             }
         }
+
+        #endregion
+
+
+
+
+
+
+
+
+
+
+        #region add edit delete DataSourceTemplate
+
+        private ObservableCollection<DataSourceTemplate> _dataSourceTemplates = new ObservableCollection<DataSourceTemplate>();
+        public ObservableCollection<DataSourceTemplate> DataSourceTemplates //шаблоны источников данных
+        {
+            get { return _dataSourceTemplates; }
+            private set
+            {
+                _dataSourceTemplates = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private DataSourceTemplate _selectedDataSourceTemplate;
+        public DataSourceTemplate SelectedDataSourceTemplate //выбранный шаблон источника данных
+        {
+            get { return _selectedDataSourceTemplate; }
+            set
+            {
+                _selectedDataSourceTemplate = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand AddDataSourceTemplate_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    viewmodelData.IsMainWindowEnabled = false;
+                    ViewAddDataSourceTemplate viewAddDataSourceTemplate = new ViewAddDataSourceTemplate();
+                    viewAddDataSourceTemplate.Show();
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+
+        private string _addDataSourceTemplateName;
+        public string AddDataSourceTemplateName //название шаблона источника данных
+        {
+            get { return _addDataSourceTemplateName; }
+            set
+            {
+                _addDataSourceTemplateName = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _addDataSourceTemplateDescription;
+        public string AddDataSourceTemplateDescription //описание шаблона источника данных
+        {
+            get { return _addDataSourceTemplateDescription; }
+            set
+            {
+                _addDataSourceTemplateDescription = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public void AddDataSourceTemplate_Closing(object sender, CancelEventArgs e)
+        {
+            viewmodelData.IsMainWindowEnabled = true;
+            CloseAddDataSourceTemplateAction = null; //сбрасываем Action, чтобы при инициализации нового окна в него поместился метод его закрытия
+        }
+
+        public Action CloseAddDataSourceTemplateAction { get; set; }
+
+        public ICommand CloseAddDataSourceTemplate_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    CloseAddDataSourceTemplateAction?.Invoke();
+                }, (obj) => IsAddOrEditIndicator());
+            }
+        }
+
+        private ObservableCollection<string> _tooltipAddAddDataSourceTemplate = new ObservableCollection<string>();
+        public ObservableCollection<string> TooltipAddAddDataSourceTemplate //подсказка, показываемая при наведении на кнопку добавить
+        {
+            get { return _tooltipAddAddDataSourceTemplate; }
+            set
+            {
+                _tooltipAddAddDataSourceTemplate = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool IsFieldsAddDataSourceTemplateCorrect()
+        {
+            bool result = true;
+            TooltipAddAddDataSourceTemplate.Clear(); //очищаем подсказку кнопки добавить
+
+            string name = AddDataSourceTemplateName.Replace(" ", "");
+
+            //проверка на пустое значение
+            if (name == "")
+            {
+                result = false;
+                TooltipAddAddDataSourceTemplate.Add("Не заполнены все поля.");
+            }
+
+            //проверка на допустимые символы
+            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            bool isNotFind = false;
+            for (int i = 0; i < name.Length; i++)
+            {
+                if (letters.IndexOf(name[i]) == -1)
+                {
+                    isNotFind = true;
+                }
+
+            }
+            if (isNotFind)
+            {
+                result = false;
+                TooltipAddAddDataSourceTemplate.Add("Допустимо использование только английского алфавита.");
+            }
+
+            //проверка на уникальность названия
+            bool isUnique = true;
+            foreach (DataSourceTemplate item in DataSourceTemplates)
+            {
+                if (name == item.Name) //проверяем имя на уникальность среди всех записей
+                {
+                    isUnique = false;
+                }
+            }
+            if (isUnique == false)
+            {
+                result = false;
+                TooltipAddAddDataSourceTemplate.Add("Данное название уже используется.");
+            }
+
+            return result;
+        }
+
+        public ICommand AddAddDataSourceTemplate_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    string name = AddDataSourceTemplateName.Replace(" ", "");
+                    DataSourceTemplate dataSourceTemplate = new DataSourceTemplate { Name = name, Description = AddDataSourceTemplateDescription };
+                    DataSourceTemplates.Add(dataSourceTemplate);
+
+                    CloseAddDataSourceTemplateAction?.Invoke();
+                }, (obj) => IsFieldsAddDataSourceTemplateCorrect());
+            }
+        }
+
+        public ICommand EditDataSourceTemplate_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AddDataSourceTemplateName = SelectedDataSourceTemplate.Name;
+                    AddDataSourceTemplateDescription = SelectedDataSourceTemplate.Description;
+
+                    viewmodelData.IsMainWindowEnabled = false;
+                    ViewEditDataSourceTemplate viewEditDataSourceTemplate = new ViewEditDataSourceTemplate();
+                    viewEditDataSourceTemplate.Show();
+                }, (obj) => SelectedDataSourceTemplate != null && IsAddOrEditAlgorithm());
+            }
+        }
+
+        private bool IsFieldsEditDataSourceTemplateCorrect()
+        {
+            bool result = true;
+            TooltipAddAddDataSourceTemplate.Clear(); //очищаем подсказку кнопки добавить
+
+            string name = AddDataSourceTemplateName.Replace(" ", "");
+
+            //проверка на пустое значение
+            if (name == "")
+            {
+                result = false;
+                TooltipAddAddDataSourceTemplate.Add("Не заполнены все поля.");
+            }
+
+            //проверка на допустимые символы
+            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            bool isNotFind = false;
+            for (int i = 0; i < name.Length; i++)
+            {
+                if (letters.IndexOf(name[i]) == -1)
+                {
+                    isNotFind = true;
+                }
+
+            }
+            if (isNotFind)
+            {
+                result = false;
+                TooltipAddAddDataSourceTemplate.Add("Допустимо использование только английского алфавита.");
+            }
+
+            //проверка на уникальность названия
+            bool isUnique = true;
+            foreach (DataSourceTemplate item in DataSourceTemplates)
+            {
+                if (SelectedDataSourceTemplate != null) //без этой проверки ошибка на обращение null полю, после сохранения
+                {
+                    if (name == item.Name && name != SelectedDataSourceTemplate.Name) //проверяем имя на уникальность среди всех записей кроме редактируемой
+                    {
+                        isUnique = false;
+                    }
+                }
+            }
+            if (isUnique == false)
+            {
+                result = false;
+                TooltipAddAddDataSourceTemplate.Add("Данное название уже используется.");
+            }
+
+            return result;
+        }
+
+        public ICommand EditSaveDataSourceTemplate_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    string name = AddDataSourceTemplateName.Replace(" ", "");
+                    int index = DataSourceTemplates.IndexOf(SelectedDataSourceTemplate);
+                    DataSourceTemplate dataSourceTemplate = new DataSourceTemplate { Name = name, Description = AddDataSourceTemplateDescription };
+                    DataSourceTemplates.RemoveAt(index);
+                    DataSourceTemplates.Insert(index, dataSourceTemplate);
+
+                    CloseAddDataSourceTemplateAction?.Invoke();
+                }, (obj) => IsFieldsEditDataSourceTemplateCorrect());
+            }
+        }
+
+        public ICommand DeleteDataSourceTemplate_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    int index = DataSourceTemplates.IndexOf(SelectedDataSourceTemplate); //находим индекс выбранного элемента
+                    string msg = "Название: " + SelectedDataSourceTemplate.Name;
+                    string caption = "Удалить?";
+                    MessageBoxButton messageBoxButton = MessageBoxButton.YesNo;
+                    var result = MessageBox.Show(msg, caption, messageBoxButton);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        DataSourceTemplates.RemoveAt(index);
+                    }
+                }, (obj) => SelectedDataSourceTemplate != null && IsAddOrEditAlgorithm());
+            }
+        }
+
+        #endregion
+
+
+
+
+
+
+
+
+
+
+        #region add edit IndicatorParameterRange    add delete AlgorithmIndicators
+
+        private ObservableCollection<IndicatorParameterRangeView> _indicatorParameterRangesView = new ObservableCollection<IndicatorParameterRangeView>();
+        public ObservableCollection<IndicatorParameterRangeView> IndicatorParameterRangesView //диапазоны значений параметров индикаторов
+        {
+            get { return _indicatorParameterRangesView; }
+            private set
+            {
+                _indicatorParameterRangesView = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private IndicatorParameterRangeView _selectedIndicatorParameterRangeView;
+        public IndicatorParameterRangeView SelectedIndicatorParameterRangeView //выбранный диапазон значений параметра индикатора
+        {
+            get { return _selectedIndicatorParameterRangeView; }
+            set
+            {
+                _selectedIndicatorParameterRangeView = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<Indicator> _algorithmIndicators = new ObservableCollection<Indicator>();
+        public ObservableCollection<Indicator> AlgorithmIndicators //индикаторы алгоритма
+        {
+            get { return _algorithmIndicators; }
+            private set
+            {
+                _algorithmIndicators = value;
+                OnPropertyChanged();
+            }
+        }
+        
+        private Indicator _selectedAlgorithmIndicator;
+        public Indicator SelectedAlgorithmIndicator //выбранный индикатор алгоритма
+        {
+            get { return _selectedAlgorithmIndicator; }
+            set
+            {
+                _selectedAlgorithmIndicator = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand AddAlgorithmIndicator_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    //вставляет parameterTemplates выбранного индикатора в IndicatorParameterRangesView, так чтобы индикаторы распологались по порядку в IndicatorParameterRangesView
+                    int nextIdIndex = -1; //индекс элемента, id индикатора которого превышает id добавляемого индикатора
+                    foreach(IndicatorParameterRangeView item in IndicatorParameterRangesView)
+                    {
+                        if(nextIdIndex == -1)
+                        {
+                            if(item.Indicator.Id > SelectedIndicator.Id)
+                            {
+                                nextIdIndex = IndicatorParameterRangesView.IndexOf(item);
+                            }
+                        }
+                    }
+                    //добавляет parameterTemplates в IndicatorParameterRangesView
+                    foreach(IndicatorParameterTemplate item in SelectedIndicator.IndicatorParameterTemplates)
+                    {
+                        IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { IdIndicatorParameterTemplate = item.Id, Indicator = item.Indicator, NameIndicator = item.Indicator.Name, NameIndicatorParameterTemplate = item.Name, DescriptionIndicatorParameterTemplate = item.Description };
+                        if (nextIdIndex == -1)
+                        {
+                            IndicatorParameterRangesView.Add(indicatorParameterRangeView);
+                        }
+                        else
+                        {
+                            IndicatorParameterRangesView.Insert(nextIdIndex, indicatorParameterRangeView);
+                        }
+                    }
+                    UpdateAlgorithmIndicators();
+                }, (obj) => IsAddOrEditAlgorithm() && SelectedIndicator != null && AlgorithmIndicators.IndexOf(SelectedIndicator) == -1 );
+            }
+        }
+
+        private void UpdateAlgorithmIndicators() //обновляет AlgorithmIndicators в соответствии с IndicatorParameterRangesView
+        {
+            AlgorithmIndicators.Clear();
+            int lastId = -1; //id последнего добавленного индикатора
+            foreach(IndicatorParameterRangeView item in IndicatorParameterRangesView)
+            {
+                if(item.Indicator.Id != lastId)
+                {
+                    AlgorithmIndicators.Add(item.Indicator);
+                    lastId = item.Indicator.Id;
+                }
+            }
+        }
+
+        public ICommand DeleteAlgorithmIndicator_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    string msg = "Название: " + SelectedAlgorithmIndicator.Name;
+                    string caption = "Удалить?";
+                    MessageBoxButton messageBoxButton = MessageBoxButton.YesNo;
+                    var result = MessageBox.Show(msg, caption, messageBoxButton);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        List<int> removeIndexs = new List<int>(); //список с индексами элементов которые нужно удалить в порядке убывания (т.к. при удалении первых индексы следующих будут смещаться)
+                        for (int i = IndicatorParameterRangesView.Count - 1; i >= 0; i--)
+                        {
+                            if (IndicatorParameterRangesView[i].Indicator.Id == SelectedAlgorithmIndicator.Id)
+                            {
+                                removeIndexs.Add(i);
+                            }
+                        }
+                        foreach(int item in removeIndexs)
+                        {
+                            IndicatorParameterRangesView.RemoveAt(item);
+                        }
+                        UpdateAlgorithmIndicators();
+                    }
+                }, (obj) => SelectedAlgorithmIndicator != null && IsAddOrEditAlgorithm());
+            }
+        }
+        
+        private double _editIndicatorParameterRangesViewMinValue;
+        public double EditIndicatorParameterRangesViewMinValue //минимальное значение оптимизируемого параметра
+        {
+            get { return _editIndicatorParameterRangesViewMinValue; }
+            set
+            {
+                _editIndicatorParameterRangesViewMinValue = value;
+                OnPropertyChanged();
+            }
+        }
+        
+        private double _editIndicatorParameterRangesViewMaxValue;
+        public double EditIndicatorParameterRangesViewMaxValue //максимальное значение оптимизируемого параметра
+        {
+            get { return _editIndicatorParameterRangesViewMaxValue; }
+            set
+            {
+                _editIndicatorParameterRangesViewMaxValue = value;
+                OnPropertyChanged();
+            }
+        }
+        
+        private double _editIndicatorParameterRangesViewStep;
+        public double EditIndicatorParameterRangesViewMaxStep //шаг оптимизируемого параметра
+        {
+            get { return _editIndicatorParameterRangesViewStep; }
+            set
+            {
+                _editIndicatorParameterRangesViewStep = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand EditIndicatorParameterRangesView_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AddIndicatorParameterTemplateName = SelectedIndicatorParameterTemplate.Name;
+                    AddIndicatorParameterTemplateDescription = SelectedIndicatorParameterTemplate.Description;
+
+                    viewmodelData.IsMainWindowEnabled = false;
+                    ViewEditIndicatorParameterTemplate viewEditIndicatorParameterTemplate = new ViewEditIndicatorParameterTemplate();
+                    viewEditIndicatorParameterTemplate.Show();
+                }, (obj) => SelectedIndicatorParameterRangeView != null && IsAddOrEditAlgorithm());
+            }
+        }
+        /*
+        private string _addDataSourceTemplateDescription;
+        public string AddDataSourceTemplateDescription //описание шаблона источника данных
+        {
+            get { return _addDataSourceTemplateDescription; }
+            set
+            {
+                _addDataSourceTemplateDescription = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public void AddDataSourceTemplate_Closing(object sender, CancelEventArgs e)
+        {
+            viewmodelData.IsMainWindowEnabled = true;
+            CloseAddDataSourceTemplateAction = null; //сбрасываем Action, чтобы при инициализации нового окна в него поместился метод его закрытия
+        }
+
+        public Action CloseAddDataSourceTemplateAction { get; set; }
+
+        public ICommand CloseAddDataSourceTemplate_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    CloseAddDataSourceTemplateAction?.Invoke();
+                }, (obj) => IsAddOrEditIndicator());
+            }
+        }
+
+        private ObservableCollection<string> _tooltipAddAddDataSourceTemplate = new ObservableCollection<string>();
+        public ObservableCollection<string> TooltipAddAddDataSourceTemplate //подсказка, показываемая при наведении на кнопку добавить
+        {
+            get { return _tooltipAddAddDataSourceTemplate; }
+            set
+            {
+                _tooltipAddAddDataSourceTemplate = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool IsFieldsAddDataSourceTemplateCorrect()
+        {
+            bool result = true;
+            TooltipAddAddDataSourceTemplate.Clear(); //очищаем подсказку кнопки добавить
+
+            string name = AddDataSourceTemplateName.Replace(" ", "");
+
+            //проверка на пустое значение
+            if (name == "")
+            {
+                result = false;
+                TooltipAddAddDataSourceTemplate.Add("Не заполнены все поля.");
+            }
+
+            //проверка на допустимые символы
+            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            bool isNotFind = false;
+            for (int i = 0; i < name.Length; i++)
+            {
+                if (letters.IndexOf(name[i]) == -1)
+                {
+                    isNotFind = true;
+                }
+
+            }
+            if (isNotFind)
+            {
+                result = false;
+                TooltipAddAddDataSourceTemplate.Add("Допустимо использование только английского алфавита.");
+            }
+
+            //проверка на уникальность названия
+            bool isUnique = true;
+            foreach (DataSourceTemplate item in DataSourceTemplates)
+            {
+                if (name == item.Name) //проверяем имя на уникальность среди всех записей
+                {
+                    isUnique = false;
+                }
+            }
+            if (isUnique == false)
+            {
+                result = false;
+                TooltipAddAddDataSourceTemplate.Add("Данное название уже используется.");
+            }
+
+            return result;
+        }
+
+        public ICommand AddAddDataSourceTemplate_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    string name = AddDataSourceTemplateName.Replace(" ", "");
+                    DataSourceTemplate dataSourceTemplate = new DataSourceTemplate { Name = name, Description = AddDataSourceTemplateDescription };
+                    DataSourceTemplates.Add(dataSourceTemplate);
+
+                    CloseAddDataSourceTemplateAction?.Invoke();
+                }, (obj) => IsFieldsAddDataSourceTemplateCorrect());
+            }
+        }
+
+        public ICommand EditDataSourceTemplate_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AddDataSourceTemplateName = SelectedDataSourceTemplate.Name;
+                    AddDataSourceTemplateDescription = SelectedDataSourceTemplate.Description;
+
+                    viewmodelData.IsMainWindowEnabled = false;
+                    ViewEditDataSourceTemplate viewEditDataSourceTemplate = new ViewEditDataSourceTemplate();
+                    viewEditDataSourceTemplate.Show();
+                }, (obj) => SelectedDataSourceTemplate != null && IsAddOrEditAlgorithm());
+            }
+        }
+
+        private bool IsFieldsEditDataSourceTemplateCorrect()
+        {
+            bool result = true;
+            TooltipAddAddDataSourceTemplate.Clear(); //очищаем подсказку кнопки добавить
+
+            string name = AddDataSourceTemplateName.Replace(" ", "");
+
+            //проверка на пустое значение
+            if (name == "")
+            {
+                result = false;
+                TooltipAddAddDataSourceTemplate.Add("Не заполнены все поля.");
+            }
+
+            //проверка на допустимые символы
+            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            bool isNotFind = false;
+            for (int i = 0; i < name.Length; i++)
+            {
+                if (letters.IndexOf(name[i]) == -1)
+                {
+                    isNotFind = true;
+                }
+
+            }
+            if (isNotFind)
+            {
+                result = false;
+                TooltipAddAddDataSourceTemplate.Add("Допустимо использование только английского алфавита.");
+            }
+
+            //проверка на уникальность названия
+            bool isUnique = true;
+            foreach (DataSourceTemplate item in DataSourceTemplates)
+            {
+                if (SelectedDataSourceTemplate != null) //без этой проверки ошибка на обращение null полю, после сохранения
+                {
+                    if (name == item.Name && name != SelectedDataSourceTemplate.Name) //проверяем имя на уникальность среди всех записей кроме редактируемой
+                    {
+                        isUnique = false;
+                    }
+                }
+            }
+            if (isUnique == false)
+            {
+                result = false;
+                TooltipAddAddDataSourceTemplate.Add("Данное название уже используется.");
+            }
+
+            return result;
+        }
+
+        public ICommand EditSaveDataSourceTemplate_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    string name = AddDataSourceTemplateName.Replace(" ", "");
+                    int index = DataSourceTemplates.IndexOf(SelectedDataSourceTemplate);
+                    DataSourceTemplate dataSourceTemplate = new DataSourceTemplate { Name = name, Description = AddDataSourceTemplateDescription };
+                    DataSourceTemplates.RemoveAt(index);
+                    DataSourceTemplates.Insert(index, dataSourceTemplate);
+
+                    CloseAddDataSourceTemplateAction?.Invoke();
+                }, (obj) => IsFieldsEditDataSourceTemplateCorrect());
+            }
+        }
+
+        public ICommand DeleteDataSourceTemplate_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    int index = DataSourceTemplates.IndexOf(SelectedDataSourceTemplate); //находим индекс выбранного элемента
+                    string msg = "Название: " + SelectedDataSourceTemplate.Name;
+                    string caption = "Удалить?";
+                    MessageBoxButton messageBoxButton = MessageBoxButton.YesNo;
+                    var result = MessageBox.Show(msg, caption, messageBoxButton);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        DataSourceTemplates.RemoveAt(index);
+                    }
+                }, (obj) => SelectedDataSourceTemplate != null && IsAddOrEditAlgorithm());
+            }
+        }*/
 
         #endregion
 

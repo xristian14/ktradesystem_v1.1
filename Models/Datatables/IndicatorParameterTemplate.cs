@@ -12,5 +12,6 @@ namespace ktradesystem.Models.Datatables
         public string Name { get; set; }
         public string Description { get; set; }
         public int IdIndicator { get; set; }
+        public Indicator Indicator { get; set; }
     }
 }

@@ -166,20 +166,22 @@ namespace ktradesystem.Models
             foreach (DataRow row in dataIndicators.Rows)
             {
                 int idIndicator = (int)row.Field<long>("id");
-                List<IndicatorParameterTemplate> indicatorParameterTemplates = new List<IndicatorParameterTemplate>();
-                foreach (IndicatorParameterTemplate item in IndicatorParameterTemplates)
-                {
-                    if (item.IdIndicator == idIndicator)
-                    {
-                        indicatorParameterTemplates.Add(item);
-                    }
-                }
                 bool isStandart = false;
                 if((int)row.Field<long>("isStandart") == 1)
                 {
                     isStandart = true;
                 }
-                Indicator indicator = new Indicator { Id = idIndicator, Name = row.Field<string>("name"), Description = row.Field<string>("description"), IndicatorParameterTemplates = indicatorParameterTemplates, Script = row.Field<string>("script"), IsStandart = isStandart };
+                Indicator indicator = new Indicator { Id = idIndicator, Name = row.Field<string>("name"), Description = row.Field<string>("description"), Script = row.Field<string>("script"), IsStandart = isStandart };
+                List<IndicatorParameterTemplate> indicatorParameterTemplates = new List<IndicatorParameterTemplate>();
+                foreach (IndicatorParameterTemplate item in IndicatorParameterTemplates)
+                {
+                    if (item.IdIndicator == idIndicator)
+                    {
+                        item.Indicator = indicator;
+                        indicatorParameterTemplates.Add(item);
+                    }
+                }
+                indicator.IndicatorParameterTemplates = indicatorParameterTemplates;
                 Indicators.Add(indicator);
             }
         }

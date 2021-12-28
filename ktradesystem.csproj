@@ -78,9 +78,11 @@
     <Compile Include="Models\Datatables\Algorithm.cs" />
     <Compile Include="Models\Datatables\AlgorithmParamter.cs" />
     <Compile Include="Models\Datatables\DataSourceTemplate.cs" />
+    <Compile Include="Models\Datatables\IndicatorParameterRange.cs" />
     <Compile Include="Models\ModelTesting.cs" />
     <Compile Include="ViewModels\DataSourceView.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
+    <Compile Include="ViewModels\IndicatorParameterRangeView.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\ViewModelData.cs" />
     <Compile Include="ViewModels\ViewModelPageDataSource.cs" />
@@ -101,11 +103,20 @@
     <Compile Include="Views\ViewAddDataSource.xaml.cs">
       <DependentUpon>ViewAddDataSource.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\ViewAddDataSourceTemplate.xaml.cs">
+      <DependentUpon>ViewAddDataSourceTemplate.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ViewAddIndicatorParameterTemplate.xaml.cs">
       <DependentUpon>ViewAddIndicatorParameterTemplate.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ViewEditDataSource.xaml.cs">
       <DependentUpon>ViewEditDataSource.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ViewEditDataSourceTemplate.xaml.cs">
+      <DependentUpon>ViewEditDataSourceTemplate.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ViewEditIndicatorParameterRangesView.xaml.cs">
+      <DependentUpon>ViewEditIndicatorParameterRangesView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ViewEditIndicatorParameterTemplate.xaml.cs">
       <DependentUpon>ViewEditIndicatorParameterTemplate.xaml</DependentUpon>
@@ -176,6 +187,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Views\ViewAddDataSourceTemplate.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\ViewAddIndicatorParameterTemplate.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -183,6 +198,14 @@
     <Page Include="Views\ViewEditDataSource.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\ViewEditDataSourceTemplate.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ViewEditIndicatorParameterRangesView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\ViewEditIndicatorParameterTemplate.xaml">
       <Generator>MSBuild:Compile</Generator>

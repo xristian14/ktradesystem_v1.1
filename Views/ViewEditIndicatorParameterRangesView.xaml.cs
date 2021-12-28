@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using ktradesystem.ViewModels;
 
 namespace ktradesystem.Views
 {
@@ -22,6 +23,15 @@ namespace ktradesystem.Views
         public ViewEditIndicatorParameterRangesView()
         {
             InitializeComponent();
+
+            ViewModelPageTesting viewModelPageTesting = ViewModelPageTesting.getInstance();
+            DataContext = viewModelPageTesting;
+
+            if (viewModelPageTesting.CloseAddDataSourceTemplateAction == null)
+            {
+                viewModelPageTesting.CloseAddDataSourceTemplateAction = new Action(this.Close); //устанавливаем на action viewmodel метод закрытия окна(для кнопки отмена)
+            }
+            Closing += viewModelPageTesting.AddDataSourceTemplate_Closing;
         }
     }
 }

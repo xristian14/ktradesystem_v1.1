@@ -289,7 +289,7 @@
                             <TextBlock Text="Значения оптимизируемых параметров выбранных индикаторов"/>
                             <Button Content="Редактировать" Command="{Binding EditIndicatorParameterRangesView_Click}" Width="95" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView ItemsSource="{Binding IndicatorParameterRangesView, Mode=OneWay}" SelectedItem="{Binding SelectedIndicatorParameterRangeView, Mode=OneWayToSource}" SelectionMode="Single" Height="140">
+                        <ListView ItemsSource="{Binding IndicatorParameterRangesView, Mode=OneWay}" SelectedItem="{Binding SelectedIndicatorParameterRangeView, Mode=TwoWay}" SelectionMode="Single" Height="140">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn DisplayMemberBinding="{Binding NameIndicator}" Header="Название индикатора" Width="{Binding ElementName=helperParRan1, Path=ActualWidth}"/>

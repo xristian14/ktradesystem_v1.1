@@ -975,7 +975,7 @@ return a.ToString();
                 AlgorithmName = SelectedAlgorithm.Name;
                 AlgorithmDescription = SelectedAlgorithm.Description;
                 AlgorithmParameters.Clear();
-                foreach (AlgorithmParamter algorithmParamter in SelectedAlgorithm.AlgorithmParamters)
+                foreach (AlgorithmParameter algorithmParamter in SelectedAlgorithm.AlgorithmParamters)
                 {
                     AlgorithmParameters.Add(algorithmParamter);
                 }
@@ -1149,7 +1149,7 @@ return a.ToString();
 
 
 
-        #region add edit delete DataSourceTemplate
+        #region view add edit delete DataSourceTemplate
 
         private ObservableCollection<DataSourceTemplate> _dataSourceTemplates = new ObservableCollection<DataSourceTemplate>();
         public ObservableCollection<DataSourceTemplate> DataSourceTemplates //шаблоны источников данных
@@ -1223,7 +1223,7 @@ return a.ToString();
                 return new DelegateCommand((obj) =>
                 {
                     CloseAddDataSourceTemplateAction?.Invoke();
-                }, (obj) => IsAddOrEditIndicator());
+                }, (obj) => true);
             }
         }
 
@@ -1417,7 +1417,7 @@ return a.ToString();
 
 
 
-        #region add edit IndicatorParameterRange    add delete AlgorithmIndicators
+        #region view edit IndicatorParameterRange    view add delete AlgorithmIndicators
 
         private ObservableCollection<IndicatorParameterRangeView> _indicatorParameterRangesView = new ObservableCollection<IndicatorParameterRangeView>();
         public ObservableCollection<IndicatorParameterRangeView> IndicatorParameterRangesView //диапазоны значений параметров индикаторов
@@ -1543,8 +1543,8 @@ return a.ToString();
             }
         }
         
-        private double _editIndicatorParameterRangesViewMinValue;
-        public double EditIndicatorParameterRangesViewMinValue //минимальное значение оптимизируемого параметра
+        private string _editIndicatorParameterRangesViewMinValue;
+        public string EditIndicatorParameterRangesViewMinValue //минимальное значение оптимизируемого параметра
         {
             get { return _editIndicatorParameterRangesViewMinValue; }
             set
@@ -1554,8 +1554,8 @@ return a.ToString();
             }
         }
         
-        private double _editIndicatorParameterRangesViewMaxValue;
-        public double EditIndicatorParameterRangesViewMaxValue //максимальное значение оптимизируемого параметра
+        private string _editIndicatorParameterRangesViewMaxValue;
+        public string EditIndicatorParameterRangesViewMaxValue //максимальное значение оптимизируемого параметра
         {
             get { return _editIndicatorParameterRangesViewMaxValue; }
             set
@@ -1565,13 +1565,35 @@ return a.ToString();
             }
         }
         
-        private double _editIndicatorParameterRangesViewStep;
-        public double EditIndicatorParameterRangesViewMaxStep //шаг оптимизируемого параметра
+        private string _editIndicatorParameterRangesViewStep;
+        public string EditIndicatorParameterRangesViewStep //шаг оптимизируемого параметра
         {
             get { return _editIndicatorParameterRangesViewStep; }
             set
             {
                 _editIndicatorParameterRangesViewStep = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private List<string> _editIndicatorParameterRangesViewTypesStep = new List<string> { "процентный", "числовой" };
+        public List<string> EditIndicatorParameterRangesViewTypesStep //список с возможными типами шага оптимизируемого параметра
+        {
+            get { return _editIndicatorParameterRangesViewTypesStep; }
+            set
+            {
+                _editIndicatorParameterRangesViewTypesStep = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _editIndicatorParameterRangesViewSelectedTypeStep;
+        public string EditIndicatorParameterRangesViewSelectedTypeStep //выбранный тип шага оптимизируемого параметра
+        {
+            get { return _editIndicatorParameterRangesViewSelectedTypeStep; }
+            set
+            {
+                _editIndicatorParameterRangesViewSelectedTypeStep = value;
                 OnPropertyChanged();
             }
         }
@@ -1582,224 +1604,123 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AddIndicatorParameterTemplateName = SelectedIndicatorParameterTemplate.Name;
-                    AddIndicatorParameterTemplateDescription = SelectedIndicatorParameterTemplate.Description;
+                    EditIndicatorParameterRangesViewMinValue = SelectedIndicatorParameterRangeView.MinValue != null ? SelectedIndicatorParameterRangeView.MinValue : null;
+                    EditIndicatorParameterRangesViewMaxValue = SelectedIndicatorParameterRangeView.MaxValue != null ? SelectedIndicatorParameterRangeView.MaxValue : null;
+                    EditIndicatorParameterRangesViewStep = SelectedIndicatorParameterRangeView.Step != null ? SelectedIndicatorParameterRangeView.Step : null;
+
+                    if (SelectedIndicatorParameterRangeView.IsStepPercent)
+                    {
+                        EditIndicatorParameterRangesViewSelectedTypeStep = EditIndicatorParameterRangesViewTypesStep[0];
+                    }
+                    else
+                    {
+                        EditIndicatorParameterRangesViewSelectedTypeStep = EditIndicatorParameterRangesViewTypesStep[1];
+                    }
 
                     viewmodelData.IsMainWindowEnabled = false;
-                    ViewEditIndicatorParameterTemplate viewEditIndicatorParameterTemplate = new ViewEditIndicatorParameterTemplate();
-                    viewEditIndicatorParameterTemplate.Show();
+                    ViewEditIndicatorParameterRangesView viewEditIndicatorParameterRangesView = new ViewEditIndicatorParameterRangesView();
+                    viewEditIndicatorParameterRangesView.Show();
                 }, (obj) => SelectedIndicatorParameterRangeView != null && IsAddOrEditAlgorithm());
             }
         }
-        /*
-        private string _addDataSourceTemplateDescription;
-        public string AddDataSourceTemplateDescription //описание шаблона источника данных
+
+        private ObservableCollection<string> _tooltipEditIndicatorParameterRangesView = new ObservableCollection<string>();
+        public ObservableCollection<string> TooltipEditIndicatorParameterRangesView //подсказка, показываемая при наведении на кнопку добавить
         {
-            get { return _addDataSourceTemplateDescription; }
+            get { return _tooltipEditIndicatorParameterRangesView; }
             set
             {
-                _addDataSourceTemplateDescription = value;
+                _tooltipEditIndicatorParameterRangesView = value;
                 OnPropertyChanged();
             }
         }
 
-        public void AddDataSourceTemplate_Closing(object sender, CancelEventArgs e)
-        {
-            viewmodelData.IsMainWindowEnabled = true;
-            CloseAddDataSourceTemplateAction = null; //сбрасываем Action, чтобы при инициализации нового окна в него поместился метод его закрытия
-        }
-
-        public Action CloseAddDataSourceTemplateAction { get; set; }
-
-        public ICommand CloseAddDataSourceTemplate_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    CloseAddDataSourceTemplateAction?.Invoke();
-                }, (obj) => IsAddOrEditIndicator());
-            }
-        }
-
-        private ObservableCollection<string> _tooltipAddAddDataSourceTemplate = new ObservableCollection<string>();
-        public ObservableCollection<string> TooltipAddAddDataSourceTemplate //подсказка, показываемая при наведении на кнопку добавить
-        {
-            get { return _tooltipAddAddDataSourceTemplate; }
-            set
-            {
-                _tooltipAddAddDataSourceTemplate = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private bool IsFieldsAddDataSourceTemplateCorrect()
+        private bool IsFieldsEditIndicatorParameterRangesViewCorrect()
         {
             bool result = true;
-            TooltipAddAddDataSourceTemplate.Clear(); //очищаем подсказку кнопки добавить
-
-            string name = AddDataSourceTemplateName.Replace(" ", "");
+            TooltipEditIndicatorParameterRangesView.Clear(); //очищаем подсказку кнопки добавить
 
             //проверка на пустое значение
-            if (name == "")
+            if (EditIndicatorParameterRangesViewMinValue == "" || EditIndicatorParameterRangesViewMaxValue == "" || EditIndicatorParameterRangesViewStep == "")
             {
                 result = false;
-                TooltipAddAddDataSourceTemplate.Add("Не заполнены все поля.");
+                TooltipEditIndicatorParameterRangesView.Add("Не заполнены все поля.");
             }
 
-            //проверка на допустимые символы
-            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            bool isNotFind = false;
-            for (int i = 0; i < name.Length; i++)
+            //проверка на возможность конвертации в число с плавающей точкой
+            if (double.TryParse(EditIndicatorParameterRangesViewMinValue, out double res) == false)
             {
-                if (letters.IndexOf(name[i]) == -1)
+                result = false;
+                TooltipEditIndicatorParameterRangesView.Add("Минимальное значение должно быть числом.");
+            }
+
+            //проверка на возможность конвертации в число с плавающей точкой
+            if (double.TryParse(EditIndicatorParameterRangesViewMaxValue, out res) == false)
+            {
+                result = false;
+                TooltipEditIndicatorParameterRangesView.Add("Максимальное значение должно быть числом.");
+            }
+
+            //проверка на возможность конвертации в число с плавающей точкой
+            if (double.TryParse(EditIndicatorParameterRangesViewStep, out res) == false)
+            {
+                result = false;
+                TooltipEditIndicatorParameterRangesView.Add("Шаг должен быть числом.");
+            }
+
+            //проверка на возможность достигнуть максимума с минимума с шагом
+            if (double.TryParse(EditIndicatorParameterRangesViewMinValue, out double min) && double.TryParse(EditIndicatorParameterRangesViewMaxValue, out double max) && double.TryParse(EditIndicatorParameterRangesViewStep, out double step))
+            {
+                if( (max > min && step > 0) == false)
                 {
-                    isNotFind = true;
-                }
-
-            }
-            if (isNotFind)
-            {
-                result = false;
-                TooltipAddAddDataSourceTemplate.Add("Допустимо использование только английского алфавита.");
-            }
-
-            //проверка на уникальность названия
-            bool isUnique = true;
-            foreach (DataSourceTemplate item in DataSourceTemplates)
-            {
-                if (name == item.Name) //проверяем имя на уникальность среди всех записей
-                {
-                    isUnique = false;
+                    result = false;
+                    TooltipEditIndicatorParameterRangesView.Add("Максимум должен быть больше минимума, а шаг должен быть положительным.");
                 }
             }
-            if (isUnique == false)
-            {
-                result = false;
-                TooltipAddAddDataSourceTemplate.Add("Данное название уже используется.");
-            }
 
-            return result;
+                return result;
         }
 
-        public ICommand AddAddDataSourceTemplate_Click
+        public ICommand EditSaveIndicatorParameterRangesView_Click
         {
             get
             {
                 return new DelegateCommand((obj) =>
                 {
-                    string name = AddDataSourceTemplateName.Replace(" ", "");
-                    DataSourceTemplate dataSourceTemplate = new DataSourceTemplate { Name = name, Description = AddDataSourceTemplateDescription };
-                    DataSourceTemplates.Add(dataSourceTemplate);
+                    bool isStepPercent = false;
+                    if(EditIndicatorParameterRangesViewSelectedTypeStep == EditIndicatorParameterRangesViewTypesStep[0])
+                    {
+                        isStepPercent = true;
+                    }
+                    string rangeValuesView = EditIndicatorParameterRangesViewMinValue + " – " + EditIndicatorParameterRangesViewMaxValue;
+
+                    string steView = EditIndicatorParameterRangesViewStep;
+                    if (isStepPercent)
+                    {
+                        steView += "%";
+                    }
+                    IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { Id = SelectedIndicatorParameterRangeView.Id, MinValue = EditIndicatorParameterRangesViewMinValue, MaxValue = EditIndicatorParameterRangesViewMaxValue, Step = EditIndicatorParameterRangesViewStep, IsStepPercent = isStepPercent, IdAlgorithm = SelectedIndicatorParameterRangeView.IdAlgorithm, IdIndicatorParameterTemplate = SelectedIndicatorParameterRangeView.IdIndicatorParameterTemplate, Indicator = SelectedIndicatorParameterRangeView.Indicator, NameIndicator = SelectedIndicatorParameterRangeView.NameIndicator, NameIndicatorParameterTemplate = SelectedIndicatorParameterRangeView.NameIndicatorParameterTemplate, DescriptionIndicatorParameterTemplate = SelectedIndicatorParameterRangeView.DescriptionIndicatorParameterTemplate, RangeValuesView = rangeValuesView, StepView = steView };
+
+                    int index = IndicatorParameterRangesView.IndexOf(SelectedIndicatorParameterRangeView);
+                    IndicatorParameterRangesView.RemoveAt(index);
+                    IndicatorParameterRangesView.Insert(index, indicatorParameterRangeView);
+                    SelectedIndicatorParameterRangeView = indicatorParameterRangeView;
 
                     CloseAddDataSourceTemplateAction?.Invoke();
-                }, (obj) => IsFieldsAddDataSourceTemplateCorrect());
+                }, (obj) => IsFieldsEditIndicatorParameterRangesViewCorrect());
             }
         }
 
-        public ICommand EditDataSourceTemplate_Click
+        public ICommand CloseEditIndicatorParameterRangesView_Click
         {
             get
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AddDataSourceTemplateName = SelectedDataSourceTemplate.Name;
-                    AddDataSourceTemplateDescription = SelectedDataSourceTemplate.Description;
-
-                    viewmodelData.IsMainWindowEnabled = false;
-                    ViewEditDataSourceTemplate viewEditDataSourceTemplate = new ViewEditDataSourceTemplate();
-                    viewEditDataSourceTemplate.Show();
-                }, (obj) => SelectedDataSourceTemplate != null && IsAddOrEditAlgorithm());
-            }
-        }
-
-        private bool IsFieldsEditDataSourceTemplateCorrect()
-        {
-            bool result = true;
-            TooltipAddAddDataSourceTemplate.Clear(); //очищаем подсказку кнопки добавить
-
-            string name = AddDataSourceTemplateName.Replace(" ", "");
-
-            //проверка на пустое значение
-            if (name == "")
-            {
-                result = false;
-                TooltipAddAddDataSourceTemplate.Add("Не заполнены все поля.");
-            }
-
-            //проверка на допустимые символы
-            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            bool isNotFind = false;
-            for (int i = 0; i < name.Length; i++)
-            {
-                if (letters.IndexOf(name[i]) == -1)
-                {
-                    isNotFind = true;
-                }
-
-            }
-            if (isNotFind)
-            {
-                result = false;
-                TooltipAddAddDataSourceTemplate.Add("Допустимо использование только английского алфавита.");
-            }
-
-            //проверка на уникальность названия
-            bool isUnique = true;
-            foreach (DataSourceTemplate item in DataSourceTemplates)
-            {
-                if (SelectedDataSourceTemplate != null) //без этой проверки ошибка на обращение null полю, после сохранения
-                {
-                    if (name == item.Name && name != SelectedDataSourceTemplate.Name) //проверяем имя на уникальность среди всех записей кроме редактируемой
-                    {
-                        isUnique = false;
-                    }
-                }
-            }
-            if (isUnique == false)
-            {
-                result = false;
-                TooltipAddAddDataSourceTemplate.Add("Данное название уже используется.");
-            }
-
-            return result;
-        }
-
-        public ICommand EditSaveDataSourceTemplate_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    string name = AddDataSourceTemplateName.Replace(" ", "");
-                    int index = DataSourceTemplates.IndexOf(SelectedDataSourceTemplate);
-                    DataSourceTemplate dataSourceTemplate = new DataSourceTemplate { Name = name, Description = AddDataSourceTemplateDescription };
-                    DataSourceTemplates.RemoveAt(index);
-                    DataSourceTemplates.Insert(index, dataSourceTemplate);
-
                     CloseAddDataSourceTemplateAction?.Invoke();
-                }, (obj) => IsFieldsEditDataSourceTemplateCorrect());
+                }, (obj) => true);
             }
         }
-
-        public ICommand DeleteDataSourceTemplate_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    int index = DataSourceTemplates.IndexOf(SelectedDataSourceTemplate); //находим индекс выбранного элемента
-                    string msg = "Название: " + SelectedDataSourceTemplate.Name;
-                    string caption = "Удалить?";
-                    MessageBoxButton messageBoxButton = MessageBoxButton.YesNo;
-                    var result = MessageBox.Show(msg, caption, messageBoxButton);
-                    if (result == MessageBoxResult.Yes)
-                    {
-                        DataSourceTemplates.RemoveAt(index);
-                    }
-                }, (obj) => SelectedDataSourceTemplate != null && IsAddOrEditAlgorithm());
-            }
-        }*/
 
         #endregion
 
@@ -1814,8 +1735,8 @@ return a.ToString();
 
         #region view add edit delete AlgorithmParameters
 
-        private ObservableCollection<AlgorithmParamter> _algorithmParameters = new ObservableCollection<AlgorithmParamter>();
-        public ObservableCollection<AlgorithmParamter> AlgorithmParameters //параметры алгоритма
+        private ObservableCollection<AlgorithmParameter> _algorithmParameters = new ObservableCollection<AlgorithmParameter>();
+        public ObservableCollection<AlgorithmParameter> AlgorithmParameters //параметры алгоритма
         {
             get { return _algorithmParameters; }
             private set
@@ -1825,8 +1746,8 @@ return a.ToString();
             }
         }
 
-        private AlgorithmParamter _selectedAlgorithmParamter;
-        public AlgorithmParamter SelectedAlgorithmParamter //выбранный параметр алгоритма
+        private AlgorithmParameter _selectedAlgorithmParamter;
+        public AlgorithmParameter SelectedAlgorithmParamter //выбранный параметр алгоритма
         {
             get { return _selectedAlgorithmParamter; }
             set

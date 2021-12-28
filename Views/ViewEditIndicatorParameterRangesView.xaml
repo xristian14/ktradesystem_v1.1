@@ -25,24 +25,24 @@
                 <Label Content="Шаг" Height="26"/>
             </StackPanel>
             <StackPanel Grid.Column="1">
-                <TextBlock Text="{Binding AddDsName, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
-                <TextBlock Text="{Binding AddDsName, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
-                <TextBox Text="{Binding AddDsName, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
-                <TextBox Text="{Binding AddDsName, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
-                <ComboBox ItemsSource="{Binding ComissiontypesView}" SelectedItem="{Binding AddDsComissiontype, Mode=TwoWay}" SelectedIndex="0" Height="22" Margin="0,2,0,2"/>
-                <TextBox Text="{Binding AddDsName, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
+                <TextBlock Text="{Binding SelectedIndicatorParameterRangeView.NameIndicator}" Height="20" Margin="0,3,0,3"/>
+                <TextBlock Text="{Binding SelectedIndicatorParameterRangeView.NameIndicatorParameterTemplate}" Height="20" Margin="0,3,0,3"/>
+                <TextBox Text="{Binding EditIndicatorParameterRangesViewMinValue, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
+                <TextBox Text="{Binding EditIndicatorParameterRangesViewMaxValue, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
+                <ComboBox ItemsSource="{Binding EditIndicatorParameterRangesViewTypesStep}" SelectedItem="{Binding EditIndicatorParameterRangesViewSelectedTypeStep, Mode=TwoWay}" SelectedIndex="0" Height="22" Margin="0,2,0,2"/>
+                <TextBox Text="{Binding EditIndicatorParameterRangesViewStep, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
             </StackPanel>
         </Grid>
         <Grid Grid.Row="1">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Height="24">
-                <Button Content="Сохранить" Command="{Binding EditSaveIndicatorParameterTemplate_Click}" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000" Width="70">
+                <Button Content="Сохранить" Command="{Binding EditSaveIndicatorParameterRangesView_Click}" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000" Width="70">
                     <Button.ToolTip>
                         <ToolTip>
-                            <ListView ItemsSource="{Binding TooltipAddAddIndicatorParameterTemplate}" IsEnabled="False"/>
+                            <ListView ItemsSource="{Binding TooltipEditIndicatorParameterRangesView}" IsEnabled="False"/>
                         </ToolTip>
                     </Button.ToolTip>
                 </Button>
-                <Button Content="Отменить" Command="{Binding CloseAddIndicatorParameterTemplate_Click}" Width="70" Margin="5 0 0 0"/>
+                <Button Content="Отменить" Command="{Binding CloseEditIndicatorParameterRangesView_Click}" Width="70" Margin="5 0 0 0"/>
             </StackPanel>
         </Grid>
     </Grid>

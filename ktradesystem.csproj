@@ -76,10 +76,11 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Models\Datatables\Algorithm.cs" />
-    <Compile Include="Models\Datatables\AlgorithmParamter.cs" />
+    <Compile Include="Models\Datatables\AlgorithmParameter.cs" />
     <Compile Include="Models\Datatables\DataSourceTemplate.cs" />
     <Compile Include="Models\Datatables\IndicatorParameterRange.cs" />
     <Compile Include="Models\ModelTesting.cs" />
+    <Compile Include="ViewModels\AlgorithmParameterView.cs" />
     <Compile Include="ViewModels\DataSourceView.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
     <Compile Include="ViewModels\IndicatorParameterRangeView.cs" />

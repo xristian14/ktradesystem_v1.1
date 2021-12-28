@@ -10,9 +10,9 @@ namespace ktradesystem.ViewModels
     class IndicatorParameterRangeView
     {
         public int Id { get; set; }
-        public double MinValue { get; set; }
-        public double MaxValue { get; set; }
-        public double Step { get; set; }
+        public string MinValue { get; set; }
+        public string MaxValue { get; set; }
+        public string Step { get; set; }
         public bool IsStepPercent { get; set; }
         public int IdAlgorithm { get; set; }
         public int IdIndicatorParameterTemplate { get; set; }

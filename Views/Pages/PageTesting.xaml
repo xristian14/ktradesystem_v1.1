@@ -328,7 +328,7 @@
                             <Button Content="Редактировать" Command="{Binding EditAlgorithmParameter_Click}" Width="95" Margin="7 0 0 0"/>
                             <Button Content="Удалить" Command="{Binding DeleteAlgorithmParameter_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView Grid.Row="2" ItemsSource="{Binding AlgorithmParametersView, Mode=OneWay}" SelectedItem="{Binding SelectedAlgorithmParamterView, Mode=TwoWay}" SelectionMode="Single" Height="105">
+                        <ListView Grid.Row="2" ItemsSource="{Binding AlgorithmParametersView, Mode=OneWay}" SelectedItem="{Binding SelectedAlgorithmParameterView, Mode=TwoWay}" SelectionMode="Single" Height="105">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="{Binding ElementName=helperAlgPar1, Path=ActualWidth}"/>
@@ -452,7 +452,7 @@
                             <Button Content="Сохранить" Command="{Binding AlgorithmSave_Click}" Width="110" ToolTipService.ShowOnDisabled="True" Margin="0 0 7 0">
                                 <Button.ToolTip>
                                     <ToolTip>
-                                        <ListView ItemsSource="{Binding TooltipAddAddAlgorithm}" IsEnabled="False"/>
+                                        <ListView ItemsSource="{Binding TooltipSaveAlgorithm}" IsEnabled="False"/>
                                     </ToolTip>
                                 </Button.ToolTip>
                             </Button>

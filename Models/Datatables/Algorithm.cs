@@ -11,8 +11,9 @@ namespace ktradesystem.Models.Datatables
         public int Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
-        public List<AlgorithmParameter> AlgorithmParamters { get; set; }
+        public List<DataSourceTemplate> DataSourceTemplates { get; set; }
+        public List<IndicatorParameterRange> IndicatorParameterRanges { get; set; }
+        public List<AlgorithmParameter> AlgorithmParameters { get; set; }
         public string Script { get; set; }
-        public bool IsStandart { get; set; }
     }
 }

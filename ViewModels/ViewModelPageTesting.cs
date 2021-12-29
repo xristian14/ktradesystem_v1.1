@@ -28,6 +28,9 @@ namespace ktradesystem.ViewModels
             _modelData.Indicators.CollectionChanged += modelData_IndicatorsCollectionChanged;
             Indicators = _modelData.Indicators;
 
+            _modelData.Algorithms.CollectionChanged += modelData_AlgorithmsCollectionChanged;
+            Algorithms = _modelData.Algorithms;
+
             _modelTesting = ModelTesting.getInstance();
         }
 
@@ -975,9 +978,9 @@ return a.ToString();
                 AlgorithmName = SelectedAlgorithm.Name;
                 AlgorithmDescription = SelectedAlgorithm.Description;
                 AlgorithmParameters.Clear();
-                foreach (AlgorithmParameter algorithmParamter in SelectedAlgorithm.AlgorithmParamters)
+                foreach (AlgorithmParameter algorithmParameter in SelectedAlgorithm.AlgorithmParameters)
                 {
-                    AlgorithmParameters.Add(algorithmParamter);
+                    AlgorithmParameters.Add(algorithmParameter);
                 }
                 AlgorithmScript = SelectedAlgorithm.Script;
             }
@@ -1121,6 +1124,119 @@ return a.ToString();
                 {
                     AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "candles[0]");
                 }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+
+        private ObservableCollection<string> _tooltipSaveAlgorithm = new ObservableCollection<string>();
+        public ObservableCollection<string> TooltipSaveAlgorithm //подсказка, показываемая при наведении на кнопку добавить
+        {
+            get { return _tooltipSaveAlgorithm; }
+            set
+            {
+                _tooltipSaveAlgorithm = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool IsFieldsSaveAlgorithmCorrect()
+        {
+            bool result = true;
+            TooltipSaveAlgorithm.Clear(); //очищаем подсказку кнопки добавить
+
+            string name = "";
+            if (IndicatorName != null)
+            {
+                name = IndicatorName.Replace(" ", "");
+            }
+
+            //проверка на пустое значение
+            if (name == "")
+            {
+                result = false;
+                TooltipSaveAlgorithm.Add("Не заполнены все поля.");
+            }
+
+            //проверка на допустимые символы
+            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            bool isNotFind = false;
+            for (int i = 0; i < name.Length; i++)
+            {
+                if (letters.IndexOf(name[i]) == -1)
+                {
+                    isNotFind = true;
+                }
+
+            }
+            if (isNotFind)
+            {
+                result = false;
+                TooltipSaveAlgorithm.Add("Допустимо использование только английского алфавита.");
+            }
+
+            //проверка на уникальность названия
+            bool isUnique = true;
+            if (IsIndicatorEdited)
+            {
+                foreach (Indicator item in Indicators)
+                {
+                    if (name == item.Name && item.Id != SelectedIndicator.Id) //проверяем имя на уникальность среди всех записей кроме редактируемой
+                    {
+                        isUnique = false;
+                    }
+                }
+            }
+            else
+            {
+                foreach (Indicator item in Indicators)
+                {
+                    if (name == item.Name) //проверяем имя на уникальность среди всех записей
+                    {
+                        isUnique = false;
+                    }
+                }
+            }
+
+            if (isUnique == false)
+            {
+                result = false;
+                TooltipSaveAlgorithm.Add("Данное название уже используется.");
+            }
+
+            return result;
+        }
+
+        public ICommand AlgorithmSave_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    List<IndicatorParameterRange> indicatorParameterRanges = new List<IndicatorParameterRange>();
+                    foreach(IndicatorParameterRangeView indicatorParameterRangeView in IndicatorParameterRangesView)
+                    {
+                        IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange {Id = indicatorParameterRangeView.Id,  MinValue = double.Parse(indicatorParameterRangeView.MinValue), MaxValue = double.Parse(indicatorParameterRangeView.MaxValue), Step = double.Parse(indicatorParameterRangeView.Step), IsStepPercent = indicatorParameterRangeView.IsStepPercent, IdAlgorithm = indicatorParameterRangeView.IdAlgorithm, IdIndicatorParameterTemplate = indicatorParameterRangeView.IdIndicatorParameterTemplate, Indicator = indicatorParameterRangeView.Indicator };
+                    }
+
+                    List<AlgorithmParameter> algorithmParameters = new List<AlgorithmParameter>();
+                    foreach(AlgorithmParameterView algorithmParameterView in AlgorithmParametersView)
+                    {
+                        AlgorithmParameter algorithmParameter = new AlgorithmParameter { Id = algorithmParameterView.Id, Name = algorithmParameterView.Name, Description = algorithmParameterView.Description, MinValue = double.Parse(algorithmParameterView.MinValue), MaxValue = double.Parse(algorithmParameterView.MaxValue), Step = double.Parse(algorithmParameterView.Step), IsStepPercent = algorithmParameterView.IsStepPercent, IdAlgorithm = algorithmParameterView.IdAlgorithm };
+                    }
+                    /*
+                    if (IsAlgorithmAdded)
+                    {
+                        _modelTesting.IndicatorInsertUpdate(IndicatorName, IndicatorDescription, InsertIndicatorParameterTemplates, IndicatorScript);
+                    }
+                    else if (IsAlgorithmEdited)
+                    {
+                        _modelTesting.IndicatorInsertUpdate(IndicatorName, IndicatorDescription, InsertIndicatorParameterTemplates, IndicatorScript, SelectedIndicator.Id);
+                    }
+                    */
+                    IsIndicatorAdded = false;
+                    IsIndicatorEdited = false;
+                    UpdateIndicatorStatusText();
+
+                }, (obj) => IsAddOrEditAlgorithm() && IsFieldsSaveAlgorithmCorrect());
             }
         }
 
@@ -1757,90 +1873,90 @@ return a.ToString();
             }
         }
 
-        private AlgorithmParameterView _selectedAlgorithmParamterView;
-        public AlgorithmParameterView SelectedAlgorithmParamterView //выбранный параметр алгоритма
+        private AlgorithmParameterView _selectedAlgorithmParameterView;
+        public AlgorithmParameterView SelectedAlgorithmParameterView //выбранный параметр алгоритма
         {
-            get { return _selectedAlgorithmParamterView; }
+            get { return _selectedAlgorithmParameterView; }
             set
             {
-                _selectedAlgorithmParamterView = value;
+                _selectedAlgorithmParameterView = value;
                 OnPropertyChanged();
             }
         }
 
-        private string _algorithmParamterName;
-        public string AlgorithmParamterName //название параметра алгоритма
+        private string _algorithmParameterName;
+        public string AlgorithmParameterName //название параметра алгоритма
         {
-            get { return _algorithmParamterName; }
+            get { return _algorithmParameterName; }
             set
             {
-                _algorithmParamterName = value;
+                _algorithmParameterName = value;
                 OnPropertyChanged();
             }
         }
 
-        private string _algorithmParamterDescription;
-        public string AlgorithmParamterDescription //описание параметра алгоритма
+        private string _algorithmParameterDescription;
+        public string AlgorithmParameterDescription //описание параметра алгоритма
         {
-            get { return _algorithmParamterDescription; }
+            get { return _algorithmParameterDescription; }
             set
             {
-                _algorithmParamterDescription = value;
+                _algorithmParameterDescription = value;
                 OnPropertyChanged();
             }
         }
 
-        private string _algorithmParamterMinValue;
-        public string AlgorithmParamterMinValue //минимальное значение параметра алгоритма
+        private string _algorithmParameterMinValue;
+        public string AlgorithmParameterMinValue //минимальное значение параметра алгоритма
         {
-            get { return _algorithmParamterMinValue; }
+            get { return _algorithmParameterMinValue; }
             set
             {
-                _algorithmParamterMinValue = value;
+                _algorithmParameterMinValue = value;
                 OnPropertyChanged();
             }
         }
 
-        private string _algorithmParamterMaxValue;
-        public string AlgorithmParamterMaxValue //максимальное значение параметра алгоритма
+        private string _algorithmParameterMaxValue;
+        public string AlgorithmParameterMaxValue //максимальное значение параметра алгоритма
         {
-            get { return _algorithmParamterMaxValue; }
+            get { return _algorithmParameterMaxValue; }
             set
             {
-                _algorithmParamterMaxValue = value;
+                _algorithmParameterMaxValue = value;
                 OnPropertyChanged();
             }
         }
 
-        private string _algorithmParamterStep;
-        public string AlgorithmParamterStep //шаг параметра алгоритма
+        private string _AlgorithmParameterstep;
+        public string AlgorithmParameterstep //шаг параметра алгоритма
         {
-            get { return _algorithmParamterStep; }
+            get { return _AlgorithmParameterstep; }
             set
             {
-                _algorithmParamterStep = value;
+                _AlgorithmParameterstep = value;
                 OnPropertyChanged();
             }
         }
 
-        private List<string> _algorithmParamterTypesStep = new List<string> { "процентный", "числовой" };
-        public List<string> AlgorithmParamterTypesStep //список с возможными типами шага оптимизируемого параметра
+        private List<string> _algorithmParameterTypesStep = new List<string> { "процентный", "числовой" };
+        public List<string> AlgorithmParameterTypesStep //список с возможными типами шага оптимизируемого параметра
         {
-            get { return _algorithmParamterTypesStep; }
+            get { return _algorithmParameterTypesStep; }
             set
             {
-                _algorithmParamterTypesStep = value;
+                _algorithmParameterTypesStep = value;
                 OnPropertyChanged();
             }
         }
 
-        private string _algorithmParamterSelectedTypeStep;
-        public string AlgorithmParamterSelectedTypeStep //выбранный тип шага оптимизируемого параметра
+        private string _AlgorithmParameterselectedTypeStep;
+        public string AlgorithmParameterselectedTypeStep //выбранный тип шага оптимизируемого параметра
         {
-            get { return _algorithmParamterSelectedTypeStep; }
+            get { return _AlgorithmParameterselectedTypeStep; }
             set
             {
-                _algorithmParamterSelectedTypeStep = value;
+                _AlgorithmParameterselectedTypeStep = value;
                 OnPropertyChanged();
             }
         }
@@ -1851,12 +1967,12 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmParamterName = "";
-                    AlgorithmParamterDescription = "";
-                    AlgorithmParamterMinValue = "";
-                    AlgorithmParamterMaxValue = "";
-                    AlgorithmParamterStep = "";
-                    AlgorithmParamterSelectedTypeStep = AlgorithmParamterTypesStep[0];
+                    AlgorithmParameterName = "";
+                    AlgorithmParameterDescription = "";
+                    AlgorithmParameterMinValue = "";
+                    AlgorithmParameterMaxValue = "";
+                    AlgorithmParameterstep = "";
+                    AlgorithmParameterselectedTypeStep = AlgorithmParameterTypesStep[0];
 
                     viewmodelData.IsMainWindowEnabled = false;
                     AddAlgorithmParameter addAlgorithmParameter = new AddAlgorithmParameter();
@@ -1882,10 +1998,10 @@ return a.ToString();
             bool result = true;
             TooltipAddAddAlgorithmParameter.Clear(); //очищаем подсказку кнопки добавить
 
-            string name = AlgorithmParamterName != null? AlgorithmParamterName.Replace(" ", "") : "";
+            string name = AlgorithmParameterName != null? AlgorithmParameterName.Replace(" ", "") : "";
 
             //проверка на пустое значение
-            if (name == "" || AlgorithmParamterMinValue == "" || AlgorithmParamterMaxValue == "" || AlgorithmParamterStep == "")
+            if (name == "" || AlgorithmParameterMinValue == "" || AlgorithmParameterMaxValue == "" || AlgorithmParameterstep == "")
             {
                 result = false;
                 TooltipAddAddAlgorithmParameter.Add("Не заполнены все поля.");
@@ -1924,28 +2040,28 @@ return a.ToString();
             }
 
             //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(AlgorithmParamterMinValue, out double res) == false)
+            if (double.TryParse(AlgorithmParameterMinValue, out double res) == false)
             {
                 result = false;
                 TooltipAddAddAlgorithmParameter.Add("Минимальное значение должно быть числом.");
             }
 
             //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(AlgorithmParamterMaxValue, out res) == false)
+            if (double.TryParse(AlgorithmParameterMaxValue, out res) == false)
             {
                 result = false;
                 TooltipAddAddAlgorithmParameter.Add("Максимальное значение должно быть числом.");
             }
 
             //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(AlgorithmParamterStep, out res) == false)
+            if (double.TryParse(AlgorithmParameterstep, out res) == false)
             {
                 result = false;
                 TooltipAddAddAlgorithmParameter.Add("Шаг должен быть числом.");
             }
 
             //проверка на возможность достигнуть максимума с минимума с шагом
-            if (double.TryParse(AlgorithmParamterMinValue, out double min) && double.TryParse(AlgorithmParamterMaxValue, out double max) && double.TryParse(AlgorithmParamterStep, out double step))
+            if (double.TryParse(AlgorithmParameterMinValue, out double min) && double.TryParse(AlgorithmParameterMaxValue, out double max) && double.TryParse(AlgorithmParameterstep, out double step))
             {
                 if ((max > min && step > 0) == false)
                 {
@@ -1963,24 +2079,24 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    string name = AlgorithmParamterName != null ? AlgorithmParamterName.Replace(" ", "") : "";
+                    string name = AlgorithmParameterName != null ? AlgorithmParameterName.Replace(" ", "") : "";
 
 
 
                     bool isStepPercent = false;
-                    if (AlgorithmParamterSelectedTypeStep == AlgorithmParamterTypesStep[0])
+                    if (AlgorithmParameterselectedTypeStep == AlgorithmParameterTypesStep[0])
                     {
                         isStepPercent = true;
                     }
-                    string rangeValuesView = AlgorithmParamterMinValue + " – " + AlgorithmParamterMaxValue;
+                    string rangeValuesView = AlgorithmParameterMinValue + " – " + AlgorithmParameterMaxValue;
 
-                    string steView = AlgorithmParamterStep;
+                    string steView = AlgorithmParameterstep;
                     if (isStepPercent)
                     {
                         steView += "%";
                     }
 
-                    AlgorithmParameterView algorithmParameterView = new AlgorithmParameterView { Name = name, Description = AlgorithmParamterDescription, MinValue = AlgorithmParamterMinValue, MaxValue = AlgorithmParamterMaxValue, IsStepPercent = isStepPercent, Step = AlgorithmParamterStep, RangeValuesView = rangeValuesView, StepView = steView };
+                    AlgorithmParameterView algorithmParameterView = new AlgorithmParameterView { Name = name, Description = AlgorithmParameterDescription, MinValue = AlgorithmParameterMinValue, MaxValue = AlgorithmParameterMaxValue, IsStepPercent = isStepPercent, Step = AlgorithmParameterstep, RangeValuesView = rangeValuesView, StepView = steView };
                     AlgorithmParametersView.Add(algorithmParameterView);
                     
                     CloseAddDataSourceTemplateAction?.Invoke();
@@ -1994,25 +2110,25 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmParamterName = SelectedAlgorithmParamterView.Name;
-                    AlgorithmParamterDescription = SelectedAlgorithmParamterView.Description;
-                    AlgorithmParamterMinValue = SelectedAlgorithmParamterView.MinValue;
-                    AlgorithmParamterMaxValue = SelectedAlgorithmParamterView.MaxValue;
-                    AlgorithmParamterStep = SelectedAlgorithmParamterView.Step;
-                    if (SelectedAlgorithmParamterView.IsStepPercent)
+                    AlgorithmParameterName = SelectedAlgorithmParameterView.Name;
+                    AlgorithmParameterDescription = SelectedAlgorithmParameterView.Description;
+                    AlgorithmParameterMinValue = SelectedAlgorithmParameterView.MinValue;
+                    AlgorithmParameterMaxValue = SelectedAlgorithmParameterView.MaxValue;
+                    AlgorithmParameterstep = SelectedAlgorithmParameterView.Step;
+                    if (SelectedAlgorithmParameterView.IsStepPercent)
                     {
-                        AlgorithmParamterSelectedTypeStep = AlgorithmParamterTypesStep[0];
+                        AlgorithmParameterselectedTypeStep = AlgorithmParameterTypesStep[0];
                     }
                     else
                     {
-                        AlgorithmParamterSelectedTypeStep = AlgorithmParamterTypesStep[1];
+                        AlgorithmParameterselectedTypeStep = AlgorithmParameterTypesStep[1];
                     }
 
                     viewmodelData.IsMainWindowEnabled = false;
                     EditAlgorithmParameter editAlgorithmParameter = new EditAlgorithmParameter();
                     editAlgorithmParameter.Show();
 
-                }, (obj) => IsAddOrEditAlgorithm() && SelectedAlgorithmParamterView != null);
+                }, (obj) => IsAddOrEditAlgorithm() && SelectedAlgorithmParameterView != null);
             }
         }
 
@@ -2021,10 +2137,10 @@ return a.ToString();
             bool result = true;
             TooltipAddAddAlgorithmParameter.Clear(); //очищаем подсказку кнопки добавить
 
-            string name = AlgorithmParamterName != null ? AlgorithmParamterName.Replace(" ", "") : "";
+            string name = AlgorithmParameterName != null ? AlgorithmParameterName.Replace(" ", "") : "";
 
             //проверка на пустое значение
-            if (name == "" || AlgorithmParamterMinValue == "" || AlgorithmParamterMaxValue == "" || AlgorithmParamterStep == "")
+            if (name == "" || AlgorithmParameterMinValue == "" || AlgorithmParameterMaxValue == "" || AlgorithmParameterstep == "")
             {
                 result = false;
                 TooltipAddAddAlgorithmParameter.Add("Не заполнены все поля.");
@@ -2051,7 +2167,7 @@ return a.ToString();
             bool isUnique = true;
             foreach (AlgorithmParameterView item in AlgorithmParametersView)
             {
-                if (name == item.Name && item != SelectedAlgorithmParamterView) //проверяем имя на уникальность среди всех записей
+                if (name == item.Name && item != SelectedAlgorithmParameterView) //проверяем имя на уникальность среди всех записей
                 {
                     isUnique = false;
                 }
@@ -2063,28 +2179,28 @@ return a.ToString();
             }
 
             //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(AlgorithmParamterMinValue, out double res) == false)
+            if (double.TryParse(AlgorithmParameterMinValue, out double res) == false)
             {
                 result = false;
                 TooltipAddAddAlgorithmParameter.Add("Минимальное значение должно быть числом.");
             }
 
             //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(AlgorithmParamterMaxValue, out res) == false)
+            if (double.TryParse(AlgorithmParameterMaxValue, out res) == false)
             {
                 result = false;
                 TooltipAddAddAlgorithmParameter.Add("Максимальное значение должно быть числом.");
             }
 
             //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(AlgorithmParamterStep, out res) == false)
+            if (double.TryParse(AlgorithmParameterstep, out res) == false)
             {
                 result = false;
                 TooltipAddAddAlgorithmParameter.Add("Шаг должен быть числом.");
             }
 
             //проверка на возможность достигнуть максимума с минимума с шагом
-            if (double.TryParse(AlgorithmParamterMinValue, out double min) && double.TryParse(AlgorithmParamterMaxValue, out double max) && double.TryParse(AlgorithmParamterStep, out double step))
+            if (double.TryParse(AlgorithmParameterMinValue, out double min) && double.TryParse(AlgorithmParameterMaxValue, out double max) && double.TryParse(AlgorithmParameterstep, out double step))
             {
                 if ((max > min && step > 0) == false)
                 {
@@ -2102,29 +2218,29 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    string name = AlgorithmParamterName != null ? AlgorithmParamterName.Replace(" ", "") : "";
+                    string name = AlgorithmParameterName != null ? AlgorithmParameterName.Replace(" ", "") : "";
 
 
 
                     bool isStepPercent = false;
-                    if (AlgorithmParamterSelectedTypeStep == AlgorithmParamterTypesStep[0])
+                    if (AlgorithmParameterselectedTypeStep == AlgorithmParameterTypesStep[0])
                     {
                         isStepPercent = true;
                     }
-                    string rangeValuesView = AlgorithmParamterMinValue + " – " + AlgorithmParamterMaxValue;
+                    string rangeValuesView = AlgorithmParameterMinValue + " – " + AlgorithmParameterMaxValue;
 
-                    string steView = AlgorithmParamterStep;
+                    string steView = AlgorithmParameterstep;
                     if (isStepPercent)
                     {
                         steView += "%";
                     }
 
-                    AlgorithmParameterView algorithmParameterView = new AlgorithmParameterView { Name = name, Description = AlgorithmParamterDescription, MinValue = AlgorithmParamterMinValue, MaxValue = AlgorithmParamterMaxValue, IsStepPercent = isStepPercent, Step = AlgorithmParamterStep, RangeValuesView = rangeValuesView, StepView = steView };
+                    AlgorithmParameterView algorithmParameterView = new AlgorithmParameterView { Name = name, Description = AlgorithmParameterDescription, MinValue = AlgorithmParameterMinValue, MaxValue = AlgorithmParameterMaxValue, IsStepPercent = isStepPercent, Step = AlgorithmParameterstep, RangeValuesView = rangeValuesView, StepView = steView };
 
-                    int index = AlgorithmParametersView.IndexOf(SelectedAlgorithmParamterView);
+                    int index = AlgorithmParametersView.IndexOf(SelectedAlgorithmParameterView);
                     AlgorithmParametersView.RemoveAt(index);
                     AlgorithmParametersView.Insert(index, algorithmParameterView);
-                    SelectedAlgorithmParamterView = algorithmParameterView;
+                    SelectedAlgorithmParameterView = algorithmParameterView;
 
                     CloseAddDataSourceTemplateAction?.Invoke();
                 }, (obj) => IsFieldsEditAlgorithmParameterCorrect());
@@ -2137,8 +2253,8 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    int index = AlgorithmParametersView.IndexOf(SelectedAlgorithmParamterView); //находим индекс выбранного элемента
-                    string msg = "Название: " + SelectedAlgorithmParamterView.Name;
+                    int index = AlgorithmParametersView.IndexOf(SelectedAlgorithmParameterView); //находим индекс выбранного элемента
+                    string msg = "Название: " + SelectedAlgorithmParameterView.Name;
                     string caption = "Удалить?";
                     MessageBoxButton messageBoxButton = MessageBoxButton.YesNo;
                     var result = MessageBox.Show(msg, caption, messageBoxButton);
@@ -2146,7 +2262,7 @@ return a.ToString();
                     {
                         AlgorithmParametersView.RemoveAt(index);
                     }
-                }, (obj) => SelectedAlgorithmParamterView != null && IsAddOrEditAlgorithm());
+                }, (obj) => SelectedAlgorithmParameterView != null && IsAddOrEditAlgorithm());
             }
         }
         

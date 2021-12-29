@@ -12,30 +12,30 @@
                 <StackPanel Orientation="Vertical">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Название" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
-                        <TextBox Text="{Binding AlgorithmParamterName, Mode=TwoWay}" Width="{Binding ElementName=helper2, Path=ActualWidth}"/>
+                        <TextBox Text="{Binding AlgorithmParameterName, Mode=TwoWay}" Width="{Binding ElementName=helper2, Path=ActualWidth}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="(только английскими буквами)" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
                         <TextBlock Text="Описание" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
-                        <TextBox Text="{Binding AlgorithmParamterDescription, Mode=TwoWay}" Width="{Binding ElementName=helper2, Path=ActualWidth}" TextWrapping="Wrap"/>
+                        <TextBox Text="{Binding AlgorithmParameterDescription, Mode=TwoWay}" Width="{Binding ElementName=helper2, Path=ActualWidth}" TextWrapping="Wrap"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
                         <TextBlock Text="Минимальное значение" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
-                        <TextBox Text="{Binding AlgorithmParamterMinValue, Mode=TwoWay}" Width="{Binding ElementName=helper2, Path=ActualWidth}" TextWrapping="Wrap"/>
+                        <TextBox Text="{Binding AlgorithmParameterMinValue, Mode=TwoWay}" Width="{Binding ElementName=helper2, Path=ActualWidth}" TextWrapping="Wrap"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
                         <TextBlock Text="Максимальное значение" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
-                        <TextBox Text="{Binding AlgorithmParamterMaxValue, Mode=TwoWay}" Width="{Binding ElementName=helper2, Path=ActualWidth}" TextWrapping="Wrap"/>
+                        <TextBox Text="{Binding AlgorithmParameterMaxValue, Mode=TwoWay}" Width="{Binding ElementName=helper2, Path=ActualWidth}" TextWrapping="Wrap"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
                         <TextBlock Text="Тип шага" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
-                        <ComboBox ItemsSource="{Binding AlgorithmParamterTypesStep}" Width="{Binding ElementName=helper2, Path=ActualWidth}" SelectedItem="{Binding AlgorithmParamterSelectedTypeStep, Mode=TwoWay}" SelectedIndex="0"/>
+                        <ComboBox ItemsSource="{Binding AlgorithmParameterTypesStep}" Width="{Binding ElementName=helper2, Path=ActualWidth}" SelectedItem="{Binding AlgorithmParameterselectedTypeStep, Mode=TwoWay}" SelectedIndex="0"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
                         <TextBlock Text="Шаг" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
-                        <TextBox Text="{Binding AlgorithmParamterStep, Mode=TwoWay}" Width="{Binding ElementName=helper2, Path=ActualWidth}" TextWrapping="Wrap"/>
+                        <TextBox Text="{Binding AlgorithmParameterstep, Mode=TwoWay}" Width="{Binding ElementName=helper2, Path=ActualWidth}" TextWrapping="Wrap"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Height="44"></StackPanel>
 

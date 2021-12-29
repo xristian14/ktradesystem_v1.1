@@ -165,6 +165,9 @@ namespace ktradesystem.Models
             command.Parameters.AddWithValue("idIndicator", parameterTemplate.IdIndicator);
 
             command.ExecuteNonQuery();
+
+            //нужно выполнить проверку на то, есть ли индикатор данного параметра в алгоритмах, и если есть, то создать для них IndicatorParameterRange, ссылающийся на этот IndicatorParameterTemplate, для того чтобы запрос с LEFT JOIN и UNION был правильным (если будет parameterTemplate но не будет parameterRange, то будет добавлена строка с некорректными данными в полях в запросе IndicatorParameterRanges), а так же для того чтобы список со значениями параметров индикаторов соответствовал списку шаблонов параметров данного индикатора
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         }
 
         public void DeleteIndicatorParameterTemplate(int id)
@@ -206,6 +209,57 @@ namespace ktradesystem.Models
             string query = "DELETE FROM Indicators WHERE id = :id";
             command.CommandText = query;
             command.Parameters.AddWithValue("id", id);
+            command.ExecuteNonQuery();
+        }
+
+        public void InsertAlgorithm(Algorithm algorithm)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "INSERT INTO Algorithms (name, description, script) VALUES (:name, :description, :script)";
+            command.Parameters.AddWithValue("name", algorithm.Name);
+            command.Parameters.AddWithValue("description", algorithm.Description);
+            command.Parameters.AddWithValue("script", algorithm.Script);
+
+            command.ExecuteNonQuery();
+        }
+
+        public void InsertDataSourceTemplate(DataSourceTemplate dataSourceTemplate)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "INSERT INTO DataSourceTemplates (name, description, idAlgorithm) VALUES (:name, :description, :idAlgorithm)";
+            command.Parameters.AddWithValue("name", dataSourceTemplate.Name);
+            command.Parameters.AddWithValue("description", dataSourceTemplate.Description);
+            command.Parameters.AddWithValue("idAlgorithm", dataSourceTemplate.IdAlgorithm);
+
+            command.ExecuteNonQuery();
+        }
+
+        public void InsertIndicatorParameterRange(IndicatorParameterRange indicatorParameterRange)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "INSERT INTO IndicatorParameterRanges (minValue, maxValue, step, isStepPercent, idAlgorithm, idIndicatorParameterTemplate) VALUES (:minValue, :maxValue, :step, :isStepPercent, :idAlgorithm, :idIndicatorParameterTemplate)";
+            command.Parameters.AddWithValue("minValue", indicatorParameterRange.MinValue);
+            command.Parameters.AddWithValue("maxValue", indicatorParameterRange.MaxValue);
+            command.Parameters.AddWithValue("step", indicatorParameterRange.Step);
+            command.Parameters.AddWithValue("isStepPercent", indicatorParameterRange.IsStepPercent);
+            command.Parameters.AddWithValue("idAlgorithm", indicatorParameterRange.IdAlgorithm);
+            command.Parameters.AddWithValue("idIndicatorParameterTemplate", indicatorParameterRange.IdIndicatorParameterTemplate);
+
+            command.ExecuteNonQuery();
+        }
+
+        public void InsertAlgorithmParameter(AlgorithmParameter algorithmParameter)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "INSERT INTO AlgorithmParameters (name, description, minValue, maxValue, step, isStepPercent, idAlgorithm) VALUES (:name, :description, :minValue, :maxValue, :step, :isStepPercent, :idAlgorithm)";
+            command.Parameters.AddWithValue("name", algorithmParameter.Name);
+            command.Parameters.AddWithValue("description", algorithmParameter.Description);
+            command.Parameters.AddWithValue("minValue", algorithmParameter.MinValue);
+            command.Parameters.AddWithValue("maxValue", algorithmParameter.MaxValue);
+            command.Parameters.AddWithValue("step", algorithmParameter.Step);
+            command.Parameters.AddWithValue("isStepPercent", algorithmParameter.IsStepPercent);
+            command.Parameters.AddWithValue("idAlgorithm", algorithmParameter.IdAlgorithm);
+
             command.ExecuteNonQuery();
         }
     }

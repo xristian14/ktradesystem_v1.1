@@ -12,7 +12,7 @@
                 <TextBlock Text="Название"/>
                 <TextBox Text="{Binding AddDataSourceTemplateName, Mode=OneWayToSource}" Margin="10 0 0 0" Width="167"/>
             </StackPanel>
-            <TextBlock Text="(Только английскими буквами)"/>
+            <TextBlock Text="(только английскими буквами)"/>
             <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
                 <TextBlock Text="Описание"/>
                 <TextBox Text="{Binding AddDataSourceTemplateDescription, Mode=OneWayToSource}" TextWrapping="Wrap" Margin="10 0 0 0" Width="167"/>

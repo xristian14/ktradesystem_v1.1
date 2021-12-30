@@ -1015,6 +1015,7 @@ return a.ToString();
                 AlgorithmDescription = SelectedAlgorithm.Description;
                 CreateDataSourceTemplatesView();
                 CreateIndicatorParameterRangesView();
+                UpdateAlgorithmIndicators();
                 AlgorithmParameters.Clear();
                 foreach (AlgorithmParameter algorithmParameter in SelectedAlgorithm.AlgorithmParameters)
                 {
@@ -1266,7 +1267,7 @@ return a.ToString();
                 return new DelegateCommand((obj) =>
                 {
                     List<DataSourceTemplate> dataSourceTemplates = new List<DataSourceTemplate>();
-                    foreach(DataSourceTemplate item in DataSourceTemplates)
+                    foreach(DataSourceTemplate item in DataSourceTemplatesView)
                     {
                         DataSourceTemplate dataSourceTemplate = new DataSourceTemplate { Id = item.Id, Name = item.Name, Description = item.Description, IdAlgorithm = item.IdAlgorithm };
                         dataSourceTemplates.Add(dataSourceTemplate);
@@ -1294,10 +1295,10 @@ return a.ToString();
                     {
                         _modelTesting.AlgorithmInsertUpdate(AlgorithmName, AlgorithmDescription, dataSourceTemplates, indicatorParameterRanges, algorithmParameters, AlgorithmScript, _algorithmId);
                     }
-                    
-                    IsIndicatorAdded = false;
-                    IsIndicatorEdited = false;
-                    UpdateIndicatorStatusText();
+
+                    IsAlgorithmAdded = false;
+                    IsAlgorithmEdited = false;
+                    UpdateAlgorithmStatusText();
 
                 }, (obj) => IsAddOrEditAlgorithm() && IsFieldsSaveAlgorithmCorrect());
             }
@@ -1502,7 +1503,7 @@ return a.ToString();
                 {
                     string name = AddDataSourceTemplateName != null ? AddDataSourceTemplateName.Replace(" ", "") : "";
                     DataSourceTemplate dataSourceTemplate = new DataSourceTemplate { Name = name, Description = AddDataSourceTemplateDescription };
-                    DataSourceTemplates.Add(dataSourceTemplate);
+                    DataSourceTemplatesView.Add(dataSourceTemplate);
 
                     CloseAddDataSourceTemplateAction?.Invoke();
                 }, (obj) => IsFieldsAddDataSourceTemplateCorrect());
@@ -1584,10 +1585,10 @@ return a.ToString();
                 return new DelegateCommand((obj) =>
                 {
                     string name = AddDataSourceTemplateName.Replace(" ", "");
-                    int index = DataSourceTemplates.IndexOf(SelectedDataSourceTemplateView);
+                    int index = DataSourceTemplatesView.IndexOf(SelectedDataSourceTemplateView);
                     DataSourceTemplate dataSourceTemplate = new DataSourceTemplate { Name = name, Description = AddDataSourceTemplateDescription };
-                    DataSourceTemplates.RemoveAt(index);
-                    DataSourceTemplates.Insert(index, dataSourceTemplate);
+                    DataSourceTemplatesView.RemoveAt(index);
+                    DataSourceTemplatesView.Insert(index, dataSourceTemplate);
 
                     CloseAddDataSourceTemplateAction?.Invoke();
                 }, (obj) => IsFieldsEditDataSourceTemplateCorrect());
@@ -1600,14 +1601,14 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    int index = DataSourceTemplates.IndexOf(SelectedDataSourceTemplateView); //находим индекс выбранного элемента
+                    int index = DataSourceTemplatesView.IndexOf(SelectedDataSourceTemplateView); //находим индекс выбранного элемента
                     string msg = "Название: " + SelectedDataSourceTemplateView.Name;
                     string caption = "Удалить?";
                     MessageBoxButton messageBoxButton = MessageBoxButton.YesNo;
                     var result = MessageBox.Show(msg, caption, messageBoxButton);
                     if (result == MessageBoxResult.Yes)
                     {
-                        DataSourceTemplates.RemoveAt(index);
+                        DataSourceTemplatesView.RemoveAt(index);
                     }
                 }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
             }

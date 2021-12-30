@@ -147,64 +147,160 @@ namespace ktradesystem.Models
             }
             else
             {
-                //обновляет имеющиеся в БД шаблоны параметров данного индикатора в соответствии с IndicatorParameterTemplates, и обновляет индикатор
-                List<IndicatorParameterTemplate> updateParTemp = new List<IndicatorParameterTemplate>(); //список с id параметра который нужно обновить и имя и описание на которые нужно обновить
-                List<IndicatorParameterTemplate> addParTemp = new List<IndicatorParameterTemplate>(); //список с шаблонами параметров которые нужно добавить
-                List<int> deleteParTemp = new List<int>(); //список с id которые нужно удалить
-
-                Indicator oldIndicator = new Indicator();
-                foreach (Indicator indicator in _modelData.Indicators)
+                //находим обновляемый объект алгоритма по id
+                Algorithm oldAlgorithm = new Algorithm();
+                foreach(Algorithm algorithm in _modelData.Algorithms)
                 {
-                    if (indicator.Id == id)
+                    if(algorithm.Id == id)
                     {
-                        oldIndicator = indicator;
+                        oldAlgorithm = algorithm;
                     }
                 }
-                /*
-                int length = IndicatorParameterTemplates.Count;
-                if (oldIndicator.IndicatorParameterTemplates.Count > length)
+
+
+                //обновляем макеты источников данных
+                List<DataSourceTemplate> updateDatSouTem = new List<DataSourceTemplate>(); //список с записями которые нужно добавить
+                List<DataSourceTemplate> addDatSouTem = new List<DataSourceTemplate>(); //список с id записи которую нужно обновить, и новые данные для этой записи
+                List<int> deleteDatSouTem = new List<int>(); //список с id записей которые нужно удалить
+
+                int maxLengthDataSourceTemplate = dataSourceTemplates.Count;
+                if(oldAlgorithm.DataSourceTemplates.Count > maxLengthDataSourceTemplate)
                 {
-                    length = oldIndicator.IndicatorParameterTemplates.Count;
+                    maxLengthDataSourceTemplate = oldAlgorithm.DataSourceTemplates.Count;
                 }
-                //проходит по всем элементам которые есть в старом и новом списке шаблонов параметров, и определяет какие обновить, какие добавить, а какие удалить
-                for (int i = 0; i < length; i++)
+                //проходим по всем элементам старого и нового списка, и определяем какие обновить, какие добавить, а какие удалить
+                for(int i = 0; i < maxLengthDataSourceTemplate; i++)
                 {
-                    if (IndicatorParameterTemplates.Count > i && oldIndicator.IndicatorParameterTemplates.Count > i)
+                    if(dataSourceTemplates.Count > i && oldAlgorithm.DataSourceTemplates.Count > i)
                     {
-                        if (IndicatorParameterTemplates[i].Name != oldIndicator.IndicatorParameterTemplates[i].Name || IndicatorParameterTemplates[i].Description != oldIndicator.IndicatorParameterTemplates[i].Description)
+                        if(dataSourceTemplates[i].Name != oldAlgorithm.DataSourceTemplates[i].Name || dataSourceTemplates[i].Description != oldAlgorithm.DataSourceTemplates[i].Description)
                         {
-                            updateParTemp.Add(new IndicatorParameterTemplate { Id = oldIndicator.IndicatorParameterTemplates[i].Id, Name = IndicatorParameterTemplates[i].Name, Description = IndicatorParameterTemplates[i].Description, IdIndicator = oldIndicator.IndicatorParameterTemplates[i].IdIndicator });
+                            updateDatSouTem.Add(new DataSourceTemplate { Name = dataSourceTemplates[i].Name, Description = dataSourceTemplates[i].Description });
                         }
-
                     }
-                    else if (IndicatorParameterTemplates.Count > i && oldIndicator.IndicatorParameterTemplates.Count <= i)
+                    else if(dataSourceTemplates.Count > i && oldAlgorithm.DataSourceTemplates.Count <= i)
                     {
-                        IndicatorParameterTemplates[i].IdIndicator = oldIndicator.Id;
-                        addParTemp.Add(IndicatorParameterTemplates[i]);
+                        dataSourceTemplates[i].IdAlgorithm = oldAlgorithm.Id;
+                        addDatSouTem.Add(dataSourceTemplates[i]);
                     }
-                    else if (IndicatorParameterTemplates.Count <= i && oldIndicator.IndicatorParameterTemplates.Count > i)
+                    else if(dataSourceTemplates.Count <= i && oldAlgorithm.DataSourceTemplates.Count > i)
                     {
-                        deleteParTemp.Add(oldIndicator.IndicatorParameterTemplates[i].Id);
+                        deleteDatSouTem.Add(oldAlgorithm.DataSourceTemplates[i].Id);
                     }
-                }*/
-                //обновляем шаблоны параметров
-                foreach (IndicatorParameterTemplate item in updateParTemp)
-                {
-                    _database.UpdateIndicatorParameterTemplate(item);
                 }
-                //добавляем шаблоны параметров
-                foreach (IndicatorParameterTemplate item in addParTemp)
+                //обновляем
+                foreach (DataSourceTemplate dataSourceTemplate in updateDatSouTem)
                 {
-                    _database.InsertIndicatorParameterTemplate(item);
+                    _database.UpdateDataSourceTemplate(dataSourceTemplate);
                 }
-                //удаляем шаблоны параметров
-                foreach (int idDelete in deleteParTemp)
+                //добавляем
+                foreach (DataSourceTemplate dataSourceTemplate1 in addDatSouTem)
                 {
-                    _database.DeleteIndicatorParameterTemplate(idDelete);
+                    _database.InsertDataSourceTemplate(dataSourceTemplate1);
+                }
+                //удаляем
+                foreach (int idDatSouTem in deleteDatSouTem)
+                {
+                    _database.DeleteDataSourceTemplate(idDatSouTem);
                 }
 
-                //обновляем индикатор
-                _database.UpdateIndicator(new Indicator { Id = id, Name = name, Description = description, Script = script });
+
+                //обновляем диапазоны значений параметров индикаторов
+                List<IndicatorParameterRange> updateIndParRan = new List<IndicatorParameterRange>(); //список с записями которые нужно добавить
+                List<IndicatorParameterRange> addIndParRan = new List<IndicatorParameterRange>(); //список с id записи которую нужно обновить, и новые данные для этой записи
+                List<int> deleteIndParRan = new List<int>(); //список с id записей которые нужно удалить
+
+                int maxLengthIndicatorParameterRange = indicatorParameterRanges.Count;
+                if (oldAlgorithm.IndicatorParameterRanges.Count > maxLengthIndicatorParameterRange)
+                {
+                    maxLengthIndicatorParameterRange = oldAlgorithm.IndicatorParameterRanges.Count;
+                }
+                //проходим по всем элементам старого и нового списка, и определяем какие обновить, какие добавить, а какие удалить
+                for (int i = 0; i < maxLengthIndicatorParameterRange; i++)
+                {
+                    if (indicatorParameterRanges.Count > i && oldAlgorithm.IndicatorParameterRanges.Count > i)
+                    {
+                        if (indicatorParameterRanges[i].MinValue != oldAlgorithm.IndicatorParameterRanges[i].MinValue || indicatorParameterRanges[i].MaxValue != oldAlgorithm.IndicatorParameterRanges[i].MaxValue || indicatorParameterRanges[i].Step != oldAlgorithm.IndicatorParameterRanges[i].Step || indicatorParameterRanges[i].IsStepPercent != oldAlgorithm.IndicatorParameterRanges[i].IsStepPercent)
+                        {
+                            updateIndParRan.Add(indicatorParameterRanges[i]);
+                        }
+                    }
+                    else if (indicatorParameterRanges.Count > i && oldAlgorithm.IndicatorParameterRanges.Count <= i)
+                    {
+                        indicatorParameterRanges[i].IdAlgorithm = oldAlgorithm.Id;
+                        addIndParRan.Add(indicatorParameterRanges[i]);
+                    }
+                    else if (indicatorParameterRanges.Count <= i && oldAlgorithm.IndicatorParameterRanges.Count > i)
+                    {
+                        deleteIndParRan.Add(oldAlgorithm.IndicatorParameterRanges[i].Id);
+                    }
+                }
+                //обновляем
+                foreach (IndicatorParameterRange indicatorParameterRange in updateIndParRan)
+                {
+                    _database.UpdateIndicatorParameterRange(indicatorParameterRange);
+                }
+                //добавляем
+                foreach (IndicatorParameterRange indicatorParameterRange1 in addIndParRan)
+                {
+                    _database.InsertIndicatorParameterRange(indicatorParameterRange1);
+                }
+                //удаляем
+                foreach (int idIndParRan in deleteIndParRan)
+                {
+                    _database.DeleteIndicatorParameterRange(idIndParRan);
+                }
+
+
+                //обновляем параметры алгоритма
+                List<AlgorithmParameter> updateAlgPar = new List<AlgorithmParameter>(); //список с записями которые нужно добавить
+                List<AlgorithmParameter> addAlgPar = new List<AlgorithmParameter>(); //список с id записи которую нужно обновить, и новые данные для этой записи
+                List<int> deleteAlgPar = new List<int>(); //список с id записей которые нужно удалить
+
+                int maxLengthAlgorithmParameter = algorithmParameters.Count;
+                if (oldAlgorithm.AlgorithmParameters.Count > maxLengthAlgorithmParameter)
+                {
+                    maxLengthAlgorithmParameter = oldAlgorithm.AlgorithmParameters.Count;
+                }
+                //проходим по всем элементам старого и нового списка, и определяем какие обновить, какие добавить, а какие удалить
+                for (int i = 0; i < maxLengthAlgorithmParameter; i++)
+                {
+                    if (algorithmParameters.Count > i && oldAlgorithm.AlgorithmParameters.Count > i)
+                    {
+                        if (algorithmParameters[i].Name != oldAlgorithm.AlgorithmParameters[i].Name || algorithmParameters[i].Description != oldAlgorithm.AlgorithmParameters[i].Description || algorithmParameters[i].MinValue != oldAlgorithm.AlgorithmParameters[i].MinValue || algorithmParameters[i].MaxValue != oldAlgorithm.AlgorithmParameters[i].MaxValue || algorithmParameters[i].Step != oldAlgorithm.AlgorithmParameters[i].Step || algorithmParameters[i].IsStepPercent != oldAlgorithm.AlgorithmParameters[i].IsStepPercent)
+                        {
+                            updateAlgPar.Add(algorithmParameters[i]);
+                        }
+                    }
+                    else if (algorithmParameters.Count > i && oldAlgorithm.AlgorithmParameters.Count <= i)
+                    {
+                        algorithmParameters[i].IdAlgorithm = oldAlgorithm.Id;
+                        addAlgPar.Add(algorithmParameters[i]);
+                    }
+                    else if (algorithmParameters.Count <= i && oldAlgorithm.AlgorithmParameters.Count > i)
+                    {
+                        deleteAlgPar.Add(oldAlgorithm.AlgorithmParameters[i].Id);
+                    }
+                }
+                //обновляем
+                foreach (AlgorithmParameter algorithmParameter in updateAlgPar)
+                {
+                    _database.UpdateAlgorithmParameter(algorithmParameter);
+                }
+                //добавляем
+                foreach (AlgorithmParameter algorithmParameter1 in addAlgPar)
+                {
+                    _database.InsertAlgorithmParameter(algorithmParameter1);
+                }
+                //удаляем
+                foreach (int idAlgPar in deleteAlgPar)
+                {
+                    _database.DeleteAlgorithmParameter(idAlgPar);
+                }
+
+
+                //обновляем алгоритм
+                _database.UpdateAlgorithm(new Algorithm { Id = id, Name = name, Description = description, Script = script });
             }
 
             _modelData.ReadAlgorithms();

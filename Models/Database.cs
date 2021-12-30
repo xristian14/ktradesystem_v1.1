@@ -259,5 +259,84 @@ namespace ktradesystem.Models
 
             command.ExecuteNonQuery();
         }
+
+        public void UpdateDataSourceTemplate(DataSourceTemplate dataSourceTemplate)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "UPDATE DataSourceTemplates SET name = :name, description = :description, idAlgorithm = :idAlgorithm WHERE id = :id";
+            command.Parameters.AddWithValue("name", dataSourceTemplate.Name);
+            command.Parameters.AddWithValue("description", dataSourceTemplate.Description);
+            command.Parameters.AddWithValue("idAlgorithm", dataSourceTemplate.IdAlgorithm);
+            command.Parameters.AddWithValue("id", dataSourceTemplate.Id);
+
+            command.ExecuteNonQuery();
+        }
+
+        public void DeleteDataSourceTemplate(int id)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            string query = "DELETE FROM DataSourceTemplates WHERE id = :id";
+            command.CommandText = query;
+            command.Parameters.AddWithValue("id", id);
+            command.ExecuteNonQuery();
+        }
+
+        public void UpdateIndicatorParameterRange(IndicatorParameterRange indicatorParameterRange)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "UPDATE IndicatorParameterRanges SET minValue = :minValue, maxValue = :maxValue, step = :step, isStepPercent = :isStepPercent WHERE id = :id";
+            command.Parameters.AddWithValue("minValue", indicatorParameterRange.MinValue);
+            command.Parameters.AddWithValue("maxValue", indicatorParameterRange.MaxValue);
+            command.Parameters.AddWithValue("step", indicatorParameterRange.Step);
+            command.Parameters.AddWithValue("isStepPercent", indicatorParameterRange.IsStepPercent);
+            command.Parameters.AddWithValue("id", indicatorParameterRange.Id);
+
+            command.ExecuteNonQuery();
+        }
+
+        public void DeleteIndicatorParameterRange(int id)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            string query = "DELETE FROM IndicatorParameterRanges WHERE id = :id";
+            command.CommandText = query;
+            command.Parameters.AddWithValue("id", id);
+            command.ExecuteNonQuery();
+        }
+
+        public void UpdateAlgorithmParameter(AlgorithmParameter algorithmParameter)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "UPDATE algorithmParameters SET name = :name, description = :description, minValue = :minValue, maxValue = :maxValue, step = :step, isStepPercent = :isStepPercent WHERE id = :id";
+            command.Parameters.AddWithValue("name", algorithmParameter.Name);
+            command.Parameters.AddWithValue("description", algorithmParameter.Description);
+            command.Parameters.AddWithValue("minValue", algorithmParameter.MinValue);
+            command.Parameters.AddWithValue("maxValue", algorithmParameter.MaxValue);
+            command.Parameters.AddWithValue("step", algorithmParameter.Step);
+            command.Parameters.AddWithValue("isStepPercent", algorithmParameter.IsStepPercent);
+            command.Parameters.AddWithValue("id", algorithmParameter.Id);
+
+            command.ExecuteNonQuery();
+        }
+
+        public void DeleteAlgorithmParameter(int id)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            string query = "DELETE FROM AlgorithmParameters WHERE id = :id";
+            command.CommandText = query;
+            command.Parameters.AddWithValue("id", id);
+            command.ExecuteNonQuery();
+        }
+
+        public void UpdateAlgorithm(Algorithm algorithm)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "UPDATE Algorithms SET name = :name, description = :description, script = :script WHERE id = :id";
+            command.Parameters.AddWithValue("name", algorithm.Name);
+            command.Parameters.AddWithValue("description", algorithm.Description);
+            command.Parameters.AddWithValue("script", algorithm.Script);
+            command.Parameters.AddWithValue("id", algorithm.Id);
+
+            command.ExecuteNonQuery();
+        }
     }
 }

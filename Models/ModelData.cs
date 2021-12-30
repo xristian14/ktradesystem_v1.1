@@ -280,8 +280,73 @@ namespace ktradesystem.Models
                 Indicators.Add(indicator);
             }
 
-            //надо здесь добавить проверку на недостающее indicatorParameterRange, при добавлении нового IndicatorParameterTemplate, перед считывание алгоритмов, т.к. сложный запрос в считывании алгоритмов
+            CheckMissingIndicatorParameterRange();
+
             ReadAlgorithms(); //считываем алгоритмы, т.к. после изменения индикаторов, при каскадном удалении параметров или индикаторов, в алгоритмах будут новые данные
+        }
+
+        private void CheckMissingIndicatorParameterRange() //при добавлении шаблона параметра индикатору, в алгоритме, запись со значениями данного параметра не добавляется. Эта функция определяет диапазоны значений которых "недостаёт" и добавляет их.
+        {
+            //проходим по алгоритмам, далее по диапазонам параметров и формируем список с шаблонами параметров соответствующих диапазонам. Далее проходимся по полученному списку шаблонов параметров и формируем список индикаторов для данного набора шаблонов параметра. Далее проходим по индикаторам, и для каждого находим полный список шаблонов параметров. Далее ищем id шаблона параметров в списке диапазонов параметров, и если не находим добавляем в список диапазонов значений которые нужно будет добавить. Далее проходимся по этому списку и выполняем операацию insert для каждого.
+            List<IndicatorParameterRange> indicatorParameterRangesForInsert = new List<IndicatorParameterRange>(); //список с диапазонами значений которые необходимо добавить в БД
+            foreach(Algorithm algorithm in Algorithms)
+            {
+                List<IndicatorParameterTemplate> indicatorParameterTemplates = new List<IndicatorParameterTemplate>(); //список с шаблонами параметров, соответствующих диапазонам значений
+                foreach(IndicatorParameterRange indicatorParameterRange in algorithm.IndicatorParameterRanges)
+                {
+                    foreach(IndicatorParameterTemplate indicatorParameterTemplate in IndicatorParameterTemplates)
+                    {
+                        if(indicatorParameterRange.IdIndicatorParameterTemplate == indicatorParameterTemplate.Id)
+                        {
+                            indicatorParameterTemplates.Add(indicatorParameterTemplate);
+                        }
+                    }
+                }
+                List<Indicator> indicators = new List<Indicator>(); //список с индикаторами, которые используются в данном алгоритме
+                foreach(IndicatorParameterTemplate itemIPT in indicatorParameterTemplates)
+                {
+                    //получаем индикатор текущего шаблона параметра
+                    Indicator currentIndicator = new Indicator();
+                    foreach(Indicator itemIndicator in Indicators)
+                    {
+                        if (itemIPT.IdIndicator == itemIndicator.Id)
+                        {
+                            currentIndicator = itemIndicator;
+                        }
+                    }
+                    //проверяем, есть ли текущий индикатор в спискe с индикаторами, которые используются в данном алгоритме. Если нет - то добавляем его в этот список.
+                    if (indicators.Contains(currentIndicator) == false)
+                    {
+                        indicators.Add(currentIndicator);
+                    }
+                }
+                //проходим по индикаторам, и далее по шаблонам параметров индикатора
+                foreach(Indicator indicator in indicators)
+                {
+                    foreach(IndicatorParameterTemplate indicatorParameterTemplate in indicator.IndicatorParameterTemplates)
+                    {
+                        //ищем id текущего шаблона в диапазонах параметров
+                        bool isIdIndicatorFind = false;
+                        foreach(IndicatorParameterRange indicatorParameterRange in algorithm.IndicatorParameterRanges)
+                        {
+                            if(indicatorParameterRange.IdIndicatorParameterTemplate == indicatorParameterTemplate.Id)
+                            {
+                                isIdIndicatorFind = true;
+                            }
+                        }
+                        if(isIdIndicatorFind == false) //если параметр не найден, формируем IndicatorParameterRange и добавляем в список с диапазонами значений которые необходимо вставить
+                        {
+                            IndicatorParameterRange indicatorParameterRangeForInsert = new IndicatorParameterRange { IdAlgorithm = algorithm.Id, IdIndicatorParameterTemplate = indicatorParameterTemplate.Id };
+                            indicatorParameterRangesForInsert.Add(indicatorParameterRangeForInsert);
+                        }
+                    }
+                }
+            }
+            //вставляем диапазоны значений параметров
+            foreach(IndicatorParameterRange indicatorParameterRange1 in indicatorParameterRangesForInsert)
+            {
+                _database.InsertIndicatorParameterRange(indicatorParameterRange1);
+            }
         }
 
         public void ReadAlgorithms()
@@ -300,24 +365,31 @@ namespace ktradesystem.Models
             IndicatorParameterRanges.Clear();
 
             //данный запрос выполняет операцию FULL OUTER JOIN с помощью двух LEFT JOIN и UNION т.к. FULL OUTER JOIN не поддерживается, это нужно чтобы отсортировать записи по id индикатора к которому принадлежит параметр, чтобы в таблице значений параметров выбранных индикаторов, записи шли по индикаторам
-            DataTable dataIndicatorParameterRanges = _database.QuerySelect("SELECT ipr.*, ipt.idIndicator AS iptIdIndicator, ipt.id AS iptId, ipt.name AS iptName FROM IndicatorParameterRanges AS ipr LEFT JOIN IndicatorParameterTemplates AS ipt ON ipr.idIndicatorParameterTemplate = ipt.id    UNION ALL    SELECT ipr.*, ipt.idIndicator AS iptIdIndicator, ipt.id AS iptId, ipt.name AS iptName FROM IndicatorParameterTemplates AS ipt LEFT JOIN IndicatorParameterRanges AS ipr ON ipr.idIndicatorParameterTemplate = ipt.id    WHERE ipr.idIndicatorParameterTemplate IS NULL    ORDER BY idIndicator");
+            DataTable dataIndicatorParameterRanges = _database.QuerySelect("SELECT ipr.*, ipt.idIndicator AS iptIdIndicator, ipt.id AS iptId, ipt.name AS iptName FROM IndicatorParameterRanges AS ipr LEFT JOIN IndicatorParameterTemplates AS ipt ON ipr.idIndicatorParameterTemplate = ipt.id     UNION ALL     SELECT ipr.*, ipt.idIndicator AS iptIdIndicator, ipt.id AS iptId, ipt.name AS iptName FROM IndicatorParameterTemplates AS ipt LEFT JOIN IndicatorParameterRanges AS ipr ON ipr.idIndicatorParameterTemplate = ipt.id     WHERE ipr.idIndicatorParameterTemplate IS NULL AND ipr.id NOTNULL     ORDER BY idIndicator");
             foreach (DataRow row in dataIndicatorParameterRanges.Rows)
             {
-                bool isStepPercent = false;
-                if((int)row.Field<long>("isStepPercent") == 1)
-                {
-                    isStepPercent = true;
-                }
                 int idIndicatorParameterTemplate = (int)row.Field<long>("idIndicatorParameterTemplate");
                 Indicator indicator = new Indicator();
-                foreach(IndicatorParameterTemplate indicatorParameterTemplate in IndicatorParameterTemplates)
+                foreach (IndicatorParameterTemplate indicatorParameterTemplate in IndicatorParameterTemplates)
                 {
-                    if(indicatorParameterTemplate.Id == idIndicatorParameterTemplate)
+                    if (indicatorParameterTemplate.Id == idIndicatorParameterTemplate)
                     {
                         indicator = indicatorParameterTemplate.Indicator;
                     }
                 }
-                IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange { Id = (int)row.Field<long>("id"), MinValue = row.Field<double>("minValue"), MaxValue = row.Field<double>("maxValue"), Step = row.Field<double>("step"), IsStepPercent = isStepPercent, IdAlgorithm = (int)row.Field<long>("idAlgorithm"), IdIndicatorParameterTemplate = idIndicatorParameterTemplate, Indicator = indicator };
+                IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange { Id = (int)row.Field<long>("id"), MinValue = row.Field<double?>("minValue"), MaxValue = row.Field<double?>("maxValue"), Step = row.Field<double?>("step"), IdAlgorithm = (int)row.Field<long>("idAlgorithm"), IdIndicatorParameterTemplate = idIndicatorParameterTemplate, Indicator = indicator };
+                if((int?)row.Field<long?>("isStepPercent") != null)
+                {
+                    if((int?)row.Field<long?>("isStepPercent") == 1)
+                    {
+                        indicatorParameterRange.IsStepPercent = true;
+                    }
+                    else
+                    {
+                        indicatorParameterRange.IsStepPercent = false;
+                    }
+                }
+                
                 IndicatorParameterRanges.Add(indicatorParameterRange);
             }
 

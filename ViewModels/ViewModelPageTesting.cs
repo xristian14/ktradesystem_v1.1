@@ -28,6 +28,12 @@ namespace ktradesystem.ViewModels
             _modelData.Indicators.CollectionChanged += modelData_IndicatorsCollectionChanged;
             Indicators = _modelData.Indicators;
 
+            _modelData.IndicatorParameterTemplates.CollectionChanged += modelData_IndicatorParameterTemplatesCollectionChanged;
+            IndicatorParameterTemplates = _modelData.IndicatorParameterTemplates;
+
+            _modelData.DataSourceTemplates.CollectionChanged += modelData_DataSourceTemplatesCollectionChanged;
+            DataSourceTemplates = _modelData.DataSourceTemplates;
+
             _modelData.Algorithms.CollectionChanged += modelData_AlgorithmsCollectionChanged;
             Algorithms = _modelData.Algorithms;
 
@@ -155,12 +161,13 @@ namespace ktradesystem.ViewModels
         {
             if(SelectedIndicator != null)
             {
+                _indicatorId = SelectedIndicator.Id;
                 IndicatorName = SelectedIndicator.Name;
                 IndicatorDescription = SelectedIndicator.Description;
-                IndicatorParameterTemplates.Clear();
+                IndicatorParameterTemplatesView.Clear();
                 foreach(IndicatorParameterTemplate parameterTemplate in SelectedIndicator.IndicatorParameterTemplates)
                 {
-                    IndicatorParameterTemplates.Add(parameterTemplate);
+                    IndicatorParameterTemplatesView.Add(parameterTemplate);
                 }
                 IndicatorScript = SelectedIndicator.Script;
             }
@@ -168,7 +175,7 @@ namespace ktradesystem.ViewModels
             {
                 IndicatorName = "";
                 IndicatorDescription = "";
-                IndicatorParameterTemplates.Clear();
+                IndicatorParameterTemplatesView.Clear();
                 IndicatorScript = "";
             }
         }
@@ -194,6 +201,8 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        int _indicatorId;
 
         private string _indicatorName;
         public string IndicatorName //название индикатора
@@ -331,8 +340,8 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "Parameter." + SelectedIndicatorParameterTemplate.Name);
-                }, (obj) => SelectedIndicatorParameterTemplate != null && IsAddOrEditIndicator());
+                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "Parameter." + SelectedIndicatorParameterTemplateView.Name);
+                }, (obj) => SelectedIndicatorParameterTemplateView != null && IsAddOrEditIndicator());
             }
         }
 
@@ -564,7 +573,7 @@ namespace ktradesystem.ViewModels
                 return new DelegateCommand((obj) =>
                 {
                     List<IndicatorParameterTemplate> InsertIndicatorParameterTemplates = new List<IndicatorParameterTemplate>();
-                    foreach(IndicatorParameterTemplate item in IndicatorParameterTemplates)
+                    foreach(IndicatorParameterTemplate item in IndicatorParameterTemplatesView)
                     {
                         InsertIndicatorParameterTemplates.Add(item);
                     }
@@ -572,10 +581,24 @@ namespace ktradesystem.ViewModels
                     if (IsIndicatorAdded)
                     {
                         _modelTesting.IndicatorInsertUpdate(IndicatorName, IndicatorDescription, InsertIndicatorParameterTemplates, IndicatorScript);
+
+                        //выбираем добавленный индикатор
+                        SelectedIndicator = Indicators[Indicators.Count - 1];
                     }
                     else if(IsIndicatorEdited)
                     {
                         _modelTesting.IndicatorInsertUpdate(IndicatorName, IndicatorDescription, InsertIndicatorParameterTemplates, IndicatorScript, SelectedIndicator.Id);
+
+                        //выбираем измененный индикатор
+                        int index = -1;
+                        foreach(Indicator indicator in Indicators)
+                        {
+                            if(indicator.Id == _indicatorId)
+                            {
+                                index = Indicators.IndexOf(indicator);
+                            }
+                        }
+                        SelectedIndicator = Indicators[index];
                     }
 
                     IsIndicatorAdded = false;
@@ -640,24 +663,24 @@ return a.ToString();
 
         #region view add edit delete IndicatorParameterTemplate
 
-        private ObservableCollection<IndicatorParameterTemplate> _indicatorParameterTemplates = new ObservableCollection<IndicatorParameterTemplate>();
-        public ObservableCollection<IndicatorParameterTemplate> IndicatorParameterTemplates //шаблоны параметров индикатора
+        private ObservableCollection<IndicatorParameterTemplate> _indicatorParameterTemplatesView = new ObservableCollection<IndicatorParameterTemplate>();
+        public ObservableCollection<IndicatorParameterTemplate> IndicatorParameterTemplatesView //шаблоны параметров индикатора
         {
-            get { return _indicatorParameterTemplates; }
+            get { return _indicatorParameterTemplatesView; }
             private set
             {
-                _indicatorParameterTemplates = value;
+                _indicatorParameterTemplatesView = value;
                 OnPropertyChanged();
             }
         }
 
-        private IndicatorParameterTemplate _selectedIndicatorParameterTemplate;
-        public IndicatorParameterTemplate SelectedIndicatorParameterTemplate //выбранный шаблон параметра индикатора
+        private IndicatorParameterTemplate _selectedIndicatorParameterTemplateView;
+        public IndicatorParameterTemplate SelectedIndicatorParameterTemplateView //выбранный шаблон параметра индикатора
         {
-            get { return _selectedIndicatorParameterTemplate; }
+            get { return _selectedIndicatorParameterTemplateView; }
             set
             {
-                _selectedIndicatorParameterTemplate = value;
+                _selectedIndicatorParameterTemplateView = value;
                 OnPropertyChanged();
             }
         }
@@ -760,7 +783,7 @@ return a.ToString();
 
             //проверка на уникальность названия
             bool isUnique = true;
-            foreach (IndicatorParameterTemplate item in IndicatorParameterTemplates)
+            foreach (IndicatorParameterTemplate item in IndicatorParameterTemplatesView)
             {
                 if (name == item.Name) //проверяем имя на уникальность среди всех записей
                 {
@@ -784,7 +807,7 @@ return a.ToString();
                 {
                     string name = AddIndicatorParameterTemplateName.Replace(" ", "");
                     IndicatorParameterTemplate parameterTemplate = new IndicatorParameterTemplate { Name = name, Description = AddIndicatorParameterTemplateDescription };
-                    IndicatorParameterTemplates.Add(parameterTemplate);
+                    IndicatorParameterTemplatesView.Add(parameterTemplate);
 
                     CloseAddIndicatorParameterTemplateAction?.Invoke();
                 }, (obj) => IsFieldsAddIndicatorParameterTemplateCorrect() );
@@ -797,13 +820,13 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AddIndicatorParameterTemplateName = SelectedIndicatorParameterTemplate.Name;
-                    AddIndicatorParameterTemplateDescription = SelectedIndicatorParameterTemplate.Description;
+                    AddIndicatorParameterTemplateName = SelectedIndicatorParameterTemplateView.Name;
+                    AddIndicatorParameterTemplateDescription = SelectedIndicatorParameterTemplateView.Description;
 
                     viewmodelData.IsMainWindowEnabled = false;
                     ViewEditIndicatorParameterTemplate viewEditIndicatorParameterTemplate = new ViewEditIndicatorParameterTemplate();
                     viewEditIndicatorParameterTemplate.Show();
-                }, (obj) => SelectedIndicatorParameterTemplate != null && IsAddOrEditIndicator());
+                }, (obj) => SelectedIndicatorParameterTemplateView != null && IsAddOrEditIndicator());
             }
         }
 
@@ -840,11 +863,11 @@ return a.ToString();
 
             //проверка на уникальность названия
             bool isUnique = true;
-            foreach (IndicatorParameterTemplate item in IndicatorParameterTemplates)
+            foreach (IndicatorParameterTemplate item in IndicatorParameterTemplatesView)
             {
-                if(SelectedIndicatorParameterTemplate != null) //без этой проверки ошибка на обращение null полю, после сохранения
+                if(SelectedIndicatorParameterTemplateView != null) //без этой проверки ошибка на обращение null полю, после сохранения
                 {
-                    if (name == item.Name && name != SelectedIndicatorParameterTemplate.Name) //проверяем имя на уникальность среди всех записей кроме редактируемой
+                    if (name == item.Name && name != SelectedIndicatorParameterTemplateView.Name) //проверяем имя на уникальность среди всех записей кроме редактируемой
                     {
                         isUnique = false;
                     }
@@ -866,10 +889,10 @@ return a.ToString();
                 return new DelegateCommand((obj) =>
                 {
                     string name = AddIndicatorParameterTemplateName.Replace(" ", "");
-                    int index = IndicatorParameterTemplates.IndexOf(SelectedIndicatorParameterTemplate);
+                    int index = IndicatorParameterTemplatesView.IndexOf(SelectedIndicatorParameterTemplateView);
                     IndicatorParameterTemplate parameterTemplate = new IndicatorParameterTemplate { Name = name, Description = AddIndicatorParameterTemplateDescription };
-                    IndicatorParameterTemplates.RemoveAt(index);
-                    IndicatorParameterTemplates.Insert(index, parameterTemplate);
+                    IndicatorParameterTemplatesView.RemoveAt(index);
+                    IndicatorParameterTemplatesView.Insert(index, parameterTemplate);
 
                     CloseAddIndicatorParameterTemplateAction?.Invoke();
                 }, (obj) => IsFieldsEditIndicatorParameterTemplateCorrect());
@@ -882,16 +905,16 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    int index = IndicatorParameterTemplates.IndexOf(SelectedIndicatorParameterTemplate); //находим индекс выбранного элемента
-                    string msg = "Название: " + SelectedIndicatorParameterTemplate.Name;
+                    int index = IndicatorParameterTemplatesView.IndexOf(SelectedIndicatorParameterTemplateView); //находим индекс выбранного элемента
+                    string msg = "Название: " + SelectedIndicatorParameterTemplateView.Name;
                     string caption = "Удалить?";
                     MessageBoxButton messageBoxButton = MessageBoxButton.YesNo;
                     var result = MessageBox.Show(msg, caption, messageBoxButton);
                     if (result == MessageBoxResult.Yes)
                     {
-                        IndicatorParameterTemplates.RemoveAt(index);
+                        IndicatorParameterTemplatesView.RemoveAt(index);
                     }
-                }, (obj) => SelectedIndicatorParameterTemplate != null && IsAddOrEditIndicator() );
+                }, (obj) => SelectedIndicatorParameterTemplateView != null && IsAddOrEditIndicator() );
             }
         }
 
@@ -918,6 +941,7 @@ return a.ToString();
             {
                 _algorithms = value;
                 OnPropertyChanged();
+                SelectLatestAlgorithm(); //выбирает алгоритм который был последним выбранным
             }
         }
 
@@ -935,6 +959,17 @@ return a.ToString();
                 _selectedAlgorithm = value;
                 OnPropertyChanged();
                 SelectedAlgorithmChanged(); //помещяет в переменные редактора значения выбранного алгоритма для просмотра данного алгоритма
+            }
+        }
+
+        private void SelectLatestAlgorithm() //выбирает алгоритм который был последним выбранным
+        {
+            foreach(Algorithm algorithm in Algorithms)
+            {
+                if(algorithm.Id == _algorithmId)
+                {
+                    SelectedAlgorithm = algorithm;
+                }
             }
         }
 
@@ -975,8 +1010,11 @@ return a.ToString();
         {
             if (SelectedAlgorithm != null)
             {
+                _algorithmId = SelectedAlgorithm.Id;
                 AlgorithmName = SelectedAlgorithm.Name;
                 AlgorithmDescription = SelectedAlgorithm.Description;
+                CreateDataSourceTemplatesView();
+                CreateIndicatorParameterRangesView();
                 AlgorithmParameters.Clear();
                 foreach (AlgorithmParameter algorithmParameter in SelectedAlgorithm.AlgorithmParameters)
                 {
@@ -1014,6 +1052,8 @@ return a.ToString();
                 OnPropertyChanged();
             }
         }
+
+        private int _algorithmId; //id алгоритма
 
         private string _algorithmName;
         public string AlgorithmName //название алгоритма
@@ -1144,9 +1184,9 @@ return a.ToString();
             TooltipSaveAlgorithm.Clear(); //очищаем подсказку кнопки добавить
 
             string name = "";
-            if (IndicatorName != null)
+            if (AlgorithmName != null)
             {
-                name = IndicatorName.Replace(" ", "");
+                name = AlgorithmName.Replace(" ", "");
             }
 
             //проверка на пустое значение
@@ -1175,11 +1215,11 @@ return a.ToString();
 
             //проверка на уникальность названия
             bool isUnique = true;
-            if (IsIndicatorEdited)
+            if (IsAlgorithmEdited)
             {
-                foreach (Indicator item in Indicators)
+                foreach (Algorithm item in Algorithms)
                 {
-                    if (name == item.Name && item.Id != SelectedIndicator.Id) //проверяем имя на уникальность среди всех записей кроме редактируемой
+                    if (name == item.Name && item.Id != SelectedAlgorithm.Id) //проверяем имя на уникальность среди всех записей кроме редактируемой
                     {
                         isUnique = false;
                     }
@@ -1187,7 +1227,7 @@ return a.ToString();
             }
             else
             {
-                foreach (Indicator item in Indicators)
+                foreach (Algorithm item in Algorithms)
                 {
                     if (name == item.Name) //проверяем имя на уникальность среди всех записей
                     {
@@ -1195,11 +1235,25 @@ return a.ToString();
                     }
                 }
             }
-
             if (isUnique == false)
             {
                 result = false;
                 TooltipSaveAlgorithm.Add("Данное название уже используется.");
+            }
+
+            //проверка на заполненные значения параметров индикаторов
+            bool isFilledRanges = true;
+            foreach(IndicatorParameterRangeView indicatorParameterRangeView in IndicatorParameterRangesView)
+            {
+                if(indicatorParameterRangeView.MinValue == "")
+                {
+                    isFilledRanges = false;
+                }
+            }
+            if(isFilledRanges == false)
+            {
+                result = false;
+                TooltipSaveAlgorithm.Add("Не заполнены значения параметров индикаторов.");
             }
 
             return result;
@@ -1211,27 +1265,36 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
+                    List<DataSourceTemplate> dataSourceTemplates = new List<DataSourceTemplate>();
+                    foreach(DataSourceTemplate item in DataSourceTemplates)
+                    {
+                        DataSourceTemplate dataSourceTemplate = new DataSourceTemplate { Id = item.Id, Name = item.Name, Description = item.Description, IdAlgorithm = item.IdAlgorithm };
+                        dataSourceTemplates.Add(dataSourceTemplate);
+                    }
+
                     List<IndicatorParameterRange> indicatorParameterRanges = new List<IndicatorParameterRange>();
                     foreach(IndicatorParameterRangeView indicatorParameterRangeView in IndicatorParameterRangesView)
                     {
                         IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange {Id = indicatorParameterRangeView.Id,  MinValue = double.Parse(indicatorParameterRangeView.MinValue), MaxValue = double.Parse(indicatorParameterRangeView.MaxValue), Step = double.Parse(indicatorParameterRangeView.Step), IsStepPercent = indicatorParameterRangeView.IsStepPercent, IdAlgorithm = indicatorParameterRangeView.IdAlgorithm, IdIndicatorParameterTemplate = indicatorParameterRangeView.IdIndicatorParameterTemplate, Indicator = indicatorParameterRangeView.Indicator };
+                        indicatorParameterRanges.Add(indicatorParameterRange);
                     }
 
                     List<AlgorithmParameter> algorithmParameters = new List<AlgorithmParameter>();
                     foreach(AlgorithmParameterView algorithmParameterView in AlgorithmParametersView)
                     {
                         AlgorithmParameter algorithmParameter = new AlgorithmParameter { Id = algorithmParameterView.Id, Name = algorithmParameterView.Name, Description = algorithmParameterView.Description, MinValue = double.Parse(algorithmParameterView.MinValue), MaxValue = double.Parse(algorithmParameterView.MaxValue), Step = double.Parse(algorithmParameterView.Step), IsStepPercent = algorithmParameterView.IsStepPercent, IdAlgorithm = algorithmParameterView.IdAlgorithm };
+                        algorithmParameters.Add(algorithmParameter);
                     }
-                    /*
+                    
                     if (IsAlgorithmAdded)
                     {
-                        _modelTesting.IndicatorInsertUpdate(IndicatorName, IndicatorDescription, InsertIndicatorParameterTemplates, IndicatorScript);
+                        _modelTesting.AlgorithmInsertUpdate(AlgorithmName, AlgorithmDescription, dataSourceTemplates, indicatorParameterRanges, algorithmParameters, AlgorithmScript);
                     }
                     else if (IsAlgorithmEdited)
                     {
-                        _modelTesting.IndicatorInsertUpdate(IndicatorName, IndicatorDescription, InsertIndicatorParameterTemplates, IndicatorScript, SelectedIndicator.Id);
+                        _modelTesting.AlgorithmInsertUpdate(AlgorithmName, AlgorithmDescription, dataSourceTemplates, indicatorParameterRanges, algorithmParameters, AlgorithmScript, _algorithmId);
                     }
-                    */
+                    
                     IsIndicatorAdded = false;
                     IsIndicatorEdited = false;
                     UpdateIndicatorStatusText();
@@ -1278,13 +1341,41 @@ return a.ToString();
             }
         }
 
-        private DataSourceTemplate _selectedDataSourceTemplate;
-        public DataSourceTemplate SelectedDataSourceTemplate //выбранный шаблон источника данных
+        private void CreateDataSourceTemplatesView()
         {
-            get { return _selectedDataSourceTemplate; }
+            DataSourceTemplatesView.Clear();
+            foreach(DataSourceTemplate dataSourceTemplate in DataSourceTemplates)
+            {
+                if(dataSourceTemplate.IdAlgorithm == _algorithmId)
+                {
+                    DataSourceTemplatesView.Add(dataSourceTemplate);
+                }
+            }
+        }
+
+        private void modelData_DataSourceTemplatesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            DataSourceTemplates = (ObservableCollection<DataSourceTemplate>)sender;
+        }
+
+        private ObservableCollection<DataSourceTemplate> _dataSourceTemplatesView = new ObservableCollection<DataSourceTemplate>();
+        public ObservableCollection<DataSourceTemplate> DataSourceTemplatesView //шаблоны источников данных для выбранного алгоритма
+        {
+            get { return _dataSourceTemplatesView; }
+            private set
+            {
+                _dataSourceTemplatesView = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private DataSourceTemplate _SelectedDataSourceTemplateView;
+        public DataSourceTemplate SelectedDataSourceTemplateView //выбранный шаблон источника данных для выбранного алгоритма
+        {
+            get { return _SelectedDataSourceTemplateView; }
             set
             {
-                _selectedDataSourceTemplate = value;
+                _SelectedDataSourceTemplateView = value;
                 OnPropertyChanged();
             }
         }
@@ -1424,13 +1515,13 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AddDataSourceTemplateName = SelectedDataSourceTemplate.Name;
-                    AddDataSourceTemplateDescription = SelectedDataSourceTemplate.Description;
+                    AddDataSourceTemplateName = SelectedDataSourceTemplateView.Name;
+                    AddDataSourceTemplateDescription = SelectedDataSourceTemplateView.Description;
 
                     viewmodelData.IsMainWindowEnabled = false;
                     ViewEditDataSourceTemplate viewEditDataSourceTemplate = new ViewEditDataSourceTemplate();
                     viewEditDataSourceTemplate.Show();
-                }, (obj) => SelectedDataSourceTemplate != null && IsAddOrEditAlgorithm());
+                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
             }
         }
 
@@ -1469,9 +1560,9 @@ return a.ToString();
             bool isUnique = true;
             foreach (DataSourceTemplate item in DataSourceTemplates)
             {
-                if (SelectedDataSourceTemplate != null) //без этой проверки ошибка на обращение null полю, после сохранения
+                if (SelectedDataSourceTemplateView != null) //без этой проверки ошибка на обращение null полю, после сохранения
                 {
-                    if (name == item.Name && name != SelectedDataSourceTemplate.Name) //проверяем имя на уникальность среди всех записей кроме редактируемой
+                    if (name == item.Name && name != SelectedDataSourceTemplateView.Name) //проверяем имя на уникальность среди всех записей кроме редактируемой
                     {
                         isUnique = false;
                     }
@@ -1493,7 +1584,7 @@ return a.ToString();
                 return new DelegateCommand((obj) =>
                 {
                     string name = AddDataSourceTemplateName.Replace(" ", "");
-                    int index = DataSourceTemplates.IndexOf(SelectedDataSourceTemplate);
+                    int index = DataSourceTemplates.IndexOf(SelectedDataSourceTemplateView);
                     DataSourceTemplate dataSourceTemplate = new DataSourceTemplate { Name = name, Description = AddDataSourceTemplateDescription };
                     DataSourceTemplates.RemoveAt(index);
                     DataSourceTemplates.Insert(index, dataSourceTemplate);
@@ -1509,8 +1600,8 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    int index = DataSourceTemplates.IndexOf(SelectedDataSourceTemplate); //находим индекс выбранного элемента
-                    string msg = "Название: " + SelectedDataSourceTemplate.Name;
+                    int index = DataSourceTemplates.IndexOf(SelectedDataSourceTemplateView); //находим индекс выбранного элемента
+                    string msg = "Название: " + SelectedDataSourceTemplateView.Name;
                     string caption = "Удалить?";
                     MessageBoxButton messageBoxButton = MessageBoxButton.YesNo;
                     var result = MessageBox.Show(msg, caption, messageBoxButton);
@@ -1518,7 +1609,7 @@ return a.ToString();
                     {
                         DataSourceTemplates.RemoveAt(index);
                     }
-                }, (obj) => SelectedDataSourceTemplate != null && IsAddOrEditAlgorithm());
+                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
             }
         }
 
@@ -1534,6 +1625,22 @@ return a.ToString();
 
 
         #region view edit IndicatorParameterRange    view add delete AlgorithmIndicators
+
+        private ObservableCollection<IndicatorParameterTemplate> _indicatorParameterTemplates = new ObservableCollection<IndicatorParameterTemplate>();
+        public ObservableCollection<IndicatorParameterTemplate> IndicatorParameterTemplates //шаблоны параметров индикатора
+        {
+            get { return _indicatorParameterTemplates; }
+            private set
+            {
+                _indicatorParameterTemplates = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private void modelData_IndicatorParameterTemplatesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            IndicatorParameterTemplates = (ObservableCollection<IndicatorParameterTemplate>)sender;
+        }
 
         private ObservableCollection<IndicatorParameterRangeView> _indicatorParameterRangesView = new ObservableCollection<IndicatorParameterRangeView>();
         public ObservableCollection<IndicatorParameterRangeView> IndicatorParameterRangesView //диапазоны значений параметров индикаторов
@@ -1554,6 +1661,36 @@ return a.ToString();
             {
                 _selectedIndicatorParameterRangeView = value;
                 OnPropertyChanged();
+            }
+        }
+
+        private void CreateIndicatorParameterRangesView()
+        {
+            IndicatorParameterRangesView.Clear();
+
+            foreach(IndicatorParameterRange indicatorParameterRange in SelectedAlgorithm.IndicatorParameterRanges)
+            {
+                int index = -1;
+                foreach(IndicatorParameterTemplate indicatorParameterTemplate in IndicatorParameterTemplates)
+                {
+                    if(indicatorParameterTemplate.Id == indicatorParameterRange.IdIndicatorParameterTemplate)
+                    {
+                        index = IndicatorParameterTemplates.IndexOf(indicatorParameterTemplate);
+                    }
+                }
+                string rangeValuesView = indicatorParameterRange.MinValue != null? indicatorParameterRange.MinValue.ToString() + " – " + indicatorParameterRange.MaxValue.ToString() : "";
+                string stepView = "";
+                if (indicatorParameterRange.Step != null && indicatorParameterRange.IsStepPercent != null)
+                {
+                    stepView += indicatorParameterRange.Step.ToString();
+                    if (indicatorParameterRange.IsStepPercent == true)
+                    {
+                        stepView += "%";
+                    }
+                }
+
+                IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { Id = indicatorParameterRange.Id, MinValue = indicatorParameterRange.MinValue.ToString(), MaxValue = indicatorParameterRange.MaxValue.ToString(), Step = indicatorParameterRange.Step.ToString(), IsStepPercent = indicatorParameterRange.IsStepPercent, IdAlgorithm = indicatorParameterRange.IdAlgorithm, IdIndicatorParameterTemplate = indicatorParameterRange.IdIndicatorParameterTemplate, Indicator = indicatorParameterRange.Indicator, NameIndicator = indicatorParameterRange.Indicator.Name, NameIndicatorParameterTemplate = IndicatorParameterTemplates[index].Name, DescriptionIndicatorParameterTemplate = IndicatorParameterTemplates[index].Description, RangeValuesView = rangeValuesView, StepView = stepView };
+                IndicatorParameterRangesView.Add(indicatorParameterRangeView);
             }
         }
 
@@ -1600,7 +1737,7 @@ return a.ToString();
                     //добавляет parameterTemplates в IndicatorParameterRangesView
                     foreach(IndicatorParameterTemplate item in SelectedIndicator.IndicatorParameterTemplates)
                     {
-                        IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { IdIndicatorParameterTemplate = item.Id, Indicator = item.Indicator, NameIndicator = item.Indicator.Name, NameIndicatorParameterTemplate = item.Name, DescriptionIndicatorParameterTemplate = item.Description };
+                        IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { MinValue = "", MaxValue = "", Step = "", IdIndicatorParameterTemplate = item.Id, Indicator = item.Indicator, NameIndicator = item.Indicator.Name, NameIndicatorParameterTemplate = item.Name, DescriptionIndicatorParameterTemplate = item.Description };
                         if (nextIdIndex == -1)
                         {
                             IndicatorParameterRangesView.Add(indicatorParameterRangeView);
@@ -1724,7 +1861,7 @@ return a.ToString();
                     EditIndicatorParameterRangesViewMaxValue = SelectedIndicatorParameterRangeView.MaxValue != null ? SelectedIndicatorParameterRangeView.MaxValue : null;
                     EditIndicatorParameterRangesViewStep = SelectedIndicatorParameterRangeView.Step != null ? SelectedIndicatorParameterRangeView.Step : null;
 
-                    if (SelectedIndicatorParameterRangeView.IsStepPercent)
+                    if (SelectedIndicatorParameterRangeView.IsStepPercent == true)
                     {
                         EditIndicatorParameterRangesViewSelectedTypeStep = EditIndicatorParameterRangesViewTypesStep[0];
                     }

@@ -39,7 +39,7 @@
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
-                                    <GridViewColumn Header="Стандарт." Width="{Binding ElementName=helperInd4, Path=ActualWidth}">
+                                    <GridViewColumn Header="Стандартный" Width="{Binding ElementName=helperInd4, Path=ActualWidth}">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <CheckBox IsChecked="{Binding IsStandart}" IsHitTestVisible="False" Focusable="False"/>
@@ -54,7 +54,7 @@
                                 <ColumnDefinition Width="37"/>
                                 <ColumnDefinition Width="1*"/>
                                 <ColumnDefinition Width="1.5*"/>
-                                <ColumnDefinition Width="57"/>
+                                <ColumnDefinition Width="77"/>
                                 <ColumnDefinition Width="33"/>
                             </Grid.ColumnDefinitions>
                             <Grid Grid.Column="0" x:Name="helperInd1"/>
@@ -85,7 +85,7 @@
                                     <Button Content="Редактировать" Command="{Binding EditIndicatorParameterTemplate_Click}" Width="95" Margin="7 0 0 0"/>
                                     <Button Content="Удалить" Command="{Binding DeleteIndicatorParameterTemplate_Click}" Width="60" Margin="7 0 0 0"/>
                                 </StackPanel>
-                                <ListView ItemsSource="{Binding IndicatorParameterTemplates, Mode=OneWay}" SelectedItem="{Binding SelectedIndicatorParameterTemplate, Mode=OneWayToSource}" SelectionMode="Single" Height="110">
+                                <ListView ItemsSource="{Binding IndicatorParameterTemplatesView, Mode=OneWay}" SelectedItem="{Binding SelectedIndicatorParameterTemplateView, Mode=OneWayToSource}" SelectionMode="Single" Height="110">
                                     <ListView.View>
                                         <GridView>
                                             <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="{Binding ElementName=helperIndPar1, Path=ActualWidth}"/>
@@ -229,7 +229,7 @@
                             <Button Content="Редактировать" Command="{Binding EditDataSourceTemplate_Click}" Width="95" Margin="7 0 0 0"/>
                             <Button Content="Удалить" Command="{Binding DeleteDataSourceTemplate_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView Grid.Row="2" ItemsSource="{Binding DataSourceTemplates, Mode=OneWay}" SelectedItem="{Binding SelectedDataSourceTemplate, Mode=OneWayToSource}" SelectionMode="Single" Height="90">
+                        <ListView Grid.Row="2" ItemsSource="{Binding DataSourceTemplatesView, Mode=OneWay}" SelectedItem="{Binding SelectedDataSourceTemplateView, Mode=OneWayToSource}" SelectionMode="Single" Height="90">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="{Binding ElementName=helperDsTemp1, Path=ActualWidth}"/>

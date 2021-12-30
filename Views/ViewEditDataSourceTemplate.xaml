@@ -10,7 +10,7 @@
         <StackPanel Orientation="Vertical" Margin="10" Width="240">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Текущее название:"/>
-                <TextBlock Text="{Binding SelectedDataSourceTemplate.Name}" Margin="5 0 0 0"/>
+                <TextBlock Text="{Binding SelectedDataSourceTemplateView.Name}" Margin="5 0 0 0"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
                 <TextBlock Text="Название"/>

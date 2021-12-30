@@ -306,7 +306,7 @@ namespace ktradesystem.Models
         public void UpdateAlgorithmParameter(AlgorithmParameter algorithmParameter)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "UPDATE algorithmParameters SET name = :name, description = :description, minValue = :minValue, maxValue = :maxValue, step = :step, isStepPercent = :isStepPercent WHERE id = :id";
+            command.CommandText = "UPDATE AlgorithmParameters SET name = :name, description = :description, minValue = :minValue, maxValue = :maxValue, step = :step, isStepPercent = :isStepPercent WHERE id = :id";
             command.Parameters.AddWithValue("name", algorithmParameter.Name);
             command.Parameters.AddWithValue("description", algorithmParameter.Description);
             command.Parameters.AddWithValue("minValue", algorithmParameter.MinValue);

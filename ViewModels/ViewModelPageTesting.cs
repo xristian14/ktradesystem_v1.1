@@ -1016,18 +1016,14 @@ return a.ToString();
                 CreateDataSourceTemplatesView();
                 CreateIndicatorParameterRangesView();
                 UpdateAlgorithmIndicators();
-                AlgorithmParameters.Clear();
-                foreach (AlgorithmParameter algorithmParameter in SelectedAlgorithm.AlgorithmParameters)
-                {
-                    AlgorithmParameters.Add(algorithmParameter);
-                }
+                CreateAlgorithmParameters();
                 AlgorithmScript = SelectedAlgorithm.Script;
             }
             else
             {
                 AlgorithmName = "";
                 AlgorithmDescription = "";
-                AlgorithmParameters.Clear();
+                AlgorithmParametersView.Clear();
                 AlgorithmScript = "";
             }
         }
@@ -2022,6 +2018,21 @@ return a.ToString();
             }
         }
 
+        private void CreateAlgorithmParameters()
+        {
+            AlgorithmParametersView.Clear();
+            foreach (AlgorithmParameter algorithmParameter in SelectedAlgorithm.AlgorithmParameters)
+            {
+                string rangeValuesView = algorithmParameter.MinValue.ToString() + " – " + algorithmParameter.MaxValue.ToString();
+                string stepView = algorithmParameter.Step.ToString();
+                if (algorithmParameter.IsStepPercent == true)
+                {
+                    stepView += "%";
+                }
+                AlgorithmParametersView.Add(new AlgorithmParameterView { Id = algorithmParameter.Id, Name = algorithmParameter.Name, Description = algorithmParameter.Description, MinValue = algorithmParameter.MinValue.ToString(), MaxValue = algorithmParameter.MaxValue.ToString(), Step = algorithmParameter.Step.ToString(), IsStepPercent = algorithmParameter.IsStepPercent, IdAlgorithm = algorithmParameter.IdAlgorithm, RangeValuesView = rangeValuesView, StepView = stepView });
+            }
+        }
+        
         private string _algorithmParameterName;
         public string AlgorithmParameterName //название параметра алгоритма
         {

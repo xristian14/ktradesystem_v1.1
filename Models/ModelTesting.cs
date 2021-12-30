@@ -159,8 +159,8 @@ namespace ktradesystem.Models
 
 
                 //обновляем макеты источников данных
-                List<DataSourceTemplate> updateDatSouTem = new List<DataSourceTemplate>(); //список с записями которые нужно добавить
-                List<DataSourceTemplate> addDatSouTem = new List<DataSourceTemplate>(); //список с id записи которую нужно обновить, и новые данные для этой записи
+                List<DataSourceTemplate> updateDatSouTem = new List<DataSourceTemplate>(); //список с id записи которую нужно обновить, и новые данные для этой записи
+                List<DataSourceTemplate> addDatSouTem = new List<DataSourceTemplate>(); //список с записями которые нужно добавить
                 List<int> deleteDatSouTem = new List<int>(); //список с id записей которые нужно удалить
 
                 int maxLengthDataSourceTemplate = dataSourceTemplates.Count;
@@ -175,7 +175,8 @@ namespace ktradesystem.Models
                     {
                         if(dataSourceTemplates[i].Name != oldAlgorithm.DataSourceTemplates[i].Name || dataSourceTemplates[i].Description != oldAlgorithm.DataSourceTemplates[i].Description)
                         {
-                            updateDatSouTem.Add(new DataSourceTemplate { Name = dataSourceTemplates[i].Name, Description = dataSourceTemplates[i].Description });
+                            dataSourceTemplates[i].Id = oldAlgorithm.DataSourceTemplates[i].Id;
+                            updateDatSouTem.Add(dataSourceTemplates[i]);
                         }
                     }
                     else if(dataSourceTemplates.Count > i && oldAlgorithm.DataSourceTemplates.Count <= i)
@@ -206,8 +207,8 @@ namespace ktradesystem.Models
 
 
                 //обновляем диапазоны значений параметров индикаторов
-                List<IndicatorParameterRange> updateIndParRan = new List<IndicatorParameterRange>(); //список с записями которые нужно добавить
-                List<IndicatorParameterRange> addIndParRan = new List<IndicatorParameterRange>(); //список с id записи которую нужно обновить, и новые данные для этой записи
+                List<IndicatorParameterRange> updateIndParRan = new List<IndicatorParameterRange>(); //список с id записи которую нужно обновить, и новые данные для этой записи
+                List<IndicatorParameterRange> addIndParRan = new List<IndicatorParameterRange>(); //список с записями которые нужно добавить
                 List<int> deleteIndParRan = new List<int>(); //список с id записей которые нужно удалить
 
                 int maxLengthIndicatorParameterRange = indicatorParameterRanges.Count;
@@ -222,6 +223,7 @@ namespace ktradesystem.Models
                     {
                         if (indicatorParameterRanges[i].MinValue != oldAlgorithm.IndicatorParameterRanges[i].MinValue || indicatorParameterRanges[i].MaxValue != oldAlgorithm.IndicatorParameterRanges[i].MaxValue || indicatorParameterRanges[i].Step != oldAlgorithm.IndicatorParameterRanges[i].Step || indicatorParameterRanges[i].IsStepPercent != oldAlgorithm.IndicatorParameterRanges[i].IsStepPercent)
                         {
+                            indicatorParameterRanges[i].Id = oldAlgorithm.IndicatorParameterRanges[i].Id;
                             updateIndParRan.Add(indicatorParameterRanges[i]);
                         }
                     }
@@ -253,8 +255,8 @@ namespace ktradesystem.Models
 
 
                 //обновляем параметры алгоритма
-                List<AlgorithmParameter> updateAlgPar = new List<AlgorithmParameter>(); //список с записями которые нужно добавить
-                List<AlgorithmParameter> addAlgPar = new List<AlgorithmParameter>(); //список с id записи которую нужно обновить, и новые данные для этой записи
+                List<AlgorithmParameter> updateAlgPar = new List<AlgorithmParameter>(); //список с id записи которую нужно обновить, и новые данные для этой записи
+                List<AlgorithmParameter> addAlgPar = new List<AlgorithmParameter>(); //список с записями которые нужно добавить
                 List<int> deleteAlgPar = new List<int>(); //список с id записей которые нужно удалить
 
                 int maxLengthAlgorithmParameter = algorithmParameters.Count;
@@ -269,6 +271,7 @@ namespace ktradesystem.Models
                     {
                         if (algorithmParameters[i].Name != oldAlgorithm.AlgorithmParameters[i].Name || algorithmParameters[i].Description != oldAlgorithm.AlgorithmParameters[i].Description || algorithmParameters[i].MinValue != oldAlgorithm.AlgorithmParameters[i].MinValue || algorithmParameters[i].MaxValue != oldAlgorithm.AlgorithmParameters[i].MaxValue || algorithmParameters[i].Step != oldAlgorithm.AlgorithmParameters[i].Step || algorithmParameters[i].IsStepPercent != oldAlgorithm.AlgorithmParameters[i].IsStepPercent)
                         {
+                            algorithmParameters[i].Id = oldAlgorithm.AlgorithmParameters[i].Id;
                             updateAlgPar.Add(algorithmParameters[i]);
                         }
                     }

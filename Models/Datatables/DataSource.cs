@@ -18,6 +18,6 @@ namespace ktradesystem.Models.Datatables
         public double Comission { get; set; } //комиссия на одну операцию, куплю или продажу
         public double PriceStep { get; set; } //шаг цены для 1 пункта
         public double CostPriceStep { get; set; } //стоимость шага цены в 1 пункт
-        public string Files { get; set; } //пути к файлам источника данных
+        public List<DataSourceFile> DataSourceFiles { get; set; } //файлы
     }
 }

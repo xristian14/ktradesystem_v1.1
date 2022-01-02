@@ -691,7 +691,7 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    viewmodelData.IsMainWindowEnabled = false;
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewAddIndicatorParameterTemplate viewAddIndicatorParameterTemplate = new ViewAddIndicatorParameterTemplate();
                     viewAddIndicatorParameterTemplate.Show();
                 }, (obj) => IsAddOrEditIndicator() );
@@ -722,7 +722,7 @@ return a.ToString();
 
         public void AddIndicatorParameterTemplate_Closing(object sender, CancelEventArgs e)
         {
-            viewmodelData.IsMainWindowEnabled = true;
+            viewmodelData.IsPagesAndMainMenuButtonsEnabled = true;
             CloseAddIndicatorParameterTemplateAction = null; //сбрасываем Action, чтобы при инициализации нового окна в него поместился метод его закрытия
         }
 
@@ -823,7 +823,7 @@ return a.ToString();
                     AddIndicatorParameterTemplateName = SelectedIndicatorParameterTemplateView.Name;
                     AddIndicatorParameterTemplateDescription = SelectedIndicatorParameterTemplateView.Description;
 
-                    viewmodelData.IsMainWindowEnabled = false;
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewEditIndicatorParameterTemplate viewEditIndicatorParameterTemplate = new ViewEditIndicatorParameterTemplate();
                     viewEditIndicatorParameterTemplate.Show();
                 }, (obj) => SelectedIndicatorParameterTemplateView != null && IsAddOrEditIndicator());
@@ -1383,7 +1383,7 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
-                    viewmodelData.IsMainWindowEnabled = false;
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewAddDataSourceTemplate viewAddDataSourceTemplate = new ViewAddDataSourceTemplate();
                     viewAddDataSourceTemplate.Show();
                 }, (obj) => IsAddOrEditAlgorithm());
@@ -1414,7 +1414,7 @@ return a.ToString();
 
         public void AddDataSourceTemplate_Closing(object sender, CancelEventArgs e)
         {
-            viewmodelData.IsMainWindowEnabled = true;
+            viewmodelData.IsPagesAndMainMenuButtonsEnabled = true;
             CloseAddDataSourceTemplateAction = null; //сбрасываем Action, чтобы при инициализации нового окна в него поместился метод его закрытия
         }
 
@@ -1515,7 +1515,7 @@ return a.ToString();
                     AddDataSourceTemplateName = SelectedDataSourceTemplateView.Name;
                     AddDataSourceTemplateDescription = SelectedDataSourceTemplateView.Description;
 
-                    viewmodelData.IsMainWindowEnabled = false;
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewEditDataSourceTemplate viewEditDataSourceTemplate = new ViewEditDataSourceTemplate();
                     viewEditDataSourceTemplate.Show();
                 }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
@@ -1867,7 +1867,7 @@ return a.ToString();
                         EditIndicatorParameterRangesViewSelectedTypeStep = EditIndicatorParameterRangesViewTypesStep[1];
                     }
 
-                    viewmodelData.IsMainWindowEnabled = false;
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewEditIndicatorParameterRangesView viewEditIndicatorParameterRangesView = new ViewEditIndicatorParameterRangesView();
                     viewEditIndicatorParameterRangesView.Show();
                 }, (obj) => SelectedIndicatorParameterRangeView != null && IsAddOrEditAlgorithm());
@@ -2123,7 +2123,7 @@ return a.ToString();
                     AlgorithmParameterstep = "";
                     AlgorithmParameterselectedTypeStep = AlgorithmParameterTypesStep[0];
 
-                    viewmodelData.IsMainWindowEnabled = false;
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     AddAlgorithmParameter addAlgorithmParameter = new AddAlgorithmParameter();
                     addAlgorithmParameter.Show();
 
@@ -2273,7 +2273,7 @@ return a.ToString();
                         AlgorithmParameterselectedTypeStep = AlgorithmParameterTypesStep[1];
                     }
 
-                    viewmodelData.IsMainWindowEnabled = false;
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     EditAlgorithmParameter editAlgorithmParameter = new EditAlgorithmParameter();
                     editAlgorithmParameter.Show();
 

@@ -218,10 +218,9 @@ namespace ktradesystem.ViewModels
                 }
                 //формирует список файлов
                 List<string> files = new List<string>();
-                string[] filesArr = dsItem.Files.Split('|');
-                foreach(string file in filesArr)
+                foreach (DataSourceFile dataSourceFile in dsItem.DataSourceFiles)
                 {
-                    files.Add(file);
+                    files.Add(dataSourceFile.Path);
                 }
 
                 DataSourceView dsView = new DataSourceView { Id = dsItem.Id, Name = dsItem.Name, Currency = currencyName, Interval = intervalName, Instrument = instrumentName, Cost = dsItem.Cost, Comissiontype = dsItem.Comissiontype, Comission = dsItem.Comission, ComissionView = comission, PriceStep = dsItem.PriceStep, CostPriceStep = dsItem.CostPriceStep, Files = files };
@@ -320,7 +319,7 @@ namespace ktradesystem.ViewModels
                     Comissiontype1 = true;
                     Comissiontype2 = false;
 
-                    viewmodelData.IsMainWindowEnabled = false;
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewAddDataSource viewAddDataSource = new ViewAddDataSource();
                     viewAddDataSource.Show();
                 }, (obj) => true);
@@ -381,7 +380,7 @@ namespace ktradesystem.ViewModels
                         AddDataSourceFolder = "";
                     }
 
-                    viewmodelData.IsMainWindowEnabled = false;
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewEditDataSource viewEditDataSource = new ViewEditDataSource();
                     viewEditDataSource.Show();
                     
@@ -532,7 +531,7 @@ namespace ktradesystem.ViewModels
             AddDataSourceFolder = null; //сбрасываем название папки
             FilesUnselected.Clear(); //очищаем список файлы
             FilesSelected.Clear();
-            viewmodelData.IsMainWindowEnabled = true;
+            viewmodelData.IsPagesAndMainMenuButtonsEnabled = true;
             CloseAddDataSourceAction = null; //сбрасываем Action, чтобы при инициализации нового окна в него поместился метод его закрытия
         }
 
@@ -711,18 +710,18 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    //формирует строку с файлами
-                    string AddDsFiles = "";
+                    //формирует список с файлами
+                    List<DataSourceFile> dataSourceFiles = new List<DataSourceFile>();
                     foreach(string item in FilesSelected)
                     {
-                        AddDsFiles += AddDataSourceFolder + "\\" + item + "|";
+                        DataSourceFile dataSourceFile = new DataSourceFile { Path = item };
+                        dataSourceFiles.Add(dataSourceFile);
                     }
-                    AddDsFiles = AddDsFiles.Remove(AddDsFiles.Length - 1);
                     //формирует addInstrument
                     Instrument addInstrument = null;
                     foreach (Instrument instrument in Instruments)
                     {
-                        if(instrument.Name == AddDsInstrument)
+                        if (instrument.Name == AddDsInstrument)
                         {
                             addInstrument = instrument;
                         }
@@ -751,7 +750,7 @@ namespace ktradesystem.ViewModels
                     {
                         cost = costdouble;
                     }
-                    _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, addInstrument, addCurrency, cost, addComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), AddDsFiles);
+                    _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, addInstrument, addCurrency, cost, addComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles);
                     CloseAddDataSourceAction?.Invoke();
                 }, (obj) => IsFieldsAddDataSourceCurrect());
             }
@@ -835,13 +834,13 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    //формирует строку с файлами
-                    string AddDsFiles = "";
+                    //формирует список с файлами
+                    List<DataSourceFile> dataSourceFiles = new List<DataSourceFile>();
                     foreach (string item in FilesSelected)
                     {
-                        AddDsFiles += AddDataSourceFolder + "\\" + item + "|";
+                        DataSourceFile dataSourceFile = new DataSourceFile { Path = item };
+                        dataSourceFiles.Add(dataSourceFile);
                     }
-                    AddDsFiles = AddDsFiles.Remove(AddDsFiles.Length - 1);
                     //формирует addInstrument
                     Instrument addInstrument = null;
                     foreach (Instrument instrument in Instruments)
@@ -874,7 +873,7 @@ namespace ktradesystem.ViewModels
                     if(double.TryParse(AddDsCost, out double costdouble)){
                         cost = costdouble;
                     }
-                    _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, addInstrument, addCurrency, cost, addComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), AddDsFiles, EditDsId);
+                    _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, addInstrument, addCurrency, cost, addComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles, EditDsId);
 
                     CloseAddDataSourceAction?.Invoke();
                 }, (obj) => IsFieldsEditDataSourceCurrect());

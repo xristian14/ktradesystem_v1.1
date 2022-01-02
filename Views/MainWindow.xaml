@@ -6,10 +6,12 @@
         xmlns:local="clr-namespace:ktradesystem"
         mc:Ignorable="d"
         Title="Khristian Trade System" Height="720" Width="1280" WindowState="Maximized">
-    <Grid IsEnabled="{Binding IsMainWindowEnabled}">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="25"/>
             <RowDefinition Height="1*"/>
+            <!--<RowDefinition Height="{Binding StatusBarHeight}"/>-->
+            <RowDefinition Height="25"/>
             <RowDefinition Height="90"/>
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
@@ -19,8 +21,20 @@
                 <Button Content="Настройки" Command="{Binding MenuSettings_Click}" Height="25" Width="74" Margin="5 0 0 0"/>
             </StackPanel>
         </Grid>
-        <Frame Grid.Row="1" Content="{Binding CurrentPage}" NavigationUIVisibility="Hidden"/>
-        <Grid Grid.Row="2">
+        <Frame IsEnabled="{Binding IsPagesAndMainMenuButtonsEnabled}" Grid.Row="1" Content="{Binding CurrentPage}" NavigationUIVisibility="Hidden"/>
+        <StackPanel Grid.Row="2" Orientation="Vertical" Background="#FFF1F1F1">
+            <StackPanel Visibility="{Binding StatusBarDataSourceVisibility}" Orientation="Horizontal" Margin="0 3 0 0">
+                <TextBlock Text="Добавление источника данных" Height="18" Margin="15 0 0 0"/>
+                <TextBlock Text="Считывание файлов:" Height="18" Margin="15 0 0 0"/>
+                <TextBlock Text="{Binding StatusBarDataSourceDoneText}" Width="40" Height="18" Margin="7 0 0 0"/>
+                <TextBlock Text="{Binding StatusBarDataSourceDonePercent}" Width="26" Height="18" Margin="7 0 0 0"/>
+                <TextBlock Text="Осталось:" Height="18" Margin="15 0 0 0"/>
+                <TextBlock Text="{Binding StatusBarDataSourceRemainingTime}" Width="50" Height="18" Margin="7 0 0 0"/>
+                <ProgressBar Value="{Binding StatusBarDataSourceProgressValue, Mode=OneWay}" Minimum="{Binding StatusBarDataSourceProgressMinValue}" Maximum="{Binding StatusBarDataSourceProgressMaxValue}" Height="18" Width="130" Margin="15 0 0 0"/>
+                <Button Content="Отменить" Command="{Binding StatusBarDataSourceCancel_Click}" Height="20" Width="59" Margin="7 0 0 0" Padding="1,0"/>
+            </StackPanel>
+        </StackPanel>
+        <Grid Grid.Row="3">
             <ListView ItemsSource="{Binding MainMessages}">
                 <ListView.View>
                     <GridView>

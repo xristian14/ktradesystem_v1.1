@@ -38,22 +38,15 @@ namespace ktradesystem.Models
         private ObservableCollection<DataSource> _dataSources = new ObservableCollection<DataSource>();
         
         //создание объекта из данных которые набрал пользователь и добавление в DataSources
-        public void CreateDataSourceInsertUpdate(string name, Instrument instrument, Currency currency, double? cost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, string files, int id = -1) //метод проверяет присланные данные на корректность и вызывает метод добавления записи в бд или обновления существующей записи если был прислан id
+        public void CreateDataSourceInsertUpdate(string name, Instrument instrument, Currency currency, double? cost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, List<DataSourceFile> dataSourceFiles, int id = -1) //метод проверяет присланные данные на корректность и вызывает метод добавления записи в бд или обновления существующей записи если был прислан id
         {
             List<Interval> intervalsInFiles = new List<Interval>(); //список с интервалами файлов, чтобы проверить, имеют ли все файлы одинаковые интервалы
             List<DateTime[]> datesInFiles = new List<DateTime[]>(); //список с первыми тремя датами файлов, чтобы определить интервал, а так же проверить, нет ли дублирующихся дат в разных файлах
             //удостоверяемся в том что все файлы имеют допустимый формат данных
             bool isAllFilesCorrect = true; //правильный и формат файлов
-            //формирует массив с файлами из строки
-            List<string> filesList = new List<string>();
-            string[] filesArr = files.Split('|');
-            foreach (string file in filesArr)
+            foreach (DataSourceFile item in dataSourceFiles)
             {
-                filesList.Add(file);
-            }
-            foreach (string item in filesList)
-            {
-                FileStream fileStream = new FileStream(item, FileMode.Open, FileAccess.Read);
+                FileStream fileStream = new FileStream(item.Path, FileMode.Open, FileAccess.Read);
                 StreamReader streamReader = new StreamReader(fileStream);
                 bool isFileCorrect = true; //правильный ли формат данного файла
                 string header = streamReader.ReadLine();
@@ -207,7 +200,7 @@ namespace ktradesystem.Models
                 }
             }
             
-            //если все корректно, сортируем файлы по датам, создаем объект, добавляем в список DataSources и записываем в БД
+            //если все корректно, сортируем файлы по датам, создаем периоды с временем работы биржы для файлов, и записываем в БД
             if (isAllFilesCorrect)
             {
                 //сортируем файлы
@@ -217,7 +210,7 @@ namespace ktradesystem.Models
                     firstDates.Add(datesInFiles[i][0]);
                 }
                 DateTime saveDate; //первая дата файла для сохранения после удаления из элемента списка
-                string saveFile; //путь к файлу для сохранения после удаления из элемента списка
+                DataSourceFile saveFile; //элемент файла для сохранения после удаления из элемента списка
                 for (int i = 0; i < firstDates.Count; i++)
                 {
                     for (int k = 0; k < firstDates.Count - 1; k++)
@@ -228,18 +221,54 @@ namespace ktradesystem.Models
                             firstDates[k] = firstDates[k + 1];
                             firstDates[k + 1] = saveDate;
 
-                            saveFile = filesList[k];
-                            filesList[k] = filesList[k + 1];
-                            filesList[k + 1] = saveFile;
+                            saveFile = dataSourceFiles[k];
+                            dataSourceFiles[k] = dataSourceFiles[k + 1];
+                            dataSourceFiles[k + 1] = saveFile;
                         }
                     }
                 }
-                string filesSorted = "";
-                foreach(string itemFilesList in filesList)
+
+                //определяем время работы биржи для файлов, распараллеливая это на несколько ядер
+                int processorCount = Environment.ProcessorCount; //количество создаваемых потоков
+                //для настройки с оставлением 1 потока на ютуб, сделать так чтобы минимум 1 оставался в работе
+                var tasks = new Task[processorCount]; //задачи
+                for(int i = 0; i < dataSourceFiles.Count; i++)
                 {
-                    filesSorted += itemFilesList + "|";
+                    if(i < processorCount)
+                    {
+                        DataSourceFile dataSourceFile = dataSourceFiles[i];
+                        tasks[i] = Task.Run(() => DefiningFileWorkingPeriods(dataSourceFile));
+                    }
+                    else
+                    {
+                        int indexCompleted = Task.WaitAny(tasks);
+                        DataSourceFile dataSourceFile = dataSourceFiles[i];
+                        tasks[indexCompleted] = Task.Run(() => DefiningFileWorkingPeriods(dataSourceFile));
+                    }
                 }
-                filesSorted = filesSorted.Remove(filesSorted.Length - 1);
+                Task.WaitAll(tasks);
+                /*
+                for (int i = 0; i < tests.Count; i++)
+            {
+                if(i < processorCount)
+                {
+                    tasksCompleted[i] += 1;
+                    Test test = tests[i];
+                    int b = i;
+                    tasks[i] = Task.Run(() => Calculate(test, b));
+                }
+                else
+                {
+                    int indexCompleted = Task.WaitAny(tasks);
+                    tasksCompleted[indexCompleted] += 1;
+                    Test test = tests[i];
+                    int b = i;
+                    tasks[indexCompleted] = Task.Run(() => Calculate(test, b));
+                }
+            }
+            Task.WaitAll(tasks);
+                 */
+
                 bool isAddCost = true; //нужно ли добавлять стоимость в запись (у акции нет стоимости)
                 if(instrument.Id == 1)
                 {
@@ -248,15 +277,34 @@ namespace ktradesystem.Models
 
                 if (id == -1)
                 {
-                    _database.InsertDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, filesSorted, isAddCost);
+                    _database.InsertDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, dataSourceFiles, isAddCost);
                 }
                 else
                 {
-                    _database.UpdateDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, filesSorted, isAddCost, id);
+                    _database.UpdateDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, dataSourceFiles, isAddCost, id);
                 }
                 
                 _modelData.ReadDataSources();
             }
+        }
+
+        private void DefiningFileWorkingPeriods(DataSourceFile dataSourceFile)
+        {
+            List<DataSourceFileWorkingPeriod> dataSourceFileWorkingPeriods = new List<DataSourceFileWorkingPeriod>();
+
+            FileStream fileStream = new FileStream(dataSourceFile.Path, FileMode.Open, FileAccess.Read);
+            StreamReader streamReader = new StreamReader(fileStream);
+            string line = streamReader.ReadLine();
+            while(line != "")
+            {
+                string[] lineArr = line.Split(',');
+
+
+                line = streamReader.ReadLine();
+            }
+            
+
+            dataSourceFile.DataSourceFileWorkingPeriods = dataSourceFileWorkingPeriods;
         }
 
         public void DeleteDataSource(int id)

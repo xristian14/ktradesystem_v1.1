@@ -230,6 +230,14 @@ namespace ktradesystem.Models
 
                 //определяем время работы биржи для файлов, распараллеливая это на несколько ядер
                 int processorCount = Environment.ProcessorCount; //количество создаваемых потоков
+                if(dataSourceFiles.Count < processorCount) //если файлов меньше чем число доступных потоков, устанавливаем количество потоков на количество файлов, т.к. WaitAll ругается если поток в tasks null
+                {
+                    processorCount = dataSourceFiles.Count;
+                }
+                if(processorCount < 1)
+                {
+                    processorCount = 1;
+                }
                 //для настройки с оставлением 1 потока на ютуб, сделать так чтобы минимум 1 оставался в работе
                 var tasks = new Task[processorCount]; //задачи
                 for(int i = 0; i < dataSourceFiles.Count; i++)
@@ -276,6 +284,118 @@ namespace ktradesystem.Models
                 }
                 else
                 {
+                    //обновлю dataSourceFiles, после считаю заного все записи из бд, и обновлю dataSourceFileWorkingPeriods, далее обновлю DataSource
+                    DataSource oldDataSource = new DataSource();
+                    foreach (DataSource dataSource in _modelData.DataSources)
+                    {
+                        if (dataSource.Id == id)
+                        {
+                            oldDataSource = dataSource;
+                        }
+                    }
+
+                    List<DataSourceFile> updateDataSourceFiles = new List<DataSourceFile>(); //список с id записи которую нужно обновить и данные на которые нужно обновить
+                    List<DataSourceFile> addDataSourceFiles = new List<DataSourceFile>(); //список с записями которые нужно добавить
+                    List<int> deleteDataSourceFiles = new List<int>(); //список с id записей которые нужно удалить
+
+                    int maxLengthDataSourceFile = dataSourceFiles.Count;
+                    if (oldDataSource.DataSourceFiles.Count > maxLengthDataSourceFile)
+                    {
+                        maxLengthDataSourceFile = oldDataSource.DataSourceFiles.Count;
+                    }
+                    //проходим по всем элементам старого и нового списка, и определяем какие обновить, какие добавить, а какие удалить
+                    for (int i = 0; i < maxLengthDataSourceFile; i++)
+                    {
+                        if (dataSourceFiles.Count > i && oldDataSource.DataSourceFiles.Count > i)
+                        {
+                            if (dataSourceFiles[i].Path != oldDataSource.DataSourceFiles[i].Path)
+                            {
+                                dataSourceFiles[i].Id = oldDataSource.DataSourceFiles[i].Id;
+                                dataSourceFiles[i].IdDataSource = oldDataSource.DataSourceFiles[i].IdDataSource;
+                                updateDataSourceFiles.Add(dataSourceFiles[i]);
+                            }
+                        }
+                        else if (dataSourceFiles.Count > i && oldDataSource.DataSourceFiles.Count <= i)
+                        {
+                            dataSourceFiles[i].IdDataSource = oldDataSource.Id;
+                            addDataSourceFiles.Add(dataSourceFiles[i]);
+                        }
+                        else if (dataSourceFiles.Count <= i && oldDataSource.DataSourceFiles.Count > i)
+                        {
+                            deleteDataSourceFiles.Add(oldDataSource.DataSourceFiles[i].Id);
+                        }
+                    }
+                    //обновляем
+                    foreach (DataSourceFile dataSourceFile in updateDataSourceFiles)
+                    {
+                        _database.UpdateDataSourceFile(dataSourceFile);
+                    }
+                    //добавляем
+                    foreach (DataSourceFile dataSourceFile1 in addDataSourceFiles)
+                    {
+                        _database.InsertDataSourceFile(dataSourceFile1);
+                    }
+                    //удаляем
+                    foreach (int idDeleteDataSourceFile in deleteDataSourceFiles)
+                    {
+                        _database.DeleteDataSourceFile(idDeleteDataSourceFile);
+                    }
+                    _modelData.ReadDataSourceFiles();
+
+                    //обновляю dataSourceFileWorkingPeriods
+                    for(int k = 0; k < dataSourceFiles.Count; k++)
+                    {
+                        DataSourceFile oldDataSourceFile = _modelData.DataSourceFiles[k];
+                        
+                        List<DataSourceFileWorkingPeriod> updateDataSourceFileWorkingPeriods = new List<DataSourceFileWorkingPeriod>(); //список с id записи которую нужно обновить и данные на которые нужно обновить
+                        List<DataSourceFileWorkingPeriod> addDataSourceFileWorkingPeriods = new List<DataSourceFileWorkingPeriod>(); //список с записями которые нужно добавить
+                        List<int> deleteDataSourceFileWorkingPeriods = new List<int>(); //список с id записей которые нужно удалить
+
+                        int maxLengthDataSourceFileWorkingPeriod = dataSourceFiles[k].DataSourceFileWorkingPeriods.Count;
+                        if (oldDataSourceFile.DataSourceFileWorkingPeriods.Count > maxLengthDataSourceFileWorkingPeriod)
+                        {
+                            maxLengthDataSourceFileWorkingPeriod = oldDataSourceFile.DataSourceFileWorkingPeriods.Count;
+                        }
+                        //проходим по всем элементам старого и нового списка, и определяем какие обновить, какие добавить, а какие удалить
+                        for (int i = 0; i < maxLengthDataSourceFileWorkingPeriod; i++)
+                        {
+                            if (dataSourceFiles[k].DataSourceFileWorkingPeriods.Count > i && oldDataSourceFile.DataSourceFileWorkingPeriods.Count > i)
+                            {
+                                if (DateTime.Compare(dataSourceFiles[k].DataSourceFileWorkingPeriods[i].StartPeriod, oldDataSourceFile.DataSourceFileWorkingPeriods[i].StartPeriod) != 0 || DateTime.Compare(dataSourceFiles[k].DataSourceFileWorkingPeriods[i].TradingStartTime, oldDataSourceFile.DataSourceFileWorkingPeriods[i].TradingStartTime) != 0 || DateTime.Compare(dataSourceFiles[k].DataSourceFileWorkingPeriods[i].TradingEndTime, oldDataSourceFile.DataSourceFileWorkingPeriods[i].TradingEndTime) != 0)
+                                {
+                                    dataSourceFiles[k].DataSourceFileWorkingPeriods[i].Id = oldDataSourceFile.DataSourceFileWorkingPeriods[i].Id;
+                                    dataSourceFiles[k].DataSourceFileWorkingPeriods[i].IdDataSourceFile = oldDataSourceFile.DataSourceFileWorkingPeriods[i].IdDataSourceFile;
+                                    updateDataSourceFileWorkingPeriods.Add(dataSourceFiles[k].DataSourceFileWorkingPeriods[i]);
+                                }
+                            }
+                            else if (dataSourceFiles[k].DataSourceFileWorkingPeriods.Count > i && oldDataSourceFile.DataSourceFileWorkingPeriods.Count <= i)
+                            {
+                                dataSourceFiles[k].DataSourceFileWorkingPeriods[i].IdDataSourceFile = oldDataSourceFile.Id;
+                                addDataSourceFileWorkingPeriods.Add(dataSourceFiles[k].DataSourceFileWorkingPeriods[i]);
+                            }
+                            else if (dataSourceFiles[k].DataSourceFileWorkingPeriods.Count <= i && oldDataSourceFile.DataSourceFileWorkingPeriods.Count > i)
+                            {
+                                deleteDataSourceFileWorkingPeriods.Add(oldDataSourceFile.DataSourceFileWorkingPeriods[i].Id);
+                            }
+                        }
+                        //обновляем
+                        foreach (DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod in updateDataSourceFileWorkingPeriods)
+                        {
+                            _database.UpdateDataSourceFileWorkingPeriod(dataSourceFileWorkingPeriod);
+                        }
+                        //добавляем
+                        foreach (DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod1 in addDataSourceFileWorkingPeriods)
+                        {
+                            _database.InsertDataSourceFileWorkingPeriod(dataSourceFileWorkingPeriod1);
+                        }
+                        //удаляем
+                        foreach (int idDeleteDataSourceFileWorkingPeriod in deleteDataSourceFileWorkingPeriods)
+                        {
+                            _database.DeleteDataSourceFileWorkingPeriod(idDeleteDataSourceFileWorkingPeriod);
+                        }
+                    }
+
+                    //обновляю DataSource
                     _database.UpdateDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, isAddCost, id);
                 }
                 
@@ -292,8 +412,9 @@ namespace ktradesystem.Models
 
             FileStream fileStream = new FileStream(dataSourceFile.Path, FileMode.Open, FileAccess.Read);
             StreamReader streamReader = new StreamReader(fileStream);
+            string line = streamReader.ReadLine(); //пропускаем шапку файла
             //считываем первую строку и записываем в dataSourceFileWorkingPeriod чтобы не ставить условие на первое считывание в цикле
-            string line = streamReader.ReadLine();
+            line = streamReader.ReadLine();
             string[] lineArr = line.Split(',');
             string dateFormated = lineArr[2].Insert(6, "-").Insert(4, "-");
             string timeFormated = lineArr[3].Insert(4, ":").Insert(2, ":");
@@ -306,7 +427,7 @@ namespace ktradesystem.Models
             lastDate = dataSourceFileWorkingPeriod.StartPeriod;
             lastOpenTime = dataSourceFileWorkingPeriod.TradingStartTime;
             line = streamReader.ReadLine();
-            while (line != "")
+            while (line != null)
             {
                 lineArr = line.Split(',');
                 dateFormated = lineArr[2].Insert(6, "-").Insert(4, "-");

@@ -714,7 +714,7 @@ namespace ktradesystem.ViewModels
                     List<DataSourceFile> dataSourceFiles = new List<DataSourceFile>();
                     foreach(string item in FilesSelected)
                     {
-                        DataSourceFile dataSourceFile = new DataSourceFile { Path = item };
+                        DataSourceFile dataSourceFile = new DataSourceFile { Path = AddDataSourceFolder + "\\" + item };
                         dataSourceFiles.Add(dataSourceFile);
                     }
                     //формирует addInstrument
@@ -838,7 +838,7 @@ namespace ktradesystem.ViewModels
                     List<DataSourceFile> dataSourceFiles = new List<DataSourceFile>();
                     foreach (string item in FilesSelected)
                     {
-                        DataSourceFile dataSourceFile = new DataSourceFile { Path = item };
+                        DataSourceFile dataSourceFile = new DataSourceFile { Path = AddDataSourceFolder + "\\" + item };
                         dataSourceFiles.Add(dataSourceFile);
                     }
                     //формирует addInstrument

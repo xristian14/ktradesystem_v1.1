@@ -358,5 +358,47 @@ namespace ktradesystem.Models
 
             command.ExecuteNonQuery();
         }
+
+        public void UpdateDataSourceFile(DataSourceFile dataSourceFile)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "UPDATE DataSourceFiles SET path = :path, idDataSource = :idDataSource WHERE id = :id";
+            command.Parameters.AddWithValue("path", dataSourceFile.Path);
+            command.Parameters.AddWithValue("idDataSource", dataSourceFile.IdDataSource);
+            command.Parameters.AddWithValue("id", dataSourceFile.Id);
+
+            command.ExecuteNonQuery();
+        }
+
+        public void DeleteDataSourceFile(int id)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            string query = "DELETE FROM DataSourceFiles WHERE id = :id";
+            command.CommandText = query;
+            command.Parameters.AddWithValue("id", id);
+            command.ExecuteNonQuery();
+        }
+
+        public void UpdateDataSourceFileWorkingPeriod(DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "UPDATE DataSourceFileWorkingPeriods SET startPeriod = :startPeriod, tradingStartTime = :tradingStartTime, tradingEndTime = :tradingEndTime, idDataSourceFile = :idDataSourceFile WHERE id = :id";
+            command.Parameters.AddWithValue("startPeriod", dataSourceFileWorkingPeriod.StartPeriod);
+            command.Parameters.AddWithValue("tradingStartTime", dataSourceFileWorkingPeriod.TradingStartTime);
+            command.Parameters.AddWithValue("tradingEndTime", dataSourceFileWorkingPeriod.TradingEndTime);
+            command.Parameters.AddWithValue("idDataSourceFile", dataSourceFileWorkingPeriod.IdDataSourceFile);
+            command.Parameters.AddWithValue("id", dataSourceFileWorkingPeriod.Id);
+
+            command.ExecuteNonQuery();
+        }
+
+        public void DeleteDataSourceFileWorkingPeriod(int id)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            string query = "DELETE FROM DataSourceFileWorkingPeriods WHERE id = :id";
+            command.CommandText = query;
+            command.Parameters.AddWithValue("id", id);
+            command.ExecuteNonQuery();
+        }
     }
 }

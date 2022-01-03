@@ -75,17 +75,17 @@ namespace ktradesystem.Models
             return data;
         }
 
-        public void InsertDataSource(string name, Instrument instrument, Interval interval, Currency currency, double? cost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, string files, bool isAddCost) //isAddCost - добавлять ли стоимость в запись, при false это поле не будет задано в запросе
+        public void InsertDataSource(string name, Instrument instrument, Interval interval, Currency currency, double? cost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, bool isAddCost) //isAddCost - добавлять ли стоимость в запись, при false это поле не будет задано в запросе
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
             string query = "";
             if (isAddCost)
             {
-                query = "INSERT INTO Datasources (name, idInstrument, idInterval, idCurrency, cost, idComissiontype, comission, priceStep, costPriceStep, files) VALUES (:name, :idInstrument, :idInterval, :idCurrency, :cost, :idComissiontype, :comission, :priceStep, :costPriceStep, :files)";
+                query = "INSERT INTO Datasources (name, idInstrument, idInterval, idCurrency, cost, idComissiontype, comission, priceStep, costPriceStep) VALUES (:name, :idInstrument, :idInterval, :idCurrency, :cost, :idComissiontype, :comission, :priceStep, :costPriceStep)";
             }
             else
             {
-                query = "INSERT INTO Datasources (name, idInstrument, idInterval, idCurrency, idComissiontype, comission, priceStep, costPriceStep, files) VALUES (:name, :idInstrument, :idInterval, :idCurrency, :idComissiontype, :comission, :priceStep, :costPriceStep, :files)";
+                query = "INSERT INTO Datasources (name, idInstrument, idInterval, idCurrency, idComissiontype, comission, priceStep, costPriceStep) VALUES (:name, :idInstrument, :idInterval, :idCurrency, :idComissiontype, :comission, :priceStep, :costPriceStep)";
             }
             command.CommandText = query;
             command.Parameters.AddWithValue("name", name);
@@ -100,22 +100,21 @@ namespace ktradesystem.Models
             command.Parameters.AddWithValue("comission", comission);
             command.Parameters.AddWithValue("priceStep", priceStep);
             command.Parameters.AddWithValue("costPriceStep", costPriceStep);
-            command.Parameters.AddWithValue("files", files);
 
             command.ExecuteNonQuery();
         }
 
-        public void UpdateDataSource(string name, Instrument instrument, Interval interval, Currency currency, double? cost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, string files, bool isAddCost, int id) //isAddCost - добавлять ли стоимость в запись, при false это поле не будет задано в запросе
+        public void UpdateDataSource(string name, Instrument instrument, Interval interval, Currency currency, double? cost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, bool isAddCost, int id) //isAddCost - добавлять ли стоимость в запись, при false это поле не будет задано в запросе
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
             string query = "";
             if (isAddCost)
             {
-                query = "UPDATE Datasources SET name = :name, idInstrument = :idInstrument, idInterval = :idInterval, idCurrency = :idCurrency, cost = :cost, idComissiontype = :idComissiontype, comission = :comission, priceStep = :priceStep, costPriceStep = :costPriceStep, files = :files WHERE id = :id";
+                query = "UPDATE Datasources SET name = :name, idInstrument = :idInstrument, idInterval = :idInterval, idCurrency = :idCurrency, cost = :cost, idComissiontype = :idComissiontype, comission = :comission, priceStep = :priceStep, costPriceStep = :costPriceStep WHERE id = :id";
             }
             else
             {
-                query = "UPDATE Datasources SET name = :name, idInstrument = :idInstrument, idInterval = :idInterval, idCurrency = :idCurrency, idComissiontype = :idComissiontype, comission = :comission, priceStep = :priceStep, costPriceStep = :costPriceStep, files = :files WHERE id = :id";
+                query = "UPDATE Datasources SET name = :name, idInstrument = :idInstrument, idInterval = :idInterval, idCurrency = :idCurrency, idComissiontype = :idComissiontype, comission = :comission, priceStep = :priceStep, costPriceStep = :costPriceStep WHERE id = :id";
             }
             command.CommandText = query;
             command.Parameters.AddWithValue("name", name);
@@ -130,7 +129,6 @@ namespace ktradesystem.Models
             command.Parameters.AddWithValue("comission", comission);
             command.Parameters.AddWithValue("priceStep", priceStep);
             command.Parameters.AddWithValue("costPriceStep", costPriceStep);
-            command.Parameters.AddWithValue("files", files);
             command.Parameters.AddWithValue("id", id);
 
             command.ExecuteNonQuery();
@@ -142,6 +140,28 @@ namespace ktradesystem.Models
             string query = "DELETE FROM Datasources WHERE id = :id";
             command.CommandText = query;
             command.Parameters.AddWithValue("id", id);
+            command.ExecuteNonQuery();
+        }
+
+        public void InsertDataSourceFile(DataSourceFile dataSourceFile)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "INSERT INTO DataSourceFiles (path, idDataSource) VALUES (:path, :idDataSource)";
+            command.Parameters.AddWithValue("path", dataSourceFile.Path);
+            command.Parameters.AddWithValue("idDataSource", dataSourceFile.IdDataSource);
+
+            command.ExecuteNonQuery();
+        }
+
+        public void InsertDataSourceFileWorkingPeriod(DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "INSERT INTO DataSourceFileWorkingPeriods (startPeriod, tradingStartTime, tradingEndTime, idDataSourceFile) VALUES (:startPeriod, :tradingStartTime, :tradingEndTime, :idDataSourceFile)";
+            command.Parameters.AddWithValue("startPeriod", dataSourceFileWorkingPeriod.StartPeriod);
+            command.Parameters.AddWithValue("tradingStartTime", dataSourceFileWorkingPeriod.TradingStartTime);
+            command.Parameters.AddWithValue("tradingEndTime", dataSourceFileWorkingPeriod.TradingEndTime);
+            command.Parameters.AddWithValue("idDataSourceFile", dataSourceFileWorkingPeriod.IdDataSourceFile);
+
             command.ExecuteNonQuery();
         }
 

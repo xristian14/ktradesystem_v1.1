@@ -247,27 +247,6 @@ namespace ktradesystem.Models
                     }
                 }
                 Task.WaitAll(tasks);
-                /*
-                for (int i = 0; i < tests.Count; i++)
-            {
-                if(i < processorCount)
-                {
-                    tasksCompleted[i] += 1;
-                    Test test = tests[i];
-                    int b = i;
-                    tasks[i] = Task.Run(() => Calculate(test, b));
-                }
-                else
-                {
-                    int indexCompleted = Task.WaitAny(tasks);
-                    tasksCompleted[indexCompleted] += 1;
-                    Test test = tests[i];
-                    int b = i;
-                    tasks[indexCompleted] = Task.Run(() => Calculate(test, b));
-                }
-            }
-            Task.WaitAll(tasks);
-                 */
 
                 bool isAddCost = true; //нужно ли добавлять стоимость в запись (у акции нет стоимости)
                 if(instrument.Id == 1)
@@ -277,11 +256,27 @@ namespace ktradesystem.Models
 
                 if (id == -1)
                 {
-                    _database.InsertDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, dataSourceFiles, isAddCost);
+                    _database.InsertDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, isAddCost);
+                    _modelData.ReadDataSources();
+                    //вставляем записи dataSourceFiles для данного источника данных
+                    int newDataSourceId = _modelData.DataSources[_modelData.DataSources.Count - 1].Id;
+                    foreach (DataSourceFile dataSourceFile in dataSourceFiles)
+                    {
+                        dataSourceFile.IdDataSource = newDataSourceId;
+                        _database.InsertDataSourceFile(dataSourceFile);
+                        _modelData.ReadDataSourceFiles();
+                        //вставляем записи DataSourceFileWorkingPeriods для только что вставленного DataSourceFile
+                        int newDataSourceFileId = _modelData.DataSourceFiles[_modelData.DataSourceFiles.Count - 1].Id;
+                        foreach(DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod in dataSourceFile.DataSourceFileWorkingPeriods)
+                        {
+                            dataSourceFileWorkingPeriod.IdDataSourceFile = newDataSourceFileId;
+                            _database.InsertDataSourceFileWorkingPeriod(dataSourceFileWorkingPeriod);
+                        }
+                    }
                 }
                 else
                 {
-                    _database.UpdateDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, dataSourceFiles, isAddCost, id);
+                    _database.UpdateDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, isAddCost, id);
                 }
                 
                 _modelData.ReadDataSources();
@@ -290,19 +285,72 @@ namespace ktradesystem.Models
 
         private void DefiningFileWorkingPeriods(DataSourceFile dataSourceFile)
         {
+            //проходим по датам и для каждого дня формируем время начала и окончания. Далее сравниваем время начала и окончания существующего объекта с прошлым днем, и если отличаются создаем новый объект периода
+
             List<DataSourceFileWorkingPeriod> dataSourceFileWorkingPeriods = new List<DataSourceFileWorkingPeriod>();
+            DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod = new DataSourceFileWorkingPeriod();
 
             FileStream fileStream = new FileStream(dataSourceFile.Path, FileMode.Open, FileAccess.Read);
             StreamReader streamReader = new StreamReader(fileStream);
+            //считываем первую строку и записываем в dataSourceFileWorkingPeriod чтобы не ставить условие на первое считывание в цикле
             string line = streamReader.ReadLine();
-            while(line != "")
-            {
-                string[] lineArr = line.Split(',');
+            string[] lineArr = line.Split(',');
+            string dateFormated = lineArr[2].Insert(6, "-").Insert(4, "-");
+            string timeFormated = lineArr[3].Insert(4, ":").Insert(2, ":");
+            dataSourceFileWorkingPeriod.StartPeriod = DateTime.Parse(dateFormated);
+            dataSourceFileWorkingPeriod.TradingStartTime = DateTime.Parse(timeFormated);
 
+            DateTime lastDate; //прошлая дата, чтобы определять что день сменился
+            DateTime lastOpenTime = new DateTime(); //время открытия прошлого дня
+            DateTime lastCloseTime = new DateTime(); //время закрытия прошлого дня
+            lastDate = dataSourceFileWorkingPeriod.StartPeriod;
+            lastOpenTime = dataSourceFileWorkingPeriod.TradingStartTime;
+            line = streamReader.ReadLine();
+            while (line != "")
+            {
+                lineArr = line.Split(',');
+                dateFormated = lineArr[2].Insert(6, "-").Insert(4, "-");
+                timeFormated = lineArr[3].Insert(4, ":").Insert(2, ":");
+                DateTime currentDate = DateTime.Parse(dateFormated);
+                if (dataSourceFileWorkingPeriod.TradingEndTime == null) //при формировании первого объекта, если день сменился, записываем время окончания, а так же дату и время открытия нового дня
+                {
+                    if((lastDate.Date - dataSourceFileWorkingPeriod.StartPeriod.Date).TotalDays >= 1)
+                    {
+                        dataSourceFileWorkingPeriod.TradingEndTime = lastCloseTime; //записали время окончания первого дня
+                        dataSourceFileWorkingPeriods.Add(dataSourceFileWorkingPeriod);
+                    }
+                }
+                else if((currentDate.Date - lastDate.Date).TotalDays >= 1) //определяем что прошлый день сформировался (т.к. наступил новый)
+                {
+                    //сравниваем прошлый день и объект dataSourceFileWorkingPeriod
+                    if(lastOpenTime.TimeOfDay != dataSourceFileWorkingPeriod.TradingStartTime.TimeOfDay || lastCloseTime.TimeOfDay != dataSourceFileWorkingPeriod.TradingEndTime.TimeOfDay)
+                    {
+                        //если не совпадают, формируем новый объект dataSourceFileWorkingPeriod
+                        dataSourceFileWorkingPeriod = new DataSourceFileWorkingPeriod { StartPeriod = lastDate, TradingStartTime = lastOpenTime, TradingEndTime = lastCloseTime };
+                        dataSourceFileWorkingPeriods.Add(dataSourceFileWorkingPeriod);
+                    }
+                    //начинаем запись нового дня
+                    lastDate = currentDate;
+                    lastOpenTime = DateTime.Parse(timeFormated);
+                    lastCloseTime = lastOpenTime;
+                }
+                else
+                {
+                    lastCloseTime = DateTime.Parse(timeFormated);
+                }
 
                 line = streamReader.ReadLine();
             }
-            
+            streamReader.Close();
+            fileStream.Close();
+            //т.к. после последней записи последнего дня цикл заканчивается, проверяем этот день на соответствие текущему dataSourceFileWorkingPeriod
+            //сравниваем прошлый день и объект dataSourceFileWorkingPeriod
+            if (lastOpenTime.TimeOfDay != dataSourceFileWorkingPeriod.TradingStartTime.TimeOfDay || lastCloseTime.TimeOfDay != dataSourceFileWorkingPeriod.TradingEndTime.TimeOfDay)
+            {
+                //если не совпадают, формируем новый объект dataSourceFileWorkingPeriod
+                dataSourceFileWorkingPeriod = new DataSourceFileWorkingPeriod { StartPeriod = lastDate, TradingStartTime = lastOpenTime, TradingEndTime = lastCloseTime };
+                dataSourceFileWorkingPeriods.Add(dataSourceFileWorkingPeriod);
+            }
 
             dataSourceFile.DataSourceFileWorkingPeriods = dataSourceFileWorkingPeriods;
         }

@@ -12,6 +12,7 @@ using System.Windows.Input;
 using ktradesystem.Views;
 using System.Windows.Forms;
 using System.IO;
+using Ookii.Dialogs.Wpf;
 
 namespace ktradesystem.ViewModels
 {
@@ -541,11 +542,12 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    FolderBrowserDialog fbd = new FolderBrowserDialog();
-                    if(fbd.ShowDialog() == DialogResult.OK)
+                    VistaFolderBrowserDialog vistaFolderBrowserDialog = new VistaFolderBrowserDialog();
+                    bool? isSuccess = vistaFolderBrowserDialog.ShowDialog();
+                    if(isSuccess == true)
                     {
-                        AddDataSourceFolder = fbd.SelectedPath; //получаем путь выбранной папки
-                        string[] files = Directory.GetFiles(fbd.SelectedPath); //получаем массив с названиями файлов
+                        AddDataSourceFolder = vistaFolderBrowserDialog.SelectedPath; //получаем путь выбранной папки
+                        string[] files = Directory.GetFiles(vistaFolderBrowserDialog.SelectedPath); //получаем массив с названиями файлов
                         FilesUnselected.Clear(); //очищаем список невыбранных файлов
                         FilesSelected.Clear(); //очищаем список выбранных файлов
                         foreach (string item in files) //проходимся по списку файлу и те котоыре имеют расширение .txt добавляем в список невыбранных файлов

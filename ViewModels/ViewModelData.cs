@@ -11,6 +11,7 @@ using System.Runtime.CompilerServices;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using ktradesystem.Models;
+using ktradesystem.CommunicationChannel;
 
 namespace ktradesystem.ViewModels
 {
@@ -20,12 +21,14 @@ namespace ktradesystem.ViewModels
 
         private ViewmodelData()
         {
+            _modelData = ModelData.getInstance();
             _modelDataSource = ModelDataSource.getInstance();
             _modelDataSource.PropertyChanged += Model_PropertyChanged;
 
-            _communicationChannel = CommunicationChannel.getInstance();
-            _communicationChannel.PropertyChanged += Model_PropertyChanged;
-            _communicationChannel.MainMessages.CollectionChanged += CommunicationChannel_MainMessagesCollectionChanged;
+            _mainCommunicationChannel = MainCommunicationChannel.getInstance();
+            _mainCommunicationChannel.PropertyChanged += Model_PropertyChanged;
+            _mainCommunicationChannel.MainMessages.CollectionChanged += MainCommunicationChannel_MainMessagesCollectionChanged;
+            _mainCommunicationChannel.DataSourceAddingProgress.CollectionChanged += MainCommunicationChannel_DataSourceAddingProgressCollectionChanged;
 
             _dataSource = new Views.Pages.PageDataSource();
             _testing = new Views.Pages.PageTesting();
@@ -41,7 +44,8 @@ namespace ktradesystem.ViewModels
             return _instance;
         }
 
-        private CommunicationChannel _communicationChannel;
+        private ModelData _modelData;
+        private MainCommunicationChannel _mainCommunicationChannel;
         private ModelDataSource _modelDataSource;
 
         private Page _dataSource;
@@ -93,6 +97,34 @@ namespace ktradesystem.ViewModels
 
 
         #region statusBarDataSource
+        public void StatusBarDataSourceShow()
+        {
+            StatusBarHeight = 25;
+            StatusBarDataSourceVisibility = Visibility.Visible;
+        }
+
+        public void StatusBarDataSourceHide()
+        {
+            StatusBarHeight = 0;
+            StatusBarDataSourceVisibility = Visibility.Collapsed;
+        }
+
+        private ObservableCollection<DataSourceAddingProgress> _dataSourceAddingProgress = new ObservableCollection<DataSourceAddingProgress>(); //прогресс выполнения операции добавления источника дынных
+        public ObservableCollection<DataSourceAddingProgress> DataSourceAddingProgress
+        {
+            get { return _dataSourceAddingProgress; }
+            private set
+            {
+                _dataSourceAddingProgress = value;
+                OnPropertyChanged();
+                CreateStatusBarDataSourceContent();
+            }
+        }
+
+        private void MainCommunicationChannel_DataSourceAddingProgressCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            DataSourceAddingProgress = (ObservableCollection<DataSourceAddingProgress>)sender;
+        }
 
         private Visibility _statusBarDataSourceVisibility = Visibility.Visible;
         public Visibility StatusBarDataSourceVisibility //видимость элементов строки состояния для источников данных
@@ -116,17 +148,6 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private string _statusBarDataSourceDonePercent;
-        public string StatusBarDataSourceDonePercent //на сколько процентов завершено
-        {
-            get { return _statusBarDataSourceDonePercent; }
-            private set
-            {
-                _statusBarDataSourceDonePercent = value;
-                OnPropertyChanged();
-            }
-        }
-
         private string _statusBarDataSourceRemainingTime;
         public string StatusBarDataSourceRemainingTime //оставшееся время
         {
@@ -138,7 +159,7 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private int _statusBarDataSourceProgressMinValue;
+        private int _statusBarDataSourceProgressMinValue = 0;
         public int StatusBarDataSourceProgressMinValue //минимальное значение для progress bar
         {
             get { return _statusBarDataSourceProgressMinValue; }
@@ -168,6 +189,57 @@ namespace ktradesystem.ViewModels
             {
                 _statusBarDataSourceProgressValue = value;
                 OnPropertyChanged();
+            }
+        }
+
+        private void CreateStatusBarDataSourceContent()
+        {
+            if(DataSourceAddingProgress.Count != 0)
+            {
+                if (DataSourceAddingProgress[0].IsFinish)
+                {
+                    //обновляем данные DataSourcesForSubscribers
+                    _modelData.NotifyDataSourcesSubscribers();
+                    //закрываем statusBarDataSource, делаем форму активной
+                    StatusBarDataSourceHide();
+                    _mainCommunicationChannel.DataSourceAddingProgress.Clear();
+                    //очищаем поля
+                    StatusBarDataSourceDoneText = "";
+                    StatusBarDataSourceRemainingTime = "";
+                    StatusBarDataSourceProgressMaxValue = 0;
+                    StatusBarDataSourceProgressValue = 0;
+                }
+                else
+                {
+                    //обновляем значения полей statusBarDataSource
+                    StatusBarDataSourceDoneText = DataSourceAddingProgress[0].CompletedTasksCount.ToString() + "/" + DataSourceAddingProgress[0].TasksCount.ToString();
+
+                    int totalRemainingSeconds = (int)((DataSourceAddingProgress[0].ElapsedTime.TotalSeconds / (DataSourceAddingProgress[0].CompletedTasksCount / DataSourceAddingProgress[0].TasksCount)) - DataSourceAddingProgress[0].ElapsedTime.TotalSeconds); //делим пройденное время на завершенную часть от целого и получаем общее время, необходимое для выполнения всей работы, и вычитаем из него пройденное время
+                    TimeSpan timeSpan = TimeSpan.FromSeconds(totalRemainingSeconds);
+                    string timeRemaining = timeSpan.Hours.ToString();
+                    if(timeRemaining.Length == 1)
+                    {
+                        timeRemaining = timeRemaining.Insert(0, "0");
+                    }
+                    timeRemaining += ":" + timeSpan.Minutes.ToString();
+                    if (timeRemaining.Length == 4)
+                    {
+                        timeRemaining = timeRemaining.Insert(3, "0");
+                    }
+                    timeRemaining += ":" + timeSpan.Seconds.ToString();
+                    if (timeRemaining.Length == 7)
+                    {
+                        timeRemaining = timeRemaining.Insert(6, "0");
+                    }
+                    if (timeSpan.Days > 0)
+                    {
+                        timeRemaining = timeRemaining.Insert(0, timeSpan.Days.ToString() + " дней ");
+                    }
+
+                    StatusBarDataSourceRemainingTime = timeRemaining;
+                    StatusBarDataSourceProgressMaxValue = DataSourceAddingProgress[0].TasksCount;
+                    StatusBarDataSourceProgressValue = DataSourceAddingProgress[0].CompletedTasksCount;
+                }
             }
         }
 
@@ -206,7 +278,7 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private void CommunicationChannel_MainMessagesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        private void MainCommunicationChannel_MainMessagesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             MainMessages = (ObservableCollection<Message>)sender;
         }

@@ -7,6 +7,8 @@ using System.IO;
 using System.Collections.ObjectModel;
 using System.Data;
 using ktradesystem.Models.Datatables;
+using ktradesystem.CommunicationChannel;
+using System.Diagnostics;
 
 namespace ktradesystem.Models
 {
@@ -28,18 +30,20 @@ namespace ktradesystem.Models
             _database = Database.getInstance();
             _modelData = ModelData.getInstance();
             _dataSources = _modelData.DataSources;
-            _communicationChannel = CommunicationChannel.getInstance();
+            _mainCommunicationChannel = MainCommunicationChannel.getInstance();
         }
 
         private Database _database;
         private ModelData _modelData;
-        private CommunicationChannel _communicationChannel;
+        private MainCommunicationChannel _mainCommunicationChannel;
 
         private ObservableCollection<DataSource> _dataSources = new ObservableCollection<DataSource>();
         
         //создание объекта из данных которые набрал пользователь и добавление в DataSources
         public void CreateDataSourceInsertUpdate(string name, Instrument instrument, Currency currency, double? cost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, List<DataSourceFile> dataSourceFiles, int id = -1) //метод проверяет присланные данные на корректность и вызывает метод добавления записи в бд или обновления существующей записи если был прислан id
         {
+            _mainCommunicationChannel.DataSourceAddingProgress.Clear();
+
             List<Interval> intervalsInFiles = new List<Interval>(); //список с интервалами файлов, чтобы проверить, имеют ли все файлы одинаковые интервалы
             List<DateTime> datesInFiles = new List<DateTime>(); //список с первыми датами файлов, чтобы проверить, нет ли дублирующихся дат в разных файлах
             //удостоверяемся в том что все файлы имеют допустимый формат данных
@@ -61,7 +65,7 @@ namespace ktradesystem.Models
 
                 if (isHeaderCorrect)
                 {
-                    //считываем первые 2000 строк файла для определения интервала
+                    //считываем первые 3000 строк файла для определения интервала
 
                     //считываем первую строку и определяем время
                     string line = streamReader.ReadLine();
@@ -79,7 +83,7 @@ namespace ktradesystem.Models
                     //считываем следующую строку
                     line = streamReader.ReadLine();
                     int l = 0;
-                    while (l < 2000 && line != null)
+                    while (l < 3000 && line != null)
                     {
                         lineArr = line.Split(',');
                         dateTimeFormated = lineArr[2].Insert(6, "-").Insert(4, "-") + " " + lineArr[3].Insert(4, ":").Insert(2, ":");
@@ -131,7 +135,7 @@ namespace ktradesystem.Models
             }
             if (isAllFilesCorrect == false)
             {
-                _communicationChannel.AddMainMessage("Файлы с котировками: " + headerErrorFiles + " имеют неверный формат данных. Допустимый формат: \"" + headerFormat + "\".");
+                _mainCommunicationChannel.AddMainMessage("Файлы с котировками: " + headerErrorFiles + " имеют неверный формат данных. Допустимый формат: \"" + headerFormat + "\".");
             }
             //определяем что нет не найденного интервала
             bool isNotFoundInterval = false;
@@ -144,7 +148,7 @@ namespace ktradesystem.Models
             }
             if (isNotFoundInterval)
             {
-                _communicationChannel.AddMainMessage("Не удается распознать временной интервал файлов с котировками: " + unknownIntervalFiles + ". Убедитесь что используются поддерживаемые временные интервалы.");
+                _mainCommunicationChannel.AddMainMessage("Не удается распознать временной интервал файлов с котировками: " + unknownIntervalFiles + ". Убедитесь что используются поддерживаемые временные интервалы.");
                 isAllFilesCorrect = false;
             }
             //если все интервалы определены, определяем, нет ли отличающихся интервалов
@@ -163,7 +167,7 @@ namespace ktradesystem.Models
             }
             if (isEqualIntervals == false)
             {
-                _communicationChannel.AddMainMessage("Файлы с котировками: " + unequalIntervalFiles + " имеют разные интервалы времени в свечках в сравнении с: " + dataSourceFiles[0].Path.Split('\\').Last<string>() + ".");
+                _mainCommunicationChannel.AddMainMessage("Файлы с котировками: " + unequalIntervalFiles + " имеют разные интервалы времени в свечках в сравнении с: " + dataSourceFiles[0].Path.Split('\\').Last<string>() + ".");
                 isAllFilesCorrect = false;
             }
 
@@ -190,7 +194,7 @@ namespace ktradesystem.Models
                 }
                 if(isFirstDateUnique == false)
                 {
-                    _communicationChannel.AddMainMessage("Файлы с котировками: " + ununiqueFiles + " имеют одинаковые даты.");
+                    _mainCommunicationChannel.AddMainMessage("Файлы с котировками: " + ununiqueFiles + " имеют одинаковые даты.");
                     isAllFilesCorrect = false;
                 }
             }
@@ -223,7 +227,20 @@ namespace ktradesystem.Models
                     }
                 }
 
+                /*
+                var s = new Stopwatch();
+                s.Start();
+                for (int i = 0; i < 100000; i++)
+                {
+                    dateTimeFormated = date.Insert(8, " ").Insert(6, "-").Insert(4, "-") + time.Insert(4, ":").Insert(2, ":");
+                }
+                s.Stop();
+                string duration = s.Elapsed.TotalMilliseconds.ToString();
+                */
+
                 //определяем время работы биржи для файлов, распараллеливая это на несколько ядер
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
                 int processorCount = Environment.ProcessorCount; //количество создаваемых потоков
                 if(dataSourceFiles.Count < processorCount) //если файлов меньше чем число доступных потоков, устанавливаем количество потоков на количество файлов, т.к. WaitAll ругается если поток в tasks null
                 {
@@ -233,7 +250,6 @@ namespace ktradesystem.Models
                 {
                     processorCount = 1;
                 }
-                //для настройки с оставлением 1 потока на ютуб, сделать так чтобы минимум 1 оставался в работе
                 var tasks = new Task[processorCount]; //задачи
                 for(int i = 0; i < dataSourceFiles.Count; i++)
                 {
@@ -245,11 +261,16 @@ namespace ktradesystem.Models
                     else
                     {
                         int indexCompleted = Task.WaitAny(tasks);
+                        _mainCommunicationChannel.DataSourceAddingProgress.Clear();
+                        _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount = dataSourceFiles.Count, CompletedTasksCount = i + 1 - processorCount, ElapsedTime = stopwatch.Elapsed, IsFinish = false });
                         DataSourceFile dataSourceFile = dataSourceFiles[i];
                         tasks[indexCompleted] = Task.Run(() => DefiningFileWorkingPeriods(dataSourceFile));
                     }
                 }
                 Task.WaitAll(tasks);
+                stopwatch.Stop();
+                _mainCommunicationChannel.DataSourceAddingProgress.Clear();
+                _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount  = dataSourceFiles.Count, CompletedTasksCount = dataSourceFiles.Count, ElapsedTime = stopwatch.Elapsed, IsFinish = false });
 
                 bool isAddCost = true; //нужно ли добавлять стоимость в запись (у акции нет стоимости)
                 if(instrument.Id == 1)
@@ -395,6 +416,9 @@ namespace ktradesystem.Models
                 }
                 
                 _modelData.ReadDataSources();
+
+                _mainCommunicationChannel.DataSourceAddingProgress.Clear();
+                _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount = dataSourceFiles.Count, CompletedTasksCount = dataSourceFiles.Count, ElapsedTime = stopwatch.Elapsed, IsFinish = true });
             }
         }
 
@@ -475,6 +499,7 @@ namespace ktradesystem.Models
         {
             _database.DeleteDataSource(id);
             _modelData.ReadDataSources();
+            _modelData.NotifyDataSourcesSubscribers();
         }
     }
 }

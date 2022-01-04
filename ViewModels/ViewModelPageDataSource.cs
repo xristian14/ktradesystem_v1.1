@@ -37,8 +37,8 @@ namespace ktradesystem.ViewModels
             _modelData.Comissiontypes.CollectionChanged += modelData_ComissiontypesCollectionChanged;
             Comissiontypes = _modelData.Comissiontypes;
 
-            _modelData.DataSources.CollectionChanged += modelData_DataSourcesCollectionChanged; //вешаем на обновление DataSources в модели метод: присвоить текущему DataSources DataSources из модели
-            DataSources = _modelData.DataSources;
+            _modelData.DataSourcesForSubscribers.CollectionChanged += modelData_DataSourcesForSubscribersCollectionChanged; //вешаем на обновление DataSourcesForSubscribers в модели метод: присвоить текущему DataSourcesForSubscribers DataSourcesForSubscribers из модели
+            DataSourcesForSubscribers = _modelData.DataSourcesForSubscribers;
 
             _modelDataSource = ModelDataSource.getInstance();
             _modelDataSource.PropertyChanged += Model_PropertyChanged;
@@ -57,13 +57,13 @@ namespace ktradesystem.ViewModels
         private ModelDataSource _modelDataSource;
 
         private ViewmodelData _viewmodelData;
-        public ViewmodelData viewmodelData
+        public ViewmodelData ViewmodelData
         {
             get
             {
-                if(_viewmodelData == null)
+                if (_viewmodelData == null)
                 {
-                    _viewmodelData = ViewmodelData.getInstance();
+                    _viewmodelData = ViewmodelData.getInstance(); //реализовано таким образом, т.к. объекты ссылаюстя друг на друга и идет бесконечный цикл инициализации
                 }
                 return _viewmodelData;
             }
@@ -146,7 +146,7 @@ namespace ktradesystem.ViewModels
         }
 
         private ObservableCollection<DataSource> _dataSources = new ObservableCollection<DataSource>(); //источники данных
-        public ObservableCollection<DataSource> DataSources
+        public ObservableCollection<DataSource> DataSourcesForSubscribers
         {
             get { return _dataSources; }
             private set
@@ -157,9 +157,9 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private void modelData_DataSourcesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        private void modelData_DataSourcesForSubscribersCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            DataSources = (ObservableCollection<DataSource>)sender;
+            DataSourcesForSubscribers = (ObservableCollection<DataSource>)sender;
         }
 
 
@@ -175,10 +175,10 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private void CreateDataSourceView() //создает DataSourcesView на основе DataSources
+        private void CreateDataSourceView() //создает DataSourcesView на основе DataSourcesForSubscribers
         {
             DataSourcesView.Clear();
-            foreach(DataSource dsItem in DataSources)
+            foreach(DataSource dsItem in DataSourcesForSubscribers)
             {
                 //определяет название валюты
                 string currencyName = "";
@@ -320,7 +320,7 @@ namespace ktradesystem.ViewModels
                     Comissiontype1 = true;
                     Comissiontype2 = false;
 
-                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
+                    ViewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewAddDataSource viewAddDataSource = new ViewAddDataSource();
                     viewAddDataSource.Show();
                 }, (obj) => true);
@@ -381,7 +381,7 @@ namespace ktradesystem.ViewModels
                         AddDataSourceFolder = "";
                     }
 
-                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
+                    ViewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewEditDataSource viewEditDataSource = new ViewEditDataSource();
                     viewEditDataSource.Show();
                     
@@ -532,7 +532,7 @@ namespace ktradesystem.ViewModels
             AddDataSourceFolder = null; //сбрасываем название папки
             FilesUnselected.Clear(); //очищаем список файлы
             FilesSelected.Clear();
-            viewmodelData.IsPagesAndMainMenuButtonsEnabled = true;
+            ViewmodelData.IsPagesAndMainMenuButtonsEnabled = true;
             CloseAddDataSourceAction = null; //сбрасываем Action, чтобы при инициализации нового окна в него поместился метод его закрытия
         }
 
@@ -662,7 +662,7 @@ namespace ktradesystem.ViewModels
 
             //проверка на уникальность названия
             bool isUnique = true;
-            foreach(DataSource itemDs in DataSources)
+            foreach(DataSource itemDs in DataSourcesForSubscribers)
             {
                 if(AddDsName == itemDs.Name)
                 {
@@ -752,7 +752,14 @@ namespace ktradesystem.ViewModels
                     {
                         cost = costdouble;
                     }
-                    _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, addInstrument, addCurrency, cost, addComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles);
+
+                    //делаем форму неактивной, показываем statusBarDataSource
+                    ViewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
+                    ViewmodelData.StatusBarDataSourceShow();
+
+                    //запускаем добавление в отдельном потоке чтобы форма обновлялась
+                    Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, addInstrument, addCurrency, cost, addComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles));
+
                     CloseAddDataSourceAction?.Invoke();
                 }, (obj) => IsFieldsAddDataSourceCurrect());
             }
@@ -786,7 +793,7 @@ namespace ktradesystem.ViewModels
 
             //проверка на уникальность названия
             bool isUnique = true;
-            foreach (DataSource itemDs in DataSources)
+            foreach (DataSource itemDs in DataSourcesForSubscribers)
             {
                 if (AddDsName == itemDs.Name && itemDs.Id != EditDsId) //проверяем имя на уникальность среди всех записей кроме редактируемой
                 {

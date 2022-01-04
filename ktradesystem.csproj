@@ -81,6 +81,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="CommunicationChannel\DataSourceAddingProgress.cs" />
     <Compile Include="Models\Datatables\Algorithm.cs" />
     <Compile Include="Models\Datatables\AlgorithmParameter.cs" />
     <Compile Include="Models\Datatables\DataSourceFile.cs" />
@@ -139,7 +140,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\Candle.cs" />
-    <Compile Include="Models\CommunicationChannel.cs" />
+    <Compile Include="CommunicationChannel\MainCommunicationChannel.cs" />
     <Compile Include="Models\Database.cs" />
     <Compile Include="Models\Datatables\Comissiontype.cs" />
     <Compile Include="Models\Datatables\Currency.cs" />
@@ -148,7 +149,7 @@
     <Compile Include="Models\Datatables\Instrument.cs" />
     <Compile Include="Models\Datatables\Interval.cs" />
     <Compile Include="Models\Datatables\Setting.cs" />
-    <Compile Include="Models\Message.cs" />
+    <Compile Include="CommunicationChannel\Message.cs" />
     <Compile Include="Models\ModelBase.cs" />
     <Compile Include="Models\ModelData.cs" />
     <Compile Include="Models\ModelDataSource.cs" />

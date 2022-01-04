@@ -4,23 +4,24 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections.ObjectModel;
+using ktradesystem.Models;
 
-namespace ktradesystem.Models
+namespace ktradesystem.CommunicationChannel
 {
-    class CommunicationChannel : ModelBase //класс реализует канал связи через который ViewModel получает сообщения от модели
+    class MainCommunicationChannel : ModelBase //класс реализует канал связи через который ViewModel получает сообщения от модели
     {
-        private static CommunicationChannel _instance;
+        private static MainCommunicationChannel _instance;
 
-        public static CommunicationChannel getInstance()
+        public static MainCommunicationChannel getInstance()
         {
             if (_instance == null)
             {
-                _instance = new CommunicationChannel();
+                _instance = new MainCommunicationChannel();
             }
             return _instance;
         }
 
-        private CommunicationChannel()
+        private MainCommunicationChannel()
         {
 
         }
@@ -50,6 +51,17 @@ namespace ktradesystem.Models
             int number = MainMessages.Count + 1;
             Message message = new Message() { Number = number, Time = timeStr, Text = msg };
             MainMessages.Add(message);
+        }
+
+        private ObservableCollection<DataSourceAddingProgress> _dataSourceAddingProgress = new ObservableCollection<DataSourceAddingProgress>(); //прогресс выполнения операции добавления источника дынных
+        public ObservableCollection<DataSourceAddingProgress> DataSourceAddingProgress
+        {
+            get { return _dataSourceAddingProgress; }
+            private set
+            {
+                _dataSourceAddingProgress = value;
+                OnPropertyChanged();
+            }
         }
     }
 }

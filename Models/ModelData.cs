@@ -60,6 +60,7 @@ namespace ktradesystem.Models
             }
 
             ReadDataSources();
+            NotifyDataSourcesSubscribers();
 
             ReadIndicators();
         }
@@ -121,6 +122,17 @@ namespace ktradesystem.Models
             private set
             {
                 _dataSources = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<DataSource> _dataSourcesForSubscribers = new ObservableCollection<DataSource>(); //источники данных для подписчиков (т.к. при подписке на основной будет ошибка изменения UI компонентов вне основного потока UI)
+        public ObservableCollection<DataSource> DataSourcesForSubscribers
+        {
+            get { return _dataSourcesForSubscribers; }
+            private set
+            {
+                _dataSourcesForSubscribers = value;
                 OnPropertyChanged();
             }
         }
@@ -309,6 +321,15 @@ namespace ktradesystem.Models
                 ds.DataSourceFiles = dataSourceFiles;
 
                 DataSources.Add(ds);
+            }
+        }
+
+        public void NotifyDataSourcesSubscribers() //выполняет обновление DataSourcesForSubscribers, вследствии чего UI обновится на новые данные
+        {
+            DataSourcesForSubscribers.Clear();
+            foreach(DataSource dataSource in DataSources)
+            {
+                DataSourcesForSubscribers.Add(dataSource);
             }
         }
 

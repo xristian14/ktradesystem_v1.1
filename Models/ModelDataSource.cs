@@ -30,15 +30,12 @@ namespace ktradesystem.Models
         {
             _database = Database.getInstance();
             _modelData = ModelData.getInstance();
-            _dataSources = _modelData.DataSources;
             _mainCommunicationChannel = MainCommunicationChannel.getInstance();
         }
 
         private Database _database;
         private ModelData _modelData;
         private MainCommunicationChannel _mainCommunicationChannel;
-
-        private ObservableCollection<DataSource> _dataSources = new ObservableCollection<DataSource>();
         
         //создание объекта из данных которые набрал пользователь и добавление в DataSources
         public void CreateDataSourceInsertUpdate(string name, Instrument instrument, Currency currency, double? cost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, List<DataSourceFile> dataSourceFiles, int id = -1) //метод проверяет присланные данные на корректность и вызывает метод добавления записи в бд или обновления существующей записи если был прислан id
@@ -228,17 +225,6 @@ namespace ktradesystem.Models
                     }
                 }
 
-                /*
-                var s = new Stopwatch();
-                s.Start();
-                for (int i = 0; i < 100000; i++)
-                {
-                    dateTimeFormated = date.Insert(8, " ").Insert(6, "-").Insert(4, "-") + time.Insert(4, ":").Insert(2, ":");
-                }
-                s.Stop();
-                string duration = s.Elapsed.TotalMilliseconds.ToString();
-                */
-
                 //определяем время работы биржи для файлов, распараллеливая это на несколько ядер
                 Stopwatch stopwatch = new Stopwatch();
                 stopwatch.Start();
@@ -263,15 +249,15 @@ namespace ktradesystem.Models
                     {
                         int indexCompleted = Task.WaitAny(tasks);
                         _mainCommunicationChannel.DataSourceAddingProgress.Clear();
-                        _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount = dataSourceFiles.Count, CompletedTasksCount = i + 1 - processorCount, ElapsedTime = stopwatch.Elapsed, IsFinish = false });
+                        _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount = dataSourceFiles.Count * 2, CompletedTasksCount = i + 1 - processorCount, ElapsedTime = stopwatch.Elapsed, IsFinish = false });
                         DataSourceFile dataSourceFile = dataSourceFiles[i];
                         tasks[indexCompleted] = Task.Run(() => DefiningFileWorkingPeriods(dataSourceFile));
                     }
                 }
                 Task.WaitAll(tasks);
-                stopwatch.Stop();
+
                 _mainCommunicationChannel.DataSourceAddingProgress.Clear();
-                _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount  = dataSourceFiles.Count, CompletedTasksCount = dataSourceFiles.Count, ElapsedTime = stopwatch.Elapsed, IsFinish = false });
+                _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount  = dataSourceFiles.Count * 2, CompletedTasksCount = dataSourceFiles.Count, ElapsedTime = stopwatch.Elapsed, IsFinish = false });
 
                 bool isAddCost = true; //нужно ли добавлять стоимость в запись (у акции нет стоимости)
                 if(instrument.Id == 1)
@@ -283,6 +269,9 @@ namespace ktradesystem.Models
                 {
                     _database.InsertDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, isAddCost);
                     _modelData.ReadDataSources();
+
+                    int a = 1;
+
                     //вставляем записи dataSourceFiles для данного источника данных
                     int newDataSourceId = _modelData.DataSources[_modelData.DataSources.Count - 1].Id;
                     foreach (DataSourceFile dataSourceFile in dataSourceFiles)
@@ -290,6 +279,7 @@ namespace ktradesystem.Models
                         dataSourceFile.IdDataSource = newDataSourceId;
                         _database.InsertDataSourceFile(dataSourceFile);
                         _modelData.ReadDataSourceFiles();
+
                         //вставляем записи DataSourceFileWorkingPeriods для только что вставленного DataSourceFile
                         int newDataSourceFileId = _modelData.DataSourceFiles[_modelData.DataSourceFiles.Count - 1].Id;
                         foreach(DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod in dataSourceFile.DataSourceFileWorkingPeriods)
@@ -297,6 +287,10 @@ namespace ktradesystem.Models
                             dataSourceFileWorkingPeriod.IdDataSourceFile = newDataSourceFileId;
                             _database.InsertDataSourceFileWorkingPeriod(dataSourceFileWorkingPeriod);
                         }
+
+                        _mainCommunicationChannel.DataSourceAddingProgress.Clear();
+                        _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount = dataSourceFiles.Count * 2, CompletedTasksCount = dataSourceFiles.Count + a, ElapsedTime = stopwatch.Elapsed, IsFinish = false });
+                        a++;
                     }
                 }
                 else
@@ -414,12 +408,13 @@ namespace ktradesystem.Models
 
                     //обновляю DataSource
                     _database.UpdateDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, isAddCost, id);
-                }
-                
+                };
+
                 _modelData.ReadDataSources();
 
+                stopwatch.Stop();
                 _mainCommunicationChannel.DataSourceAddingProgress.Clear();
-                _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount = dataSourceFiles.Count, CompletedTasksCount = dataSourceFiles.Count, ElapsedTime = stopwatch.Elapsed, IsFinish = true });
+                _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount = dataSourceFiles.Count * 2, CompletedTasksCount = dataSourceFiles.Count, ElapsedTime = stopwatch.Elapsed, IsFinish = true });
 
             }
         }

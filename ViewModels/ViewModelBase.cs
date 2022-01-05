@@ -5,15 +5,32 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Threading;
+using System.Threading;
 
 namespace ktradesystem.ViewModels
 {
     class ViewModelBase : INotifyPropertyChanged
     {
+        public ViewModelBase()
+        {
+            _dispatcher = Dispatcher.CurrentDispatcher;
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged([CallerMemberName] string prop = "")
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
+            DispatcherInvoke((Action)(() =>
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
+            }));
+        }
+
+        public Dispatcher _dispatcher;
+
+        public void DispatcherInvoke(Action action)
+        {
+            _dispatcher.Invoke(action);
         }
     }
 }

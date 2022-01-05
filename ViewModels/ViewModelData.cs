@@ -117,7 +117,11 @@ namespace ktradesystem.ViewModels
             {
                 _dataSourceAddingProgress = value;
                 OnPropertyChanged();
-                CreateStatusBarDataSourceContent();
+                DispatcherInvoke((Action)(() =>
+                {
+                    CreateStatusBarDataSourceContent();
+                }));
+                //CreateStatusBarDataSourceContent();
             }
         }
 
@@ -126,7 +130,7 @@ namespace ktradesystem.ViewModels
             DataSourceAddingProgress = (ObservableCollection<DataSourceAddingProgress>)sender;
         }
 
-        private Visibility _statusBarDataSourceVisibility = Visibility.Visible;
+        private Visibility _statusBarDataSourceVisibility = Visibility.Collapsed;
         public Visibility StatusBarDataSourceVisibility //видимость элементов строки состояния для источников данных
         {
             get { return _statusBarDataSourceVisibility; }
@@ -196,12 +200,14 @@ namespace ktradesystem.ViewModels
         {
             if(DataSourceAddingProgress.Count != 0)
             {
-                if (DataSourceAddingProgress[0].IsFinish)
+                DataSourceAddingProgress dataSourceAddingProgresses = new DataSourceAddingProgress { TasksCount = DataSourceAddingProgress[0].TasksCount, CompletedTasksCount = DataSourceAddingProgress[0].CompletedTasksCount, ElapsedTime = DataSourceAddingProgress[0].ElapsedTime, IsFinish = DataSourceAddingProgress[0].IsFinish };
+                if (dataSourceAddingProgresses.IsFinish)
                 {
                     //обновляем данные DataSourcesForSubscribers
                     _modelData.NotifyDataSourcesSubscribers();
                     //закрываем statusBarDataSource, делаем форму активной
                     StatusBarDataSourceHide();
+                    IsPagesAndMainMenuButtonsEnabled = true;
                     _mainCommunicationChannel.DataSourceAddingProgress.Clear();
                     //очищаем поля
                     StatusBarDataSourceDoneText = "";
@@ -212,9 +218,9 @@ namespace ktradesystem.ViewModels
                 else
                 {
                     //обновляем значения полей statusBarDataSource
-                    StatusBarDataSourceDoneText = DataSourceAddingProgress[0].CompletedTasksCount.ToString() + "/" + DataSourceAddingProgress[0].TasksCount.ToString();
+                    StatusBarDataSourceDoneText = dataSourceAddingProgresses.CompletedTasksCount.ToString() + "/" + dataSourceAddingProgresses.TasksCount.ToString();
 
-                    int totalRemainingSeconds = (int)((DataSourceAddingProgress[0].ElapsedTime.TotalSeconds / (DataSourceAddingProgress[0].CompletedTasksCount / DataSourceAddingProgress[0].TasksCount)) - DataSourceAddingProgress[0].ElapsedTime.TotalSeconds); //делим пройденное время на завершенную часть от целого и получаем общее время, необходимое для выполнения всей работы, и вычитаем из него пройденное время
+                    int totalRemainingSeconds = (int)((dataSourceAddingProgresses.ElapsedTime.TotalSeconds / ((double)(dataSourceAddingProgresses.CompletedTasksCount) / (double)(dataSourceAddingProgresses.TasksCount))) - dataSourceAddingProgresses.ElapsedTime.TotalSeconds); //делим пройденное время на завершенную часть от целого и получаем общее время, необходимое для выполнения всей работы, и вычитаем из него пройденное время
                     TimeSpan timeSpan = TimeSpan.FromSeconds(totalRemainingSeconds);
                     string timeRemaining = timeSpan.Hours.ToString();
                     if(timeRemaining.Length == 1)
@@ -237,8 +243,8 @@ namespace ktradesystem.ViewModels
                     }
 
                     StatusBarDataSourceRemainingTime = timeRemaining;
-                    StatusBarDataSourceProgressMaxValue = DataSourceAddingProgress[0].TasksCount;
-                    StatusBarDataSourceProgressValue = DataSourceAddingProgress[0].CompletedTasksCount;
+                    StatusBarDataSourceProgressMaxValue = dataSourceAddingProgresses.TasksCount;
+                    StatusBarDataSourceProgressValue = dataSourceAddingProgresses.CompletedTasksCount;
                 }
             }
         }

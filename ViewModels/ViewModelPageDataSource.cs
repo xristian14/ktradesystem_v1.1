@@ -11,6 +11,7 @@ using System.ComponentModel;
 using System.Windows.Input;
 using ktradesystem.Views;
 using System.Windows.Forms;
+using System.Windows;
 using System.IO;
 using Ookii.Dialogs.Wpf;
 
@@ -399,7 +400,7 @@ namespace ktradesystem.ViewModels
                     string msg = "Id: " + SelectedDataSource.Id + "   Название: " + SelectedDataSource.Name;
                     string caption = "Удалить источник данных?";
                     MessageBoxButtons messageBoxButton = MessageBoxButtons.YesNo;
-                    var result = MessageBox.Show(msg, caption, messageBoxButton);
+                    var result = System.Windows.Forms.MessageBox.Show(msg, caption, messageBoxButton);
                     if (result == DialogResult.Yes)
                     {
                         _modelDataSource.DeleteDataSource(SelectedDataSource.Id);
@@ -532,7 +533,15 @@ namespace ktradesystem.ViewModels
             AddDataSourceFolder = null; //сбрасываем название папки
             FilesUnselected.Clear(); //очищаем список файлы
             FilesSelected.Clear();
-            ViewmodelData.IsPagesAndMainMenuButtonsEnabled = true;
+            if (_viewmodelData.StatusBarDataSourceVisibility == Visibility.Visible) //окно было закрыто по нажатию кнопки добавить или по отмене
+            {
+                ViewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
+            }
+            else
+            {
+                ViewmodelData.IsPagesAndMainMenuButtonsEnabled = true;
+            }
+            
             CloseAddDataSourceAction = null; //сбрасываем Action, чтобы при инициализации нового окна в него поместился метод его закрытия
         }
 
@@ -753,8 +762,7 @@ namespace ktradesystem.ViewModels
                         cost = costdouble;
                     }
 
-                    //делаем форму неактивной, показываем statusBarDataSource
-                    ViewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
+                    //показываем statusBarDataSource
                     ViewmodelData.StatusBarDataSourceShow();
 
                     //запускаем добавление в отдельном потоке чтобы форма обновлялась

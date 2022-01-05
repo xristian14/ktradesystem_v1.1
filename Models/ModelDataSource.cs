@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 using System.IO;
 using System.Collections.ObjectModel;
 using System.Data;
@@ -419,6 +420,7 @@ namespace ktradesystem.Models
 
                 _mainCommunicationChannel.DataSourceAddingProgress.Clear();
                 _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount = dataSourceFiles.Count, CompletedTasksCount = dataSourceFiles.Count, ElapsedTime = stopwatch.Elapsed, IsFinish = true });
+
             }
         }
 

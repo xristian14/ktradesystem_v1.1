@@ -137,28 +137,6 @@ namespace ktradesystem.Models
             }
         }
 
-        private ObservableCollection<DataSourceFile> _dataSourceFiles = new ObservableCollection<DataSourceFile>(); //файлы источников данных
-        public ObservableCollection<DataSourceFile> DataSourceFiles
-        {
-            get { return _dataSourceFiles; }
-            private set
-            {
-                _dataSourceFiles = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private ObservableCollection<DataSourceFileWorkingPeriod> _dataSourceFileWorkingPeriods = new ObservableCollection<DataSourceFileWorkingPeriod>(); //периоды с временем начала и окончаняи торгов файлов источников данных
-        public ObservableCollection<DataSourceFileWorkingPeriod> DataSourceFileWorkingPeriods
-        {
-            get { return _dataSourceFileWorkingPeriods; }
-            private set
-            {
-                _dataSourceFileWorkingPeriods = value;
-                OnPropertyChanged();
-            }
-        }
-
         private ObservableCollection<IndicatorParameterTemplate> _indicatorParameterTemplates = new ObservableCollection<IndicatorParameterTemplate>(); //шаблоны параметров (для индикаторов)
         public ObservableCollection<IndicatorParameterTemplate> IndicatorParameterTemplates
         {
@@ -225,45 +203,8 @@ namespace ktradesystem.Models
             }
         }
 
-        public void ReadDataSourceFileWorkingPeriods()
-        {
-            //считываем периоды с временем начала и окончания торгов файлов источников данных
-            DataSourceFileWorkingPeriods.Clear();
-            DataTable dataDataSourceFileWorkingPeriods = _database.QuerySelect("SELECT * FROM DataSourceFileWorkingPeriods");
-            foreach (DataRow row in dataDataSourceFileWorkingPeriods.Rows)
-            {
-                DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod = new DataSourceFileWorkingPeriod { Id = (int)row.Field<long>("id"), StartPeriod = DateTime.Parse(row.Field<string>("startPeriod")), TradingStartTime = DateTime.Parse(row.Field<string>("tradingStartTime")), TradingEndTime = DateTime.Parse(row.Field<string>("tradingEndTime")), IdDataSourceFile = (int)row.Field<long>("idDataSourceFile") };
-                DataSourceFileWorkingPeriods.Add(dataSourceFileWorkingPeriod);
-            }
-        }
-
-        public void ReadDataSourceFiles()
-        {
-            //считываем файлы источников данных
-            DataSourceFiles.Clear();
-            DataTable dataDataSourceFiles = _database.QuerySelect("SELECT * FROM DataSourceFiles");
-            foreach (DataRow row in dataDataSourceFiles.Rows)
-            {
-                DataSourceFile dataSourceFile = new DataSourceFile { Id = (int)row.Field<long>("id"), Path = row.Field<string>("path"), IdDataSource = (int)row.Field<long>("idDataSource") };
-                //определяем dataSourceFileWorkingPeriods для файла источника данных
-                List<DataSourceFileWorkingPeriod> dataSourceFileWorkingPeriods = new List<DataSourceFileWorkingPeriod>();
-                foreach (DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod in DataSourceFileWorkingPeriods)
-                {
-                    if (dataSourceFileWorkingPeriod.IdDataSourceFile == dataSourceFile.Id)
-                    {
-                        dataSourceFileWorkingPeriods.Add(dataSourceFileWorkingPeriod);
-                    }
-                }
-                dataSourceFile.DataSourceFileWorkingPeriods = dataSourceFileWorkingPeriods;
-                DataSourceFiles.Add(dataSourceFile);
-            }
-        }
-
         public void ReadDataSources()
         {
-            ReadDataSourceFileWorkingPeriods();
-            ReadDataSourceFiles();
-            
             //считываем источники данных
             DataSources.Clear();
             DataTable data = _database.QuerySelect("SELECT * FROM Datasources");
@@ -309,17 +250,23 @@ namespace ktradesystem.Models
                 ds.Comission = row.Field<double>("comission");
                 ds.PriceStep = row.Field<double>("priceStep");
                 ds.CostPriceStep = row.Field<double>("costPriceStep");
-                //определяем dataSourceFiles для источника данных
-                List<DataSourceFile> dataSourceFiles = new List<DataSourceFile>();
-                foreach(DataSourceFile dataSourceFile in DataSourceFiles)
-                {
-                    if(dataSourceFile.IdDataSource == ds.Id)
-                    {
-                        dataSourceFiles.Add(dataSourceFile);
-                    }
-                }
-                ds.DataSourceFiles = dataSourceFiles;
 
+                //считываем dataSourceFiles для источника данных
+                ds.DataSourceFiles = new List<DataSourceFile>();
+                DataTable dataDataSourceFiles = _database.SelectDataSourceFiles(ds.Id);
+                foreach (DataRow row1 in dataDataSourceFiles.Rows)
+                {
+                    DataSourceFile dataSourceFile = new DataSourceFile { Id = (int)row1.Field<long>("id"), Path = row1.Field<string>("path"), IdDataSource = (int)row1.Field<long>("idDataSource") };
+                    dataSourceFile.DataSourceFileWorkingPeriods = new List<DataSourceFileWorkingPeriod>();
+                    //считываем dataSourceFileWorkingPeriods для файла источника данных
+                    DataTable dataDataSourceFileWorkingPeriods = _database.SelectDataSourceFileWorkingPeriods(dataSourceFile.Id);
+                    foreach (DataRow row2 in dataDataSourceFileWorkingPeriods.Rows)
+                    {
+                        DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod = new DataSourceFileWorkingPeriod { Id = (int)row2.Field<long>("id"), StartPeriod = DateTime.Parse(row2.Field<string>("startPeriod")), TradingStartTime = DateTime.Parse(row2.Field<string>("tradingStartTime")), TradingEndTime = DateTime.Parse(row2.Field<string>("tradingEndTime")), IdDataSourceFile = (int)row2.Field<long>("idDataSourceFile") };
+                        dataSourceFile.DataSourceFileWorkingPeriods.Add(dataSourceFileWorkingPeriod);
+                    }
+                    ds.DataSourceFiles.Add(dataSourceFile);
+                }
                 DataSources.Add(ds);
             }
         }

@@ -219,7 +219,6 @@ namespace ktradesystem.ViewModels
                 {
                     //обновляем значения полей statusBarDataSource
                     StatusBarDataSourceDoneText = dataSourceAddingProgresses.CompletedTasksCount.ToString() + "/" + dataSourceAddingProgresses.TasksCount.ToString();
-
                     int totalRemainingSeconds = (int)((dataSourceAddingProgresses.ElapsedTime.TotalSeconds / ((double)(dataSourceAddingProgresses.CompletedTasksCount) / (double)(dataSourceAddingProgresses.TasksCount))) - dataSourceAddingProgresses.ElapsedTime.TotalSeconds); //делим пройденное время на завершенную часть от целого и получаем общее время, необходимое для выполнения всей работы, и вычитаем из него пройденное время
                     TimeSpan timeSpan = TimeSpan.FromSeconds(totalRemainingSeconds);
                     string timeRemaining = timeSpan.Hours.ToString();
@@ -255,7 +254,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    MessageBox.Show(Environment.ProcessorCount.ToString());
+                    _modelDataSource.CancellationTokenSourceDataSourceCancel();
                 }, (obj) => true);
             }
         }

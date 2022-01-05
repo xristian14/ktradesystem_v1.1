@@ -75,6 +75,28 @@ namespace ktradesystem.Models
             return data;
         }
 
+        public DataTable SelectDataSourceFiles(int idDataSource)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "SELECT * FROM DataSourceFiles WHERE idDataSource = :idDataSource";
+            command.Parameters.AddWithValue("idDataSource", idDataSource);
+            DataTable data = new DataTable();
+            SQLiteDataAdapter adapter = new SQLiteDataAdapter(command);
+            adapter.Fill(data);
+            return data;
+        }
+
+        public DataTable SelectDataSourceFileWorkingPeriods(int idDataSourceFile)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "SELECT * FROM DataSourceFileWorkingPeriods WHERE idDataSourceFile = :idDataSourceFile";
+            command.Parameters.AddWithValue("idDataSourceFile", idDataSourceFile);
+            DataTable data = new DataTable();
+            SQLiteDataAdapter adapter = new SQLiteDataAdapter(command);
+            adapter.Fill(data);
+            return data;
+        }
+
         public void InsertDataSource(string name, Instrument instrument, Interval interval, Currency currency, double? cost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, bool isAddCost) //isAddCost - добавлять ли стоимость в запись, при false это поле не будет задано в запросе
         {
             SQLiteCommand command = new SQLiteCommand(_connection);

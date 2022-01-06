@@ -410,7 +410,7 @@ namespace ktradesystem.Models
                                     }
                                 }
                             }
-                            else //если количество новых файлов больше чем было раньше, считаем что все DataSourceFileWorkingPeriod нужно добавить
+                            else //если текущий файл отсутствует в старых файлах, считаем что все DataSourceFileWorkingPeriod данного файла нужно добавить
                             {
                                 for(int i = 0; i < dataSourceFiles[k].DataSourceFileWorkingPeriods.Count; i++)
                                 {

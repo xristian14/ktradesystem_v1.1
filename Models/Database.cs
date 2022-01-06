@@ -337,11 +337,12 @@ namespace ktradesystem.Models
         public void UpdateIndicatorParameterRange(IndicatorParameterRange indicatorParameterRange)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "UPDATE IndicatorParameterRanges SET minValue = :minValue, maxValue = :maxValue, step = :step, isStepPercent = :isStepPercent WHERE id = :id";
+            command.CommandText = "UPDATE IndicatorParameterRanges SET minValue = :minValue, maxValue = :maxValue, step = :step, isStepPercent = :isStepPercent, idIndicatorParameterTemplate = :idIndicatorParameterTemplate WHERE id = :id";
             command.Parameters.AddWithValue("minValue", indicatorParameterRange.MinValue);
             command.Parameters.AddWithValue("maxValue", indicatorParameterRange.MaxValue);
             command.Parameters.AddWithValue("step", indicatorParameterRange.Step);
             command.Parameters.AddWithValue("isStepPercent", indicatorParameterRange.IsStepPercent);
+            command.Parameters.AddWithValue("idIndicatorParameterTemplate", indicatorParameterRange.IdIndicatorParameterTemplate);
             command.Parameters.AddWithValue("id", indicatorParameterRange.Id);
 
             command.ExecuteNonQuery();
@@ -389,6 +390,15 @@ namespace ktradesystem.Models
             command.Parameters.AddWithValue("script", algorithm.Script);
             command.Parameters.AddWithValue("id", algorithm.Id);
 
+            command.ExecuteNonQuery();
+        }
+
+        public void DeleteAlgorithm(int id)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            string query = "DELETE FROM Algorithms WHERE id = :id";
+            command.CommandText = query;
+            command.Parameters.AddWithValue("id", id);
             command.ExecuteNonQuery();
         }
 

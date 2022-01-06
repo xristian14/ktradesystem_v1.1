@@ -124,7 +124,7 @@ namespace ktradesystem.Models
                 _database.InsertAlgorithm(new Algorithm { Name = name, Description = description, Script = script });
                 _modelData.ReadAlgorithms();
 
-                int newAlgorithmId = _modelData.Algorithms[_modelData.Algorithms.Count - 1].Id;
+                int newAlgorithmId = _modelData.Algorithms.Last().Id;
 
                 foreach (DataSourceTemplate dataSourceTemplate in dataSourceTemplates)
                 {
@@ -222,11 +222,10 @@ namespace ktradesystem.Models
                 {
                     if (indicatorParameterRanges.Count > i && oldAlgorithm.IndicatorParameterRanges.Count > i)
                     {
-                        if (indicatorParameterRanges[i].MinValue != oldAlgorithm.IndicatorParameterRanges[i].MinValue || indicatorParameterRanges[i].MaxValue != oldAlgorithm.IndicatorParameterRanges[i].MaxValue || indicatorParameterRanges[i].Step != oldAlgorithm.IndicatorParameterRanges[i].Step || indicatorParameterRanges[i].IsStepPercent != oldAlgorithm.IndicatorParameterRanges[i].IsStepPercent)
+                        if (indicatorParameterRanges[i].MinValue != oldAlgorithm.IndicatorParameterRanges[i].MinValue || indicatorParameterRanges[i].MaxValue != oldAlgorithm.IndicatorParameterRanges[i].MaxValue || indicatorParameterRanges[i].Step != oldAlgorithm.IndicatorParameterRanges[i].Step || indicatorParameterRanges[i].IsStepPercent != oldAlgorithm.IndicatorParameterRanges[i].IsStepPercent || indicatorParameterRanges[i].IdIndicatorParameterTemplate != oldAlgorithm.IndicatorParameterRanges[i].IdIndicatorParameterTemplate)
                         {
                             indicatorParameterRanges[i].Id = oldAlgorithm.IndicatorParameterRanges[i].Id;
                             indicatorParameterRanges[i].IdAlgorithm = oldAlgorithm.IndicatorParameterRanges[i].IdAlgorithm;
-                            indicatorParameterRanges[i].IdIndicatorParameterTemplate = oldAlgorithm.IndicatorParameterRanges[i].IdIndicatorParameterTemplate;
                             updateIndParRan.Add(indicatorParameterRanges[i]);
                         }
                     }
@@ -309,6 +308,13 @@ namespace ktradesystem.Models
                 //обновляем алгоритм
                 _database.UpdateAlgorithm(new Algorithm { Id = id, Name = name, Description = description, Script = script });
             }
+
+            _modelData.ReadAlgorithms();
+        }
+
+        public void AlgorithmDelete(int id)
+        {
+            _database.DeleteAlgorithm(id);
 
             _modelData.ReadAlgorithms();
         }

@@ -964,11 +964,20 @@ return a.ToString();
 
         private void SelectLatestAlgorithm() //выбирает алгоритм который был последним выбранным
         {
+            bool isFindLastAlgorithm = false; //был ли найден последний алгоритм. Если нет - значит был добавлен новый
             foreach(Algorithm algorithm in Algorithms)
             {
                 if(algorithm.Id == _algorithmId)
                 {
                     SelectedAlgorithm = algorithm;
+                    isFindLastAlgorithm = true;
+                }
+            }
+            if (isFindLastAlgorithm == false) //выбираем добавленный алгоритм
+            {
+                if(Algorithms.Count > 0)
+                {
+                    SelectedAlgorithm = Algorithms.Last();
                 }
             }
         }
@@ -1023,6 +1032,9 @@ return a.ToString();
             {
                 AlgorithmName = "";
                 AlgorithmDescription = "";
+                DataSourceTemplatesView.Clear();
+                IndicatorParameterRangesView.Clear();
+                AlgorithmIndicators.Clear();
                 AlgorithmParametersView.Clear();
                 AlgorithmScript = "";
             }
@@ -1136,7 +1148,7 @@ return a.ToString();
                     var result = MessageBox.Show(msg, caption, messageBoxButton);
                     if (result == MessageBoxResult.Yes)
                     {
-                        //_modelTesting.AlgorithmDelete(SelectedAlgorithm.Id);
+                        _modelTesting.AlgorithmDelete(SelectedAlgorithm.Id);
                     }
                 }, (obj) => !IsAddOrEditAlgorithm() && SelectedAlgorithm != null);
             }
@@ -1862,9 +1874,13 @@ return a.ToString();
                     {
                         EditIndicatorParameterRangesViewSelectedTypeStep = EditIndicatorParameterRangesViewTypesStep[0];
                     }
-                    else
+                    else if(SelectedIndicatorParameterRangeView.IsStepPercent == false)
                     {
                         EditIndicatorParameterRangesViewSelectedTypeStep = EditIndicatorParameterRangesViewTypesStep[1];
+                    }
+                    else //если null, выбираем первый
+                    {
+                        EditIndicatorParameterRangesViewSelectedTypeStep = EditIndicatorParameterRangesViewTypesStep[0];
                     }
 
                     viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;

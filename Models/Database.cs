@@ -97,6 +97,17 @@ namespace ktradesystem.Models
             return data;
         }
 
+        public DataTable SelectDataSourceFromId(int id)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "SELECT * FROM DataSources WHERE id = :id";
+            command.Parameters.AddWithValue("id", id);
+            DataTable data = new DataTable();
+            SQLiteDataAdapter adapter = new SQLiteDataAdapter(command);
+            adapter.Fill(data);
+            return data;
+        }
+
         public void InsertDataSource(string name, Instrument instrument, Interval interval, Currency currency, double? cost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, bool isAddCost) //isAddCost - добавлять ли стоимость в запись, при false это поле не будет задано в запросе
         {
             SQLiteCommand command = new SQLiteCommand(_connection);

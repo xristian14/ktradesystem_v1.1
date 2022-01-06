@@ -890,7 +890,12 @@ namespace ktradesystem.ViewModels
                     if(double.TryParse(AddDsCost, out double costdouble)){
                         cost = costdouble;
                     }
-                    _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, addInstrument, addCurrency, cost, addComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles, EditDsId);
+
+                    //показываем statusBarDataSource
+                    ViewmodelData.StatusBarDataSourceShow();
+
+                    //запускаем добавление в отдельном потоке чтобы форма обновлялась
+                    Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, addInstrument, addCurrency, cost, addComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles, EditDsId));
 
                     CloseAddDataSourceAction?.Invoke();
                 }, (obj) => IsFieldsEditDataSourceCurrect());

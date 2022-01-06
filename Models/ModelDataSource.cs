@@ -168,6 +168,8 @@ namespace ktradesystem.Models
                     processorCount = 1;
                 }
                 var tasks = new Task[processorCount]; //задачи
+                string progressHeader = id == -1 ? "Добавление источника данных" : "Редактирование источника данных";
+                int taskCount = id == -1 ? dataSourceFiles.Count * 2 : dataSourceFiles.Count * 2 + 3;//количество задач (для прогресса выполнения)
                 for(int i = 0; i < dataSourceFiles.Count; i++)
                 {
                     if(i < processorCount)
@@ -189,7 +191,7 @@ namespace ktradesystem.Models
 
                         DispatcherInvoke((Action)(() => {
                             _mainCommunicationChannel.DataSourceAddingProgress.Clear();
-                            _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount = dataSourceFiles.Count * 2, CompletedTasksCount = i + 1 - processorCount, ElapsedTime = stopwatch.Elapsed, IsFinish = false });
+                            _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { Header = progressHeader, TasksCount = taskCount, CompletedTasksCount = i + 1 - processorCount, ElapsedTime = stopwatch.Elapsed, CancelPossibility = true, IsFinish = false });
                         }));
                         
                         DataSourceFile dataSourceFile = dataSourceFiles[i];
@@ -206,7 +208,8 @@ namespace ktradesystem.Models
 
                 DispatcherInvoke((Action)(() => {
                     _mainCommunicationChannel.DataSourceAddingProgress.Clear();
-                    _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount = dataSourceFiles.Count * 2, CompletedTasksCount = dataSourceFiles.Count, ElapsedTime = stopwatch.Elapsed, IsFinish = false });
+                    _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { Header = progressHeader, TasksCount = taskCount, CompletedTasksCount = dataSourceFiles.Count, ElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsFinish = false });
+                    int t = 0;
                 }));
                 
 
@@ -270,10 +273,11 @@ namespace ktradesystem.Models
                         {
                             dataSourceFile.IdDataSource = newDataSourceId;
                             _database.InsertDataSourceFile(dataSourceFile);
-                            _modelData.ReadDataSources();
+                            //_modelData.ReadDataSources();
+                            DataSource newDataSource = _modelData.SelectDataSourceById(newDataSourceId); //считываем только только что добавленный источник данных, т.к. нет необходимости считывать все
 
                             //вставляем записи DataSourceFileWorkingPeriods для только что вставленного DataSourceFile
-                            int newDataSourceFileId = _modelData.DataSources.Last().DataSourceFiles.Last().Id;
+                            int newDataSourceFileId = newDataSource.DataSourceFiles.Last().Id;
                             foreach (DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod in dataSourceFile.DataSourceFileWorkingPeriods)
                             {
                                 dataSourceFileWorkingPeriod.IdDataSourceFile = newDataSourceFileId;
@@ -282,7 +286,7 @@ namespace ktradesystem.Models
 
                             DispatcherInvoke((Action)(() => {
                                 _mainCommunicationChannel.DataSourceAddingProgress.Clear();
-                                _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount = dataSourceFiles.Count * 2, CompletedTasksCount = dataSourceFiles.Count + a, ElapsedTime = stopwatch.Elapsed, IsFinish = false });
+                                _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { Header = progressHeader, TasksCount = taskCount, CompletedTasksCount = dataSourceFiles.Count + a, ElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsFinish = false });
                             }));
                             
                             a++;
@@ -336,69 +340,112 @@ namespace ktradesystem.Models
                         {
                             _database.UpdateDataSourceFile(dataSourceFile);
                         }
+                        DispatcherInvoke((Action)(() => {
+                            _mainCommunicationChannel.DataSourceAddingProgress.Clear();
+                            _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { Header = progressHeader, TasksCount = taskCount, CompletedTasksCount = dataSourceFiles.Count + 1, ElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsFinish = false });
+                        }));
                         //добавляем
                         foreach (DataSourceFile dataSourceFile1 in addDataSourceFiles)
                         {
                             _database.InsertDataSourceFile(dataSourceFile1);
                         }
+                        DispatcherInvoke((Action)(() => {
+                            _mainCommunicationChannel.DataSourceAddingProgress.Clear();
+                            _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { Header = progressHeader, TasksCount = taskCount, CompletedTasksCount = dataSourceFiles.Count + 2, ElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsFinish = false });
+                        }));
                         //удаляем
                         foreach (int idDeleteDataSourceFile in deleteDataSourceFiles)
                         {
                             _database.DeleteDataSourceFile(idDeleteDataSourceFile);
                         }
-                        _modelData.ReadDataSources();
+                        DispatcherInvoke((Action)(() => {
+                            _mainCommunicationChannel.DataSourceAddingProgress.Clear();
+                            _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { Header = progressHeader, TasksCount = taskCount, CompletedTasksCount = dataSourceFiles.Count + 3, ElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsFinish = false });
+                        }));
+
+                        //помещаю в dataSourceFiles их id из БД
+                        DataSource currentDataSource = _modelData.SelectDataSourceById(oldDataSource.Id);
+                        for(int r = 0; r < currentDataSource.DataSourceFiles.Count; r++)
+                        {
+                            dataSourceFiles[r].Id = currentDataSource.DataSourceFiles[r].Id;
+                        }
 
                         //обновляю dataSourceFileWorkingPeriods
                         for (int k = 0; k < dataSourceFiles.Count; k++)
                         {
-                            DataSourceFile oldDataSourceFile = oldDataSource.DataSourceFiles[k];
-
                             List<DataSourceFileWorkingPeriod> updateDataSourceFileWorkingPeriods = new List<DataSourceFileWorkingPeriod>(); //список с id записи которую нужно обновить и данные на которые нужно обновить
                             List<DataSourceFileWorkingPeriod> addDataSourceFileWorkingPeriods = new List<DataSourceFileWorkingPeriod>(); //список с записями которые нужно добавить
                             List<int> deleteDataSourceFileWorkingPeriods = new List<int>(); //список с id записей которые нужно удалить
 
-                            int maxLengthDataSourceFileWorkingPeriod = dataSourceFiles[k].DataSourceFileWorkingPeriods.Count;
-                            if (oldDataSourceFile.DataSourceFileWorkingPeriods.Count > maxLengthDataSourceFileWorkingPeriod)
+                            
+                            if(oldDataSource.DataSourceFiles.Count > k) //если в старой версии источника данных есть файл по этому индексу
                             {
-                                maxLengthDataSourceFileWorkingPeriod = oldDataSourceFile.DataSourceFileWorkingPeriods.Count;
-                            }
-                            //проходим по всем элементам старого и нового списка, и определяем какие обновить, какие добавить, а какие удалить
-                            for (int i = 0; i < maxLengthDataSourceFileWorkingPeriod; i++)
-                            {
-                                if (dataSourceFiles[k].DataSourceFileWorkingPeriods.Count > i && oldDataSourceFile.DataSourceFileWorkingPeriods.Count > i)
+                                DataSourceFile oldDataSourceFile = oldDataSource.DataSourceFiles[k];
+
+                                int maxLengthDataSourceFileWorkingPeriod = dataSourceFiles[k].DataSourceFileWorkingPeriods.Count;
+                                if (oldDataSourceFile.DataSourceFileWorkingPeriods.Count > maxLengthDataSourceFileWorkingPeriod)
                                 {
-                                    if (DateTime.Compare(dataSourceFiles[k].DataSourceFileWorkingPeriods[i].StartPeriod, oldDataSourceFile.DataSourceFileWorkingPeriods[i].StartPeriod) != 0 || DateTime.Compare(dataSourceFiles[k].DataSourceFileWorkingPeriods[i].TradingStartTime, oldDataSourceFile.DataSourceFileWorkingPeriods[i].TradingStartTime) != 0 || DateTime.Compare(dataSourceFiles[k].DataSourceFileWorkingPeriods[i].TradingEndTime, oldDataSourceFile.DataSourceFileWorkingPeriods[i].TradingEndTime) != 0)
+                                    maxLengthDataSourceFileWorkingPeriod = oldDataSourceFile.DataSourceFileWorkingPeriods.Count;
+                                }
+                                //проходим по всем элементам старого и нового списка, и определяем какие обновить, какие добавить, а какие удалить
+                                for (int i = 0; i < maxLengthDataSourceFileWorkingPeriod; i++)
+                                {
+                                    if (dataSourceFiles[k].DataSourceFileWorkingPeriods.Count > i && oldDataSourceFile.DataSourceFileWorkingPeriods.Count > i)
                                     {
-                                        dataSourceFiles[k].DataSourceFileWorkingPeriods[i].Id = oldDataSourceFile.DataSourceFileWorkingPeriods[i].Id;
-                                        dataSourceFiles[k].DataSourceFileWorkingPeriods[i].IdDataSourceFile = oldDataSourceFile.DataSourceFileWorkingPeriods[i].IdDataSourceFile;
-                                        updateDataSourceFileWorkingPeriods.Add(dataSourceFiles[k].DataSourceFileWorkingPeriods[i]);
+                                        if (DateTime.Compare(dataSourceFiles[k].DataSourceFileWorkingPeriods[i].StartPeriod, oldDataSourceFile.DataSourceFileWorkingPeriods[i].StartPeriod) != 0 || DateTime.Compare(dataSourceFiles[k].DataSourceFileWorkingPeriods[i].TradingStartTime, oldDataSourceFile.DataSourceFileWorkingPeriods[i].TradingStartTime) != 0 || DateTime.Compare(dataSourceFiles[k].DataSourceFileWorkingPeriods[i].TradingEndTime, oldDataSourceFile.DataSourceFileWorkingPeriods[i].TradingEndTime) != 0)
+                                        {
+                                            dataSourceFiles[k].DataSourceFileWorkingPeriods[i].Id = oldDataSourceFile.DataSourceFileWorkingPeriods[i].Id;
+                                            dataSourceFiles[k].DataSourceFileWorkingPeriods[i].IdDataSourceFile = oldDataSourceFile.DataSourceFileWorkingPeriods[i].IdDataSourceFile;
+                                            updateDataSourceFileWorkingPeriods.Add(dataSourceFiles[k].DataSourceFileWorkingPeriods[i]);
+                                        }
+                                    }
+                                    else if (dataSourceFiles[k].DataSourceFileWorkingPeriods.Count > i && oldDataSourceFile.DataSourceFileWorkingPeriods.Count <= i)
+                                    {
+                                        dataSourceFiles[k].DataSourceFileWorkingPeriods[i].IdDataSourceFile = oldDataSourceFile.Id;
+                                        addDataSourceFileWorkingPeriods.Add(dataSourceFiles[k].DataSourceFileWorkingPeriods[i]);
+                                    }
+                                    else if (dataSourceFiles[k].DataSourceFileWorkingPeriods.Count <= i && oldDataSourceFile.DataSourceFileWorkingPeriods.Count > i)
+                                    {
+                                        deleteDataSourceFileWorkingPeriods.Add(oldDataSourceFile.DataSourceFileWorkingPeriods[i].Id);
                                     }
                                 }
-                                else if (dataSourceFiles[k].DataSourceFileWorkingPeriods.Count > i && oldDataSourceFile.DataSourceFileWorkingPeriods.Count <= i)
+                            }
+                            else //если количество новых файлов больше чем было раньше, считаем что все DataSourceFileWorkingPeriod нужно добавить
+                            {
+                                for(int i = 0; i < dataSourceFiles[k].DataSourceFileWorkingPeriods.Count; i++)
                                 {
-                                    dataSourceFiles[k].DataSourceFileWorkingPeriods[i].IdDataSourceFile = oldDataSourceFile.Id;
+                                    dataSourceFiles[k].DataSourceFileWorkingPeriods[i].IdDataSourceFile = dataSourceFiles[k].Id;
                                     addDataSourceFileWorkingPeriods.Add(dataSourceFiles[k].DataSourceFileWorkingPeriods[i]);
                                 }
-                                else if (dataSourceFiles[k].DataSourceFileWorkingPeriods.Count <= i && oldDataSourceFile.DataSourceFileWorkingPeriods.Count > i)
-                                {
-                                    deleteDataSourceFileWorkingPeriods.Add(oldDataSourceFile.DataSourceFileWorkingPeriods[i].Id);
-                                }
                             }
+
                             //обновляем
                             foreach (DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod in updateDataSourceFileWorkingPeriods)
                             {
                                 _database.UpdateDataSourceFileWorkingPeriod(dataSourceFileWorkingPeriod);
                             }
+                            DispatcherInvoke((Action)(() => {
+                                _mainCommunicationChannel.DataSourceAddingProgress.Clear();
+                                _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { Header = progressHeader, TasksCount = taskCount, CompletedTasksCount = dataSourceFiles.Count + 3 + k + 1, ElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsFinish = false });
+                            }));
                             //добавляем
                             foreach (DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod1 in addDataSourceFileWorkingPeriods)
                             {
                                 _database.InsertDataSourceFileWorkingPeriod(dataSourceFileWorkingPeriod1);
                             }
+                            DispatcherInvoke((Action)(() => {
+                                _mainCommunicationChannel.DataSourceAddingProgress.Clear();
+                                _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { Header = progressHeader, TasksCount = taskCount, CompletedTasksCount = dataSourceFiles.Count + 3 + k + 1, ElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsFinish = false });
+                            }));
                             //удаляем
                             foreach (int idDeleteDataSourceFileWorkingPeriod in deleteDataSourceFileWorkingPeriods)
                             {
                                 _database.DeleteDataSourceFileWorkingPeriod(idDeleteDataSourceFileWorkingPeriod);
                             }
+                            DispatcherInvoke((Action)(() => {
+                                _mainCommunicationChannel.DataSourceAddingProgress.Clear();
+                                _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { Header = progressHeader, TasksCount = taskCount, CompletedTasksCount = dataSourceFiles.Count + 3 + k + 1, ElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsFinish = false });
+                            }));
                         }
 
                         //обновляю DataSource
@@ -415,7 +462,7 @@ namespace ktradesystem.Models
         {
             DispatcherInvoke((Action)(() => {
                 _mainCommunicationChannel.DataSourceAddingProgress.Clear();
-                _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { TasksCount = 1, CompletedTasksCount = 1, ElapsedTime = TimeSpan.FromSeconds(1), IsFinish = true });
+                _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { Header = "Редактирование исчтоника данных", TasksCount = 1, CompletedTasksCount = 1, ElapsedTime = TimeSpan.FromSeconds(1), CancelPossibility = false, IsFinish = true });
             }));
             
         }

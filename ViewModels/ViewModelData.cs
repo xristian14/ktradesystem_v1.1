@@ -141,6 +141,17 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        private string _statusBarDataSourceHeader;
+        public string StatusBarDataSourceHeader //заголовок выполняемого действия
+        {
+            get { return _statusBarDataSourceHeader; }
+            private set
+            {
+                _statusBarDataSourceHeader = value;
+                OnPropertyChanged();
+            }
+        }
+
         private string _statusBarDataSourceDoneText;
         public string StatusBarDataSourceDoneText //на сколько выполнено, в формате 1/20
         {
@@ -196,12 +207,22 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        private bool _statusBarDataSourceCancelPossibility = true;
+        public bool StatusBarDataSourceCancelPossibility //определяет возможность нажатия кнопки Отменить
+        {
+            get { return _statusBarDataSourceCancelPossibility; }
+            private set
+            {
+                _statusBarDataSourceCancelPossibility = value;
+                OnPropertyChanged();
+            }
+        }
+
         private void CreateStatusBarDataSourceContent()
         {
             if(DataSourceAddingProgress.Count != 0)
             {
-                DataSourceAddingProgress dataSourceAddingProgresses = new DataSourceAddingProgress { TasksCount = DataSourceAddingProgress[0].TasksCount, CompletedTasksCount = DataSourceAddingProgress[0].CompletedTasksCount, ElapsedTime = DataSourceAddingProgress[0].ElapsedTime, IsFinish = DataSourceAddingProgress[0].IsFinish };
-                if (dataSourceAddingProgresses.IsFinish)
+                if (DataSourceAddingProgress[0].IsFinish)
                 {
                     //обновляем данные DataSourcesForSubscribers
                     _modelData.NotifyDataSourcesSubscribers();
@@ -210,16 +231,19 @@ namespace ktradesystem.ViewModels
                     IsPagesAndMainMenuButtonsEnabled = true;
                     _mainCommunicationChannel.DataSourceAddingProgress.Clear();
                     //очищаем поля
+                    StatusBarDataSourceHeader = "";
                     StatusBarDataSourceDoneText = "";
                     StatusBarDataSourceRemainingTime = "";
                     StatusBarDataSourceProgressMaxValue = 0;
                     StatusBarDataSourceProgressValue = 0;
+                    StatusBarDataSourceCancelPossibility = true;
                 }
                 else
                 {
                     //обновляем значения полей statusBarDataSource
-                    StatusBarDataSourceDoneText = dataSourceAddingProgresses.CompletedTasksCount.ToString() + "/" + dataSourceAddingProgresses.TasksCount.ToString();
-                    int totalRemainingSeconds = (int)((dataSourceAddingProgresses.ElapsedTime.TotalSeconds / ((double)(dataSourceAddingProgresses.CompletedTasksCount) / (double)(dataSourceAddingProgresses.TasksCount))) - dataSourceAddingProgresses.ElapsedTime.TotalSeconds); //делим пройденное время на завершенную часть от целого и получаем общее время, необходимое для выполнения всей работы, и вычитаем из него пройденное время
+                    StatusBarDataSourceHeader = DataSourceAddingProgress[0].Header;
+                    StatusBarDataSourceDoneText = DataSourceAddingProgress[0].CompletedTasksCount.ToString() + "/" + DataSourceAddingProgress[0].TasksCount.ToString();
+                    int totalRemainingSeconds = (int)((DataSourceAddingProgress[0].ElapsedTime.TotalSeconds / ((double)(DataSourceAddingProgress[0].CompletedTasksCount) / (double)(DataSourceAddingProgress[0].TasksCount))) - DataSourceAddingProgress[0].ElapsedTime.TotalSeconds); //делим пройденное время на завершенную часть от целого и получаем общее время, необходимое для выполнения всей работы, и вычитаем из него пройденное время
                     TimeSpan timeSpan = TimeSpan.FromSeconds(totalRemainingSeconds);
                     string timeRemaining = timeSpan.Hours.ToString();
                     if(timeRemaining.Length == 1)
@@ -242,8 +266,9 @@ namespace ktradesystem.ViewModels
                     }
 
                     StatusBarDataSourceRemainingTime = timeRemaining;
-                    StatusBarDataSourceProgressMaxValue = dataSourceAddingProgresses.TasksCount;
-                    StatusBarDataSourceProgressValue = dataSourceAddingProgresses.CompletedTasksCount;
+                    StatusBarDataSourceProgressMaxValue = DataSourceAddingProgress[0].TasksCount;
+                    StatusBarDataSourceProgressValue = DataSourceAddingProgress[0].CompletedTasksCount;
+                    StatusBarDataSourceCancelPossibility = DataSourceAddingProgress[0].CancelPossibility;
                 }
             }
         }

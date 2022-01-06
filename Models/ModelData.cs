@@ -203,6 +203,73 @@ namespace ktradesystem.Models
             }
         }
 
+        public DataSource SelectDataSourceById(int id)
+        {
+            DataTable data = _database.SelectDataSourceFromId(id);
+            DataSource dataSource = new DataSource();
+            foreach (DataRow row in data.Rows)
+            {
+                Datatables.DataSource ds = new Datatables.DataSource();
+                ds.Id = (int)row.Field<long>("id");
+                ds.Name = row.Field<string>("name");
+                int idCurrency = (int)row.Field<long>("idCurrency");
+                foreach (Currency currency in Currencies)
+                {
+                    if (currency.Id == idCurrency)
+                    {
+                        ds.Currency = currency;
+                    }
+                }
+                int idInterval = (int)row.Field<long>("idInterval");
+                foreach (Interval interval in Intervals)
+                {
+                    if (interval.Id == idInterval)
+                    {
+                        ds.Interval = interval;
+                    }
+                }
+                int idInstrument = (int)row.Field<long>("idInstrument");
+                foreach (Instrument instrument in Instruments)
+                {
+                    if (instrument.Id == idInstrument)
+                    {
+                        ds.Instrument = instrument;
+                    }
+                }
+                ds.Cost = row.Field<double?>("cost");
+                int idComissiontype = (int)row.Field<long>("idComissiontype");
+                foreach (Comissiontype comissiontype in Comissiontypes)
+                {
+                    if (comissiontype.Id == idComissiontype)
+                    {
+                        ds.Comissiontype = comissiontype;
+                    }
+                }
+                ds.Comission = row.Field<double>("comission");
+                ds.PriceStep = row.Field<double>("priceStep");
+                ds.CostPriceStep = row.Field<double>("costPriceStep");
+
+                //считываем dataSourceFiles для источника данных
+                ds.DataSourceFiles = new List<DataSourceFile>();
+                DataTable dataDataSourceFiles = _database.SelectDataSourceFiles(ds.Id);
+                foreach (DataRow row1 in dataDataSourceFiles.Rows)
+                {
+                    DataSourceFile dataSourceFile = new DataSourceFile { Id = (int)row1.Field<long>("id"), Path = row1.Field<string>("path"), IdDataSource = (int)row1.Field<long>("idDataSource") };
+                    dataSourceFile.DataSourceFileWorkingPeriods = new List<DataSourceFileWorkingPeriod>();
+                    //считываем dataSourceFileWorkingPeriods для файла источника данных
+                    DataTable dataDataSourceFileWorkingPeriods = _database.SelectDataSourceFileWorkingPeriods(dataSourceFile.Id);
+                    foreach (DataRow row2 in dataDataSourceFileWorkingPeriods.Rows)
+                    {
+                        DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod = new DataSourceFileWorkingPeriod { Id = (int)row2.Field<long>("id"), StartPeriod = DateTime.Parse(row2.Field<string>("startPeriod")), TradingStartTime = DateTime.Parse(row2.Field<string>("tradingStartTime")), TradingEndTime = DateTime.Parse(row2.Field<string>("tradingEndTime")), IdDataSourceFile = (int)row2.Field<long>("idDataSourceFile") };
+                        dataSourceFile.DataSourceFileWorkingPeriods.Add(dataSourceFileWorkingPeriod);
+                    }
+                    ds.DataSourceFiles.Add(dataSourceFile);
+                }
+                dataSource = ds;
+            }
+            return dataSource;
+        }
+
         public void ReadDataSources()
         {
             //считываем источники данных

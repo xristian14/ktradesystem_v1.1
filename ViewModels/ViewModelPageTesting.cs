@@ -38,6 +38,7 @@ namespace ktradesystem.ViewModels
             Algorithms = _modelData.Algorithms;
 
             _modelTesting = ModelTesting.getInstance();
+            _viewModelPageDataSource = ViewModelPageDataSource.getInstance();
         }
 
         public static ViewModelPageTesting getInstance()
@@ -51,6 +52,7 @@ namespace ktradesystem.ViewModels
 
         private ModelData _modelData;
         private ModelTesting _modelTesting;
+        private ViewModelPageDataSource _viewModelPageDataSource;
 
         private void Model_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -278,7 +280,7 @@ namespace ktradesystem.ViewModels
                     UpdateIndicatorStatusText();
                     SelectedIndicator = null;
                     SelectedIndicatorChanged();
-                }, (obj) => !IsAddOrEditIndicator());
+                }, (obj) => !IsAddOrEditIndicator() && !IsAddOrEditAlgorithm());
             }
         }
 
@@ -290,7 +292,7 @@ namespace ktradesystem.ViewModels
                 {
                     IsIndicatorEdited = true;
                     UpdateIndicatorStatusText();
-                }, (obj) => !IsAddOrEditIndicator() && SelectedIndicator != null );
+                }, (obj) => !IsAddOrEditIndicator() && !IsAddOrEditAlgorithm() && SelectedIndicator != null );
             }
         }
 
@@ -308,7 +310,7 @@ namespace ktradesystem.ViewModels
                     {
                         _modelTesting.IndicatorDelete(SelectedIndicator.Id);
                     }
-                }, (obj) => !IsAddOrEditIndicator() && SelectedIndicator != null );
+                }, (obj) => !IsAddOrEditIndicator() && !IsAddOrEditAlgorithm() && SelectedIndicator != null );
             }
         }
 
@@ -1120,7 +1122,7 @@ return a.ToString();
                     UpdateAlgorithmStatusText();
                     SelectedAlgorithm = null;
                     SelectedAlgorithmChanged();
-                }, (obj) => !IsAddOrEditAlgorithm() );
+                }, (obj) => !IsAddOrEditAlgorithm() && !IsAddOrEditIndicator());
             }
         }
 
@@ -1132,7 +1134,7 @@ return a.ToString();
                 {
                     IsAlgorithmEdited = true;
                     UpdateAlgorithmStatusText();
-                }, (obj) => !IsAddOrEditAlgorithm() && SelectedAlgorithm != null);
+                }, (obj) => !IsAddOrEditAlgorithm() && !IsAddOrEditIndicator() && SelectedAlgorithm != null);
             }
         }
 
@@ -1150,7 +1152,7 @@ return a.ToString();
                     {
                         _modelTesting.AlgorithmDelete(SelectedAlgorithm.Id);
                     }
-                }, (obj) => !IsAddOrEditAlgorithm() && SelectedAlgorithm != null);
+                }, (obj) => !IsAddOrEditAlgorithm() && !IsAddOrEditIndicator() && SelectedAlgorithm != null);
             }
         }
 
@@ -1206,7 +1208,7 @@ return a.ToString();
             }
 
             //проверка на допустимые символы
-            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            string letters = "абвгдеёзжийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
             bool isNotFind = false;
             for (int i = 0; i < name.Length; i++)
             {
@@ -1219,7 +1221,7 @@ return a.ToString();
             if (isNotFind)
             {
                 result = false;
-                TooltipSaveAlgorithm.Add("Допустимо использование только английского алфавита.");
+                TooltipSaveAlgorithm.Add("Допустимо использование для названия только русского и английского алфавитов, и цифр.");
             }
 
             //проверка на уникальность названия
@@ -1248,6 +1250,13 @@ return a.ToString();
             {
                 result = false;
                 TooltipSaveAlgorithm.Add("Данное название уже используется.");
+            }
+
+            //проверка на наличие минимум одного шаблона источника данных
+            if(DataSourceTemplatesView.Count == 0)
+            {
+                result = false;
+                TooltipSaveAlgorithm.Add("Необходимо добавить минимум один макет источника данных.");
             }
 
             //проверка на заполненные значения параметров индикаторов
@@ -2430,7 +2439,191 @@ return a.ToString();
                 }, (obj) => SelectedAlgorithmParameterView != null && IsAddOrEditAlgorithm());
             }
         }
-        
+
+        #endregion
+
+
+
+
+
+
+
+
+
+        #region view add delete DataSourceGroupsView
+
+        private ObservableCollection<DataSourceGroupView> _dataSourceGroupsView = new ObservableCollection<DataSourceGroupView>();
+        public ObservableCollection<DataSourceGroupView> DataSourceGroupsView //группы источников данных (соответствие макетов и источников данных, то есть выбранные источники данных для тестирования)
+        {
+            get { return _dataSourceGroupsView; }
+            private set
+            {
+                _dataSourceGroupsView = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private DataSourceGroupView _selectedDataSourceGroupView;
+        public DataSourceGroupView SelectedDataSourceGroupView //выбранная группа источников данных
+        {
+            get { return _selectedDataSourceGroupView; }
+            set
+            {
+                _selectedDataSourceGroupView = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ObservableCollection<DataSource> DataSources { get; set; } //список источников данных для combobox
+
+        private void CreateDataSourceGroupView()
+        {
+            DataSources = _viewModelPageDataSource.DataSourcesForSubscribers;
+        }
+
+        private ObservableCollection<DataSourcesForAddingDsGroupView> _dataSourcesForAddingDsGroupsView = new ObservableCollection<DataSourcesForAddingDsGroupView>();
+        public ObservableCollection<DataSourcesForAddingDsGroupView> DataSourcesForAddingDsGroupsView //список с элементами для окна добавления группы источников данных
+        {
+            get { return _dataSourcesForAddingDsGroupsView; }
+            set
+            {
+                _dataSourcesForAddingDsGroupsView = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand AddDataSourceGroupView_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    DataSourcesForAddingDsGroupsView.Clear();
+                    foreach(DataSourceTemplate dataSourceTemplate in SelectedAlgorithm.DataSourceTemplates)
+                    {
+                        DataSourcesForAddingDsGroupsView.Add(new DataSourcesForAddingDsGroupView { DataSources = _viewModelPageDataSource.DataSourcesForSubscribers, DataSourceTemplate = dataSourceTemplate });
+                    }
+
+                    //viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
+                    AddDataSourceGroupView addDataSourceGroupView = new AddDataSourceGroupView();
+                    addDataSourceGroupView.Show();
+
+                }, (obj) => true);
+            }
+        }
+
+        public ICommand DeleteDataSourceGroupView_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    DataSourceGroupsView.Remove(SelectedDataSourceGroupView);
+                    //заново пронумеровывем элементы списка
+                    for(int i = 0; i < DataSourceGroupsView.Count; i++)
+                    {
+                        DataSourceGroupsView[i].Number = i + 1;
+                    }
+                }, (obj) => SelectedDataSourceGroupView != null);
+            }
+        }
+
+        private ObservableCollection<string> _tooltipAddDataSourceGroupView = new ObservableCollection<string>();
+        public ObservableCollection<string> TooltipAddDataSourceGroupView //подсказка, показываемая при наведении на кнопку добавить
+        {
+            get { return _tooltipAddDataSourceGroupView; }
+            set
+            {
+                _tooltipAddDataSourceGroupView = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool IsFieldsAddDataSourceGroupViewCorrect()
+        {
+            bool result = true;
+
+            TooltipAddDataSourceGroupView.Clear(); //очищаем подсказку кнопки добавить
+            //проверяем на заполненность полей
+            bool isAllDataSourceSelected = true;
+            foreach(DataSourcesForAddingDsGroupView dataSourcesForAddingDsGroupView in DataSourcesForAddingDsGroupsView)
+            {
+                if(dataSourcesForAddingDsGroupView.SelectedDataSource == null)
+                {
+                    isAllDataSourceSelected = false;
+                }
+            }
+            if (isAllDataSourceSelected)
+            {
+                //удостоверяемся в том что заполненные поля не содержат одинаковых источников данных
+                bool isFindEqual = false;
+                for(int i = 0; i < DataSourcesForAddingDsGroupsView.Count; i++)
+                {
+                    for(int k = 0; k < DataSourcesForAddingDsGroupsView.Count; k++)
+                    {
+                        if(i != k)
+                        {
+                            if(DataSourcesForAddingDsGroupsView[i].SelectedDataSource == DataSourcesForAddingDsGroupsView[k].SelectedDataSource)
+                            {
+                                isFindEqual = true;
+                            }
+                        }
+                    }
+                }
+                if (isFindEqual == false)
+                {
+                    //проверяем на уникальность комбинации источников данных
+                    bool isFind = false;
+                    foreach(DataSourceGroupView dataSourceGroupView in DataSourceGroupsView)
+                    {
+                        for(int i = 0; i < dataSourceGroupView.DataSourcesAccordances.Count; i++)
+                        {
+                            if(dataSourceGroupView.DataSourcesAccordances[i].DataSourceTemplate == DataSourcesForAddingDsGroupsView[i].DataSourceTemplate && dataSourceGroupView.DataSourcesAccordances[i].DataSource == DataSourcesForAddingDsGroupsView[i].SelectedDataSource)
+                            {
+                                isFind = true;
+                            }
+                        }
+                    }
+                    if (isFind)
+                    {
+                        TooltipAddDataSourceGroupView.Add("Данная комбинация источников данных уже добавлена, выберите другую.");
+                        result = false;
+                    }
+
+                }
+                else
+                {
+                    TooltipAddDataSourceGroupView.Add("Выбран один источник данных для нескольких макетов.");
+                    result = false;
+                }
+            }
+            else
+            {
+                TooltipAddDataSourceGroupView.Add("Не выбраны источники данных.");
+                result = false;
+            }
+
+            return result;
+        }
+
+        public ICommand DataSourceGroupViewSave_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    List<DataSourceAccordance> dataSourcesAccordances = new List<DataSourceAccordance>();
+                    foreach(DataSourcesForAddingDsGroupView dataSourcesForAddingDsGroupView in DataSourcesForAddingDsGroupsView)
+                    {
+                        dataSourcesAccordances.Add(new DataSourceAccordance { DataSourceTemplate = dataSourcesForAddingDsGroupView.DataSourceTemplate, DataSource = dataSourcesForAddingDsGroupView.SelectedDataSource });
+                    }
+
+                    DataSourceGroupsView.Add( new DataSourceGroupView { Number = DataSourceGroupsView.Count + 1, DataSourcesAccordances = dataSourcesAccordances });
+                    CloseAddDataSourceTemplateAction?.Invoke();
+                }, (obj) => IsFieldsAddDataSourceGroupViewCorrect());
+            }
+        }
+
         #endregion
     }
 }

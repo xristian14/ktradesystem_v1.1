@@ -90,6 +90,9 @@
     <Compile Include="Models\Datatables\IndicatorParameterRange.cs" />
     <Compile Include="Models\ModelTesting.cs" />
     <Compile Include="ViewModels\AlgorithmParameterView.cs" />
+    <Compile Include="ViewModels\DataSourceAccordance.cs" />
+    <Compile Include="ViewModels\DataSourceGroupView.cs" />
+    <Compile Include="ViewModels\DataSourcesForAddingDsGroupView.cs" />
     <Compile Include="ViewModels\DataSourceView.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
     <Compile Include="ViewModels\IndicatorParameterRangeView.cs" />
@@ -103,6 +106,9 @@
     </Compile>
     <Compile Include="Views\AddAlgorithmParameter.xaml.cs">
       <DependentUpon>AddAlgorithmParameter.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\AddDataSourceGroupView.xaml.cs">
+      <DependentUpon>AddDataSourceGroupView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\EditAlgorithmParameter.xaml.cs">
       <DependentUpon>EditAlgorithmParameter.xaml</DependentUpon>
@@ -188,6 +194,10 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="Views\AddAlgorithmParameter.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\AddDataSourceGroupView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

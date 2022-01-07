@@ -223,13 +223,13 @@
                             <TextBlock Text="Описание"/>
                             <TextBox Text="{Binding AlgorithmDescription}" IsReadOnly="{Binding IsAlgorithmReadOnly}" Width="462" TextWrapping="Wrap" Margin="6 0 0 0"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                        <StackPanel Orientation="Horizontal" Margin="0 7 0 0">
                             <TextBlock Text="Макеты источников данных"/>
                             <Button Content="Добавить" Command="{Binding AddDataSourceTemplate_Click}" Width="70" Margin="7 0 0 0"/>
                             <Button Content="Редактировать" Command="{Binding EditDataSourceTemplate_Click}" Width="95" Margin="7 0 0 0"/>
                             <Button Content="Удалить" Command="{Binding DeleteDataSourceTemplate_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView Grid.Row="2" ItemsSource="{Binding DataSourceTemplatesView, Mode=OneWay}" SelectedItem="{Binding SelectedDataSourceTemplateView, Mode=OneWayToSource}" SelectionMode="Single" Height="90">
+                        <ListView Grid.Row="2" ItemsSource="{Binding DataSourceTemplatesView, Mode=OneWay}" SelectedItem="{Binding SelectedDataSourceTemplateView, Mode=OneWayToSource}" SelectionMode="Single" MinHeight="32" MaxHeight="90">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="{Binding ElementName=helperDsTemp1, Path=ActualWidth}"/>
@@ -253,12 +253,12 @@
                             <Grid Grid.Column="1" x:Name="helperDsTemp2"/>
                         </Grid>
 
-                        <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                        <StackPanel Orientation="Horizontal" Margin="0 7 0 0">
                             <TextBlock Text="Индикаторы"/>
                             <Button Content="Добавить" Command="{Binding AddAlgorithmIndicator_Click}" Width="70" Margin="7 0 0 0"/>
                             <Button Content="Удалить" Command="{Binding DeleteAlgorithmIndicator_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView Grid.Row="2" ItemsSource="{Binding AlgorithmIndicators, Mode=OneWay}" SelectedItem="{Binding SelectedAlgorithmIndicator, Mode=OneWayToSource}" SelectionMode="Single" Height="105">
+                        <ListView Grid.Row="2" ItemsSource="{Binding AlgorithmIndicators, Mode=OneWay}" SelectedItem="{Binding SelectedAlgorithmIndicator, Mode=OneWayToSource}" SelectionMode="Single" MinHeight="32" MaxHeight="105">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="{Binding ElementName=helperAlgInd1, Path=ActualWidth}"/>
@@ -285,11 +285,11 @@
                             <Grid Grid.Column="2" x:Name="helperAlgInd3"/>
                         </Grid>
 
-                        <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                        <StackPanel Orientation="Horizontal" Margin="0 7 0 0">
                             <TextBlock Text="Значения оптимизируемых параметров выбранных индикаторов"/>
                             <Button Content="Редактировать" Command="{Binding EditIndicatorParameterRangesView_Click}" Width="95" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView ItemsSource="{Binding IndicatorParameterRangesView, Mode=OneWay}" SelectedItem="{Binding SelectedIndicatorParameterRangeView, Mode=TwoWay}" SelectionMode="Single" Height="140">
+                        <ListView ItemsSource="{Binding IndicatorParameterRangesView, Mode=OneWay}" SelectedItem="{Binding SelectedIndicatorParameterRangeView, Mode=TwoWay}" SelectionMode="Single" MinHeight="32" MaxHeight="140">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn DisplayMemberBinding="{Binding NameIndicator}" Header="Название индикатора" Width="{Binding ElementName=helperParRan1, Path=ActualWidth}"/>
@@ -322,13 +322,13 @@
                             <Grid Grid.Column="4" x:Name="helperParRan5"/>
                         </Grid>
 
-                        <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                        <StackPanel Orientation="Horizontal" Margin="0 7 0 0">
                             <TextBlock Text="Оптимизируемые параметры алгоритма"/>
                             <Button Content="Добавить" Command="{Binding AddAlgorithmParameter_Click}" Width="70" Margin="7 0 0 0"/>
                             <Button Content="Редактировать" Command="{Binding EditAlgorithmParameter_Click}" Width="95" Margin="7 0 0 0"/>
                             <Button Content="Удалить" Command="{Binding DeleteAlgorithmParameter_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView Grid.Row="2" ItemsSource="{Binding AlgorithmParametersView, Mode=OneWay}" SelectedItem="{Binding SelectedAlgorithmParameterView, Mode=TwoWay}" SelectionMode="Single" Height="105">
+                        <ListView Grid.Row="2" ItemsSource="{Binding AlgorithmParametersView, Mode=OneWay}" SelectedItem="{Binding SelectedAlgorithmParameterView, Mode=TwoWay}" SelectionMode="Single" MinHeight="32" MaxHeight="105">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="{Binding ElementName=helperAlgPar1, Path=ActualWidth}"/>
@@ -471,12 +471,12 @@
                 <TextBlock Text="Выбранный алгоритм:" Margin="0 5 0 0"/>
                 <TextBlock Text="Алгоритм1" Margin="0 5 0 0"/>
                 <TextBox Text="{Binding Description}" TextWrapping="Wrap" Margin="0 5 0 0"/>
-                <TextBlock Text="Источники данных для тестирования:" Margin="0 5 0 0"/>
+                <TextBlock Text="Источники данных для тестирования:" Margin="0 7 0 0"/>
                 <StackPanel Orientation="Horizontal" Margin="0 3 0 0">
                     <Button Content="Добавить" Command="{Binding AddDataSourceGroupView_Click}" Width="70"/>
                     <Button Content="Удалить" Command="{Binding DeleteDataSourceGroupView_Click}" Width="60" Margin="7 0 0 0"/>
                 </StackPanel>
-                <ListView ItemsSource="{Binding DataSourceGroupsView}" SelectedItem="{Binding SelectedDataSourceGroupView, Mode=TwoWay}" SelectionMode="Single" MinHeight="40" MaxHeight="160">
+                <ListView ItemsSource="{Binding DataSourceGroupsView}" SelectedItem="{Binding SelectedDataSourceGroupView, Mode=TwoWay}" SelectionMode="Single" MinHeight="32" MaxHeight="160">
                     <ListView.View>
                         <GridView>
                             <GridViewColumn DisplayMemberBinding="{Binding Number}" Header="№" Width="{Binding ElementName=helperDs1, Path=ActualWidth}"/>
@@ -526,6 +526,30 @@
                     </Grid.ColumnDefinitions>
                     <Grid Grid.Column="1" x:Name="helperDss1"/>
                     <Grid Grid.Column="2" x:Name="helperDss2"/>
+                </Grid>
+                <CheckBox Content="Выбрать оси плоскости поиска топ-модели" Margin="0 7 0 0"/>
+                <ListView ItemsSource="{Binding DataSourcesForAddingDsGroupsView, Mode=OneWay}" SelectionMode="Single" Height="100">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn DisplayMemberBinding="{Binding DataSourceTemplate.Name}" Header="Ось" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
+                            <GridViewColumn Header="Параметр" Width="{Binding ElementName=helper2, Path=ActualWidth}">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding DataSources}" SelectedItem="{Binding SelectedDataSource, Mode=TwoWay}" DisplayMemberPath="Name"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+                <Grid Visibility="Visible">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="33"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0" x:Name="helper1"/>
+                    <Grid Grid.Column="1" x:Name="helper2"/>
                 </Grid>
             </StackPanel>
         </StackPanel>

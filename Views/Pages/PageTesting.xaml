@@ -469,8 +469,8 @@
             <StackPanel Orientation="Vertical" Margin="10" Background="White">
                 <TextBlock Text="Параметры тестирования" HorizontalAlignment="Center"/>
                 <TextBlock Text="Выбранный алгоритм:" Margin="0 5 0 0"/>
-                <TextBlock Text="Алгоритм1" Margin="0 5 0 0"/>
-                <TextBox Text="{Binding Description}" TextWrapping="Wrap" Margin="0 5 0 0"/>
+                <TextBlock Text="{Binding AlgorithmName}" Margin="0 5 0 0"/>
+                <TextBox Text="{Binding AlgorithmDescription}" TextWrapping="Wrap" Margin="0 5 0 0"/>
                 <TextBlock Text="Источники данных для тестирования:" Margin="0 7 0 0"/>
                 <StackPanel Orientation="Horizontal" Margin="0 3 0 0">
                     <Button Content="Добавить" Command="{Binding AddDataSourceGroupView_Click}" Width="70"/>
@@ -549,13 +549,14 @@
                 </ListView>
                 <Grid Visibility="Visible">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="35"/>
+                        <ColumnDefinition Width="30"/>
                         <ColumnDefinition Width="1*"/>
                         <ColumnDefinition Width="33"/>
                     </Grid.ColumnDefinitions>
                     <Grid Grid.Column="0" x:Name="helperAxes1"/>
                     <Grid Grid.Column="1" x:Name="helperAxes2"/>
                 </Grid>
+                <TextBlock Text="Критерии оценки топ-модели:" Margin="0 7 0 0"/>
             </StackPanel>
         </StackPanel>
     </Grid>

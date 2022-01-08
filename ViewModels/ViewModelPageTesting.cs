@@ -2450,6 +2450,7 @@ return a.ToString();
 
 
 
+
         #region view add delete DataSourceGroupsView
 
         private ObservableCollection<DataSourceGroupView> _dataSourceGroupsView = new ObservableCollection<DataSourceGroupView>();
@@ -2621,6 +2622,62 @@ return a.ToString();
                     DataSourceGroupsView.Add( new DataSourceGroupView { Number = DataSourceGroupsView.Count + 1, DataSourcesAccordances = dataSourcesAccordances });
                     CloseAddDataSourceTemplateAction?.Invoke();
                 }, (obj) => IsFieldsAddDataSourceGroupViewCorrect());
+            }
+        }
+
+        #endregion
+
+
+
+
+
+
+
+
+
+
+        #region view edit AxesParameters
+
+        private bool _isAxesParametersSpecified;
+        public bool IsAxesParametersSpecified //показатель выбранности чек-бокса, указаны ли оси
+        {
+            get { return _isAxesParametersSpecified; }
+            set
+            {
+                _isAxesParametersSpecified = value;
+                OnPropertyChanged();
+                CreateAxesParametersSelectView();
+            }
+        }
+
+        private ObservableCollection<AxesParameterSelectView> _axesParametersSelectView = new ObservableCollection<AxesParameterSelectView>();
+        public ObservableCollection<AxesParameterSelectView> AxesParametersSelectView //выбор осей двумерной плоскости на которой будет искаться топ-модель с соседями
+        {
+            get { return _axesParametersSelectView; }
+            set
+            {
+                _axesParametersSelectView = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private void CreateAxesParametersSelectView()
+        {
+            AxesParametersSelectView.Clear();
+            if (IsAxesParametersSpecified)
+            {
+                List<string> namesParameters = new List<string>();
+                foreach(IndicatorParameterRangeView indicatorParameterRangeView in IndicatorParameterRangesView)
+                {
+                    namesParameters.Add("Индикатор " + indicatorParameterRangeView.NameIndicator +  " – " + indicatorParameterRangeView.NameIndicatorParameterTemplate);
+                }
+                foreach(AlgorithmParameterView algorithmParameterView in AlgorithmParametersView)
+                {
+                    namesParameters.Add("Алгоритм – " + algorithmParameterView.Name);
+                }
+
+                AxesParametersSelectView.Add(new AxesParameterSelectView { Axis = "X", NamesParameters = namesParameters });
+                AxesParametersSelectView.Add(new AxesParameterSelectView { Axis = "Y", NamesParameters = namesParameters });
             }
         }
 

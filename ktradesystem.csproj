@@ -82,6 +82,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="CommunicationChannel\DataSourceAddingProgress.cs" />
+    <Compile Include="Models\AxesParameter.cs" />
     <Compile Include="Models\Datatables\Algorithm.cs" />
     <Compile Include="Models\Datatables\AlgorithmParameter.cs" />
     <Compile Include="Models\Datatables\DataSourceFile.cs" />
@@ -90,6 +91,7 @@
     <Compile Include="Models\Datatables\IndicatorParameterRange.cs" />
     <Compile Include="Models\ModelTesting.cs" />
     <Compile Include="ViewModels\AlgorithmParameterView.cs" />
+    <Compile Include="ViewModels\AxesParameterSelectView.cs" />
     <Compile Include="ViewModels\DataSourceAccordance.cs" />
     <Compile Include="ViewModels\DataSourceGroupView.cs" />
     <Compile Include="ViewModels\DataSourcesForAddingDsGroupView.cs" />

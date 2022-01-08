@@ -209,7 +209,6 @@ namespace ktradesystem.Models
                 DispatcherInvoke((Action)(() => {
                     _mainCommunicationChannel.DataSourceAddingProgress.Clear();
                     _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { Header = progressHeader, TasksCount = taskCount, CompletedTasksCount = dataSourceFiles.Count, ElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsFinish = false });
-                    int t = 0;
                 }));
                 
 

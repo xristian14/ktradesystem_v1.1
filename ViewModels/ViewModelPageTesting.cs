@@ -37,6 +37,9 @@ namespace ktradesystem.ViewModels
             _modelData.Algorithms.CollectionChanged += modelData_AlgorithmsCollectionChanged;
             Algorithms = _modelData.Algorithms;
 
+            _modelData.EvaluationCriterias.CollectionChanged += modelData_EvaluationCriteriasChanged;
+            EvaluationCriterias = _modelData.EvaluationCriterias;
+
             _modelTesting = ModelTesting.getInstance();
             _viewModelPageDataSource = ViewModelPageDataSource.getInstance();
         }
@@ -2509,7 +2512,7 @@ return a.ToString();
                     AddDataSourceGroupView addDataSourceGroupView = new AddDataSourceGroupView();
                     addDataSourceGroupView.Show();
 
-                }, (obj) => true);
+                }, (obj) => SelectedAlgorithm != null);
             }
         }
 
@@ -2678,6 +2681,102 @@ return a.ToString();
 
                 AxesParametersSelectView.Add(new AxesParameterSelectView { Axis = "X", NamesParameters = namesParameters });
                 AxesParametersSelectView.Add(new AxesParameterSelectView { Axis = "Y", NamesParameters = namesParameters });
+            }
+        }
+
+        #endregion
+
+
+
+
+
+
+
+
+
+
+        #region view edit add CriteriaTopModel
+
+        private ObservableCollection<EvaluationCriteria> _evaluationCriterias = new ObservableCollection<EvaluationCriteria>(); //критерии оценки тестирования
+        public ObservableCollection<EvaluationCriteria> EvaluationCriterias
+        {
+            get { return _evaluationCriterias; }
+            private set
+            {
+                _evaluationCriterias = value;
+                OnPropertyChanged();
+                CreateEvaluationCriteriasView();
+            }
+        }
+
+        private void modelData_EvaluationCriteriasChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            EvaluationCriterias = (ObservableCollection<EvaluationCriteria>)sender;
+        }
+
+        private ObservableCollection<EvaluationCriteriaView> _evaluationCriteriasView = new ObservableCollection<EvaluationCriteriaView>(); //критерии оценки тестирования для combobox
+        public ObservableCollection<EvaluationCriteriaView> EvaluationCriteriasView
+        {
+            get { return _evaluationCriteriasView; }
+            private set
+            {
+                _evaluationCriteriasView = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private EvaluationCriteriaView _selectedEvaluationCriteriaView = new EvaluationCriteriaView(); //выбранный критерий оценки тестирования для combobox
+        public EvaluationCriteriaView SelectedEvaluationCriteriaView
+        {
+            get { return _selectedEvaluationCriteriaView; }
+            set
+            {
+                _selectedEvaluationCriteriaView = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private void CreateEvaluationCriteriasView()
+        {
+            EvaluationCriteriasView.Clear();
+            foreach (EvaluationCriteria evaluationCriteria in EvaluationCriterias)
+            {
+                EvaluationCriteriasView.Add(new EvaluationCriteriaView { EvaluationCriteria = evaluationCriteria, Name = evaluationCriteria.ShortName + " (" + evaluationCriteria.Name + ")" });
+            }
+            SelectedCompareSignsEvaluationCriteria = CompareSignsEvaluationCriteria[0];
+            FiltersTopModelView.Add(new FilterTopModelView { CompareSings = new ObservableCollection<string> { ">", "<" }, EvaluationCriteriasView = EvaluationCriteriasView });
+        }
+
+        private ObservableCollection<string> _compareSignsEvaluationCriteria = new ObservableCollection<string> { "Максимальное", "Минимальное" };
+        public ObservableCollection<string> CompareSignsEvaluationCriteria
+        {
+            get { return _compareSignsEvaluationCriteria; }
+            private set
+            {
+                _compareSignsEvaluationCriteria = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _selectedCompareSignsEvaluationCriteria;
+        public string SelectedCompareSignsEvaluationCriteria
+        {
+            get { return _selectedCompareSignsEvaluationCriteria; }
+            set
+            {
+                _selectedCompareSignsEvaluationCriteria = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<FilterTopModelView> _filtersTopModelView = new ObservableCollection<FilterTopModelView>();
+        public ObservableCollection<FilterTopModelView> FiltersTopModelView
+        {
+            get { return _filtersTopModelView; }
+            set
+            {
+                _filtersTopModelView = value;
+                OnPropertyChanged();
             }
         }
 

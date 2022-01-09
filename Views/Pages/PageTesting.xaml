@@ -27,7 +27,7 @@
                             <Button Content="Редактировать" Command="{Binding IndicatorsEdit_Click}" Width="95" Margin="7 0 0 0"/>
                             <Button Content="Удалить" Command="{Binding IndicatorsDelete_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView ItemsSource="{Binding Indicators}" SelectedItem="{Binding SelectedIndicator, Mode=TwoWay}" SelectionMode="Single" Height="160">
+                        <ListView ItemsSource="{Binding Indicators}" SelectedItem="{Binding SelectedIndicator, Mode=TwoWay}" SelectionMode="Single" Height="125">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="{Binding ElementName=helperInd1, Path=ActualWidth}"/>
@@ -53,7 +53,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="37"/>
                                 <ColumnDefinition Width="1*"/>
-                                <ColumnDefinition Width="1.5*"/>
+                                <ColumnDefinition Width="1.65*"/>
                                 <ColumnDefinition Width="77"/>
                                 <ColumnDefinition Width="33"/>
                             </Grid.ColumnDefinitions>
@@ -180,7 +180,7 @@
                             <Button Content="Редактировать" Command="{Binding AlgorithmsEdit_Click}" Width="95" Margin="7 0 0 0"/>
                             <Button Content="Удалить" Command="{Binding AlgorithmsDelete_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView ItemsSource="{Binding Algorithms}" SelectedItem="{Binding SelectedAlgorithm, Mode=TwoWay}" SelectionMode="Single" Height="140">
+                        <ListView ItemsSource="{Binding Algorithms}" SelectedItem="{Binding SelectedAlgorithm, Mode=TwoWay}" SelectionMode="Single" Height="125">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="{Binding ElementName=helperAlg1, Path=ActualWidth}"/>
@@ -198,8 +198,8 @@
                         <Grid Visibility="Visible">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="37"/>
-                                <ColumnDefinition Width="3*"/>
-                                <ColumnDefinition Width="4*"/>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1.4*"/>
                                 <ColumnDefinition Width="33"/>
                             </Grid.ColumnDefinitions>
                             <Grid Grid.Column="0" x:Name="helperAlg1"/>
@@ -556,7 +556,60 @@
                     <Grid Grid.Column="0" x:Name="helperAxes1"/>
                     <Grid Grid.Column="1" x:Name="helperAxes2"/>
                 </Grid>
-                <TextBlock Text="Критерии оценки топ-модели:" Margin="0 7 0 0"/>
+                <TextBlock Text="Критерий оценки топ-модели:" Margin="0 7 0 0"/>
+                <StackPanel Orientation="Horizontal" Margin="0 3 0 0">
+                    <ComboBox ItemsSource="{Binding EvaluationCriteriasView}" SelectedItem="{Binding SelectedEvaluationCriteriaView, Mode=TwoWay}" DisplayMemberPath="Name" Width="{Binding ElementName=helperTopModelCriterias1, Path=ActualWidth}"/>
+                    <ComboBox ItemsSource="{Binding CompareSignsEvaluationCriteria}" SelectedItem="{Binding SelectedCompareSignsEvaluationCriteria, Mode=TwoWay}" SelectedIndex="0" Width="{Binding ElementName=helperTopModelCriterias3, Path=ActualWidth}" Margin="7 0 0 0"/>
+                </StackPanel>
+                <Grid Visibility="Visible">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="7"/>
+                        <ColumnDefinition Width="110"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0" x:Name="helperTopModelCriterias1"/>
+                    <Grid Grid.Column="1" x:Name="helperTopModelCriterias2"/>
+                    <Grid Grid.Column="2" x:Name="helperTopModelCriterias3"/>
+                </Grid>
+                <TextBlock Text="Фильтры для топ-модели:" Margin="0 3 0 0"/>
+                <ListView ItemsSource="{Binding FiltersTopModelView}" SelectionMode="Single" MaxHeight="100">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Критерий оценки" Width="{Binding ElementName=helperTopModelFiltres1, Path=ActualWidth}">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding EvaluationCriteriasView}" SelectedItem="{Binding SelectedEvaluationCriteriaView, Mode=TwoWay}" DisplayMemberPath="Name"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Условие" Width="{Binding ElementName=helperTopModelFiltres2, Path=ActualWidth}">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding CompareSings}" SelectedItem="{Binding SelectedCompareSing, Mode=TwoWay}"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Значение" Width="{Binding ElementName=helperTopModelFiltres3, Path=ActualWidth}">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding FilterValue}" Width="48"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+                <Grid Visibility="Visible">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="33"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0" x:Name="helperTopModelFiltres1"/>
+                    <Grid Grid.Column="1" x:Name="helperTopModelFiltres2"/>
+                    <Grid Grid.Column="2" x:Name="helperTopModelFiltres3"/>
+                </Grid>
             </StackPanel>
         </StackPanel>
     </Grid>

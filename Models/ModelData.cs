@@ -59,6 +59,14 @@ namespace ktradesystem.Models
                 Comissiontypes.Add(сomissiontype);
             }
 
+            //считываем критерии оценки тестирвоания
+            DataTable dataEvaluationCriterias = _database.QuerySelect("SELECT * FROM EvaluationCriterias");
+            foreach (DataRow row in dataEvaluationCriterias.Rows)
+            {
+                EvaluationCriteria evaluationCriteria = new EvaluationCriteria { Id = (int)row.Field<long>("id"), ShortName = row.Field<string>("shortName"), Name = row.Field<string>("name"), Description = row.Field<string>("description"), Script = row.Field<string>("script") };
+                EvaluationCriterias.Add(evaluationCriteria);
+            }
+
             ReadDataSources();
             NotifyDataSourcesSubscribers();
 
@@ -199,6 +207,17 @@ namespace ktradesystem.Models
             private set
             {
                 _algorithms = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<EvaluationCriteria> _evaluationCriterias = new ObservableCollection<EvaluationCriteria>(); //критерии оценки тестирования
+        public ObservableCollection<EvaluationCriteria> EvaluationCriterias
+        {
+            get { return _evaluationCriterias; }
+            private set
+            {
+                _evaluationCriterias = value;
                 OnPropertyChanged();
             }
         }

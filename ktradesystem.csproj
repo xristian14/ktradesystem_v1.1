@@ -88,6 +88,7 @@
     <Compile Include="Models\Datatables\DataSourceFile.cs" />
     <Compile Include="Models\Datatables\DataSourceFileWorkingPeriod.cs" />
     <Compile Include="Models\Datatables\DataSourceTemplate.cs" />
+    <Compile Include="Models\Datatables\EvaluationCriteria.cs" />
     <Compile Include="Models\Datatables\IndicatorParameterRange.cs" />
     <Compile Include="Models\ModelTesting.cs" />
     <Compile Include="ViewModels\AlgorithmParameterView.cs" />
@@ -97,6 +98,8 @@
     <Compile Include="ViewModels\DataSourcesForAddingDsGroupView.cs" />
     <Compile Include="ViewModels\DataSourceView.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
+    <Compile Include="ViewModels\EvaluationCriteriaView.cs" />
+    <Compile Include="ViewModels\FilterTopModelView.cs" />
     <Compile Include="ViewModels\IndicatorParameterRangeView.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\ViewModelData.cs" />

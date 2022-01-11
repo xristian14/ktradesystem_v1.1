@@ -9,6 +9,8 @@ namespace ktradesystem.Models
     class TestBatch //тестовая связка
     {
         public DataSourceGroup DataSourceGroup { get; set; }
-
+        public List<TestRun> TestRuns { get; set; }
+        public TestRun ForwardTestRun { get; set; }
+        public List<string[]> StatisticalSignificance { get; set; }
     }
 }

@@ -10,5 +10,6 @@ namespace ktradesystem.Models.Datatables
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        public double DollarCost { get; set; } //стоимость 1 доллара для данной валюты
     }
 }

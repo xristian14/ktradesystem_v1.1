@@ -42,6 +42,9 @@ namespace ktradesystem.ViewModels
 
             _modelTesting = ModelTesting.getInstance();
             _viewModelPageDataSource = ViewModelPageDataSource.getInstance();
+
+            Currencies = _modelData.Currencies;
+            SelectedCurrency = Currencies[0];
         }
 
         public static ViewModelPageTesting getInstance()
@@ -2508,7 +2511,7 @@ return a.ToString();
                         DataSourcesForAddingDsGroupsView.Add(new DataSourcesForAddingDsGroupView { DataSources = _viewModelPageDataSource.DataSourcesForSubscribers, DataSourceTemplate = dataSourceTemplate });
                     }
 
-                    //viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     AddDataSourceGroupView addDataSourceGroupView = new AddDataSourceGroupView();
                     addDataSourceGroupView.Show();
 
@@ -2628,59 +2631,14 @@ return a.ToString();
             }
         }
 
-        #endregion
-
-
-
-
-
-
-
-
-
-
-        #region view edit AxesParameters
-
-        private bool _isAxesParametersSpecified;
-        public bool IsAxesParametersSpecified //показатель выбранности чек-бокса, указаны ли оси
+        public ICommand DataSourceGroupViewCancel_Click
         {
-            get { return _isAxesParametersSpecified; }
-            set
+            get
             {
-                _isAxesParametersSpecified = value;
-                OnPropertyChanged();
-                CreateAxesParametersSelectView();
-            }
-        }
-
-        private ObservableCollection<AxesParameterSelectView> _axesParametersSelectView = new ObservableCollection<AxesParameterSelectView>();
-        public ObservableCollection<AxesParameterSelectView> AxesParametersSelectView //выбор осей двумерной плоскости на которой будет искаться топ-модель с соседями
-        {
-            get { return _axesParametersSelectView; }
-            set
-            {
-                _axesParametersSelectView = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private void CreateAxesParametersSelectView()
-        {
-            AxesParametersSelectView.Clear();
-            if (IsAxesParametersSpecified)
-            {
-                List<string> namesParameters = new List<string>();
-                foreach(IndicatorParameterRangeView indicatorParameterRangeView in IndicatorParameterRangesView)
+                return new DelegateCommand((obj) =>
                 {
-                    namesParameters.Add("Индикатор " + indicatorParameterRangeView.NameIndicator +  " – " + indicatorParameterRangeView.NameIndicatorParameterTemplate);
-                }
-                foreach(AlgorithmParameterView algorithmParameterView in AlgorithmParametersView)
-                {
-                    namesParameters.Add("Алгоритм – " + algorithmParameterView.Name);
-                }
-
-                AxesParametersSelectView.Add(new AxesParameterSelectView { Axis = "X", NamesParameters = namesParameters });
-                AxesParametersSelectView.Add(new AxesParameterSelectView { Axis = "Y", NamesParameters = namesParameters });
+                    CloseAddDataSourceTemplateAction?.Invoke();
+                }, (obj) => true);
             }
         }
 
@@ -2744,7 +2702,6 @@ return a.ToString();
                 EvaluationCriteriasView.Add(new EvaluationCriteriaView { EvaluationCriteria = evaluationCriteria, Name = evaluationCriteria.ShortName + " (" + evaluationCriteria.Name + ")" });
             }
             SelectedCompareSignsEvaluationCriteria = CompareSignsEvaluationCriteria[0];
-            FiltersTopModelView.Add(new FilterTopModelView { CompareSings = new ObservableCollection<string> { ">", "<" }, EvaluationCriteriasView = EvaluationCriteriasView });
         }
 
         private ObservableCollection<string> _compareSignsEvaluationCriteria = new ObservableCollection<string> { "Максимальное", "Минимальное" };
@@ -2776,6 +2733,228 @@ return a.ToString();
             set
             {
                 _filtersTopModelView = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private FilterTopModelView _selectedFilterTopModelView;
+        public FilterTopModelView SelectedFilterTopModelView
+        {
+            get { return _selectedFilterTopModelView; }
+            set
+            {
+                _selectedFilterTopModelView = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand AddFilterTopModelView_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    FiltersTopModelView.Add(new FilterTopModelView { CompareSings = new ObservableCollection<string> { ">", "<" }, EvaluationCriteriasView = EvaluationCriteriasView });
+                }, (obj) => SelectedAlgorithm != null);
+            }
+        }
+
+        public ICommand DeleteFilterTopModelView_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    FiltersTopModelView.Remove(SelectedFilterTopModelView);
+                }, (obj) => SelectedFilterTopModelView != null);
+            }
+        }
+
+        #endregion
+
+
+
+
+
+
+
+
+
+
+        #region IsConsiderNeighbours, view edit AxesParameters, IsForwardTesting
+
+        private bool _isConsiderNeighbours = true;
+        public bool IsConsiderNeighbours //выбран ли параметр, учитывать соседнии результаты при поике топ-модели
+        {
+            get { return _isConsiderNeighbours; }
+            set
+            {
+                _isConsiderNeighbours = value;
+                OnPropertyChanged();
+                IsAxesParametersSpecified = false;
+            }
+        }
+
+        private int _sizeNeighboursGroupPercent = 9;
+        public int SizeNeighboursGroupPercent //размер группы соседних тестов от общей площади поисковой плоскости
+        {
+            get { return _sizeNeighboursGroupPercent; }
+            set
+            {
+                _sizeNeighboursGroupPercent = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isAxesParametersSpecified;
+        public bool IsAxesParametersSpecified //показатель выбранности чек-бокса, указаны ли оси
+        {
+            get { return _isAxesParametersSpecified; }
+            set
+            {
+                _isAxesParametersSpecified = value;
+                OnPropertyChanged();
+                CreateAxesParametersSelectView();
+            }
+        }
+
+        private ObservableCollection<AxesParameterSelectView> _axesParametersSelectView = new ObservableCollection<AxesParameterSelectView>();
+        public ObservableCollection<AxesParameterSelectView> AxesParametersSelectView //выбор осей двумерной плоскости на которой будет искаться топ-модель с соседями
+        {
+            get { return _axesParametersSelectView; }
+            set
+            {
+                _axesParametersSelectView = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private void CreateAxesParametersSelectView()
+        {
+            AxesParametersSelectView.Clear();
+            if (IsAxesParametersSpecified)
+            {
+                List<string> namesParameters = new List<string>();
+                foreach(IndicatorParameterRangeView indicatorParameterRangeView in IndicatorParameterRangesView)
+                {
+                    namesParameters.Add("Индикатор " + indicatorParameterRangeView.NameIndicator +  " – " + indicatorParameterRangeView.NameIndicatorParameterTemplate);
+                }
+                foreach(AlgorithmParameterView algorithmParameterView in AlgorithmParametersView)
+                {
+                    namesParameters.Add("Алгоритм – " + algorithmParameterView.Name);
+                }
+
+                AxesParametersSelectView.Add(new AxesParameterSelectView { Axis = "X", NamesParameters = namesParameters });
+                AxesParametersSelectView.Add(new AxesParameterSelectView { Axis = "Y", NamesParameters = namesParameters });
+            }
+        }
+
+        private bool _isForwardTesting = false;
+        public bool IsForwardTesting //проводить ли форвардное тестирование
+        {
+            get { return _isForwardTesting; }
+            set
+            {
+                _isForwardTesting = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isForwardDepositTesting = false;
+        public bool IsForwardDepositTesting //добавить ли торговлю депозитом для форвардного тестирования
+        {
+            get { return _isForwardDepositTesting; }
+            set
+            {
+                _isForwardDepositTesting = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _forwardDeposit;
+        public string ForwardDeposit //размер депозита
+        {
+            get { return _forwardDeposit; }
+            set
+            {
+                _forwardDeposit = value;
+                OnPropertyChanged();
+                CreateDepositInAnotherCurrencies();
+            }
+        }
+
+        private ObservableCollection<Currency> _currencies;
+        public ObservableCollection<Currency> Currencies //валюты для депозита
+        {
+            get { return _currencies; }
+            set
+            {
+                _currencies = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Currency _selectedCurrency;
+        public Currency SelectedCurrency //выбранная валюта для депозита
+        {
+            get { return _selectedCurrency; }
+            set
+            {
+                _selectedCurrency = value;
+                OnPropertyChanged();
+                CreateDepositInAnotherCurrencies();
+            }
+        }
+
+        private ObservableCollection<string> _depositInAnotherCurrencies = new ObservableCollection<string>();
+        public ObservableCollection<string> DepositInAnotherCurrencies //размер депозита в других валютах
+        {
+            get { return _depositInAnotherCurrencies; }
+            set
+            {
+                _depositInAnotherCurrencies = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private void CreateDepositInAnotherCurrencies()
+        {
+            DepositInAnotherCurrencies.Clear();
+            if(double.TryParse(ForwardDeposit, out double res))
+            {
+                //определяем доллоровую стоимость депозита
+                double dollarCostDeposit = res / SelectedCurrency.DollarCost;
+                foreach (Currency currency in Currencies)
+                {
+                    if (currency != SelectedCurrency)
+                    {
+                        //переводим доллоровую стоимость в валютную, умножая на стоимость 1 доллара
+                        double cost = Math.Round(dollarCostDeposit * currency.DollarCost, 2);
+                        DepositInAnotherCurrencies.Add(cost.ToString() + currency.Name);
+                    }
+                }
+            }
+            
+        }
+
+        private DateTime _startPeriodTesting = new DateTime(2000, 1, 1);
+        public DateTime StartPeriodTesting //начало перида тестирования
+        {
+            get { return _startPeriodTesting; }
+            set
+            {
+                _startPeriodTesting = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private DateTime _endPeriodTesting = DateTime.Today;
+        public DateTime EndPeriodTesting //окончание перида тестирования
+        {
+            get { return _endPeriodTesting; }
+            set
+            {
+                _endPeriodTesting = value;
                 OnPropertyChanged();
             }
         }

@@ -47,7 +47,7 @@ namespace ktradesystem.Models
             DataTable dataCurrencies = _database.QuerySelect("SELECT * FROM Currencies");
             foreach (DataRow row in dataCurrencies.Rows)
             {
-                Currency currency = new Currency { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name") };
+                Currency currency = new Currency { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name"), DollarCost = row.Field<double>("dollarCost") };
                 Currencies.Add(currency);
             }
 

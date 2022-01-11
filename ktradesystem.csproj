@@ -93,7 +93,7 @@
     <Compile Include="Models\ModelTesting.cs" />
     <Compile Include="ViewModels\AlgorithmParameterView.cs" />
     <Compile Include="ViewModels\AxesParameterSelectView.cs" />
-    <Compile Include="ViewModels\DataSourceAccordance.cs" />
+    <Compile Include="ViewModels\DataSourceAccordanceView.cs" />
     <Compile Include="ViewModels\DataSourceGroupView.cs" />
     <Compile Include="ViewModels\DataSourcesForAddingDsGroupView.cs" />
     <Compile Include="ViewModels\DataSourceView.cs" />

@@ -10,6 +10,6 @@ namespace ktradesystem.ViewModels
     class DataSourceGroupView //выбранные источники данных для макетов источников данных
     {
         public int Number { get; set; }
-        public List<DataSourceAccordance> DataSourcesAccordances { get; set; } //соответствие шаблонов источников данных и источников данных
+        public List<DataSourceAccordanceView> DataSourcesAccordances { get; set; } //соответствие шаблонов источников данных и источников данных
     }
 }

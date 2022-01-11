@@ -7,9 +7,9 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
-    class AxesParameter //ось параметра, определяет оси двумерной плоскости для поиска топ модели с соседями
+    class IndicatorParameterValue
     {
         public IndicatorParameterTemplate IndicatorParameterTemplate { get; set; }
-        public AlgorithmParameter AlgorithmParameter { get; set; }
+        public double Value { get; set; }
     }
 }

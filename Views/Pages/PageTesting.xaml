@@ -672,7 +672,7 @@
                     <TextBox Text="" Margin="5 0 0 0" Width="30"/>
                     <TextBlock Text="дней" Margin="1 0 0 0" VerticalAlignment="Center"/>
                 </StackPanel>
-                <Button Content="Запустить тестирование" Command="{Binding LaunchTesting_Click}" Width="160" Height="32" Margin="0 14 0 0" HorizontalAlignment="Right"/>
+                <Button Content="Запустить тестирование" Command="{Binding LaunchTesting_Click}" Width="152" Height="30" Margin="0 14 0 0" HorizontalAlignment="Right"/>
             </StackPanel>
         </StackPanel>
     </Grid>

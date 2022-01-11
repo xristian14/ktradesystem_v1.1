@@ -67,6 +67,14 @@ namespace ktradesystem.Models
                 EvaluationCriterias.Add(evaluationCriteria);
             }
 
+            //считываем типы заявок
+            DataTable dataTypeOrders = _database.QuerySelect("SELECT * FROM TypeOrders");
+            foreach (DataRow row in dataTypeOrders.Rows)
+            {
+                TypeOrder typeOrder = new TypeOrder { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name") };
+                TypeOrders.Add(typeOrder);
+            }
+
             ReadDataSources();
             NotifyDataSourcesSubscribers();
 
@@ -218,6 +226,17 @@ namespace ktradesystem.Models
             private set
             {
                 _evaluationCriterias = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<TypeOrder> _typeOrders = new ObservableCollection<TypeOrder>(); //типы заявок
+        public ObservableCollection<TypeOrder> TypeOrders
+        {
+            get { return _typeOrders; }
+            private set
+            {
+                _typeOrders = value;
                 OnPropertyChanged();
             }
         }

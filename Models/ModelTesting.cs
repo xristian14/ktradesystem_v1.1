@@ -318,5 +318,10 @@ namespace ktradesystem.Models
 
             _modelData.ReadAlgorithms();
         }
+
+        public void TestingLaunch()
+        {
+
+        }
     }
 }

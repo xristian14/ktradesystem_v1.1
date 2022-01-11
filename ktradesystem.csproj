@@ -82,7 +82,20 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="CommunicationChannel\DataSourceAddingProgress.cs" />
+    <Compile Include="Models\Account.cs" />
+    <Compile Include="Models\AlgorithmParameterValue.cs" />
     <Compile Include="Models\AxesParameter.cs" />
+    <Compile Include="Models\DateTimeDuration.cs" />
+    <Compile Include="Models\Deal.cs" />
+    <Compile Include="Models\DepositCurrency.cs" />
+    <Compile Include="Models\EvaluationCriteriaValue.cs" />
+    <Compile Include="Models\IndicatorParameterValue.cs" />
+    <Compile Include="Models\Order.cs" />
+    <Compile Include="Models\TestBatch.cs" />
+    <Compile Include="Models\TestRun.cs" />
+    <Compile Include="Models\TopModelCriteria.cs" />
+    <Compile Include="Models\DataSourceAccordance.cs" />
+    <Compile Include="Models\DataSourceGroup.cs" />
     <Compile Include="Models\Datatables\Algorithm.cs" />
     <Compile Include="Models\Datatables\AlgorithmParameter.cs" />
     <Compile Include="Models\Datatables\DataSourceFile.cs" />
@@ -90,7 +103,10 @@
     <Compile Include="Models\Datatables\DataSourceTemplate.cs" />
     <Compile Include="Models\Datatables\EvaluationCriteria.cs" />
     <Compile Include="Models\Datatables\IndicatorParameterRange.cs" />
+    <Compile Include="Models\TopModelFilter.cs" />
     <Compile Include="Models\ModelTesting.cs" />
+    <Compile Include="Models\Testing.cs" />
+    <Compile Include="Models\Datatables\TypeOrder.cs" />
     <Compile Include="ViewModels\AlgorithmParameterView.cs" />
     <Compile Include="ViewModels\AxesParameterSelectView.cs" />
     <Compile Include="ViewModels\DataSourceAccordanceView.cs" />

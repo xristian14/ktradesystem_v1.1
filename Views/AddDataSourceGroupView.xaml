@@ -32,7 +32,7 @@
                 <Grid Grid.Column="1" x:Name="helper2"/>
             </Grid>
             <StackPanel Orientation="Horizontal" Margin="0 5 0 0" HorizontalAlignment="Right">
-                <Button Content="Сохранить" Command="{Binding DataSourceGroupViewSave_Click}" Width="110" ToolTipService.ShowOnDisabled="True" Margin="0 0 7 0">
+                <Button Content="Сохранить" Command="{Binding DataSourceGroupViewSave_Click}" Width="110" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000" Margin="0 0 7 0">
                     <Button.ToolTip>
                         <ToolTip>
                             <ListView ItemsSource="{Binding TooltipAddDataSourceGroupView}" IsEnabled="False"/>

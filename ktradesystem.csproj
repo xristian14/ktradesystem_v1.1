@@ -85,6 +85,7 @@
     <Compile Include="Models\Account.cs" />
     <Compile Include="Models\AlgorithmParameterValue.cs" />
     <Compile Include="Models\AxesParameter.cs" />
+    <Compile Include="Models\CompareSign.cs" />
     <Compile Include="Models\DateTimeDuration.cs" />
     <Compile Include="Models\Deal.cs" />
     <Compile Include="Models\DepositCurrency.cs" />

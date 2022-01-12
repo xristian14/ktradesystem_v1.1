@@ -2781,7 +2781,7 @@ return a.ToString();
 
 
 
-        #region IsConsiderNeighbours, view edit AxesParameters, IsForwardTesting
+        #region IsConsiderNeighbours, view edit AxesParameters, IsForwardTesting, Deposit, Period, Duration, LaunchTesting
 
         private bool _isConsiderNeighbours = true;
         public bool IsConsiderNeighbours //выбран ли параметр, учитывать соседнии результаты при поике топ-модели
@@ -2795,8 +2795,8 @@ return a.ToString();
             }
         }
 
-        private int _sizeNeighboursGroupPercent = 9;
-        public int SizeNeighboursGroupPercent //размер группы соседних тестов от общей площади поисковой плоскости
+        private string _sizeNeighboursGroupPercent = "9";
+        public string SizeNeighboursGroupPercent //размер группы соседних тестов от общей площади поисковой плоскости
         {
             get { return _sizeNeighboursGroupPercent; }
             set
@@ -2956,6 +2956,459 @@ return a.ToString();
             {
                 _endPeriodTesting = value;
                 OnPropertyChanged();
+            }
+        }
+
+        private string _durationOptimizationYears;
+        public string DurationOptimizationYears
+        {
+            get { return _durationOptimizationYears; }
+            set
+            {
+                _durationOptimizationYears = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _durationOptimizationMonths;
+        public string DurationOptimizationMonths
+        {
+            get { return _durationOptimizationMonths; }
+            set
+            {
+                _durationOptimizationMonths = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _durationOptimizationDays;
+        public string DurationOptimizationDays
+        {
+            get { return _durationOptimizationDays; }
+            set
+            {
+                _durationOptimizationDays = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _optimizationSpacingYears;
+        public string OptimizationSpacingYears
+        {
+            get { return _optimizationSpacingYears; }
+            set
+            {
+                _optimizationSpacingYears = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _optimizationSpacingMonths;
+        public string OptimizationSpacingMonths
+        {
+            get { return _optimizationSpacingMonths; }
+            set
+            {
+                _optimizationSpacingMonths = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _optimizationSpacingDays;
+        public string OptimizationSpacingDays
+        {
+            get { return _optimizationSpacingDays; }
+            set
+            {
+                _optimizationSpacingDays = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _durationForwardYears;
+        public string DurationForwardYears
+        {
+            get { return _durationForwardYears; }
+            set
+            {
+                _durationForwardYears = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _durationForwardMonths;
+        public string DurationForwardMonths
+        {
+            get { return _durationForwardMonths; }
+            set
+            {
+                _durationForwardMonths = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _durationForwardDays;
+        public string DurationForwardDays
+        {
+            get { return _durationForwardDays; }
+            set
+            {
+                _durationForwardDays = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<string> _tooltipLaunchTesting = new ObservableCollection<string>();
+        public ObservableCollection<string> TooltipLaunchTesting
+        {
+            get { return _tooltipLaunchTesting; }
+            set
+            {
+                _tooltipLaunchTesting = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool IsFieldsTestingCorrect()
+        {
+            bool result = true;
+            TooltipLaunchTesting.Clear();
+
+            //проверяем, добавлены ли источники данных
+            if(DataSourceGroupsView.Count == 0)
+            {
+                result = false;
+                TooltipLaunchTesting.Add("Добавьте источники данных.");
+            }
+
+            //проверяем, выбран ли критерий оценки топ-модели
+            if(EvaluationCriteriasView.Contains(SelectedEvaluationCriteriaView) == false)
+            {
+                result = false;
+                TooltipLaunchTesting.Add("Выберите критерий оценки топ-модели.");
+            }
+
+            //проверяем что все фильтры заполнены корректными значениями
+            if(FiltersTopModelView.Count > 0)
+            {
+                bool isCorrect = true;
+                foreach(FilterTopModelView filterTopModelView in FiltersTopModelView)
+                {
+                    if(filterTopModelView.SelectedEvaluationCriteriaView == null || filterTopModelView.SelectedCompareSing == null || double.TryParse(filterTopModelView.FilterValue, out double res) == false)
+                    {
+                        isCorrect = false;
+                    }
+                }
+                if(isCorrect == false)
+                {
+                    result = false;
+                    TooltipLaunchTesting.Add("Не заполнены все поля фильтров топ-модели, или значения некорректны.");
+                }
+            }
+
+            //проверяем что размер группы соседних тестов имеет корректное значение
+            if (IsConsiderNeighbours)
+            {
+                bool isCorrect = true;
+                if(double.TryParse(SizeNeighboursGroupPercent, out double res))
+                {
+                    if(res <= 0)
+                    {
+                        isCorrect = false;
+                    }
+                }
+                else
+                {
+                    isCorrect = false;
+                }
+                if (isCorrect == false)
+                {
+                    result = false;
+                    TooltipLaunchTesting.Add("Размер группы соседних тестов должен быть положительным числом.");
+                }
+            }
+
+            //проверяем что для осей плоскости выбраны разные параметры
+            if (IsAxesParametersSpecified)
+            {
+                if(AxesParametersSelectView.Count > 0)
+                {
+                    if(AxesParametersSelectView[0].SelectedNameParameter == null || AxesParametersSelectView[1].SelectedNameParameter == null)
+                    {
+                        result = false;
+                        TooltipLaunchTesting.Add("Не выбраны оси двумерной плоскости поиска топ-модели с соседями.");
+                    }
+                    else if(AxesParametersSelectView[0].SelectedNameParameter == AxesParametersSelectView[1].SelectedNameParameter)
+                    {
+                        result = false;
+                        TooltipLaunchTesting.Add("Выбраны одинаковые параметры для осей двумерной плоскости поиска топ-модели с соседями.");
+                    }
+                }
+            }
+
+            //проверяем что размер депозита имеет корректное значение
+            if(IsForwardTesting && IsForwardDepositTesting)
+            {
+                if(double.TryParse(ForwardDeposit, out double res) == false)
+                {
+                    result = false;
+                    TooltipLaunchTesting.Add("Размер депозита для форвардного тестирования имеет некорректное значение.");
+                }
+            }
+
+            //проверяем что дата начала периода тестирования раньше даты окончания периода тестирования
+            if(DateTime.Compare(StartPeriodTesting, EndPeriodTesting) >= 0)
+            {
+                result = false;
+                TooltipLaunchTesting.Add("Дата начала периода тестирования должна быть раньше даты окончания.");
+            }
+
+            //проверяем корректность длительности оптимизационных тестов
+            bool isYearsNotEmpty = true;
+            bool isMonthsNotEmpty = true;
+            bool isDaysNotEmpty = true;
+            if(DurationOptimizationYears == "" || DurationOptimizationYears == null)
+            {
+                isYearsNotEmpty = false;
+            }
+            if(DurationOptimizationMonths == "" || DurationOptimizationMonths == null)
+            {
+                isMonthsNotEmpty = false;
+            }
+            if(DurationOptimizationDays == "" || DurationOptimizationDays == null)
+            {
+                isDaysNotEmpty = false;
+            }
+            if(isYearsNotEmpty || isMonthsNotEmpty || isDaysNotEmpty)
+            {
+                bool isCorrect = true;
+                if (isYearsNotEmpty)
+                {
+                    if(int.TryParse(DurationOptimizationYears, out int res))
+                    {
+                        if(res <= 0)
+                        {
+                            isCorrect = false;
+                        }
+                    }
+                    else
+                    {
+                        isCorrect = false;
+                    }
+                }
+                if (isMonthsNotEmpty)
+                {
+                    if(int.TryParse(DurationOptimizationMonths, out int res))
+                    {
+                        if (res <= 0)
+                        {
+                            isCorrect = false;
+                        }
+                    }
+                    else
+                    {
+                        isCorrect = false;
+                    }
+                }
+                if (isDaysNotEmpty)
+                {
+                    if(int.TryParse(DurationOptimizationDays, out int res))
+                    {
+                        if (res <= 0)
+                        {
+                            isCorrect = false;
+                        }
+                    }
+                    else
+                    {
+                        isCorrect = false;
+                    }
+                }
+                if(isCorrect == false)
+                {
+                    result = false;
+                    TooltipLaunchTesting.Add("Длительность оптимизационных тестов должна быть целым положительным числом.");
+                }
+            }
+            else
+            {
+                result = false;
+                TooltipLaunchTesting.Add("Не заполнена длительность оптимизационных тестов.");
+            }
+
+            //проверяем корректность промежутка между оптимизационными тестами
+            isYearsNotEmpty = true;
+            isMonthsNotEmpty = true;
+            isDaysNotEmpty = true;
+            if (OptimizationSpacingYears == "" || OptimizationSpacingYears == null)
+            {
+                isYearsNotEmpty = false;
+            }
+            if (OptimizationSpacingMonths == "" || OptimizationSpacingMonths == null)
+            {
+                isMonthsNotEmpty = false;
+            }
+            if (OptimizationSpacingDays == "" || OptimizationSpacingDays == null)
+            {
+                isDaysNotEmpty = false;
+            }
+            if (isYearsNotEmpty || isMonthsNotEmpty || isDaysNotEmpty)
+            {
+                bool isCorrect = true;
+                if (isYearsNotEmpty)
+                {
+                    if (int.TryParse(OptimizationSpacingYears, out int res))
+                    {
+                        if (res <= 0)
+                        {
+                            isCorrect = false;
+                        }
+                    }
+                    else
+                    {
+                        isCorrect = false;
+                    }
+                }
+                if (isMonthsNotEmpty)
+                {
+                    if (int.TryParse(OptimizationSpacingMonths, out int res))
+                    {
+                        if (res <= 0)
+                        {
+                            isCorrect = false;
+                        }
+                    }
+                    else
+                    {
+                        isCorrect = false;
+                    }
+                }
+                if (isDaysNotEmpty)
+                {
+                    if (int.TryParse(OptimizationSpacingDays, out int res))
+                    {
+                        if (res <= 0)
+                        {
+                            isCorrect = false;
+                        }
+                    }
+                    else
+                    {
+                        isCorrect = false;
+                    }
+                }
+                if (isCorrect == false)
+                {
+                    result = false;
+                    TooltipLaunchTesting.Add("Промежуток между оптимизационными тестами должен быть целым положитльным числом.");
+                }
+            }
+            else
+            {
+                result = false;
+                TooltipLaunchTesting.Add("Не заполнен промежуток между оптимизационными тестами.");
+            }
+
+            //проверяем корректность длительности форвардного теста
+            if (IsForwardTesting)
+            {
+                isYearsNotEmpty = true;
+                isMonthsNotEmpty = true;
+                isDaysNotEmpty = true;
+                if (DurationForwardYears == "" || DurationForwardYears == null)
+                {
+                    isYearsNotEmpty = false;
+                }
+                if (DurationForwardMonths == "" || DurationForwardMonths == null)
+                {
+                    isMonthsNotEmpty = false;
+                }
+                if (DurationForwardDays == "" || DurationForwardDays == null)
+                {
+                    isDaysNotEmpty = false;
+                }
+                if (isYearsNotEmpty || isMonthsNotEmpty || isDaysNotEmpty)
+                {
+                    bool isCorrect = true;
+                    if (isYearsNotEmpty)
+                    {
+                        if (int.TryParse(DurationForwardYears, out int res))
+                        {
+                            if (res <= 0)
+                            {
+                                isCorrect = false;
+                            }
+                        }
+                        else
+                        {
+                            isCorrect = false;
+                        }
+                    }
+                    if (isMonthsNotEmpty)
+                    {
+                        if (int.TryParse(DurationForwardMonths, out int res))
+                        {
+                            if (res <= 0)
+                            {
+                                isCorrect = false;
+                            }
+                        }
+                        else
+                        {
+                            isCorrect = false;
+                        }
+                    }
+                    if (isDaysNotEmpty)
+                    {
+                        if (int.TryParse(DurationForwardDays, out int res))
+                        {
+                            if (res <= 0)
+                            {
+                                isCorrect = false;
+                            }
+                        }
+                        else
+                        {
+                            isCorrect = false;
+                        }
+                    }
+                    if (isCorrect == false)
+                    {
+                        result = false;
+                        TooltipLaunchTesting.Add("Длительность форвардного теста должна быть целым положительным числом.");
+                    }
+                }
+                else
+                {
+                    result = false;
+                    TooltipLaunchTesting.Add("Не заполнена длительность форвардного теста.");
+                }
+            }
+
+            return result;
+        }
+
+        public ICommand LaunchTesting_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    List<DataSourceGroup> dataSourceGroups = new List<DataSourceGroup>();
+                    foreach(DataSourceGroupView dataSourceGroupView in DataSourceGroupsView)
+                    {
+                        List<DataSourceAccordance> dataSourceAccordances = new List<DataSourceAccordance>();
+                        foreach (DataSourceAccordanceView dataSourceAccordanceView in dataSourceGroupView.DataSourcesAccordances)
+                        {
+                            dataSourceAccordances.Add(new DataSourceAccordance { DataSourceTemplate = dataSourceAccordanceView.DataSourceTemplate, DataSource = dataSourceAccordanceView.DataSource });
+                        }
+                        dataSourceGroups.Add(new DataSourceGroup { DataSourceAccordances = dataSourceAccordances });
+                    }
+                    //создаем объект Testing
+                    Testing testing = new Testing();
+
+                    //передаем объект в модель
+                }, (obj) => IsFieldsTestingCorrect());
             }
         }
 

@@ -19,5 +19,7 @@ namespace ktradesystem.Models.Datatables
         public double PriceStep { get; set; } //шаг цены для 1 пункта
         public double CostPriceStep { get; set; } //стоимость шага цены в 1 пункт
         public List<DataSourceFile> DataSourceFiles { get; set; } //файлы
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
     }
 }

@@ -639,11 +639,11 @@
                         </ListView.ItemContainerStyle>
                     </ListView>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
+                <StackPanel Orientation="Horizontal" IsEnabled="{Binding IsPeriodTestingEnabled}" Margin="0 10 0 0">
                     <TextBlock Text="Период тестирования: " VerticalAlignment="Center"/>
-                    <DatePicker SelectedDate="{Binding StartPeriodTesting}"/>
+                    <DatePicker SelectedDate="{Binding StartPeriodTesting, Mode=TwoWay}"/>
                     <TextBlock Text=" – " VerticalAlignment="Center"/>
-                    <DatePicker SelectedDate="{Binding EndPeriodTesting}"/>
+                    <DatePicker SelectedDate="{Binding EndPeriodTesting, Mode=TwoWay}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
                     <TextBlock Text="Длительность оптимизационных тестов:" VerticalAlignment="Center"/>

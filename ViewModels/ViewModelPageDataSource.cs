@@ -218,6 +218,8 @@ namespace ktradesystem.ViewModels
                 {
                     comission = dsItem.Comission.ToString() + "%";
                 }
+                //формирует данные за период
+                string datePeriod = dsItem.StartDate.ToShortDateString() + " – " + dsItem.EndDate.ToShortDateString();
                 //формирует список файлов
                 List<string> files = new List<string>();
                 foreach (DataSourceFile dataSourceFile in dsItem.DataSourceFiles)
@@ -225,7 +227,7 @@ namespace ktradesystem.ViewModels
                     files.Add(dataSourceFile.Path);
                 }
 
-                DataSourceView dsView = new DataSourceView { Id = dsItem.Id, Name = dsItem.Name, Currency = currencyName, Interval = intervalName, Instrument = instrumentName, Cost = dsItem.Cost, Comissiontype = dsItem.Comissiontype, Comission = dsItem.Comission, ComissionView = comission, PriceStep = dsItem.PriceStep, CostPriceStep = dsItem.CostPriceStep, Files = files };
+                DataSourceView dsView = new DataSourceView { Id = dsItem.Id, Name = dsItem.Name, Currency = currencyName, Interval = intervalName, Instrument = instrumentName, Cost = dsItem.Cost, Comissiontype = dsItem.Comissiontype, Comission = dsItem.Comission, ComissionView = comission, PriceStep = dsItem.PriceStep, CostPriceStep = dsItem.CostPriceStep, DatePeriod = datePeriod, Files = files };
                 DataSourcesView.Add(dsView);
             }
         }

@@ -250,6 +250,10 @@ namespace ktradesystem.Models
                     isAllFilesCorrect = false;
                 }
 
+                //определяем первую и последнюю даты
+                DateTime startDate = dataSourceFiles[0].DataSourceFileWorkingPeriods[0].StartPeriod;
+                DateTime endDate = dataSourceFiles.Last().DataSourceFileWorkingPeriods.Last().EndDateTime;
+
                 //если интервалы корректны, выполняем добавление или обновление записей в БД
                 if (isAllFilesCorrect)
                 {
@@ -261,7 +265,7 @@ namespace ktradesystem.Models
 
                     if (id == -1)
                     {
-                        _database.InsertDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, isAddCost);
+                        _database.InsertDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, startDate, endDate, isAddCost);
                         _modelData.ReadDataSources();
 
                         int a = 1;
@@ -448,7 +452,7 @@ namespace ktradesystem.Models
                         }
 
                         //обновляю DataSource
-                        _database.UpdateDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, isAddCost, id);
+                        _database.UpdateDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, startDate, endDate, isAddCost, id);
                     };
 
                     _modelData.ReadDataSources();
@@ -543,6 +547,8 @@ namespace ktradesystem.Models
                 dataSourceFileWorkingPeriod = new DataSourceFileWorkingPeriod { StartPeriod = lastDate, TradingStartTime = lastOpenTime, TradingEndTime = lastCloseTime };
                 dataSourceFileWorkingPeriods.Add(dataSourceFileWorkingPeriod);
             }
+
+            dataSourceFileWorkingPeriods.Last().EndDateTime = lastCloseTime; //сохраняю в последний элемент dataSourceFileWorkingPeriods, последнюю дату данного файла, для определения последней даты источника данных
 
             dataSourceFile.DataSourceFileWorkingPeriods = dataSourceFileWorkingPeriods;
 

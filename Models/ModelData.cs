@@ -286,6 +286,8 @@ namespace ktradesystem.Models
                 ds.Comission = row.Field<double>("comission");
                 ds.PriceStep = row.Field<double>("priceStep");
                 ds.CostPriceStep = row.Field<double>("costPriceStep");
+                ds.StartDate = DateTime.Parse(row.Field<string>("startDate"));
+                ds.EndDate = DateTime.Parse(row.Field<string>("endDate"));
 
                 //считываем dataSourceFiles для источника данных
                 ds.DataSourceFiles = new List<DataSourceFile>();
@@ -355,6 +357,8 @@ namespace ktradesystem.Models
                 ds.Comission = row.Field<double>("comission");
                 ds.PriceStep = row.Field<double>("priceStep");
                 ds.CostPriceStep = row.Field<double>("costPriceStep");
+                ds.StartDate = DateTime.Parse(row.Field<string>("startDate"));
+                ds.EndDate = DateTime.Parse(row.Field<string>("endDate"));
 
                 //считываем dataSourceFiles для источника данных
                 ds.DataSourceFiles = new List<DataSourceFile>();

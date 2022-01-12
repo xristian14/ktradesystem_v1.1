@@ -3394,6 +3394,7 @@ return a.ToString();
             {
                 return new DelegateCommand((obj) =>
                 {
+                    //DataSourceGroups
                     List<DataSourceGroup> dataSourceGroups = new List<DataSourceGroup>();
                     foreach(DataSourceGroupView dataSourceGroupView in DataSourceGroupsView)
                     {
@@ -3404,10 +3405,108 @@ return a.ToString();
                         }
                         dataSourceGroups.Add(new DataSourceGroup { DataSourceAccordances = dataSourceAccordances });
                     }
+
+                    //TopModelCriteria
+                    TopModelCriteria topModelCriteria = new TopModelCriteria();
+                    topModelCriteria.EvaluationCriteria = SelectedEvaluationCriteriaView.EvaluationCriteria;
+                    topModelCriteria.CompareSign = SelectedCompareSignsEvaluationCriteria == CompareSignsEvaluationCriteria[0] ? CompareSign.GetMax() : CompareSign.GetMin();
+                    List<TopModelFilter> topModelFilters = new List<TopModelFilter>();
+                    foreach (FilterTopModelView filterTopModelView in FiltersTopModelView)
+                    {
+                        topModelFilters.Add(new TopModelFilter { EvaluationCriteria = filterTopModelView.SelectedEvaluationCriteriaView.EvaluationCriteria, CompareSign = filterTopModelView.SelectedCompareSing == ">" ? CompareSign.GetMore() : CompareSign.GetLess(), Value = double.Parse(filterTopModelView.FilterValue) });
+                    }
+                    topModelCriteria.TopModelFilters = topModelFilters;
+
+                    //AxesTopModelSearchPlane
+                    List<AxesParameter> axesTopModelSearchPlane = new List<AxesParameter>();
+                    foreach(AxesParameterSelectView axesParameterSelectView in AxesParametersSelectView)
+                    {
+                        string[] arr = axesParameterSelectView.SelectedNameParameter.Split(' ');
+                        if(arr[0] == "Индикатор")
+                        {
+                            Indicator indicator = new Indicator();
+                            foreach (Indicator indicatorItem in Indicators)
+                            {
+                                if(indicatorItem.Name == arr[1])
+                                {
+                                    indicator = indicatorItem;
+                                }
+                            }
+                            IndicatorParameterTemplate indicatorParameterTemplate = new IndicatorParameterTemplate();
+                            foreach (IndicatorParameterTemplate indicatorParameterTemplateItem in indicator.IndicatorParameterTemplates)
+                            {
+                                if(indicatorParameterTemplateItem.Name == arr[3])
+                                {
+                                    indicatorParameterTemplate = indicatorParameterTemplateItem;
+                                }
+                            }
+                            axesTopModelSearchPlane.Add(new AxesParameter { IndicatorParameterTemplate = indicatorParameterTemplate });
+                        }
+                        else
+                        {
+                            AlgorithmParameter algorithmParameter = new AlgorithmParameter();
+                            foreach (AlgorithmParameter algorithmParameterItem in SelectedAlgorithm.AlgorithmParameters)
+                            {
+                                if(algorithmParameterItem.Name == arr[2])
+                                {
+                                    algorithmParameter = algorithmParameterItem;
+                                }
+                            }
+                            axesTopModelSearchPlane.Add(new AxesParameter { AlgorithmParameter = algorithmParameter });
+                        }
+                    }
+
+                    //ForwardDepositCurrencies
+                    List<DepositCurrency> forwardDepositCurrencies = new List<DepositCurrency>();
+                    //forwardDepositCurrencies.Add(new DepositCurrency { Currency = SelectedCurrency, Deposit = double.Parse(ForwardDeposit) });
+                    //определяем доллоровую стоимость депозита
+                    double dollarCostDeposit = double.Parse(ForwardDeposit) / SelectedCurrency.DollarCost;
+                    foreach (Currency currency in Currencies)
+                    {
+                        //переводим доллоровую стоимость в валютную, умножая на стоимость 1 доллара
+                        double cost = Math.Round(dollarCostDeposit * currency.DollarCost, 2);
+                        forwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = cost });
+                    }
+
+                    //DurationOptimizationTests
+                    DateTimeDuration durationOptimizationTests = new DateTimeDuration();
+                    durationOptimizationTests.Years = (DurationOptimizationYears == "" || DurationOptimizationYears == null) ? 0 : int.Parse(DurationOptimizationYears);
+                    durationOptimizationTests.Months = (DurationOptimizationMonths == "" || DurationOptimizationMonths == null) ? 0 : int.Parse(DurationOptimizationMonths);
+                    durationOptimizationTests.Days = (DurationOptimizationDays == "" || DurationOptimizationDays == null) ? 0 : int.Parse(DurationOptimizationDays);
+
+                    //OptimizationTestSpacing
+                    DateTimeDuration optimizationTestSpacing = new DateTimeDuration();
+                    optimizationTestSpacing.Years = (OptimizationSpacingYears == "" || OptimizationSpacingYears == null) ? 0 : int.Parse(OptimizationSpacingYears);
+                    optimizationTestSpacing.Months = (OptimizationSpacingMonths == "" || OptimizationSpacingMonths == null) ? 0 : int.Parse(OptimizationSpacingMonths);
+                    optimizationTestSpacing.Days = (OptimizationSpacingDays == "" || OptimizationSpacingDays == null) ? 0 : int.Parse(OptimizationSpacingDays);
+
+                    //DurationForwardTest
+                    DateTimeDuration durationForwardTest = new DateTimeDuration();
+                    durationForwardTest.Years = (DurationForwardYears == "" || DurationForwardYears == null) ? 0 : int.Parse(DurationForwardYears);
+                    durationForwardTest.Months = (DurationForwardMonths == "" || DurationForwardMonths == null) ? 0 : int.Parse(DurationForwardMonths);
+                    durationForwardTest.Days = (DurationForwardDays == "" || DurationForwardDays == null) ? 0 : int.Parse(DurationForwardDays);
+
                     //создаем объект Testing
                     Testing testing = new Testing();
+                    testing.Algorithm = SelectedAlgorithm;
+                    testing.DataSourceGroups = dataSourceGroups;
+                    testing.TopModelCriteria = topModelCriteria;
+                    testing.IsConsiderNeighbours = IsConsiderNeighbours;
+                    testing.SizeNeighboursGroupPercent = double.Parse(SizeNeighboursGroupPercent);
+                    testing.IsAxesSpecified = IsAxesParametersSpecified;
+                    testing.AxesTopModelSearchPlane = axesTopModelSearchPlane;
+                    testing.IsForwardTesting = IsForwardTesting;
+                    testing.IsForwardDepositTrading = IsForwardDepositTesting;
+                    testing.ForwardDepositCurrencies = forwardDepositCurrencies;
+                    testing.StartPeriod = StartPeriodTesting;
+                    testing.EndPeriod = EndPeriodTesting;
+                    testing.DurationOptimizationTests = durationOptimizationTests;
+                    testing.OptimizationTestSpacing = optimizationTestSpacing;
+                    testing.DurationForwardTest = durationForwardTest;
 
                     //передаем объект в модель
+                    Task.Run(() => _modelTesting.TestingLaunch(testing)); //запускаем в отдельном потоке чтобы форма обновлялась
+
                 }, (obj) => IsFieldsTestingCorrect());
             }
         }

@@ -251,8 +251,8 @@ namespace ktradesystem.Models
                 }
 
                 //определяем первую и последнюю даты
-                DateTime startDate = dataSourceFiles[0].DataSourceFileWorkingPeriods[0].StartPeriod;
-                DateTime endDate = dataSourceFiles.Last().DataSourceFileWorkingPeriods.Last().EndDateTime;
+                DateTime startDate = dataSourceFiles[0].DataSourceFileWorkingPeriods[0].StartPeriod.Date;
+                DateTime endDate = dataSourceFiles.Last().DataSourceFileWorkingPeriods.Last().EndDateTime.Date;
 
                 //если интервалы корректны, выполняем добавление или обновление записей в БД
                 if (isAllFilesCorrect)

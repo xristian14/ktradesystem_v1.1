@@ -24,14 +24,69 @@ namespace ktradesystem.Models
         public DateTimeDuration DurationOptimizationTests { get; set; } //длительность оптимизационных тестов
         public DateTimeDuration OptimizationTestSpacing { get; set; } //временной промежуток между оптимизационными тестами
         public DateTimeDuration DurationForwardTest { get; set; } //длительность форвардного тестирования
-        public List<TestBatch> TestBatches { get; set; } //тестовые прогоны (серия оптимизационных тестов + форвардный тест)
+        public List<TestBatch> TestBatches { get; set; } //тестовые прогоны (серия оптимизационных тестов за период + форвардный тест)
         private dynamic[] IndicatorsScripts { get; set; } //объекты, содержащие метод, выполняющий расчет индикатора
         private dynamic AlgorithmScript { get; set; } //объект, содержащий метод, вычисляющий работу алгоритма
         private dynamic EvaluationCriteriasScripts { get; set; } //объекты, содержащие метод, выполняющий расчет критерия оценки тестового прогона
 
         public void LaunchTesting()
         {
+            //определяем списки со значениями параметров
+            List<double>[] IndicatorsParametersAllValues = new List<double>[Algorithm.IndicatorParameterRanges.Count]; //массив со всеми возможными значениями параметров индикаторов
+            List<double>[] AlgorithmParametersAllValues = new List<double>[Algorithm.AlgorithmParameters.Count]; //массив со всеми возможными значениями параметров алгоритма
+            //вносим значения параметров индикаторов
+            for(int i = 0; i < Algorithm.IndicatorParameterRanges.Count; i++)
+            {
+                IndicatorsParametersAllValues[i] = new List<double>();
+                //ДОБАВИТЬ ТИП ЗНАЧЕНИЯ К ПАРАМЕТРУ ИНДИКАТОРА И АЛГОРИТМА
+            }
 
+            //проходим по всем группам источников данных
+            foreach(DataSourceGroup dataSourceGroup in DataSourceGroups)
+            {
+                //формируем серии оптимизационных тестов для данного источника данных для каждого периода (для форвардного нужно смотреть, помещается ли форвардный тест в оставшееся время, и если нет то не создавать оптимизационные тесты)
+
+                //определяем диапазон доступных дат для данной группы источников данных (начальная и конечная даты которые есть во всех источниках данных)
+                DateTime startAvailableDate = new DateTime();
+                DateTime endAvailableDate = new DateTime();
+                for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
+                {
+                    if(i == 0)
+                    {
+                        startAvailableDate = dataSourceGroup.DataSourceAccordances[i].DataSource.StartDate;
+                        endAvailableDate = dataSourceGroup.DataSourceAccordances[i].DataSource.EndDate;
+                    }
+                    else
+                    {
+                        if(DateTime.Compare(startAvailableDate, dataSourceGroup.DataSourceAccordances[i].DataSource.StartDate) < 0)
+                        {
+                            startAvailableDate = dataSourceGroup.DataSourceAccordances[i].DataSource.StartDate;
+                        }
+                        if (DateTime.Compare(endAvailableDate, dataSourceGroup.DataSourceAccordances[i].DataSource.EndDate) > 0)
+                        {
+                            endAvailableDate = dataSourceGroup.DataSourceAccordances[i].DataSource.EndDate;
+                        }
+                    }
+                }
+
+                //определяем начальную и конечную даты тестирования данной группы источников данных
+                DateTime startDate = DateTime.Compare(startAvailableDate, StartPeriod) < 0 ? StartPeriod : startAvailableDate;
+                DateTime endDate = DateTime.Compare(endAvailableDate, EndPeriod) > 0 ? EndPeriod : endAvailableDate;
+
+                DateTime currentDate = startDate; //текущая дата
+                while(DateTime.Compare(currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days), EndPeriod) <= 0) //пока текущая дата + длительность оптимизации, раньше или равна дате окончания, формируем оптимизационные тесты
+                {
+                    TestBatch testBatch = new TestBatch();
+
+                    //формируем TestRuns
+                    List<TestRun> testRuns = new List<TestRun>();
+
+
+
+
+                    currentDate = currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days);
+                }
+            }
         }
 
         private void TestRunExecute(TestRun testRun)

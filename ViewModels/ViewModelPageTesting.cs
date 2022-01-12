@@ -46,6 +46,8 @@ namespace ktradesystem.ViewModels
 
             Currencies = _modelData.Currencies;
             SelectedCurrency = Currencies[0];
+
+            DataSourceGroupsView.CollectionChanged += DataSourceGroupsViewChanged; //добавили создание периода тестирования при изменении групп источников данных для тестирования
         }
 
         public static ViewModelPageTesting getInstance()
@@ -2495,8 +2497,12 @@ namespace ktradesystem.ViewModels
             {
                 _dataSourceGroupsView = value;
                 OnPropertyChanged();
-                SetPeriodTesting();
             }
+        }
+
+        private void DataSourceGroupsViewChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            SetPeriodTesting();
         }
 
         private DataSourceGroupView _selectedDataSourceGroupView;
@@ -3005,6 +3011,28 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        private DateTime _displayDateStartPeriodTesting;
+        public DateTime DisplayDateStartPeriodTesting //начало доступных дат
+        {
+            get { return _displayDateStartPeriodTesting; }
+            set
+            {
+                _displayDateStartPeriodTesting = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private DateTime _displayDateEndPeriodTesting;
+        public DateTime DisplayDateEndPeriodTesting //окончание доступных дат
+        {
+            get { return _displayDateEndPeriodTesting; }
+            set
+            {
+                _displayDateEndPeriodTesting = value;
+                OnPropertyChanged();
+            }
+        }
+
         private void SetPeriodTesting() //устанавливаем начальную и конечную даты исходя из доступных дат в выбранных источниках данных
         {
             if(DataSourceGroupsView.Count > 0)
@@ -3091,12 +3119,16 @@ namespace ktradesystem.ViewModels
                     }
                 }
 
-                StartPeriodTesting = startDate;
-                EndPeriodTesting = endDate;
+                StartPeriodTesting = startDate.Date;
+                EndPeriodTesting = endDate.Date;
+                DisplayDateStartPeriodTesting = startDate.Date;
+                DisplayDateEndPeriodTesting = endDate.Date;
             }
             else
             {
                 IsPeriodTestingEnabled = false;
+                StartPeriodTesting = new DateTime(1, 1, 1);
+                EndPeriodTesting = new DateTime(1, 1, 1);
             }
         }
 
@@ -3298,7 +3330,7 @@ namespace ktradesystem.ViewModels
             }
 
             //проверяем что дата начала периода тестирования раньше даты окончания периода тестирования
-            if(DateTime.Compare(StartPeriodTesting, EndPeriodTesting) >= 0)
+            if(DateTime.Compare(EndPeriodTesting, StartPeriodTesting) < 0)
             {
                 result = false;
                 TooltipLaunchTesting.Add("Дата начала периода тестирования должна быть раньше даты окончания.");

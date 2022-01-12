@@ -321,7 +321,7 @@ namespace ktradesystem.Models
 
         public void TestingLaunch(Testing testing)
         {
-
+            testing.LaunchTesting();
         }
     }
 }

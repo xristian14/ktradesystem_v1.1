@@ -12,6 +12,7 @@ using ktradesystem.Views;
 using ktradesystem.Models;
 using ktradesystem.Models.Datatables;
 using System.Collections.Specialized;
+using System.Diagnostics;
 
 
 namespace ktradesystem.ViewModels
@@ -613,33 +614,6 @@ namespace ktradesystem.ViewModels
                     IsIndicatorEdited = false;
                     UpdateIndicatorStatusText();
 
-                    /*
-                    Microsoft.CSharp.CSharpCodeProvider Provider = new Microsoft.CSharp.CSharpCodeProvider();
-                    System.CodeDom.Compiler.CompilerParameters Param = new System.CodeDom.Compiler.CompilerParameters();
-                    Param.GenerateExecutable = false;
-                    Param.GenerateInMemory = true;
-
-                    var Result = Provider.CompileAssemblyFromSource(Param, new string[]
-                    {
-                @"
-using System;
-public class Test
-{
-public string Main()
-{
-double a = 5;
-a = a/2;
-return a.ToString();
-}
-}"
-                    });
-                    dynamic Test = Result.CompiledAssembly.CreateInstance("Test");
-                    MessageBox.Show(Test.Main());
-                    */
-
-
-
-
                 }, (obj) => IsAddOrEditIndicator() && IsFieldsAddIndicatorCorrect() );
             }
         }
@@ -655,6 +629,60 @@ return a.ToString();
                     UpdateIndicatorStatusText();
                     SelectedIndicatorChanged();
                 }, (obj) => IsAddOrEditIndicator() );
+            }
+        }
+
+        public ICommand IndicatorCheckScript_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+
+                    ///*
+                    Microsoft.CSharp.CSharpCodeProvider Provider = new Microsoft.CSharp.CSharpCodeProvider();
+                    System.CodeDom.Compiler.CompilerParameters Param = new System.CodeDom.Compiler.CompilerParameters();
+                    Param.GenerateExecutable = false;
+                    Param.GenerateInMemory = true;
+
+
+                    var Result = Provider.CompileAssemblyFromSource(Param, new string[]
+                    {
+                        @"
+                        using System;
+                        public class Test
+                        {
+                            public double Main()
+                            {
+                                double a = 5;
+                                for(int i = 0; i < 10000; i++)
+                                {
+                                    a /= 2;
+                                    a *= 2;
+                                    a += 1;
+                                }
+                                return a;
+                            }
+                        }"
+                    });
+                    /*dynamic test = Result.CompiledAssembly.CreateInstance("Test");
+
+                    Stopwatch stopwatch = new Stopwatch();
+                    stopwatch.Start();
+                    double b = test.Main();
+                    stopwatch.Stop();*/
+
+                    dynamic[] tests = new dynamic[4];
+                    tests[0] = Result.CompiledAssembly.CreateInstance("Test");
+                    Stopwatch stopwatch = new Stopwatch();
+                    stopwatch.Start();
+                    double b = tests[0].Main();
+                    stopwatch.Stop();
+
+                    MessageBox.Show("b= " + b.ToString() + " Milliseconds= " + stopwatch.Elapsed.TotalMilliseconds.ToString());
+                    //*/
+
+                }, (obj) => true );
             }
         }
 

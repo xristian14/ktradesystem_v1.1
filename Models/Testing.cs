@@ -25,6 +25,9 @@ namespace ktradesystem.Models
         public DateTimeDuration OptimizationTestSpacing { get; set; } //временной промежуток между оптимизационными тестами
         public DateTimeDuration DurationForwardTest { get; set; } //длительность форвардного тестирования
         public List<TestBatch> TestBatches { get; set; } //тестовые прогоны (серия оптимизационных тестов + форвардный тест)
+        private dynamic[] IndicatorsScripts { get; set; } //объекты, содержащие метод, выполняющий расчет индикатора
+        private dynamic AlgorithmScript { get; set; } //объект, содержащий метод, вычисляющий работу алгоритма
+        private dynamic EvaluationCriteriasScripts { get; set; } //объекты, содержащие метод, выполняющий расчет критерия оценки тестового прогона
 
         public void LaunchTesting()
         {

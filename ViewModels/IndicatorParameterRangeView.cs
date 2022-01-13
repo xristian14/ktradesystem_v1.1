@@ -13,7 +13,7 @@ namespace ktradesystem.ViewModels
         public string MinValue { get; set; }
         public string MaxValue { get; set; }
         public string Step { get; set; }
-        public bool? IsStepPercent { get; set; }
+        public bool IsStepPercent { get; set; }
         public int IdAlgorithm { get; set; }
         public IndicatorParameterTemplate IndicatorParameterTemplate { get; set; }
         public Indicator Indicator { get; set; }

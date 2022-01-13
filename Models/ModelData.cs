@@ -27,6 +27,10 @@ namespace ktradesystem.Models
         {
             _database = Database.getInstance(); //вызываем подключение к бд
 
+            //считываем настройки из базы данных
+            ReadSettings();
+            Setting setting = Settings.Where(i => i.Id == 1).First(); //пример поиска настройки по Id
+
             //считываем интервалы из базы данных
             DataTable dataIntervals = _database.QuerySelect("SELECT * FROM Intervals");
             foreach(DataRow row in dataIntervals.Rows)
@@ -92,7 +96,6 @@ namespace ktradesystem.Models
         private Database _database;
 
         private ObservableCollection<Interval> _intervals = new ObservableCollection<Interval>(); //интервалы (минутный, пятиминутный, ...)
-
         public ObservableCollection<Interval> Intervals
         {
             get { return _intervals; }
@@ -103,8 +106,18 @@ namespace ktradesystem.Models
             }
         }
 
-        private ObservableCollection<Instrument> _instruments = new ObservableCollection<Instrument>();
+        private ObservableCollection<Setting> _settings = new ObservableCollection<Setting>(); //настройки
+        public ObservableCollection<Setting> Settings
+        {
+            get { return _settings; }
+            private set
+            {
+                _settings = value;
+                OnPropertyChanged();
+            }
+        }
 
+        private ObservableCollection<Instrument> _instruments = new ObservableCollection<Instrument>();
         public ObservableCollection<Instrument> Instruments
         {
             get { return _instruments; }
@@ -116,7 +129,6 @@ namespace ktradesystem.Models
         }
 
         private ObservableCollection<Currency> _currencies = new ObservableCollection<Currency>();
-
         public ObservableCollection<Currency> Currencies
         {
             get { return _currencies; }
@@ -128,7 +140,6 @@ namespace ktradesystem.Models
         }
 
         private ObservableCollection<Comissiontype> _comissiontypes = new ObservableCollection<Comissiontype>();
-
         public ObservableCollection<Comissiontype> Comissiontypes
         {
             get { return _comissiontypes; }
@@ -257,6 +268,29 @@ namespace ktradesystem.Models
             {
                 _typeOrders = value;
                 OnPropertyChanged();
+            }
+        }
+
+        public void ReadSettings()
+        {
+            Settings.Clear();
+            DataTable dataSettings = _database.QuerySelect("SELECT * FROM Settings");
+            foreach (DataRow row in dataSettings.Rows)
+            {
+                Setting setting = new Setting { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name"), IdSettingType = (int)row.Field<long>("idSettingType") };
+                switch ((int)row.Field<long>("idSettingType"))
+                {
+                    case 1:
+                        setting.BoolValue = int.Parse(row.Field<string>("value")) == 1 ? true : false;
+                        break;
+                    case 2:
+                        setting.IntValue = int.Parse(row.Field<string>("value"));
+                        break;
+                    case 3:
+                        setting.DoubleValue = double.Parse(row.Field<string>("value"));
+                        break;
+                }
+                Settings.Add(setting);
             }
         }
 
@@ -547,7 +581,7 @@ namespace ktradesystem.Models
                         indicatorParameterTemplate1 = indicatorParameterTemplate;
                     }
                 }
-                IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange { Id = (int)row.Field<long>("id"), MinValue = row.Field<double?>("minValue"), MaxValue = row.Field<double?>("maxValue"), Step = row.Field<double?>("step"), IdAlgorithm = (int)row.Field<long>("idAlgorithm"), IndicatorParameterTemplate = indicatorParameterTemplate1, Indicator = indicator };
+                IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange { Id = (int)row.Field<long>("id"), MinValue = row.Field<double>("minValue"), MaxValue = row.Field<double>("maxValue"), Step = row.Field<double>("step"), IdAlgorithm = (int)row.Field<long>("idAlgorithm"), IndicatorParameterTemplate = indicatorParameterTemplate1, Indicator = indicator };
                 if((int?)row.Field<long?>("isStepPercent") != null)
                 {
                     if((int?)row.Field<long?>("isStepPercent") == 1)

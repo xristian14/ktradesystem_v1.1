@@ -686,7 +686,14 @@ namespace ktradesystem.ViewModels
                     double b = tests[0].Main();
                     stopwatch.Stop();
 
-                    MessageBox.Show("b= " + b.ToString() + " Milliseconds= " + stopwatch.Elapsed.TotalMilliseconds.ToString());
+                    int d = 0;
+                    bool isDLessTen = d < 10;
+                    while (isDLessTen && d < 100)
+                    {
+                        d++;
+                    }
+                    MessageBox.Show("d= " + d.ToString());
+                    //MessageBox.Show("b= " + b.ToString() + " Milliseconds= " + stopwatch.Elapsed.TotalMilliseconds.ToString());
                     //*/
 
                 }, (obj) => true );
@@ -1767,15 +1774,12 @@ namespace ktradesystem.ViewModels
                         index = IndicatorParameterTemplates.IndexOf(indicatorParameterTemplate);
                     }
                 }
-                string rangeValuesView = indicatorParameterRange.MinValue != null? indicatorParameterRange.MinValue.ToString() + " – " + indicatorParameterRange.MaxValue.ToString() : "";
+                string rangeValuesView = indicatorParameterRange.MinValue.ToString() + " – " + indicatorParameterRange.MaxValue.ToString();
                 string stepView = "";
-                if (indicatorParameterRange.Step != null && indicatorParameterRange.IsStepPercent != null)
+                stepView += indicatorParameterRange.Step.ToString();
+                if (indicatorParameterRange.IsStepPercent == true)
                 {
-                    stepView += indicatorParameterRange.Step.ToString();
-                    if (indicatorParameterRange.IsStepPercent == true)
-                    {
-                        stepView += "%";
-                    }
+                    stepView += "%";
                 }
 
                 IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { Id = indicatorParameterRange.Id, MinValue = indicatorParameterRange.MinValue.ToString(), MaxValue = indicatorParameterRange.MaxValue.ToString(), Step = indicatorParameterRange.Step.ToString(), IsStepPercent = indicatorParameterRange.IsStepPercent, IdAlgorithm = indicatorParameterRange.IdAlgorithm, IndicatorParameterTemplate = indicatorParameterRange.IndicatorParameterTemplate, Indicator = indicatorParameterRange.Indicator, NameIndicator = indicatorParameterRange.Indicator.Name, NameIndicatorParameterTemplate = IndicatorParameterTemplates[index].Name, DescriptionIndicatorParameterTemplate = IndicatorParameterTemplates[index].Description, RangeValuesView = rangeValuesView, StepView = stepView };

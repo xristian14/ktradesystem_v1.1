@@ -32,13 +32,19 @@ namespace ktradesystem.Models
         public void LaunchTesting()
         {
             //определяем списки со значениями параметров
-            List<double>[] IndicatorsParametersAllValues = new List<double>[Algorithm.IndicatorParameterRanges.Count]; //массив со всеми возможными значениями параметров индикаторов
-            List<double>[] AlgorithmParametersAllValues = new List<double>[Algorithm.AlgorithmParameters.Count]; //массив со всеми возможными значениями параметров алгоритма
+            List<int>[] IndicatorsParametersAllIntValues = new List<int>[Algorithm.IndicatorParameterRanges.Count]; //массив со всеми возможными целочисленными значениями параметров индикаторов
+            List<double>[] IndicatorsParametersAllDoubleValues = new List<double>[Algorithm.IndicatorParameterRanges.Count]; //массив со всеми возможными дробными значениями параметров индикаторов
+
+            List<int>[] AlgorithmParametersAllIntValues = new List<int>[Algorithm.AlgorithmParameters.Count]; //массив со всеми возможными целочисленными значениями параметров алгоритма
+            List<double>[] AlgorithmParametersAllDoubleValues = new List<double>[Algorithm.AlgorithmParameters.Count]; //массив со всеми возможными дробными значениями параметров алгоритма
+
+            //параметры будут передаваться в индикаторы и алгоритм в качестве параметров методов, при описании методов индикатора или алгоритма я укажу тип принимаемого параметра int или double в зависимости от типа в шаблоне параметра, и после проверки типа параметра, решу из какого списка передавать, со значениями double, или со значениями int
             //вносим значения параметров индикаторов
-            for(int i = 0; i < Algorithm.IndicatorParameterRanges.Count; i++)
+            for (int i = 0; i < Algorithm.IndicatorParameterRanges.Count; i++)
             {
-                IndicatorsParametersAllValues[i] = new List<double>();
-                //ДОБАВИТЬ ТИП ЗНАЧЕНИЯ К ПАРАМЕТРУ ИНДИКАТОРА И АЛГОРИТМА
+                IndicatorsParametersAllIntValues[i] = new List<int>();
+                IndicatorsParametersAllDoubleValues[i] = new List<double>();
+
             }
 
             //проходим по всем группам источников данных

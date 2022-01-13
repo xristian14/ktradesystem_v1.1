@@ -86,6 +86,7 @@
     <Compile Include="Models\AlgorithmParameterValue.cs" />
     <Compile Include="Models\AxesParameter.cs" />
     <Compile Include="Models\CompareSign.cs" />
+    <Compile Include="Models\Datatables\ParameterValueType.cs" />
     <Compile Include="Models\DateTimeDuration.cs" />
     <Compile Include="Models\Deal.cs" />
     <Compile Include="Models\DepositCurrency.cs" />
@@ -118,6 +119,7 @@
     <Compile Include="ViewModels\EvaluationCriteriaView.cs" />
     <Compile Include="ViewModels\FilterTopModelView.cs" />
     <Compile Include="ViewModels\IndicatorParameterRangeView.cs" />
+    <Compile Include="ViewModels\IndicatorParameterTemplateView.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\ViewModelData.cs" />
     <Compile Include="ViewModels\ViewModelPageDataSource.cs" />

@@ -59,6 +59,14 @@ namespace ktradesystem.Models
                 Comissiontypes.Add(сomissiontype);
             }
 
+            //считываем типы значений параметров
+            DataTable dataParameterValueTypes = _database.QuerySelect("SELECT * FROM ParameterValueTypes");
+            foreach (DataRow row in dataParameterValueTypes.Rows)
+            {
+                ParameterValueType parameterValueType = new ParameterValueType { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name") };
+                ParameterValueTypes.Add(parameterValueType);
+            }
+
             //считываем критерии оценки тестирвоания
             DataTable dataEvaluationCriterias = _database.QuerySelect("SELECT * FROM EvaluationCriterias");
             foreach (DataRow row in dataEvaluationCriterias.Rows)
@@ -160,6 +168,17 @@ namespace ktradesystem.Models
             private set
             {
                 _indicatorParameterTemplates = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<ParameterValueType> _parameterValueTypes = new ObservableCollection<ParameterValueType>(); //типы значений параметров
+        public ObservableCollection<ParameterValueType> ParameterValueTypes
+        {
+            get { return _parameterValueTypes; }
+            private set
+            {
+                _parameterValueTypes = value;
                 OnPropertyChanged();
             }
         }
@@ -397,7 +416,9 @@ namespace ktradesystem.Models
             DataTable dataParameterTemplates = _database.QuerySelect("SELECT * FROM IndicatorParameterTemplates");
             foreach (DataRow row in dataParameterTemplates.Rows)
             {
-                IndicatorParameterTemplate parameterTemplate = new IndicatorParameterTemplate { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name"), Description = row.Field<string>("description"), IdIndicator = (int)row.Field<long>("idIndicator") };
+                int idParameterValueType = (int)row.Field<long>("idParameterValueType");
+                ParameterValueType parameterValueType = idParameterValueType == ParameterValueTypes[0].Id ? ParameterValueTypes[0] : ParameterValueTypes[1];
+                IndicatorParameterTemplate parameterTemplate = new IndicatorParameterTemplate { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name"), Description = row.Field<string>("description"), IdIndicator = (int)row.Field<long>("idIndicator"), ParameterValueType = parameterValueType };
                 IndicatorParameterTemplates.Add(parameterTemplate);
             }
 
@@ -434,7 +455,7 @@ namespace ktradesystem.Models
 
         private void CheckMissingIndicatorParameterRange() //при добавлении шаблона параметра индикатору, в алгоритме, запись со значениями данного параметра не добавляется. Эта функция определяет диапазоны значений которых "недостаёт" и добавляет их.
         {
-            //проходим по алгоритмам, далее по диапазонам параметров и формируем список с шаблонами параметров соответствующих диапазонам. Далее проходимся по полученному списку шаблонов параметров и формируем список индикаторов для данного набора шаблонов параметра. Далее проходим по индикаторам, и для каждого находим полный список шаблонов параметров. Далее ищем id шаблона параметров в списке диапазонов параметров, и если не находим добавляем в список диапазонов значений которые нужно будет добавить. Далее проходимся по этому списку и выполняем операацию insert для каждого.
+            //проходим по алгоритмам, далее по диапазонам параметров и формируем список с шаблонами параметров соответствующих диапазонам. Далее проходимся по полученному списку шаблонов параметров и формируем список индикаторов для данного набора шаблонов параметров. Далее проходим по индикаторам, и для каждого находим полный список шаблонов параметров. Далее ищем id шаблона параметров в списке диапазонов параметров, и если не находим добавляем в список диапазонов значений которые нужно будет добавить. Далее проходимся по этому списку и выполняем операацию insert для каждого.
             List<IndicatorParameterRange> indicatorParameterRangesForInsert = new List<IndicatorParameterRange>(); //список с диапазонами значений которые необходимо добавить в БД
             foreach(Algorithm algorithm in Algorithms)
             {
@@ -443,7 +464,7 @@ namespace ktradesystem.Models
                 {
                     foreach(IndicatorParameterTemplate indicatorParameterTemplate in IndicatorParameterTemplates)
                     {
-                        if(indicatorParameterRange.IdIndicatorParameterTemplate == indicatorParameterTemplate.Id)
+                        if(indicatorParameterRange.IndicatorParameterTemplate.Id == indicatorParameterTemplate.Id)
                         {
                             indicatorParameterTemplates.Add(indicatorParameterTemplate);
                         }
@@ -476,14 +497,14 @@ namespace ktradesystem.Models
                         bool isIdIndicatorFind = false;
                         foreach(IndicatorParameterRange indicatorParameterRange in algorithm.IndicatorParameterRanges)
                         {
-                            if(indicatorParameterRange.IdIndicatorParameterTemplate == indicatorParameterTemplate.Id)
+                            if(indicatorParameterRange.IndicatorParameterTemplate.Id == indicatorParameterTemplate.Id)
                             {
                                 isIdIndicatorFind = true;
                             }
                         }
                         if(isIdIndicatorFind == false) //если параметр не найден, формируем IndicatorParameterRange и добавляем в список с диапазонами значений которые необходимо вставить
                         {
-                            IndicatorParameterRange indicatorParameterRangeForInsert = new IndicatorParameterRange { IdAlgorithm = algorithm.Id, IdIndicatorParameterTemplate = indicatorParameterTemplate.Id };
+                            IndicatorParameterRange indicatorParameterRangeForInsert = new IndicatorParameterRange { IdAlgorithm = algorithm.Id, IndicatorParameterTemplate = indicatorParameterTemplate };
                             indicatorParameterRangesForInsert.Add(indicatorParameterRangeForInsert);
                         }
                     }
@@ -516,15 +537,17 @@ namespace ktradesystem.Models
             foreach (DataRow row in dataIndicatorParameterRanges.Rows)
             {
                 int idIndicatorParameterTemplate = (int)row.Field<long>("idIndicatorParameterTemplate");
+                IndicatorParameterTemplate indicatorParameterTemplate1 = new IndicatorParameterTemplate();
                 Indicator indicator = new Indicator();
                 foreach (IndicatorParameterTemplate indicatorParameterTemplate in IndicatorParameterTemplates)
                 {
                     if (indicatorParameterTemplate.Id == idIndicatorParameterTemplate)
                     {
                         indicator = indicatorParameterTemplate.Indicator;
+                        indicatorParameterTemplate1 = indicatorParameterTemplate;
                     }
                 }
-                IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange { Id = (int)row.Field<long>("id"), MinValue = row.Field<double?>("minValue"), MaxValue = row.Field<double?>("maxValue"), Step = row.Field<double?>("step"), IdAlgorithm = (int)row.Field<long>("idAlgorithm"), IdIndicatorParameterTemplate = idIndicatorParameterTemplate, Indicator = indicator };
+                IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange { Id = (int)row.Field<long>("id"), MinValue = row.Field<double?>("minValue"), MaxValue = row.Field<double?>("maxValue"), Step = row.Field<double?>("step"), IdAlgorithm = (int)row.Field<long>("idAlgorithm"), IndicatorParameterTemplate = indicatorParameterTemplate1, Indicator = indicator };
                 if((int?)row.Field<long?>("isStepPercent") != null)
                 {
                     if((int?)row.Field<long?>("isStepPercent") == 1)
@@ -551,7 +574,9 @@ namespace ktradesystem.Models
                 {
                     isStepPercent = true;
                 }
-                AlgorithmParameter algorithmParameter = new AlgorithmParameter { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name"), Description = row.Field<string>("description"), MinValue = row.Field<double>("minValue"), MaxValue = row.Field<double>("maxValue"), Step = row.Field<double>("step"), IsStepPercent = isStepPercent, IdAlgorithm = (int)row.Field<long>("idAlgorithm") };
+                int idParameterValueType = (int)row.Field<long>("idParameterValueType");
+                ParameterValueType parameterValueType = idParameterValueType == ParameterValueTypes[0].Id ? ParameterValueTypes[0] : ParameterValueTypes[1];
+                AlgorithmParameter algorithmParameter = new AlgorithmParameter { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name"), Description = row.Field<string>("description"), MinValue = row.Field<double>("minValue"), MaxValue = row.Field<double>("maxValue"), Step = row.Field<double>("step"), IsStepPercent = isStepPercent, IdAlgorithm = (int)row.Field<long>("idAlgorithm"), ParameterValueType = parameterValueType };
                 AlgorithmParameters.Add(algorithmParameter);
             }
 

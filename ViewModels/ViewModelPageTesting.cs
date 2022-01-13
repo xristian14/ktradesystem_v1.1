@@ -32,6 +32,9 @@ namespace ktradesystem.ViewModels
             _modelData.IndicatorParameterTemplates.CollectionChanged += modelData_IndicatorParameterTemplatesCollectionChanged;
             IndicatorParameterTemplates = _modelData.IndicatorParameterTemplates;
 
+            _modelData.ParameterValueTypes.CollectionChanged += modelData_ParameterValueTypesCollectionChanged;
+            ParameterValueTypes = _modelData.ParameterValueTypes;
+
             _modelData.DataSourceTemplates.CollectionChanged += modelData_DataSourceTemplatesCollectionChanged;
             DataSourceTemplates = _modelData.DataSourceTemplates;
 
@@ -178,7 +181,9 @@ namespace ktradesystem.ViewModels
                 IndicatorParameterTemplatesView.Clear();
                 foreach(IndicatorParameterTemplate parameterTemplate in SelectedIndicator.IndicatorParameterTemplates)
                 {
-                    IndicatorParameterTemplatesView.Add(parameterTemplate);
+                    IndicatorParameterTemplateView indicatorParameterTemplateView = new IndicatorParameterTemplateView { Id = parameterTemplate.Id, Name = parameterTemplate.Name, Description = parameterTemplate.Description, IdIndicator = parameterTemplate.IdIndicator, ParameterValueType = parameterTemplate.ParameterValueType, Indicator = parameterTemplate.Indicator };
+                    IndicatorParameterTemplatesView.Add(indicatorParameterTemplateView);
+
                 }
                 IndicatorScript = SelectedIndicator.Script;
             }
@@ -584,9 +589,9 @@ namespace ktradesystem.ViewModels
                 return new DelegateCommand((obj) =>
                 {
                     List<IndicatorParameterTemplate> InsertIndicatorParameterTemplates = new List<IndicatorParameterTemplate>();
-                    foreach(IndicatorParameterTemplate item in IndicatorParameterTemplatesView)
+                    foreach(IndicatorParameterTemplateView item in IndicatorParameterTemplatesView)
                     {
-                        InsertIndicatorParameterTemplates.Add(item);
+                        InsertIndicatorParameterTemplates.Add(new IndicatorParameterTemplate { Id = item.Id, Name = item.Name, Description = item.Description, IdIndicator = item.IdIndicator, ParameterValueType = item.ParameterValueType, Indicator = item.Indicator });
                     }
 
                     if (IsIndicatorAdded)
@@ -701,8 +706,24 @@ namespace ktradesystem.ViewModels
 
         #region view add edit delete IndicatorParameterTemplate
 
-        private ObservableCollection<IndicatorParameterTemplate> _indicatorParameterTemplatesView = new ObservableCollection<IndicatorParameterTemplate>();
-        public ObservableCollection<IndicatorParameterTemplate> IndicatorParameterTemplatesView //шаблоны параметров индикатора
+        private ObservableCollection<ParameterValueType> _parameterValueTypes = new ObservableCollection<ParameterValueType>(); //типы значений параметров
+        public ObservableCollection<ParameterValueType> ParameterValueTypes
+        {
+            get { return _parameterValueTypes; }
+            private set
+            {
+                _parameterValueTypes = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private void modelData_ParameterValueTypesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            ParameterValueTypes = (ObservableCollection<ParameterValueType>)sender;
+        }
+
+        private ObservableCollection<IndicatorParameterTemplateView> _indicatorParameterTemplatesView = new ObservableCollection<IndicatorParameterTemplateView>();
+        public ObservableCollection<IndicatorParameterTemplateView> IndicatorParameterTemplatesView //шаблоны параметров индикатора
         {
             get { return _indicatorParameterTemplatesView; }
             private set
@@ -712,8 +733,8 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private IndicatorParameterTemplate _selectedIndicatorParameterTemplateView;
-        public IndicatorParameterTemplate SelectedIndicatorParameterTemplateView //выбранный шаблон параметра индикатора
+        private IndicatorParameterTemplateView _selectedIndicatorParameterTemplateView;
+        public IndicatorParameterTemplateView SelectedIndicatorParameterTemplateView //выбранный шаблон параметра индикатора
         {
             get { return _selectedIndicatorParameterTemplateView; }
             set
@@ -729,6 +750,8 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
+                    AddIndicatorParameterTemplateSelectedParameterValueType = ParameterValueTypes[0];
+
                     viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewAddIndicatorParameterTemplate viewAddIndicatorParameterTemplate = new ViewAddIndicatorParameterTemplate();
                     viewAddIndicatorParameterTemplate.Show();
@@ -754,6 +777,17 @@ namespace ktradesystem.ViewModels
             set
             {
                 _addIndicatorParameterTemplateDescription = value;
+                OnPropertyChanged();
+            }
+        }
+        
+        private ParameterValueType _addIndicatorParameterTemplateSelectedParameterValueType;
+        public ParameterValueType AddIndicatorParameterTemplateSelectedParameterValueType //выбранный тип параметра добавляемого параметра
+        {
+            get { return _addIndicatorParameterTemplateSelectedParameterValueType; }
+            set
+            {
+                _addIndicatorParameterTemplateSelectedParameterValueType = value;
                 OnPropertyChanged();
             }
         }
@@ -821,7 +855,7 @@ namespace ktradesystem.ViewModels
 
             //проверка на уникальность названия
             bool isUnique = true;
-            foreach (IndicatorParameterTemplate item in IndicatorParameterTemplatesView)
+            foreach (IndicatorParameterTemplateView item in IndicatorParameterTemplatesView)
             {
                 if (name == item.Name) //проверяем имя на уникальность среди всех записей
                 {
@@ -844,8 +878,8 @@ namespace ktradesystem.ViewModels
                 return new DelegateCommand((obj) =>
                 {
                     string name = AddIndicatorParameterTemplateName.Replace(" ", "");
-                    IndicatorParameterTemplate parameterTemplate = new IndicatorParameterTemplate { Name = name, Description = AddIndicatorParameterTemplateDescription };
-                    IndicatorParameterTemplatesView.Add(parameterTemplate);
+                    IndicatorParameterTemplateView indicatorParameterTemplateView = new IndicatorParameterTemplateView { Name = name, Description = AddIndicatorParameterTemplateDescription, ParameterValueType = AddIndicatorParameterTemplateSelectedParameterValueType };
+                    IndicatorParameterTemplatesView.Add(indicatorParameterTemplateView);
 
                     CloseAddIndicatorParameterTemplateAction?.Invoke();
                 }, (obj) => IsFieldsAddIndicatorParameterTemplateCorrect() );
@@ -860,6 +894,7 @@ namespace ktradesystem.ViewModels
                 {
                     AddIndicatorParameterTemplateName = SelectedIndicatorParameterTemplateView.Name;
                     AddIndicatorParameterTemplateDescription = SelectedIndicatorParameterTemplateView.Description;
+                    AddIndicatorParameterTemplateSelectedParameterValueType = SelectedIndicatorParameterTemplateView.ParameterValueType;
 
                     viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewEditIndicatorParameterTemplate viewEditIndicatorParameterTemplate = new ViewEditIndicatorParameterTemplate();
@@ -901,7 +936,7 @@ namespace ktradesystem.ViewModels
 
             //проверка на уникальность названия
             bool isUnique = true;
-            foreach (IndicatorParameterTemplate item in IndicatorParameterTemplatesView)
+            foreach (IndicatorParameterTemplateView item in IndicatorParameterTemplatesView)
             {
                 if(SelectedIndicatorParameterTemplateView != null) //без этой проверки ошибка на обращение null полю, после сохранения
                 {
@@ -928,9 +963,9 @@ namespace ktradesystem.ViewModels
                 {
                     string name = AddIndicatorParameterTemplateName.Replace(" ", "");
                     int index = IndicatorParameterTemplatesView.IndexOf(SelectedIndicatorParameterTemplateView);
-                    IndicatorParameterTemplate parameterTemplate = new IndicatorParameterTemplate { Name = name, Description = AddIndicatorParameterTemplateDescription };
+                    IndicatorParameterTemplateView indicatorParameterTemplateView = new IndicatorParameterTemplateView { Name = name, Description = AddIndicatorParameterTemplateDescription, ParameterValueType = AddIndicatorParameterTemplateSelectedParameterValueType };
                     IndicatorParameterTemplatesView.RemoveAt(index);
-                    IndicatorParameterTemplatesView.Insert(index, parameterTemplate);
+                    IndicatorParameterTemplatesView.Insert(index, indicatorParameterTemplateView);
 
                     CloseAddIndicatorParameterTemplateAction?.Invoke();
                 }, (obj) => IsFieldsEditIndicatorParameterTemplateCorrect());
@@ -1063,7 +1098,7 @@ namespace ktradesystem.ViewModels
                 CreateDataSourceTemplatesView();
                 CreateIndicatorParameterRangesView();
                 UpdateAlgorithmIndicators();
-                CreateAlgorithmParameters();
+                CreateAlgorithmParametersView();
                 AlgorithmScript = SelectedAlgorithm.Script;
             }
             else
@@ -1329,14 +1364,14 @@ namespace ktradesystem.ViewModels
                     List<IndicatorParameterRange> indicatorParameterRanges = new List<IndicatorParameterRange>();
                     foreach(IndicatorParameterRangeView indicatorParameterRangeView in IndicatorParameterRangesView)
                     {
-                        IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange {Id = indicatorParameterRangeView.Id,  MinValue = double.Parse(indicatorParameterRangeView.MinValue), MaxValue = double.Parse(indicatorParameterRangeView.MaxValue), Step = double.Parse(indicatorParameterRangeView.Step), IsStepPercent = indicatorParameterRangeView.IsStepPercent, IdAlgorithm = indicatorParameterRangeView.IdAlgorithm, IdIndicatorParameterTemplate = indicatorParameterRangeView.IdIndicatorParameterTemplate, Indicator = indicatorParameterRangeView.Indicator };
+                        IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange {Id = indicatorParameterRangeView.Id,  MinValue = double.Parse(indicatorParameterRangeView.MinValue), MaxValue = double.Parse(indicatorParameterRangeView.MaxValue), Step = double.Parse(indicatorParameterRangeView.Step), IsStepPercent = indicatorParameterRangeView.IsStepPercent, IdAlgorithm = indicatorParameterRangeView.IdAlgorithm, IndicatorParameterTemplate = indicatorParameterRangeView.IndicatorParameterTemplate, Indicator = indicatorParameterRangeView.Indicator };
                         indicatorParameterRanges.Add(indicatorParameterRange);
                     }
 
                     List<AlgorithmParameter> algorithmParameters = new List<AlgorithmParameter>();
                     foreach(AlgorithmParameterView algorithmParameterView in AlgorithmParametersView)
                     {
-                        AlgorithmParameter algorithmParameter = new AlgorithmParameter { Id = algorithmParameterView.Id, Name = algorithmParameterView.Name, Description = algorithmParameterView.Description, MinValue = double.Parse(algorithmParameterView.MinValue), MaxValue = double.Parse(algorithmParameterView.MaxValue), Step = double.Parse(algorithmParameterView.Step), IsStepPercent = algorithmParameterView.IsStepPercent, IdAlgorithm = algorithmParameterView.IdAlgorithm };
+                        AlgorithmParameter algorithmParameter = new AlgorithmParameter { Id = algorithmParameterView.Id, Name = algorithmParameterView.Name, Description = algorithmParameterView.Description, ParameterValueType = algorithmParameterView.ParameterValueType, MinValue = double.Parse(algorithmParameterView.MinValue), MaxValue = double.Parse(algorithmParameterView.MaxValue), Step = double.Parse(algorithmParameterView.Step), IsStepPercent = algorithmParameterView.IsStepPercent, IdAlgorithm = algorithmParameterView.IdAlgorithm };
                         algorithmParameters.Add(algorithmParameter);
                     }
                     
@@ -1727,7 +1762,7 @@ namespace ktradesystem.ViewModels
                 int index = -1;
                 foreach(IndicatorParameterTemplate indicatorParameterTemplate in IndicatorParameterTemplates)
                 {
-                    if(indicatorParameterTemplate.Id == indicatorParameterRange.IdIndicatorParameterTemplate)
+                    if(indicatorParameterTemplate == indicatorParameterRange.IndicatorParameterTemplate)
                     {
                         index = IndicatorParameterTemplates.IndexOf(indicatorParameterTemplate);
                     }
@@ -1743,7 +1778,7 @@ namespace ktradesystem.ViewModels
                     }
                 }
 
-                IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { Id = indicatorParameterRange.Id, MinValue = indicatorParameterRange.MinValue.ToString(), MaxValue = indicatorParameterRange.MaxValue.ToString(), Step = indicatorParameterRange.Step.ToString(), IsStepPercent = indicatorParameterRange.IsStepPercent, IdAlgorithm = indicatorParameterRange.IdAlgorithm, IdIndicatorParameterTemplate = indicatorParameterRange.IdIndicatorParameterTemplate, Indicator = indicatorParameterRange.Indicator, NameIndicator = indicatorParameterRange.Indicator.Name, NameIndicatorParameterTemplate = IndicatorParameterTemplates[index].Name, DescriptionIndicatorParameterTemplate = IndicatorParameterTemplates[index].Description, RangeValuesView = rangeValuesView, StepView = stepView };
+                IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { Id = indicatorParameterRange.Id, MinValue = indicatorParameterRange.MinValue.ToString(), MaxValue = indicatorParameterRange.MaxValue.ToString(), Step = indicatorParameterRange.Step.ToString(), IsStepPercent = indicatorParameterRange.IsStepPercent, IdAlgorithm = indicatorParameterRange.IdAlgorithm, IndicatorParameterTemplate = indicatorParameterRange.IndicatorParameterTemplate, Indicator = indicatorParameterRange.Indicator, NameIndicator = indicatorParameterRange.Indicator.Name, NameIndicatorParameterTemplate = IndicatorParameterTemplates[index].Name, DescriptionIndicatorParameterTemplate = IndicatorParameterTemplates[index].Description, RangeValuesView = rangeValuesView, StepView = stepView };
                 IndicatorParameterRangesView.Add(indicatorParameterRangeView);
             }
         }
@@ -1777,8 +1812,8 @@ namespace ktradesystem.ViewModels
                 return new DelegateCommand((obj) =>
                 {
                     //вставляет parameterTemplates выбранного индикатора в IndicatorParameterRangesView, так чтобы индикаторы распологались по порядку в IndicatorParameterRangesView
-                    int nextIdIndex = -1; //индекс элемента, id индикатора которого превышает id добавляемого индикатора
-                    foreach(IndicatorParameterRangeView item in IndicatorParameterRangesView)
+                    int nextIdIndex = -1; //индекс IndicatorParameterRangeView, у которого id индикатора больше id добавляемого индикатора (добавляемые параметры индикатора будут добавлены до него)
+                    foreach (IndicatorParameterRangeView item in IndicatorParameterRangesView)
                     {
                         if(nextIdIndex == -1)
                         {
@@ -1789,16 +1824,18 @@ namespace ktradesystem.ViewModels
                         }
                     }
                     //добавляет parameterTemplates в IndicatorParameterRangesView
-                    foreach(IndicatorParameterTemplate item in SelectedIndicator.IndicatorParameterTemplates)
+                    int i = 0; //показывает количество вставленных элементов (при добавлении параметра перед каким-либо, индекс следующего элемента сдвинется, а добавление по старому индексу поставит элемент перед только что добавленным. Чтобы это исправить элемент вставляется на nextIdIndex + i)
+                    foreach (IndicatorParameterTemplate item in SelectedIndicator.IndicatorParameterTemplates)
                     {
-                        IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { MinValue = "", MaxValue = "", Step = "", IdIndicatorParameterTemplate = item.Id, Indicator = item.Indicator, NameIndicator = item.Indicator.Name, NameIndicatorParameterTemplate = item.Name, DescriptionIndicatorParameterTemplate = item.Description };
+                        IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { MinValue = "", MaxValue = "", Step = "", IndicatorParameterTemplate = item, Indicator = item.Indicator, NameIndicator = item.Indicator.Name, NameIndicatorParameterTemplate = item.Name, DescriptionIndicatorParameterTemplate = item.Description };
                         if (nextIdIndex == -1)
                         {
                             IndicatorParameterRangesView.Add(indicatorParameterRangeView);
                         }
                         else
                         {
-                            IndicatorParameterRangesView.Insert(nextIdIndex, indicatorParameterRangeView);
+                            IndicatorParameterRangesView.Insert(nextIdIndex + i, indicatorParameterRangeView);
+                            i++;
                         }
                     }
                     UpdateAlgorithmIndicators();
@@ -1826,26 +1863,20 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    string msg = "Название: " + SelectedAlgorithmIndicator.Name;
-                    string caption = "Удалить?";
-                    MessageBoxButton messageBoxButton = MessageBoxButton.YesNo;
-                    var result = MessageBox.Show(msg, caption, messageBoxButton);
-                    if (result == MessageBoxResult.Yes)
+                    List<int> removeIndexs = new List<int>(); //список с индексами элементов которые нужно удалить в порядке убывания (т.к. при удалении первых индексы следующих будут смещаться)
+                    for (int i = IndicatorParameterRangesView.Count - 1; i >= 0; i--)
                     {
-                        List<int> removeIndexs = new List<int>(); //список с индексами элементов которые нужно удалить в порядке убывания (т.к. при удалении первых индексы следующих будут смещаться)
-                        for (int i = IndicatorParameterRangesView.Count - 1; i >= 0; i--)
+                        if (IndicatorParameterRangesView[i].Indicator.Id == SelectedAlgorithmIndicator.Id)
                         {
-                            if (IndicatorParameterRangesView[i].Indicator.Id == SelectedAlgorithmIndicator.Id)
-                            {
-                                removeIndexs.Add(i);
-                            }
+                            removeIndexs.Add(i);
                         }
-                        foreach(int item in removeIndexs)
-                        {
-                            IndicatorParameterRangesView.RemoveAt(item);
-                        }
-                        UpdateAlgorithmIndicators();
                     }
+                    foreach(int item in removeIndexs)
+                    {
+                        IndicatorParameterRangesView.RemoveAt(item);
+                    }
+                    UpdateAlgorithmIndicators();
+
                 }, (obj) => SelectedAlgorithmIndicator != null && IsAddOrEditAlgorithm());
             }
         }
@@ -2010,7 +2041,7 @@ namespace ktradesystem.ViewModels
                     {
                         steView += "%";
                     }
-                    IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { Id = SelectedIndicatorParameterRangeView.Id, MinValue = EditIndicatorParameterRangesViewMinValue, MaxValue = EditIndicatorParameterRangesViewMaxValue, Step = EditIndicatorParameterRangesViewStep, IsStepPercent = isStepPercent, IdAlgorithm = SelectedIndicatorParameterRangeView.IdAlgorithm, IdIndicatorParameterTemplate = SelectedIndicatorParameterRangeView.IdIndicatorParameterTemplate, Indicator = SelectedIndicatorParameterRangeView.Indicator, NameIndicator = SelectedIndicatorParameterRangeView.NameIndicator, NameIndicatorParameterTemplate = SelectedIndicatorParameterRangeView.NameIndicatorParameterTemplate, DescriptionIndicatorParameterTemplate = SelectedIndicatorParameterRangeView.DescriptionIndicatorParameterTemplate, RangeValuesView = rangeValuesView, StepView = steView };
+                    IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { Id = SelectedIndicatorParameterRangeView.Id, MinValue = EditIndicatorParameterRangesViewMinValue, MaxValue = EditIndicatorParameterRangesViewMaxValue, Step = EditIndicatorParameterRangesViewStep, IsStepPercent = isStepPercent, IdAlgorithm = SelectedIndicatorParameterRangeView.IdAlgorithm, IndicatorParameterTemplate = SelectedIndicatorParameterRangeView.IndicatorParameterTemplate, Indicator = SelectedIndicatorParameterRangeView.Indicator, NameIndicator = SelectedIndicatorParameterRangeView.NameIndicator, NameIndicatorParameterTemplate = SelectedIndicatorParameterRangeView.NameIndicatorParameterTemplate, DescriptionIndicatorParameterTemplate = SelectedIndicatorParameterRangeView.DescriptionIndicatorParameterTemplate, RangeValuesView = rangeValuesView, StepView = steView };
 
                     int index = IndicatorParameterRangesView.IndexOf(SelectedIndicatorParameterRangeView);
                     IndicatorParameterRangesView.RemoveAt(index);
@@ -2079,7 +2110,7 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private void CreateAlgorithmParameters()
+        private void CreateAlgorithmParametersView()
         {
             AlgorithmParametersView.Clear();
             foreach (AlgorithmParameter algorithmParameter in SelectedAlgorithm.AlgorithmParameters)
@@ -2090,7 +2121,7 @@ namespace ktradesystem.ViewModels
                 {
                     stepView += "%";
                 }
-                AlgorithmParametersView.Add(new AlgorithmParameterView { Id = algorithmParameter.Id, Name = algorithmParameter.Name, Description = algorithmParameter.Description, MinValue = algorithmParameter.MinValue.ToString(), MaxValue = algorithmParameter.MaxValue.ToString(), Step = algorithmParameter.Step.ToString(), IsStepPercent = algorithmParameter.IsStepPercent, IdAlgorithm = algorithmParameter.IdAlgorithm, RangeValuesView = rangeValuesView, StepView = stepView });
+                AlgorithmParametersView.Add(new AlgorithmParameterView { Id = algorithmParameter.Id, Name = algorithmParameter.Name, Description = algorithmParameter.Description, ParameterValueType = algorithmParameter.ParameterValueType, MinValue = algorithmParameter.MinValue.ToString(), MaxValue = algorithmParameter.MaxValue.ToString(), Step = algorithmParameter.Step.ToString(), IsStepPercent = algorithmParameter.IsStepPercent, IdAlgorithm = algorithmParameter.IdAlgorithm, RangeValuesView = rangeValuesView, StepView = stepView });
             }
         }
         
@@ -2112,6 +2143,17 @@ namespace ktradesystem.ViewModels
             set
             {
                 _algorithmParameterDescription = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ParameterValueType _algorithmParameterSelectedParameterValueType;
+        public ParameterValueType AlgorithmParameterSelectedParameterValueType //выбранный тип числа
+        {
+            get { return _algorithmParameterSelectedParameterValueType; }
+            set
+            {
+                _algorithmParameterSelectedParameterValueType = value;
                 OnPropertyChanged();
             }
         }
@@ -2179,6 +2221,7 @@ namespace ktradesystem.ViewModels
                 {
                     AlgorithmParameterName = "";
                     AlgorithmParameterDescription = "";
+                    AlgorithmParameterSelectedParameterValueType = ParameterValueTypes[0];
                     AlgorithmParameterMinValue = "";
                     AlgorithmParameterMaxValue = "";
                     AlgorithmParameterstep = "";
@@ -2306,7 +2349,7 @@ namespace ktradesystem.ViewModels
                         steView += "%";
                     }
 
-                    AlgorithmParameterView algorithmParameterView = new AlgorithmParameterView { Name = name, Description = AlgorithmParameterDescription, MinValue = AlgorithmParameterMinValue, MaxValue = AlgorithmParameterMaxValue, IsStepPercent = isStepPercent, Step = AlgorithmParameterstep, RangeValuesView = rangeValuesView, StepView = steView };
+                    AlgorithmParameterView algorithmParameterView = new AlgorithmParameterView { Name = name, Description = AlgorithmParameterDescription, ParameterValueType = AlgorithmParameterSelectedParameterValueType, MinValue = AlgorithmParameterMinValue, MaxValue = AlgorithmParameterMaxValue, IsStepPercent = isStepPercent, Step = AlgorithmParameterstep, RangeValuesView = rangeValuesView, StepView = steView };
                     AlgorithmParametersView.Add(algorithmParameterView);
                     
                     CloseAddDataSourceTemplateAction?.Invoke();
@@ -2322,6 +2365,7 @@ namespace ktradesystem.ViewModels
                 {
                     AlgorithmParameterName = SelectedAlgorithmParameterView.Name;
                     AlgorithmParameterDescription = SelectedAlgorithmParameterView.Description;
+                    AlgorithmParameterSelectedParameterValueType = SelectedAlgorithmParameterView.ParameterValueType;
                     AlgorithmParameterMinValue = SelectedAlgorithmParameterView.MinValue;
                     AlgorithmParameterMaxValue = SelectedAlgorithmParameterView.MaxValue;
                     AlgorithmParameterstep = SelectedAlgorithmParameterView.Step;
@@ -2445,7 +2489,7 @@ namespace ktradesystem.ViewModels
                         steView += "%";
                     }
 
-                    AlgorithmParameterView algorithmParameterView = new AlgorithmParameterView { Name = name, Description = AlgorithmParameterDescription, MinValue = AlgorithmParameterMinValue, MaxValue = AlgorithmParameterMaxValue, IsStepPercent = isStepPercent, Step = AlgorithmParameterstep, RangeValuesView = rangeValuesView, StepView = steView };
+                    AlgorithmParameterView algorithmParameterView = new AlgorithmParameterView { Name = name, Description = AlgorithmParameterDescription, ParameterValueType = AlgorithmParameterSelectedParameterValueType, MinValue = AlgorithmParameterMinValue, MaxValue = AlgorithmParameterMaxValue, IsStepPercent = isStepPercent, Step = AlgorithmParameterstep, RangeValuesView = rangeValuesView, StepView = steView };
 
                     int index = AlgorithmParametersView.IndexOf(SelectedAlgorithmParameterView);
                     AlgorithmParametersView.RemoveAt(index);
@@ -2614,30 +2658,51 @@ namespace ktradesystem.ViewModels
                 }
                 if (isFindEqual == false)
                 {
-                    //проверяем на уникальность комбинации источников данных
-                    bool isUnuque = true;
-                    foreach(DataSourceGroupView dataSourceGroupView in DataSourceGroupsView)
+                    //проверяем, имеют ли все выбранные источники данных общие даты (находим саму последнюю дату начала и самую раннюю дату окончания, если начало больше окончания, значит общих дат нет)
+                    DateTime startDate = DataSourcesForAddingDsGroupsView[0].SelectedDataSource.StartDate;
+                    DateTime endDate = DataSourcesForAddingDsGroupsView[0].SelectedDataSource.EndDate;
+                    for(int i = 1; i < DataSourcesForAddingDsGroupsView.Count; i++)
                     {
-                        bool isFind = true;
-                        //если хоть один DataSourcesAccordance не имеет полного совпадения, значи все в порядке
-                        for (int i = 0; i < dataSourceGroupView.DataSourcesAccordances.Count; i++)
+                        if(DateTime.Compare(startDate, DataSourcesForAddingDsGroupsView[i].SelectedDataSource.StartDate) < 0)
                         {
-                            if((dataSourceGroupView.DataSourcesAccordances[i].DataSourceTemplate == DataSourcesForAddingDsGroupsView[i].DataSourceTemplate && dataSourceGroupView.DataSourcesAccordances[i].DataSource == DataSourcesForAddingDsGroupsView[i].SelectedDataSource) == false) //данный DataSourcesAccordance не имеет полного совпадения
+                            startDate = DataSourcesForAddingDsGroupsView[i].SelectedDataSource.StartDate;
+                        }
+                        if (DateTime.Compare(endDate, DataSourcesForAddingDsGroupsView[i].SelectedDataSource.EndDate) > 0)
+                        {
+                            endDate = DataSourcesForAddingDsGroupsView[i].SelectedDataSource.EndDate;
+                        }
+                    }
+                    if (DateTime.Compare(startDate, endDate) < 0) //если true, то общие даты найдены
+                    {
+                        //проверяем на уникальность комбинации источников данных
+                        bool isUnuque = true;
+                        foreach (DataSourceGroupView dataSourceGroupView in DataSourceGroupsView)
+                        {
+                            bool isFind = true;
+                            //если хоть один DataSourcesAccordance не имеет полного совпадения, значи все в порядке
+                            for (int i = 0; i < dataSourceGroupView.DataSourcesAccordances.Count; i++)
                             {
-                                isFind = false;
+                                if ((dataSourceGroupView.DataSourcesAccordances[i].DataSourceTemplate == DataSourcesForAddingDsGroupsView[i].DataSourceTemplate && dataSourceGroupView.DataSourcesAccordances[i].DataSource == DataSourcesForAddingDsGroupsView[i].SelectedDataSource) == false) //данный DataSourcesAccordance не имеет полного совпадения
+                                {
+                                    isFind = false;
+                                }
+                            }
+                            if (isFind)
+                            {
+                                isUnuque = false;
                             }
                         }
-                        if (isFind)
+                        if (isUnuque == false)
                         {
-                            isUnuque = false;
+                            TooltipAddDataSourceGroupView.Add("Данная комбинация источников данных уже добавлена, выберите другую.");
+                            result = false;
                         }
                     }
-                    if (isUnuque == false)
+                    else
                     {
-                        TooltipAddDataSourceGroupView.Add("Данная комбинация источников данных уже добавлена, выберите другую.");
+                        TooltipAddDataSourceGroupView.Add("Выбранные источники данных не имеют пересекающихся дат.");
                         result = false;
                     }
-
                 }
                 else
                 {

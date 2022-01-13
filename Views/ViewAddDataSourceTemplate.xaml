@@ -5,18 +5,22 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ktradesystem.Views"
         mc:Ignorable="d"
-        Title="Добавить макет источника данных" Height="210" Width="270">
+        Title="Добавить макет источника данных" Height="210" Width="300">
     <Grid>
-        <StackPanel Orientation="Vertical" Margin="10" Width="240">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Название"/>
-                <TextBox Text="{Binding AddDataSourceTemplateName, Mode=OneWayToSource}" Margin="10 0 0 0" Width="167"/>
-            </StackPanel>
-            <TextBlock Text="(только английскими буквами)"/>
-            <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
-                <TextBlock Text="Описание"/>
-                <TextBox Text="{Binding AddDataSourceTemplateDescription, Mode=OneWayToSource}" TextWrapping="Wrap" Margin="10 0 0 0" Width="167"/>
-            </StackPanel>
+        <StackPanel Orientation="Vertical" Margin="10" Width="258">
+            <ScrollViewer Height="120">
+                <StackPanel Orientation="Vertical">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Название" Width="60"/>
+                        <TextBox Text="{Binding AddDataSourceTemplateName, Mode=OneWayToSource}" Width="167"/>
+                    </StackPanel>
+                    <TextBlock Text="(только английскими буквами)"/>
+                    <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
+                        <TextBlock Text="Описание" Width="60"/>
+                        <TextBox Text="{Binding AddDataSourceTemplateDescription, Mode=OneWayToSource}" TextWrapping="Wrap" Width="167"/>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
             <StackPanel Orientation="Horizontal" Margin="0 10 0 0" HorizontalAlignment="Right">
                 <Button Content="Добавить" Command="{Binding AddAddDataSourceTemplate_Click}" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000" Width="70">
                     <Button.ToolTip>

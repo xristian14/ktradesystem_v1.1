@@ -70,9 +70,11 @@ namespace ktradesystem.Models
                 {
                     if(indicatorParameterTemplates.Count > i && oldIndicator.IndicatorParameterTemplates.Count > i)
                     {
-                        if(indicatorParameterTemplates[i].Name != oldIndicator.IndicatorParameterTemplates[i].Name || indicatorParameterTemplates[i].Description != oldIndicator.IndicatorParameterTemplates[i].Description)
+                        if(indicatorParameterTemplates[i].Name != oldIndicator.IndicatorParameterTemplates[i].Name || indicatorParameterTemplates[i].Description != oldIndicator.IndicatorParameterTemplates[i].Description || indicatorParameterTemplates[i].ParameterValueType != oldIndicator.IndicatorParameterTemplates[i].ParameterValueType)
                         {
-                            updateParTemp.Add(new IndicatorParameterTemplate { Id = oldIndicator.IndicatorParameterTemplates[i].Id, Name = indicatorParameterTemplates[i].Name, Description = indicatorParameterTemplates[i].Description, IdIndicator = oldIndicator.IndicatorParameterTemplates[i].IdIndicator });
+                            indicatorParameterTemplates[i].Id = oldIndicator.IndicatorParameterTemplates[i].Id;
+                            indicatorParameterTemplates[i].IdIndicator = oldIndicator.IndicatorParameterTemplates[i].IdIndicator;
+                            updateParTemp.Add(indicatorParameterTemplates[i]);
                         }
                         
                     }
@@ -143,7 +145,6 @@ namespace ktradesystem.Models
                     algorithmParameter.IdAlgorithm = newAlgorithmId;
                     _database.InsertAlgorithmParameter(algorithmParameter);
                 }
-
             }
             else
             {
@@ -222,7 +223,7 @@ namespace ktradesystem.Models
                 {
                     if (indicatorParameterRanges.Count > i && oldAlgorithm.IndicatorParameterRanges.Count > i)
                     {
-                        if (indicatorParameterRanges[i].MinValue != oldAlgorithm.IndicatorParameterRanges[i].MinValue || indicatorParameterRanges[i].MaxValue != oldAlgorithm.IndicatorParameterRanges[i].MaxValue || indicatorParameterRanges[i].Step != oldAlgorithm.IndicatorParameterRanges[i].Step || indicatorParameterRanges[i].IsStepPercent != oldAlgorithm.IndicatorParameterRanges[i].IsStepPercent || indicatorParameterRanges[i].IdIndicatorParameterTemplate != oldAlgorithm.IndicatorParameterRanges[i].IdIndicatorParameterTemplate)
+                        if (indicatorParameterRanges[i].MinValue != oldAlgorithm.IndicatorParameterRanges[i].MinValue || indicatorParameterRanges[i].MaxValue != oldAlgorithm.IndicatorParameterRanges[i].MaxValue || indicatorParameterRanges[i].Step != oldAlgorithm.IndicatorParameterRanges[i].Step || indicatorParameterRanges[i].IsStepPercent != oldAlgorithm.IndicatorParameterRanges[i].IsStepPercent || indicatorParameterRanges[i].IndicatorParameterTemplate.Id != oldAlgorithm.IndicatorParameterRanges[i].IndicatorParameterTemplate.Id)
                         {
                             indicatorParameterRanges[i].Id = oldAlgorithm.IndicatorParameterRanges[i].Id;
                             indicatorParameterRanges[i].IdAlgorithm = oldAlgorithm.IndicatorParameterRanges[i].IdAlgorithm;
@@ -271,7 +272,7 @@ namespace ktradesystem.Models
                 {
                     if (algorithmParameters.Count > i && oldAlgorithm.AlgorithmParameters.Count > i)
                     {
-                        if (algorithmParameters[i].Name != oldAlgorithm.AlgorithmParameters[i].Name || algorithmParameters[i].Description != oldAlgorithm.AlgorithmParameters[i].Description || algorithmParameters[i].MinValue != oldAlgorithm.AlgorithmParameters[i].MinValue || algorithmParameters[i].MaxValue != oldAlgorithm.AlgorithmParameters[i].MaxValue || algorithmParameters[i].Step != oldAlgorithm.AlgorithmParameters[i].Step || algorithmParameters[i].IsStepPercent != oldAlgorithm.AlgorithmParameters[i].IsStepPercent)
+                        if (algorithmParameters[i].Name != oldAlgorithm.AlgorithmParameters[i].Name || algorithmParameters[i].Description != oldAlgorithm.AlgorithmParameters[i].Description || algorithmParameters[i].ParameterValueType != oldAlgorithm.AlgorithmParameters[i].ParameterValueType || algorithmParameters[i].MinValue != oldAlgorithm.AlgorithmParameters[i].MinValue || algorithmParameters[i].MaxValue != oldAlgorithm.AlgorithmParameters[i].MaxValue || algorithmParameters[i].Step != oldAlgorithm.AlgorithmParameters[i].Step || algorithmParameters[i].IsStepPercent != oldAlgorithm.AlgorithmParameters[i].IsStepPercent)
                         {
                             algorithmParameters[i].Id = oldAlgorithm.AlgorithmParameters[i].Id;
                             algorithmParameters[i].IdAlgorithm = oldAlgorithm.AlgorithmParameters[i].IdAlgorithm;

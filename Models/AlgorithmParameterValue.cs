@@ -10,6 +10,7 @@ namespace ktradesystem.Models
     class AlgorithmParameterValue
     {
         public AlgorithmParameter AlgorithmParameter { get; set; }
-        public double Value { get; set; }
+        public int IntValue { get; set; }
+        public double DoubleValue { get; set; }
     }
 }

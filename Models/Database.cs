@@ -112,10 +112,7 @@ namespace ktradesystem.Models
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
             string query = "";
-            /*
-            ds.StartDate = DateTime.Parse(row.Field<string>("startDate"));
-                ds.EndDate = DateTime.Parse(row.Field<string>("endDate")); 
-             */
+
             if (isAddCost)
             {
                 query = "INSERT INTO Datasources (name, idInstrument, idInterval, idCurrency, cost, idComissiontype, comission, priceStep, costPriceStep, startDate, endDate) VALUES (:name, :idInstrument, :idInterval, :idCurrency, :cost, :idComissiontype, :comission, :priceStep, :costPriceStep, :startDate, :endDate)";
@@ -209,9 +206,10 @@ namespace ktradesystem.Models
         public void UpdateIndicatorParameterTemplate(IndicatorParameterTemplate parameterTemplate)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "UPDATE IndicatorParameterTemplates SET name = :name, description = :description WHERE id = :id";
+            command.CommandText = "UPDATE IndicatorParameterTemplates SET name = :name, description = :description, idParameterValueType = :idParameterValueType WHERE id = :id";
             command.Parameters.AddWithValue("name", parameterTemplate.Name);
             command.Parameters.AddWithValue("description", parameterTemplate.Description);
+            command.Parameters.AddWithValue("idParameterValueType", parameterTemplate.ParameterValueType.Id);
             command.Parameters.AddWithValue("id", parameterTemplate.Id);
 
             command.ExecuteNonQuery();
@@ -220,10 +218,11 @@ namespace ktradesystem.Models
         public void InsertIndicatorParameterTemplate(IndicatorParameterTemplate parameterTemplate)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "INSERT INTO IndicatorParameterTemplates (name, description, idIndicator) VALUES (:name, :description, :idIndicator)";
+            command.CommandText = "INSERT INTO IndicatorParameterTemplates (name, description, idIndicator, idParameterValueType) VALUES (:name, :description, :idIndicator, :idParameterValueType)";
             command.Parameters.AddWithValue("name", parameterTemplate.Name);
             command.Parameters.AddWithValue("description", parameterTemplate.Description);
             command.Parameters.AddWithValue("idIndicator", parameterTemplate.IdIndicator);
+            command.Parameters.AddWithValue("idParameterValueType", parameterTemplate.ParameterValueType.Id);
 
             command.ExecuteNonQuery();
         }
@@ -301,7 +300,7 @@ namespace ktradesystem.Models
             command.Parameters.AddWithValue("step", indicatorParameterRange.Step);
             command.Parameters.AddWithValue("isStepPercent", indicatorParameterRange.IsStepPercent);
             command.Parameters.AddWithValue("idAlgorithm", indicatorParameterRange.IdAlgorithm);
-            command.Parameters.AddWithValue("idIndicatorParameterTemplate", indicatorParameterRange.IdIndicatorParameterTemplate);
+            command.Parameters.AddWithValue("idIndicatorParameterTemplate", indicatorParameterRange.IndicatorParameterTemplate.Id);
 
             command.ExecuteNonQuery();
         }
@@ -309,7 +308,7 @@ namespace ktradesystem.Models
         public void InsertAlgorithmParameter(AlgorithmParameter algorithmParameter)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "INSERT INTO AlgorithmParameters (name, description, minValue, maxValue, step, isStepPercent, idAlgorithm) VALUES (:name, :description, :minValue, :maxValue, :step, :isStepPercent, :idAlgorithm)";
+            command.CommandText = "INSERT INTO AlgorithmParameters (name, description, minValue, maxValue, step, isStepPercent, idAlgorithm, idParameterValueType) VALUES (:name, :description, :minValue, :maxValue, :step, :isStepPercent, :idAlgorithm, :idParameterValueType)";
             command.Parameters.AddWithValue("name", algorithmParameter.Name);
             command.Parameters.AddWithValue("description", algorithmParameter.Description);
             command.Parameters.AddWithValue("minValue", algorithmParameter.MinValue);
@@ -317,6 +316,7 @@ namespace ktradesystem.Models
             command.Parameters.AddWithValue("step", algorithmParameter.Step);
             command.Parameters.AddWithValue("isStepPercent", algorithmParameter.IsStepPercent);
             command.Parameters.AddWithValue("idAlgorithm", algorithmParameter.IdAlgorithm);
+            command.Parameters.AddWithValue("idParameterValueType", algorithmParameter.ParameterValueType.Id);
 
             command.ExecuteNonQuery();
         }
@@ -350,7 +350,7 @@ namespace ktradesystem.Models
             command.Parameters.AddWithValue("maxValue", indicatorParameterRange.MaxValue);
             command.Parameters.AddWithValue("step", indicatorParameterRange.Step);
             command.Parameters.AddWithValue("isStepPercent", indicatorParameterRange.IsStepPercent);
-            command.Parameters.AddWithValue("idIndicatorParameterTemplate", indicatorParameterRange.IdIndicatorParameterTemplate);
+            command.Parameters.AddWithValue("idIndicatorParameterTemplate", indicatorParameterRange.IndicatorParameterTemplate.Id);
             command.Parameters.AddWithValue("id", indicatorParameterRange.Id);
 
             command.ExecuteNonQuery();
@@ -368,13 +368,14 @@ namespace ktradesystem.Models
         public void UpdateAlgorithmParameter(AlgorithmParameter algorithmParameter)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "UPDATE AlgorithmParameters SET name = :name, description = :description, minValue = :minValue, maxValue = :maxValue, step = :step, isStepPercent = :isStepPercent WHERE id = :id";
+            command.CommandText = "UPDATE AlgorithmParameters SET name = :name, description = :description, minValue = :minValue, maxValue = :maxValue, step = :step, isStepPercent = :isStepPercent, idParameterValueType = :idParameterValueType WHERE id = :id";
             command.Parameters.AddWithValue("name", algorithmParameter.Name);
             command.Parameters.AddWithValue("description", algorithmParameter.Description);
             command.Parameters.AddWithValue("minValue", algorithmParameter.MinValue);
             command.Parameters.AddWithValue("maxValue", algorithmParameter.MaxValue);
             command.Parameters.AddWithValue("step", algorithmParameter.Step);
             command.Parameters.AddWithValue("isStepPercent", algorithmParameter.IsStepPercent);
+            command.Parameters.AddWithValue("idParameterValueType", algorithmParameter.ParameterValueType.Id);
             command.Parameters.AddWithValue("id", algorithmParameter.Id);
 
             command.ExecuteNonQuery();

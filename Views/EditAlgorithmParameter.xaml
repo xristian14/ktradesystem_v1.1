@@ -5,10 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ktradesystem.Views"
         mc:Ignorable="d"
-        Title="Редактировать параметр алгоритма" Height="310" Width="400">
+        Title="Редактировать параметр алгоритма" Height="340" Width="400">
     <Grid>
         <StackPanel Orientation="Vertical" Margin="10">
-            <ScrollViewer>
+            <ScrollViewer Height="242">
                 <StackPanel Orientation="Vertical">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Название" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
@@ -20,6 +20,10 @@
                     <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
                         <TextBlock Text="Описание" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
                         <TextBox Text="{Binding AlgorithmParameterDescription, Mode=TwoWay}" Width="{Binding ElementName=helper2, Path=ActualWidth}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
+                        <TextBlock Text="Тип числа" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
+                        <ComboBox ItemsSource="{Binding ParameterValueTypes}" SelectedItem="{Binding AlgorithmParameterSelectedParameterValueType, Mode=TwoWay}" DisplayMemberPath="Name" SelectedIndex="0" Width="{Binding ElementName=helper2, Path=ActualWidth}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
                         <TextBlock Text="Минимальное значение" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>

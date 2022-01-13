@@ -11,7 +11,7 @@
     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 10 0 0">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="700"/>
-            <ColumnDefinition Width="460"/>
+            <ColumnDefinition Width="477"/>
             <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
         <ScrollViewer>
@@ -27,7 +27,7 @@
                             <Button Content="Редактировать" Command="{Binding IndicatorsEdit_Click}" Width="95" Margin="7 0 0 0"/>
                             <Button Content="Удалить" Command="{Binding IndicatorsDelete_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView ItemsSource="{Binding Indicators}" SelectedItem="{Binding SelectedIndicator, Mode=TwoWay}" SelectionMode="Single" Height="125">
+                        <ListView ItemsSource="{Binding Indicators}" SelectedItem="{Binding SelectedIndicator, Mode=TwoWay}" SelectionMode="Single" Height="116">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="{Binding ElementName=helperInd1, Path=ActualWidth}"/>
@@ -35,7 +35,7 @@
                                     <GridViewColumn Header="Описание" Width="{Binding ElementName=helperInd3, Path=ActualWidth}">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBox Text="{Binding Description}" TextWrapping="Wrap" IsReadOnly="True"/>
+                                                <TextBox Text="{Binding Description}" TextWrapping="Wrap" MaxLines="2" IsReadOnly="True"/>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
@@ -96,6 +96,7 @@
                                                     </DataTemplate>
                                                 </GridViewColumn.CellTemplate>
                                             </GridViewColumn>
+                                            <GridViewColumn DisplayMemberBinding="{Binding ParameterValueType.Name}" Header="Тип числа" Width="{Binding ElementName=helperIndPar3, Path=ActualWidth}"/>
                                         </GridView>
                                     </ListView.View>
                                 </ListView>
@@ -103,10 +104,12 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="2*"/>
                                         <ColumnDefinition Width="3*"/>
+                                        <ColumnDefinition Width="60"/>
                                         <ColumnDefinition Width="33"/>
                                     </Grid.ColumnDefinitions>
                                     <Grid Grid.Column="0" x:Name="helperIndPar1"/>
                                     <Grid Grid.Column="1" x:Name="helperIndPar2"/>
+                                    <Grid Grid.Column="2" x:Name="helperIndPar3"/>
                                 </Grid>
                                 
                                 <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
@@ -180,7 +183,7 @@
                             <Button Content="Редактировать" Command="{Binding AlgorithmsEdit_Click}" Width="95" Margin="7 0 0 0"/>
                             <Button Content="Удалить" Command="{Binding AlgorithmsDelete_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView ItemsSource="{Binding Algorithms}" SelectedItem="{Binding SelectedAlgorithm, Mode=TwoWay}" SelectionMode="Single" Height="125">
+                        <ListView ItemsSource="{Binding Algorithms}" SelectedItem="{Binding SelectedAlgorithm, Mode=TwoWay}" SelectionMode="Single" Height="116">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="{Binding ElementName=helperAlg1, Path=ActualWidth}"/>
@@ -266,7 +269,7 @@
                                     <GridViewColumn Header="Описание" Width="{Binding ElementName=helperAlgInd3, Path=ActualWidth}">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBox Text="{Binding Description}" TextWrapping="Wrap" IsReadOnly="True"/>
+                                                <TextBox Text="{Binding Description}" TextWrapping="Wrap" MaxLines="4" IsReadOnly="True"/>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
@@ -301,16 +304,18 @@
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
-                                    <GridViewColumn DisplayMemberBinding="{Binding RangeValuesView}" Header="Значения" Width="{Binding ElementName=helperParRan4, Path=ActualWidth}"/>
-                                    <GridViewColumn DisplayMemberBinding="{Binding StepView}" Header="Шаг" Width="{Binding ElementName=helperParRan5, Path=ActualWidth}"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding IndicatorParameterTemplate.ParameterValueType.Name}" Header="Тип числа" Width="{Binding ElementName=helperParRan4, Path=ActualWidth}"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding RangeValuesView}" Header="Значения" Width="{Binding ElementName=helperParRan5, Path=ActualWidth}"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding StepView}" Header="Шаг" Width="{Binding ElementName=helperParRan6, Path=ActualWidth}"/>
                                 </GridView>
                             </ListView.View>
                         </ListView>
                         <Grid Visibility="Visible">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="124"/>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="3*"/>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1.4*"/>
+                                <ColumnDefinition Width="60"/>
                                 <ColumnDefinition Width="78"/>
                                 <ColumnDefinition Width="44"/>
                                 <ColumnDefinition Width="33"/>
@@ -320,6 +325,7 @@
                             <Grid Grid.Column="2" x:Name="helperParRan3"/>
                             <Grid Grid.Column="3" x:Name="helperParRan4"/>
                             <Grid Grid.Column="4" x:Name="helperParRan5"/>
+                            <Grid Grid.Column="5" x:Name="helperParRan6"/>
                         </Grid>
 
                         <StackPanel Orientation="Horizontal" Margin="0 7 0 0">
@@ -339,8 +345,9 @@
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
-                                    <GridViewColumn DisplayMemberBinding="{Binding RangeValuesView}" Header="Значения" Width="{Binding ElementName=helperAlgPar3, Path=ActualWidth}"/>
-                                    <GridViewColumn DisplayMemberBinding="{Binding StepView}" Header="Шаг" Width="{Binding ElementName=helperAlgPar4, Path=ActualWidth}"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding ParameterValueType.Name}" Header="Тип числа" Width="{Binding ElementName=helperAlgPar3, Path=ActualWidth}"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding RangeValuesView}" Header="Значения" Width="{Binding ElementName=helperAlgPar4, Path=ActualWidth}"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding StepView}" Header="Шаг" Width="{Binding ElementName=helperAlgPar5, Path=ActualWidth}"/>
                                 </GridView>
                             </ListView.View>
                         </ListView>
@@ -348,6 +355,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="3*"/>
                                 <ColumnDefinition Width="4*"/>
+                                <ColumnDefinition Width="60"/>
                                 <ColumnDefinition Width="78"/>
                                 <ColumnDefinition Width="44"/>
                                 <ColumnDefinition Width="33"/>
@@ -356,6 +364,7 @@
                             <Grid Grid.Column="1" x:Name="helperAlgPar2"/>
                             <Grid Grid.Column="2" x:Name="helperAlgPar3"/>
                             <Grid Grid.Column="3" x:Name="helperAlgPar4"/>
+                            <Grid Grid.Column="4" x:Name="helperAlgPar5"/>
                         </Grid>
                         
                         <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
@@ -465,221 +474,224 @@
                 </Grid>
             </StackPanel>
         </ScrollViewer>
-        <StackPanel Orientation="Vertical" Grid.Column="1" Margin="10 0 0 0" Background="White">
-            <StackPanel Orientation="Vertical" Margin="10" Background="White">
-                <TextBlock Text="Параметры тестирования" HorizontalAlignment="Center"/>
-                <TextBlock Text="Выбранный алгоритм:" Margin="0 5 0 0"/>
-                <TextBlock Text="{Binding AlgorithmName}" Margin="0 5 0 0"/>
-                <TextBox Text="{Binding AlgorithmDescription}" IsReadOnly="{Binding IsAlgorithmReadOnly}" TextWrapping="Wrap" Margin="0 5 0 0"/>
-                <TextBlock Text="Источники данных для тестирования:" Margin="0 10 0 0"/>
-                <StackPanel Orientation="Horizontal" Margin="0 3 0 0">
-                    <Button Content="Добавить" Command="{Binding AddDataSourceGroupView_Click}" Width="70"/>
-                    <Button Content="Удалить" Command="{Binding DeleteDataSourceGroupView_Click}" Width="60" Margin="7 0 0 0"/>
-                </StackPanel>
-                <ListView ItemsSource="{Binding DataSourceGroupsView}" SelectedItem="{Binding SelectedDataSourceGroupView, Mode=TwoWay}" SelectionMode="Single" MaxHeight="150">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn DisplayMemberBinding="{Binding Number}" Header="№" Width="{Binding ElementName=helperDs1, Path=ActualWidth}"/>
-                            <GridViewColumn Header="Макет источника данных   –   Источник данных" Width="{Binding ElementName=helperDs2, Path=ActualWidth}">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <ListView ItemsSource="{Binding DataSourcesAccordances}">
-                                            <ListView.View>
-                                                <GridView>
-                                                    <GridViewColumn DisplayMemberBinding="{Binding DataSourceTemplate.Name}" Width="{Binding ElementName=helperDss1, Path=ActualWidth}"/>
-                                                    <GridViewColumn DisplayMemberBinding="{Binding DataSource.Name}" Width="{Binding ElementName=helperDss2, Path=ActualWidth}"/>
-                                                    <GridView.ColumnHeaderContainerStyle>
-                                                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                        </Style>
-                                                    </GridView.ColumnHeaderContainerStyle>
-                                                </GridView>
-                                            </ListView.View>
-                                            <ListView.ItemContainerStyle>
-                                                <Style TargetType="ListViewItem">
-                                                    <Setter Property="Focusable" Value="false"/>
-                                                </Style>
-                                            </ListView.ItemContainerStyle>
-                                        </ListView>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-                <Grid Visibility="Visible">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="33"/>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="33"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid Grid.Column="0" x:Name="helperDs1"/>
-                    <Grid Grid.Column="1" x:Name="helperDs2"/>
-                </Grid>
-                <Grid Visibility="Visible">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="33"/>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="0.2*"/>
-                        <ColumnDefinition Width="33"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid Grid.Column="1" x:Name="helperDss1"/>
-                    <Grid Grid.Column="2" x:Name="helperDss2"/>
-                </Grid>
-                <TextBlock Text="Критерий оценки топ-модели:" Margin="0 10 0 0"/>
-                <StackPanel Orientation="Horizontal" Margin="0 1 0 0">
-                    <ComboBox ItemsSource="{Binding EvaluationCriteriasView}" SelectedItem="{Binding SelectedEvaluationCriteriaView, Mode=TwoWay}" DisplayMemberPath="Name" Width="{Binding ElementName=helperTopModelCriterias1, Path=ActualWidth}"/>
-                    <ComboBox ItemsSource="{Binding CompareSignsEvaluationCriteria}" SelectedItem="{Binding SelectedCompareSignsEvaluationCriteria, Mode=TwoWay}" SelectedIndex="0" Width="{Binding ElementName=helperTopModelCriterias3, Path=ActualWidth}" Margin="7 0 0 0"/>
-                </StackPanel>
-                <Grid Visibility="Visible">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2*"/>
-                        <ColumnDefinition Width="7"/>
-                        <ColumnDefinition Width="110"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid Grid.Column="0" x:Name="helperTopModelCriterias1"/>
-                    <Grid Grid.Column="1" x:Name="helperTopModelCriterias2"/>
-                    <Grid Grid.Column="2" x:Name="helperTopModelCriterias3"/>
-                </Grid>
-                <TextBlock Text="Фильтры для топ-модели:" Margin="0 10 0 0"/>
-                <StackPanel Orientation="Horizontal" Margin="0 1 0 0">
-                    <Button Content="Добавить" Command="{Binding AddFilterTopModelView_Click}" Width="70"/>
-                    <Button Content="Удалить" Command="{Binding DeleteFilterTopModelView_Click}" Width="60" Margin="7 0 0 0"/>
-                </StackPanel>
-                <ListView ItemsSource="{Binding FiltersTopModelView}" SelectedItem="{Binding SelectedFilterTopModelView}" SelectionMode="Single" MaxHeight="100">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="Критерий оценки" Width="{Binding ElementName=helperTopModelFiltres1, Path=ActualWidth}">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <ComboBox ItemsSource="{Binding EvaluationCriteriasView}" SelectedItem="{Binding SelectedEvaluationCriteriaView, Mode=TwoWay}" DisplayMemberPath="Name"/>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Условие" Width="{Binding ElementName=helperTopModelFiltres2, Path=ActualWidth}">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <ComboBox ItemsSource="{Binding CompareSings}" SelectedItem="{Binding SelectedCompareSing, Mode=TwoWay}"/>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Значение" Width="{Binding ElementName=helperTopModelFiltres3, Path=ActualWidth}">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBox Text="{Binding FilterValue}" Width="48"/>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-                <Grid Visibility="Visible">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="50"/>
-                        <ColumnDefinition Width="60"/>
-                        <ColumnDefinition Width="33"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid Grid.Column="0" x:Name="helperTopModelFiltres1"/>
-                    <Grid Grid.Column="1" x:Name="helperTopModelFiltres2"/>
-                    <Grid Grid.Column="2" x:Name="helperTopModelFiltres3"/>
-                </Grid>
-                <CheckBox Content="Учитывать соседние результаты при поиске топ-модели" IsChecked="{Binding IsConsiderNeighbours, Mode=TwoWay}" Margin="0 10 0 0"/>
-                <StackPanel Orientation="Vertical" IsEnabled="{Binding IsConsiderNeighbours}">
-                    <StackPanel Orientation="Horizontal" Margin="0 3 0 0">
-                        <TextBlock Text="Размер группы соседних тестов от площади поисковой плоскости:"/>
-                        <TextBox Text="{Binding SizeNeighboursGroupPercent}" Margin="5 0 0 0" Width="35"/>
-                        <TextBlock Text="%" Margin="5 0 0 0"/>
+        <ScrollViewer Grid.Column="1" Background="White" Margin="10 0 0 0">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Vertical" Margin="10" Background="White">
+                    <TextBlock Text="Параметры тестирования" HorizontalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
+                        <TextBlock Text="Выбранный алгоритм:  "/>
+                        <TextBlock Text="{Binding SelectedAlgorithm.Name}"/>
                     </StackPanel>
-                    <TextBlock Text="(Размер группы будет не менее 2х2)" Margin="20 0 0 0"/>
-                    <CheckBox Content="Выбрать оси двумерной плоскости поиска топ-модели с соседями" IsChecked="{Binding IsAxesParametersSpecified, Mode=TwoWay}" Margin="0 10 0 0"/>
-                    <ListView ItemsSource="{Binding AxesParametersSelectView}" SelectionMode="Single" MaxHeight="100">
+                    <TextBlock Text="Источники данных для тестирования:" Margin="0 10 0 0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0 3 0 0">
+                        <Button Content="Добавить" Command="{Binding AddDataSourceGroupView_Click}" Width="70"/>
+                        <Button Content="Удалить" Command="{Binding DeleteDataSourceGroupView_Click}" Width="60" Margin="7 0 0 0"/>
+                    </StackPanel>
+                    <ListView ItemsSource="{Binding DataSourceGroupsView}" SelectedItem="{Binding SelectedDataSourceGroupView, Mode=TwoWay}" SelectionMode="Single" MaxHeight="170">
                         <ListView.View>
                             <GridView>
-                                <GridViewColumn DisplayMemberBinding="{Binding Axis}" Header="Ось" Width="{Binding ElementName=helperAxes1, Path=ActualWidth}"/>
-                                <GridViewColumn Header="Параметр" Width="{Binding ElementName=helperAxes2, Path=ActualWidth}">
+                                <GridViewColumn DisplayMemberBinding="{Binding Number}" Header="№" Width="{Binding ElementName=helperDs1, Path=ActualWidth}"/>
+                                <GridViewColumn Header="Макет источника данных   –   Источник данных" Width="{Binding ElementName=helperDs2, Path=ActualWidth}">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
-                                            <ComboBox ItemsSource="{Binding NamesParameters}" SelectedItem="{Binding SelectedNameParameter, Mode=TwoWay}"/>
+                                            <ListView ItemsSource="{Binding DataSourcesAccordances}">
+                                                <ListView.View>
+                                                    <GridView>
+                                                        <GridViewColumn DisplayMemberBinding="{Binding DataSourceTemplate.Name}" Width="{Binding ElementName=helperDss1, Path=ActualWidth}"/>
+                                                        <GridViewColumn DisplayMemberBinding="{Binding DataSource.Name}" Width="{Binding ElementName=helperDss2, Path=ActualWidth}"/>
+                                                        <GridView.ColumnHeaderContainerStyle>
+                                                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </Style>
+                                                        </GridView.ColumnHeaderContainerStyle>
+                                                    </GridView>
+                                                </ListView.View>
+                                                <ListView.ItemContainerStyle>
+                                                    <Style TargetType="ListViewItem">
+                                                        <Setter Property="Focusable" Value="false"/>
+                                                    </Style>
+                                                </ListView.ItemContainerStyle>
+                                            </ListView>
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>
                             </GridView>
                         </ListView.View>
-                        <ListView.ItemContainerStyle>
-                            <Style TargetType="ListViewItem">
-                                <Setter Property="Focusable" Value="false"/>
-                            </Style>
-                        </ListView.ItemContainerStyle>
                     </ListView>
                     <Grid Visibility="Visible">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="30"/>
+                            <ColumnDefinition Width="33"/>
                             <ColumnDefinition Width="1*"/>
                             <ColumnDefinition Width="33"/>
                         </Grid.ColumnDefinitions>
-                        <Grid Grid.Column="0" x:Name="helperAxes1"/>
-                        <Grid Grid.Column="1" x:Name="helperAxes2"/>
+                        <Grid Grid.Column="0" x:Name="helperDs1"/>
+                        <Grid Grid.Column="1" x:Name="helperDs2"/>
                     </Grid>
-                </StackPanel>
-                <CheckBox Content="Проводить форвардное тестирование" IsChecked="{Binding IsForwardTesting, Mode=TwoWay}" Margin="0 10 0 0"/>
-                <StackPanel Orientation="Vertical" IsEnabled="{Binding IsForwardTesting}">
-                    <CheckBox Content="Добавить для форвардного тестирования торговлю депозитом" IsChecked="{Binding IsForwardDepositTesting, Mode=TwoWay}" Margin="0 6 0 0"/>
-                    <StackPanel Orientation="Horizontal" Margin="0 3 0 0" IsEnabled="{Binding IsForwardDepositTesting}">
-                        <TextBlock Text="Размер депозита:" Width="100"/>
-                        <TextBox Text="{Binding ForwardDeposit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200"/>
-                        <ComboBox ItemsSource="{Binding Currencies}" SelectedItem="{Binding SelectedCurrency, Mode=TwoWay}" DisplayMemberPath="Name" SelectedIndex="0" Margin="7 0 0 0" Width="38"/>
+                    <Grid Visibility="Visible">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="33"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="0.2*"/>
+                            <ColumnDefinition Width="33"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="1" x:Name="helperDss1"/>
+                        <Grid Grid.Column="2" x:Name="helperDss2"/>
+                    </Grid>
+                    <TextBlock Text="Критерий оценки топ-модели:" Margin="0 10 0 0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0 1 0 0">
+                        <ComboBox ItemsSource="{Binding EvaluationCriteriasView}" SelectedItem="{Binding SelectedEvaluationCriteriaView, Mode=TwoWay}" DisplayMemberPath="Name" Width="{Binding ElementName=helperTopModelCriterias1, Path=ActualWidth}"/>
+                        <ComboBox ItemsSource="{Binding CompareSignsEvaluationCriteria}" SelectedItem="{Binding SelectedCompareSignsEvaluationCriteria, Mode=TwoWay}" SelectedIndex="0" Width="{Binding ElementName=helperTopModelCriterias3, Path=ActualWidth}" Margin="7 0 0 0"/>
                     </StackPanel>
-                    <ListView Margin="100 3 0 0" Width="200" HorizontalAlignment="Left" ItemsSource="{Binding DepositInAnotherCurrencies}">
-                        <ListView.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem">
-                                <Setter Property="Focusable" Value="false"/>
-                            </Style>
-                        </ListView.ItemContainerStyle>
+                    <Grid Visibility="Visible">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="7"/>
+                            <ColumnDefinition Width="110"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0" x:Name="helperTopModelCriterias1"/>
+                        <Grid Grid.Column="1" x:Name="helperTopModelCriterias2"/>
+                        <Grid Grid.Column="2" x:Name="helperTopModelCriterias3"/>
+                    </Grid>
+                    <TextBlock Text="Фильтры для топ-модели:" Margin="0 10 0 0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0 1 0 0">
+                        <Button Content="Добавить" Command="{Binding AddFilterTopModelView_Click}" Width="70"/>
+                        <Button Content="Удалить" Command="{Binding DeleteFilterTopModelView_Click}" Width="60" Margin="7 0 0 0"/>
+                    </StackPanel>
+                    <ListView ItemsSource="{Binding FiltersTopModelView}" SelectedItem="{Binding SelectedFilterTopModelView}" SelectionMode="Single" MaxHeight="100">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Критерий оценки" Width="{Binding ElementName=helperTopModelFiltres1, Path=ActualWidth}">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ComboBox ItemsSource="{Binding EvaluationCriteriasView}" SelectedItem="{Binding SelectedEvaluationCriteriaView, Mode=TwoWay}" DisplayMemberPath="Name"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Условие" Width="{Binding ElementName=helperTopModelFiltres2, Path=ActualWidth}">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ComboBox ItemsSource="{Binding CompareSings}" SelectedItem="{Binding SelectedCompareSing, Mode=TwoWay}"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Значение" Width="{Binding ElementName=helperTopModelFiltres3, Path=ActualWidth}">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding FilterValue}" Width="48"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
                     </ListView>
+                    <Grid Visibility="Visible">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="50"/>
+                            <ColumnDefinition Width="60"/>
+                            <ColumnDefinition Width="33"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0" x:Name="helperTopModelFiltres1"/>
+                        <Grid Grid.Column="1" x:Name="helperTopModelFiltres2"/>
+                        <Grid Grid.Column="2" x:Name="helperTopModelFiltres3"/>
+                    </Grid>
+                    <CheckBox Content="Учитывать соседние результаты при поиске топ-модели" IsChecked="{Binding IsConsiderNeighbours, Mode=TwoWay}" Margin="0 10 0 0"/>
+                    <StackPanel Orientation="Vertical" IsEnabled="{Binding IsConsiderNeighbours}">
+                        <StackPanel Orientation="Horizontal" Margin="0 3 0 0">
+                            <TextBlock Text="Размер группы соседних тестов от площади поисковой плоскости:"/>
+                            <TextBox Text="{Binding SizeNeighboursGroupPercent}" Margin="5 0 0 0" Width="35"/>
+                            <TextBlock Text="%" Margin="5 0 0 0"/>
+                        </StackPanel>
+                        <TextBlock Text="(Размер группы будет не менее 2х2)" Margin="20 0 0 0"/>
+                        <CheckBox Content="Выбрать оси двумерной плоскости поиска топ-модели с соседями" IsChecked="{Binding IsAxesParametersSpecified, Mode=TwoWay}" Margin="0 10 0 0"/>
+                        <ListView ItemsSource="{Binding AxesParametersSelectView}" SelectionMode="Single" MaxHeight="100">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Axis}" Header="Ось" Width="{Binding ElementName=helperAxes1, Path=ActualWidth}"/>
+                                    <GridViewColumn Header="Параметр" Width="{Binding ElementName=helperAxes2, Path=ActualWidth}">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox ItemsSource="{Binding NamesParameters}" SelectedItem="{Binding SelectedNameParameter, Mode=TwoWay}"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="Focusable" Value="false"/>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                        </ListView>
+                        <Grid Visibility="Visible">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30"/>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="33"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0" x:Name="helperAxes1"/>
+                            <Grid Grid.Column="1" x:Name="helperAxes2"/>
+                        </Grid>
+                    </StackPanel>
+                    <CheckBox Content="Проводить форвардное тестирование" IsChecked="{Binding IsForwardTesting, Mode=TwoWay}" Margin="0 10 0 0"/>
+                    <StackPanel Orientation="Vertical" IsEnabled="{Binding IsForwardTesting}">
+                        <CheckBox Content="Добавить для форвардного тестирования торговлю депозитом" IsChecked="{Binding IsForwardDepositTesting, Mode=TwoWay}" Margin="0 6 0 0"/>
+                        <StackPanel Orientation="Horizontal" Margin="0 3 0 0" IsEnabled="{Binding IsForwardDepositTesting}">
+                            <TextBlock Text="Размер депозита:" Width="100"/>
+                            <TextBox Text="{Binding ForwardDeposit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200"/>
+                            <ComboBox ItemsSource="{Binding Currencies}" SelectedItem="{Binding SelectedCurrency, Mode=TwoWay}" DisplayMemberPath="Name" SelectedIndex="0" Margin="7 0 0 0" Width="38"/>
+                        </StackPanel>
+                        <ListView Margin="100 3 0 0" Width="200" HorizontalAlignment="Left" ItemsSource="{Binding DepositInAnotherCurrencies}">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Focusable" Value="false"/>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                        </ListView>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" IsEnabled="{Binding IsPeriodTestingEnabled}" Margin="0 10 0 0">
+                        <TextBlock Text="Период тестирования: " VerticalAlignment="Center"/>
+                        <DatePicker SelectedDate="{Binding StartPeriodTesting, Mode=TwoWay}" DisplayDateStart="{Binding DisplayDateStartPeriodTesting, Mode=OneWay}" DisplayDateEnd="{Binding DisplayDateEndPeriodTesting, Mode=OneWay}"/>
+                        <TextBlock Text=" – " VerticalAlignment="Center"/>
+                        <DatePicker SelectedDate="{Binding EndPeriodTesting, Mode=TwoWay}" DisplayDateStart="{Binding DisplayDateStartPeriodTesting, Mode=OneWay}" DisplayDateEnd="{Binding DisplayDateEndPeriodTesting, Mode=OneWay}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
+                        <TextBlock Text="Длительность оптимизационных тестов:" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding DurationOptimizationYears, Mode=TwoWay}" Margin="5 0 0 0" Width="25"/>
+                        <TextBlock Text="лет" Margin="1 0 0 0" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding DurationOptimizationMonths, Mode=TwoWay}" Margin="5 0 0 0" Width="25"/>
+                        <TextBlock Text="месяцев" Margin="1 0 0 0" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding DurationOptimizationDays, Mode=TwoWay}" Margin="5 0 0 0" Width="30"/>
+                        <TextBlock Text="дней" Margin="1 0 0 0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Text="Промежуток между оптимизационными тестами:" Margin="0 10 0 0" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox Text="{Binding OptimizationSpacingYears, Mode=TwoWay}" Margin="227 0 0 0" Width="25"/>
+                        <TextBlock Text="лет" Margin="1 0 0 0" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding OptimizationSpacingMonths, Mode=TwoWay}" Margin="5 0 0 0" Width="25"/>
+                        <TextBlock Text="месяцев" Margin="1 0 0 0" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding OptimizationSpacingDays, Mode=TwoWay}" Margin="5 0 0 0" Width="30"/>
+                        <TextBlock Text="дней" Margin="1 0 0 0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="35 10 0 0" IsEnabled="{Binding IsForwardTesting}">
+                        <TextBlock Text="Длительность форвардного теста:" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding DurationForwardYears, Mode=TwoWay}" Margin="5 0 0 0" Width="25"/>
+                        <TextBlock Text="лет" Margin="1 0 0 0" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding DurationForwardMonths, Mode=TwoWay}" Margin="5 0 0 0" Width="25"/>
+                        <TextBlock Text="месяцев" Margin="1 0 0 0" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding DurationForwardDays, Mode=TwoWay}" Margin="5 0 0 0" Width="30"/>
+                        <TextBlock Text="дней" Margin="1 0 0 0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <Button Content="Запустить тестирование" Command="{Binding LaunchTesting_Click}" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000"  Width="156" Height="32" Margin="0 14 0 0" HorizontalAlignment="Right">
+                        <Button.ToolTip>
+                            <ToolTip>
+                                <ListView ItemsSource="{Binding TooltipLaunchTesting}" IsEnabled="False"/>
+                            </ToolTip>
+                        </Button.ToolTip>
+                    </Button>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" IsEnabled="{Binding IsPeriodTestingEnabled}" Margin="0 10 0 0">
-                    <TextBlock Text="Период тестирования: " VerticalAlignment="Center"/>
-                    <DatePicker SelectedDate="{Binding StartPeriodTesting, Mode=TwoWay}" DisplayDateStart="{Binding DisplayDateStartPeriodTesting, Mode=OneWay}" DisplayDateEnd="{Binding DisplayDateEndPeriodTesting, Mode=OneWay}"/>
-                    <TextBlock Text=" – " VerticalAlignment="Center"/>
-                    <DatePicker SelectedDate="{Binding EndPeriodTesting, Mode=TwoWay}" DisplayDateStart="{Binding DisplayDateStartPeriodTesting, Mode=OneWay}" DisplayDateEnd="{Binding DisplayDateEndPeriodTesting, Mode=OneWay}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
-                    <TextBlock Text="Длительность оптимизационных тестов:" VerticalAlignment="Center"/>
-                    <TextBox Text="{Binding DurationOptimizationYears, Mode=TwoWay}" Margin="5 0 0 0" Width="25"/>
-                    <TextBlock Text="лет" Margin="1 0 0 0" VerticalAlignment="Center"/>
-                    <TextBox Text="{Binding DurationOptimizationMonths, Mode=TwoWay}" Margin="5 0 0 0" Width="25"/>
-                    <TextBlock Text="месяцев" Margin="1 0 0 0" VerticalAlignment="Center"/>
-                    <TextBox Text="{Binding DurationOptimizationDays, Mode=TwoWay}" Margin="5 0 0 0" Width="30"/>
-                    <TextBlock Text="дней" Margin="1 0 0 0" VerticalAlignment="Center"/>
-                </StackPanel>
-                <TextBlock Text="Промежуток между оптимизационными тестами:" Margin="0 10 0 0" VerticalAlignment="Center"/>
-                <StackPanel Orientation="Horizontal">
-                    <TextBox Text="{Binding OptimizationSpacingYears, Mode=TwoWay}" Margin="227 0 0 0" Width="25"/>
-                    <TextBlock Text="лет" Margin="1 0 0 0" VerticalAlignment="Center"/>
-                    <TextBox Text="{Binding OptimizationSpacingMonths, Mode=TwoWay}" Margin="5 0 0 0" Width="25"/>
-                    <TextBlock Text="месяцев" Margin="1 0 0 0" VerticalAlignment="Center"/>
-                    <TextBox Text="{Binding OptimizationSpacingDays, Mode=TwoWay}" Margin="5 0 0 0" Width="30"/>
-                    <TextBlock Text="дней" Margin="1 0 0 0" VerticalAlignment="Center"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="35 10 0 0" IsEnabled="{Binding IsForwardTesting}">
-                    <TextBlock Text="Длительность форвардного теста:" VerticalAlignment="Center"/>
-                    <TextBox Text="{Binding DurationForwardYears, Mode=TwoWay}" Margin="5 0 0 0" Width="25"/>
-                    <TextBlock Text="лет" Margin="1 0 0 0" VerticalAlignment="Center"/>
-                    <TextBox Text="{Binding DurationForwardMonths, Mode=TwoWay}" Margin="5 0 0 0" Width="25"/>
-                    <TextBlock Text="месяцев" Margin="1 0 0 0" VerticalAlignment="Center"/>
-                    <TextBox Text="{Binding DurationForwardDays, Mode=TwoWay}" Margin="5 0 0 0" Width="30"/>
-                    <TextBlock Text="дней" Margin="1 0 0 0" VerticalAlignment="Center"/>
-                </StackPanel>
-                <Button Content="Запустить тестирование" Command="{Binding LaunchTesting_Click}" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000"  Width="156" Height="32" Margin="0 14 0 0" HorizontalAlignment="Right">
-                    <Button.ToolTip>
-                        <ToolTip>
-                            <ListView ItemsSource="{Binding TooltipLaunchTesting}" IsEnabled="False"/>
-                        </ToolTip>
-                    </Button.ToolTip>
-                </Button>
             </StackPanel>
-        </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Page>

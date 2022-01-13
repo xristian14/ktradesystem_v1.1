@@ -14,7 +14,7 @@ namespace ktradesystem.Models.Datatables
         public double? Step { get; set; }
         public bool? IsStepPercent { get; set; }
         public int IdAlgorithm { get; set; }
-        public int IdIndicatorParameterTemplate { get; set; }
+        public IndicatorParameterTemplate IndicatorParameterTemplate { get; set; }
         public Indicator Indicator { get; set; }
     }
 }

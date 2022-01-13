@@ -16,5 +16,6 @@ namespace ktradesystem.Models.Datatables
         public double Step { get; set; }
         public bool IsStepPercent { get; set; }
         public int IdAlgorithm { get; set; }
+        public ParameterValueType ParameterValueType { get; set; } //тип значения параметра (целый, дробный)
     }
 }

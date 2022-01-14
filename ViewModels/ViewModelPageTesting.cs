@@ -3190,7 +3190,7 @@ namespace ktradesystem.ViewModels
 
                 StartPeriodTesting = startDate.Date;
                 EndPeriodTesting = endDate.Date;
-                DisplayDateStartPeriodTesting = startDate.Date;
+                DisplayDateStartPeriodTesting = new DateTime(startDate.Year, startDate.Month, 1);
                 DisplayDateEndPeriodTesting = endDate.Date;
             }
             else

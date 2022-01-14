@@ -135,23 +135,24 @@ namespace ktradesystem.Models
                 }
             }
 
-            //определяем допустимую длительность теста (при форвардном тестировании длительность будет от форвардной длительности, при оптимизационном от оптимизационной)
-            TimeSpan acceptableDuration = new TimeSpan();
+            //определяем минимально допустимую длительность теста
+            TimeSpan acceptableOptimizationDuration = new TimeSpan(); //минимально допустимая длительность оптимизационного теста
+            TimeSpan acceptableForwardDuration = new TimeSpan(); //минимально допустимая длительность форвардного теста
             if (IsForwardTesting)
             {
                 double totalDays = DurationForwardTest.Years * 365 + DurationForwardTest.Months * 30 + DurationForwardTest.Days;
-                acceptableDuration = TimeSpan.FromDays(totalDays * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100));
+                acceptableForwardDuration = TimeSpan.FromDays(totalDays * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100));
             }
             else
             {
                 double totalDays = DurationOptimizationTests.Years * 365 + DurationOptimizationTests.Months * 30 + DurationOptimizationTests.Days;
-                acceptableDuration = TimeSpan.FromDays(totalDays * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100));
+                acceptableOptimizationDuration = TimeSpan.FromDays(totalDays * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100));
             }
 
             //формируем тестовые связки
             foreach (DataSourceGroup dataSourceGroup in DataSourceGroups)
             {
-                //формируем серии оптимизационных тестов для данного источника данных для каждого периода (для форвардного нужно смотреть, помещается ли форвардный тест в оставшееся время, и если нет то не создавать оптимизационные тесты)
+                //формируем серии оптимизационных тестов для данного источника данных для каждого периода
 
                 //определяем диапазон доступных дат для данной группы источников данных (начальная и конечная даты которые есть во всех источниках данных)
                 DateTime startAvailableDate = new DateTime();
@@ -176,18 +177,25 @@ namespace ktradesystem.Models
                     }
                 }
 
-                //определяем начальную и конечную даты тестирования данной группы источников данных
-                DateTime startDate = DateTime.Compare(startAvailableDate, StartPeriod) < 0 ? StartPeriod : startAvailableDate;
-                DateTime endDate = DateTime.Compare(endAvailableDate, EndPeriod) > 0 ? EndPeriod : endAvailableDate;
+                //находим дату начала тестирования данной группы источников данных (нужно чтобы в следующем за этой датой промежутоком была минимально допустимая длительность для оптимизационного или форвардного тестирования, если например, дата начала 1-е число, доступные данные начинаются с 5-го, длительность 1 месяц, минимально допустимая 27 дней, в таком случае дата перейдет на 1 число следующего месяца, и там будет проверяться наличие минимально допустимых данных)
+                DateTime currentDate = StartPeriod; //текущая дата
+                //пока длительность от доступных данных до текущей даты + длительность оптимизации < минимально допустимой длительности, переходим на следующую дату, пока не будет найдена дата начала тестирования (пока дата доступных данных + минимально допустимая длительность > текущей даты + длительность оптимизации)
+                while (DateTime.Compare(startAvailableDate.Add(acceptableOptimizationDuration), currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days)) > 0)
+                {
+                    currentDate = currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days);
+                }
 
-                DateTime currentDate = startDate; //текущая дата
+                //определяем дату окончания тестирования
+                DateTime endDate = DateTime.Compare(endAvailableDate, EndPeriod) > 0 ? EndPeriod : endAvailableDate;
 
                 //пока истинно одно из условий:
                 // 1) это не форвардное тестирование, и текущая дата + минимально допустимая длительность оптимизационного теста <= конечной дате тестирования
-                // 2) это форвардное тестирование, и текущая дата + длительность оптимизационного теста + минимально допустимая длительность форвардного теста <= конечной дате тестирования
-                while(IsForwardTesting == false && DateTime.Compare(currentDate.Add(acceptableDuration), endDate) <= 0     ||     IsForwardTesting == true && DateTime.Compare(currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).Add(acceptableDuration), endDate) <= 0)
+                // 2) это форвардное тестирование, и текущая дата + минимально допустимая длительность оптимизационного теста + минимально допустимая длительность форвардного теста <= конечной дате тестирования
+                while (IsForwardTesting == false && DateTime.Compare(currentDate.Add(acceptableOptimizationDuration), endDate) <= 0     ||     IsForwardTesting == true && DateTime.Compare(currentDate.Add(acceptableOptimizationDuration).Add(acceptableForwardDuration), endDate) <= 0)
                 {
                     TestBatch testBatch = new TestBatch();
+
+                    //формируем список со всеми комбинациями параметров
 
                     //формируем TestRuns
                     List<TestRun> testRuns = new List<TestRun>();

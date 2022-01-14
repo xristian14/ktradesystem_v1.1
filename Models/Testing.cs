@@ -71,8 +71,9 @@ namespace ktradesystem.Models
                 {
                     IndicatorsParametersAllDoubleValues[i].Add(currentValue);
                 }
+                currentValue += step;
 
-                while(currentValue + step < Algorithm.IndicatorParameterRanges[i].MaxValue)
+                while (currentValue <= Algorithm.IndicatorParameterRanges[i].MaxValue)
                 {
                     if (isIntValueType)
                     {
@@ -115,8 +116,9 @@ namespace ktradesystem.Models
                 {
                     AlgorithmParametersAllDoubleValues[i].Add(currentValue);
                 }
+                currentValue += step;
 
-                while (currentValue + step < Algorithm.AlgorithmParameters[i].MaxValue)
+                while (currentValue <= Algorithm.AlgorithmParameters[i].MaxValue)
                 {
                     if (isIntValueType)
                     {
@@ -132,6 +134,93 @@ namespace ktradesystem.Models
                     }
 
                     currentValue += step;
+                }
+            }
+
+            //формируем список со всеми комбинациями параметров
+            List<int[]> allCombinations = new List<int[]>();
+            //сначала проходим по параметрам индикаторов
+            for (int ind = 0; ind < Algorithm.IndicatorParameterRanges.Count; ind++)
+            {
+                bool isIndicatorParameterIntValueType = (Algorithm.IndicatorParameterRanges[ind].IndicatorParameterTemplate.ParameterValueType.Id == 1) ? true : false;
+
+                if (allCombinations.Count == 0) //формируем начальный список всех комбинаций при первом прохождении
+                {
+                    if (isIndicatorParameterIntValueType)
+                    {
+                        for (int indValIndex = 0; indValIndex < IndicatorsParametersAllIntValues[ind].Count; indValIndex++)
+                        {
+                            allCombinations.Add(new int[1] { indValIndex });
+                        }
+                    }
+                    else
+                    {
+                        for (int indValIndex = 0; indValIndex < IndicatorsParametersAllDoubleValues[ind].Count; indValIndex++)
+                        {
+                            allCombinations.Add(new int[1] { indValIndex });
+                        }
+                    }
+                }
+                else
+                {
+                    List<int> indexes = new List<int>();
+                    if (isIndicatorParameterIntValueType)
+                    {
+                        for (int indValIndex = 0; indValIndex < IndicatorsParametersAllIntValues[ind].Count; indValIndex++)
+                        {
+                            indexes.Add(indValIndex);
+                        }
+                    }
+                    else
+                    {
+                        for (int indValIndex = 0; indValIndex < IndicatorsParametersAllDoubleValues[ind].Count; indValIndex++)
+                        {
+                            indexes.Add(indValIndex);
+                        }
+                    }
+                    allCombinations = CreateCombinations(allCombinations, indexes);
+                }
+            }
+            //теперь проходим по параметрам алгоритма
+            for (int alg = 0; alg < Algorithm.AlgorithmParameters.Count; alg++)
+            {
+                bool isAlgorithmParameterIntValueType = (Algorithm.AlgorithmParameters[alg].ParameterValueType.Id == 1) ? true : false;
+
+                if (allCombinations.Count == 0) //если комбинации пустые (не было параметров индикаторов), создаем комбинации
+                {
+                    if (isAlgorithmParameterIntValueType)
+                    {
+                        for (int algValIndex = 0; algValIndex < AlgorithmParametersAllIntValues[alg].Count; algValIndex++)
+                        {
+                            allCombinations.Add(new int[1] { algValIndex });
+                        }
+                    }
+                    else
+                    {
+                        for (int algValIndex = 0; algValIndex < AlgorithmParametersAllDoubleValues[alg].Count; algValIndex++)
+                        {
+                            allCombinations.Add(new int[1] { algValIndex });
+                        }
+                    }
+                }
+                else
+                {
+                    List<int> indexes = new List<int>();
+                    if (isAlgorithmParameterIntValueType)
+                    {
+                        for (int algValIndex = 0; algValIndex < AlgorithmParametersAllIntValues[alg].Count; algValIndex++)
+                        {
+                            indexes.Add(algValIndex);
+                        }
+                    }
+                    else
+                    {
+                        for (int algValIndex = 0; algValIndex < AlgorithmParametersAllDoubleValues[alg].Count; algValIndex++)
+                        {
+                            indexes.Add(algValIndex);
+                        }
+                    }
+                    allCombinations = CreateCombinations(allCombinations, indexes);
                 }
             }
 
@@ -162,17 +251,18 @@ namespace ktradesystem.Models
                         }
                     }
                 }
-                
+                availableDateEnd = availableDateEnd.AddDays(1); //прибавляем 1 день, т.к. в расчетах последний день является днем окончания и не торговым днем, а здесь последний день вычисляется как торговый
+
                 //определяем дату окончания тестирования
                 DateTime endDate = DateTime.Compare(availableDateEnd, EndPeriod) > 0 ? EndPeriod : availableDateEnd;
 
                 DateTime currentDate = StartPeriod; //текущая дата
 
                 //определяем минимально допустимую длительность оптимизационного теста ((текущая дата + оптимизация  -  текущая) * % из настроек)
-                TimeSpan minimumAllowedOptimizationDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days) - currentDate).TotalMinutes * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100));
+                TimeSpan minimumAllowedOptimizationDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days) - currentDate).TotalMinutes * ((double)_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100));
                 minimumAllowedOptimizationDuration = minimumAllowedOptimizationDuration.TotalDays < 1 ? TimeSpan.FromDays(1) : minimumAllowedOptimizationDuration; //если менее одного дня, устанавливаем в один день
                 //определяем минимально допустимую длительность форвардного теста ((текущая дата + оптимизация + форвардный  -  текущая + оптимизация) * % из настроек)
-                TimeSpan minimumAllowedForwardDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days) - currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days)).TotalMinutes * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100));
+                TimeSpan minimumAllowedForwardDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days) - currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days)).TotalMinutes * ((double)_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100));
                 minimumAllowedForwardDuration = minimumAllowedForwardDuration.TotalDays < 1 && IsForwardTesting ? TimeSpan.FromDays(1) : minimumAllowedForwardDuration; //если менее одного дня и это форвардное тестирование, устанавливаем в один день (при не форвардном будет 0)
 
                 //в цикле определяется минимально допустимая длительность для следующей проверки, исходя из разности дат текущей и текущей + требуемой
@@ -209,17 +299,17 @@ namespace ktradesystem.Models
                         {
                             //определяем максимальную длительность, которая помещается в доступный промежуток
                             int currentDurationPercent = 99;
-                            TimeSpan currentOptimizationDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days) - currentDate).TotalMinutes * (currentDurationPercent / 100));
+                            TimeSpan currentOptimizationDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days) - currentDate).TotalMinutes * ((double)currentDurationPercent / 100));
                             currentOptimizationDuration = currentOptimizationDuration.TotalDays < 1 ? TimeSpan.FromDays(1) : currentOptimizationDuration; //если менее одного дня, устанавливаем в один день
-                            TimeSpan currentForwardDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days) - currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days)).TotalMinutes * (currentDurationPercent / 100));
+                            TimeSpan currentForwardDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days) - currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days)).TotalMinutes * ((double)currentDurationPercent / 100));
                             currentForwardDuration = currentForwardDuration.TotalDays < 1 && IsForwardTesting ? TimeSpan.FromDays(1) : currentForwardDuration; //если менее одного дня и это форвардное тестирование, устанавливаем в один день (при не форвардном будет 0)
                             //пока период с уменьшенной длительностью не поместится, уменьшаем длительность (пока текущая дата для расчетов + уменьшенная длительность больше текущей даты + полная длительность)
                             while (DateTime.Compare(currentDateForCalculate.Add(currentOptimizationDuration).Add(currentForwardDuration).Date, currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days)) > 0)
                             {
                                 currentDurationPercent--;
-                                currentOptimizationDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days) - currentDate).TotalMinutes * (currentDurationPercent / 100));
+                                currentOptimizationDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days) - currentDate).TotalMinutes * ((double)currentDurationPercent / 100));
                                 currentOptimizationDuration = currentOptimizationDuration.TotalDays < 1 ? TimeSpan.FromDays(1) : currentOptimizationDuration; //если менее одного дня, устанавливаем в один день
-                                currentForwardDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days) - currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days)).TotalMinutes * (currentDurationPercent / 100));
+                                currentForwardDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days) - currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days)).TotalMinutes * ((double)currentDurationPercent / 100));
                                 currentForwardDuration = currentForwardDuration.TotalDays < 1 && IsForwardTesting ? TimeSpan.FromDays(1) : currentForwardDuration; //если менее одного дня и это форвардное тестирование, устанавливаем в один день (при не форвардном будет 0)
                             }
 
@@ -236,97 +326,6 @@ namespace ktradesystem.Models
                             optimizationEndDate = currentDateForCalculate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).Date;
                             forwardStartDate = optimizationEndDate;
                             forwardEndDate = currentDateForCalculate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days).Date;
-                        }
-
-                        //формируем список со всеми комбинациями параметров
-                        List<int[]> allCombinations = new List<int[]>();
-                        //сначала проходим по параметрам индикаторов
-                        for (int ind = 0; ind < Algorithm.IndicatorParameterRanges.Count; ind++)
-                        {
-                            bool isIndicatorParameterIntValueType = (Algorithm.IndicatorParameterRanges[ind].IndicatorParameterTemplate.ParameterValueType.Id == 1) ? true : false;
-
-                            if (allCombinations.Count == 0) //формируем начальный список всех комбинаций при первом прохождении
-                            {
-                                if (isIndicatorParameterIntValueType)
-                                {
-                                    allCombinations.Add(new int[IndicatorsParametersAllIntValues.Length]);
-                                    for (int indValIndex = 0; indValIndex < IndicatorsParametersAllIntValues.Length; indValIndex++)
-                                    {
-                                        allCombinations[ind][indValIndex] = indValIndex;
-                                    }
-                                }
-                                else
-                                {
-                                    allCombinations.Add(new int[IndicatorsParametersAllDoubleValues.Length]);
-                                    for (int indValIndex = 0; indValIndex < IndicatorsParametersAllDoubleValues.Length; indValIndex++)
-                                    {
-                                        allCombinations[ind][indValIndex] = indValIndex;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                List<int> indexes = new List<int>();
-                                if (isIndicatorParameterIntValueType)
-                                {
-                                    for (int indValIndex = 0; indValIndex < IndicatorsParametersAllIntValues.Length; indValIndex++)
-                                    {
-                                        indexes.Add(indValIndex);
-                                    }
-                                }
-                                else
-                                {
-                                    for (int indValIndex = 0; indValIndex < IndicatorsParametersAllDoubleValues.Length; indValIndex++)
-                                    {
-                                        indexes.Add(indValIndex);
-                                    }
-                                }
-                                allCombinations = CreateCombinations(allCombinations, indexes);
-                            }
-                        }
-                        //теперь проходим по параметрам алгоритма
-                        for (int alg = 0; alg < Algorithm.AlgorithmParameters.Count; alg++)
-                        {
-                            bool isAlgorithmParameterIntValueType = (Algorithm.AlgorithmParameters[alg].ParameterValueType.Id == 1) ? true : false;
-
-                            if (allCombinations.Count == 0) //если комбинации пустые (не было параметров индикаторов), создаем комбинации
-                            {
-                                if (isAlgorithmParameterIntValueType)
-                                {
-                                    allCombinations.Add(new int[AlgorithmParametersAllIntValues.Length]);
-                                    for (int algValIndex = 0; algValIndex < AlgorithmParametersAllIntValues.Length; algValIndex++)
-                                    {
-                                        allCombinations[alg][algValIndex] = algValIndex;
-                                    }
-                                }
-                                else
-                                {
-                                    allCombinations.Add(new int[AlgorithmParametersAllDoubleValues.Length]);
-                                    for (int algValIndex = 0; algValIndex < AlgorithmParametersAllDoubleValues.Length; algValIndex++)
-                                    {
-                                        allCombinations[alg][algValIndex] = algValIndex;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                List<int> indexes = new List<int>();
-                                if (isAlgorithmParameterIntValueType)
-                                {
-                                    for (int algValIndex = 0; algValIndex < AlgorithmParametersAllIntValues.Length; algValIndex++)
-                                    {
-                                        indexes.Add(algValIndex);
-                                    }
-                                }
-                                else
-                                {
-                                    for (int algValIndex = 0; algValIndex < AlgorithmParametersAllDoubleValues.Length; algValIndex++)
-                                    {
-                                        indexes.Add(algValIndex);
-                                    }
-                                }
-                                allCombinations = CreateCombinations(allCombinations, indexes);
-                            }
                         }
 
                         //создаем testBatch
@@ -360,7 +359,7 @@ namespace ktradesystem.Models
                             while (alg < Algorithm.AlgorithmParameters.Count)
                             {
                                 AlgorithmParameterValue algorithmParameterValue = new AlgorithmParameterValue { AlgorithmParameter = Algorithm.AlgorithmParameters[alg] };
-                                if (Algorithm.AlgorithmParameters[ind].ParameterValueType.Id == 1)
+                                if (Algorithm.AlgorithmParameters[alg].ParameterValueType.Id == 1)
                                 {
                                     algorithmParameterValue.IntValue = AlgorithmParametersAllIntValues[alg][allCombinations[i][ind + alg]];
                                 }
@@ -387,21 +386,19 @@ namespace ktradesystem.Models
                         TestBatches.Add(testBatch);
                     }
 
-                    
-
                     //прибавляем к текущей дате временной промежуток между оптимизационными тестами
                     currentDate = currentDate.AddYears(OptimizationTestSpacing.Years).AddMonths(OptimizationTestSpacing.Months).AddDays(OptimizationTestSpacing.Days);
 
                     //определяем минимально допустимую длительность оптимизационного теста ((текущая дата + оптимизация  -  текущая) * % из настроек)
-                    minimumAllowedOptimizationDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days) - currentDate).TotalMinutes * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100));
+                    minimumAllowedOptimizationDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days) - currentDate).TotalMinutes * ((double)_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100));
                     minimumAllowedOptimizationDuration = minimumAllowedOptimizationDuration.TotalDays < 1 ? TimeSpan.FromDays(1) : minimumAllowedOptimizationDuration; //если менее одного дня, устанавливаем в один день
                     //определяем минимально допустимую длительность форвардного теста ((текущая дата + оптимизация + форвардный  -  текущая + оптимизация) * % из настроек)
-                    minimumAllowedForwardDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days) - currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days)).TotalMinutes * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100));
+                    minimumAllowedForwardDuration = TimeSpan.FromMinutes((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days) - currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days)).TotalMinutes * ((double)_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100));
                     minimumAllowedForwardDuration = minimumAllowedForwardDuration.TotalDays < 1 && IsForwardTesting ? TimeSpan.FromDays(1) : minimumAllowedForwardDuration; //если менее одного дня и это форвардное тестирование, устанавливаем в один день (при не форвардном будет 0)
                 }
             }
 
-
+            //выполняем тесты
         }
 
         private void TestRunExecute(TestRun testRun)
@@ -414,20 +411,20 @@ namespace ktradesystem.Models
             return new TestRun();
         }
 
-        private List<int[]> CreateCombinations(List<int[]> combination, List<int> indexes) //принимает 2 списка, 1-й - содержит массив с комбинации индексов параметров: {[0,0],[0,1],[1,0],[1,1]}, второй только индексы: {0,1}, фунция перебирает все комбинации элементов обоих списков и возвращает новый список в котором индексы 2-го списка добавлены в комбинацию 1-го: {[0,0,0],[0,0,1],[0,1,0]..}
+        private List<int[]> CreateCombinations(List<int[]> combination, List<int> indexes) //принимает 2 списка, 1-й - содержит массив с комбинации индексов параметров: {[0,0],[0,1],[1,0],[1,1]}, второй только индексы: {0,1}, функция перебирает все комбинации элементов обоих списков и возвращает новый список в котором индексы 2-го списка добавлены в комбинацию 1-го: {[0,0,0],[0,0,1],[0,1,0]..}
         {
             List<int[]> newCombination = new List<int[]>();
             for(int i = 0; i < combination.Count; i++)
             {
                 for(int k = 0; k < indexes.Count; k++)
                 {
-                    int[] arr = new int[combination[i].Length + 1];
-                    for(int n = 0; n < combination[i].Length; n++)
+                    int[] arr = new int[combination[i].Length + 1]; //создаем новый массив, превышающий старый на один элемент
+                    for(int n = 0; n < combination[i].Length; n++) //заносим в новый массив все элементы старого массива
                     {
                         arr[n] = combination[i][n];
                     }
-                    arr[combination[i].Length] = indexes[k];
-                    newCombination.Add(arr);
+                    arr[combination[i].Length] = indexes[k]; //помещаем в последний элемент нового массива индекс из таблицы индексов
+                    newCombination.Add(arr); //добавляем новую созданную комбинацию из старой комбинации + индекса
                 }
             }
             return newCombination;

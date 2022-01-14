@@ -3080,24 +3080,35 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private DateTime _displayDateStartPeriodTesting;
-        public DateTime DisplayDateStartPeriodTesting //начало доступных дат
+        private DateTime _displayDateStartStartPeriodTesting;
+        public DateTime DisplayDateStartStartPeriodTesting //начало доступных дат для начала периода тестирования
         {
-            get { return _displayDateStartPeriodTesting; }
+            get { return _displayDateStartStartPeriodTesting; }
             set
             {
-                _displayDateStartPeriodTesting = value;
+                _displayDateStartStartPeriodTesting = value;
                 OnPropertyChanged();
             }
         }
 
-        private DateTime _displayDateEndPeriodTesting;
-        public DateTime DisplayDateEndPeriodTesting //окончание доступных дат
+        private DateTime _displayDateStartEndPeriodTesting;
+        public DateTime DisplayDateStartEndPeriodTesting //начало доступных дат для окончания периода тестирования
         {
-            get { return _displayDateEndPeriodTesting; }
+            get { return _displayDateStartEndPeriodTesting; }
             set
             {
-                _displayDateEndPeriodTesting = value;
+                _displayDateStartEndPeriodTesting = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private DateTime _displayDateEndEndPeriodTesting;
+        public DateTime DisplayDateEndEndPeriodTesting //окончание доступных дат периода окончания тестирования
+        {
+            get { return _displayDateEndEndPeriodTesting; }
+            set
+            {
+                _displayDateEndEndPeriodTesting = value;
                 OnPropertyChanged();
             }
         }
@@ -3189,9 +3200,10 @@ namespace ktradesystem.ViewModels
                 }
 
                 StartPeriodTesting = startDate.Date;
-                EndPeriodTesting = endDate.Date;
-                DisplayDateStartPeriodTesting = new DateTime(startDate.Year, startDate.Month, 1);
-                DisplayDateEndPeriodTesting = endDate.Date;
+                EndPeriodTesting = endDate.AddDays(1).Date; //прибавил 1 день, т.к. в вычислениях endDate последний день рассматривался как торговый, а в тестировании он будет рассматриваться как день на котором заканчивается торговля
+                DisplayDateStartStartPeriodTesting = new DateTime(startDate.Year, startDate.Month, 1);
+                DisplayDateStartEndPeriodTesting = startDate.Date; //дату окончания можно установить только в доступные даты
+                DisplayDateEndEndPeriodTesting = endDate.Date;
             }
             else
             {
@@ -3399,7 +3411,7 @@ namespace ktradesystem.ViewModels
             }
 
             //проверяем что дата начала периода тестирования раньше даты окончания периода тестирования
-            if(DateTime.Compare(EndPeriodTesting, StartPeriodTesting) < 0)
+            if(DateTime.Compare(EndPeriodTesting.Date, StartPeriodTesting.Date) <= 0)
             {
                 result = false;
                 TooltipLaunchTesting.Add("Дата начала периода тестирования должна быть раньше даты окончания.");
@@ -3700,14 +3712,16 @@ namespace ktradesystem.ViewModels
 
                     //ForwardDepositCurrencies
                     List<DepositCurrency> forwardDepositCurrencies = new List<DepositCurrency>();
-                    //forwardDepositCurrencies.Add(new DepositCurrency { Currency = SelectedCurrency, Deposit = double.Parse(ForwardDeposit) });
-                    //определяем доллоровую стоимость депозита
-                    double dollarCostDeposit = double.Parse(ForwardDeposit) / SelectedCurrency.DollarCost;
-                    foreach (Currency currency in Currencies)
+                    if(IsForwardTesting && IsForwardDepositTesting)
                     {
-                        //переводим доллоровую стоимость в валютную, умножая на стоимость 1 доллара
-                        double cost = Math.Round(dollarCostDeposit * currency.DollarCost, 2);
-                        forwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = cost });
+                        //определяем доллоровую стоимость депозита
+                        double dollarCostDeposit = double.Parse(ForwardDeposit) / SelectedCurrency.DollarCost;
+                        foreach (Currency currency in Currencies)
+                        {
+                            //переводим доллоровую стоимость в валютную, умножая на стоимость 1 доллара
+                            double cost = Math.Round(dollarCostDeposit * currency.DollarCost, 2);
+                            forwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = cost });
+                        }
                     }
 
                     //DurationOptimizationTests
@@ -3724,9 +3738,9 @@ namespace ktradesystem.ViewModels
 
                     //DurationForwardTest
                     DateTimeDuration durationForwardTest = new DateTimeDuration();
-                    durationForwardTest.Years = (DurationForwardYears == "" || DurationForwardYears == null) ? 0 : int.Parse(DurationForwardYears);
-                    durationForwardTest.Months = (DurationForwardMonths == "" || DurationForwardMonths == null) ? 0 : int.Parse(DurationForwardMonths);
-                    durationForwardTest.Days = (DurationForwardDays == "" || DurationForwardDays == null) ? 0 : int.Parse(DurationForwardDays);
+                    durationForwardTest.Years = (DurationForwardYears == "" || DurationForwardYears == null || IsForwardTesting == false) ? 0 : int.Parse(DurationForwardYears);
+                    durationForwardTest.Months = (DurationForwardMonths == "" || DurationForwardMonths == null || IsForwardTesting == false) ? 0 : int.Parse(DurationForwardMonths);
+                    durationForwardTest.Days = (DurationForwardDays == "" || DurationForwardDays == null || IsForwardTesting == false) ? 0 : int.Parse(DurationForwardDays);
 
                     //создаем объект Testing
                     Testing testing = new Testing();
@@ -3740,8 +3754,8 @@ namespace ktradesystem.ViewModels
                     testing.IsForwardTesting = IsForwardTesting;
                     testing.IsForwardDepositTrading = IsForwardDepositTesting;
                     testing.ForwardDepositCurrencies = forwardDepositCurrencies;
-                    testing.StartPeriod = StartPeriodTesting;
-                    testing.EndPeriod = EndPeriodTesting;
+                    testing.StartPeriod = StartPeriodTesting.Date;
+                    testing.EndPeriod = EndPeriodTesting.Date;
                     testing.DurationOptimizationTests = durationOptimizationTests;
                     testing.OptimizationTestSpacing = optimizationTestSpacing;
                     testing.DurationForwardTest = durationForwardTest;

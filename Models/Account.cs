@@ -12,6 +12,6 @@ namespace ktradesystem.Models
         public List<Order> AllOrders { get; set; }
         public List<Deal> CurrentPosition { get; set; } //копии сделок (т.к. при ссылке на оригинальную, при закрытии части позиции, будут изменяться сделки из истории сделок), количество лотов в этих сделках будет уменьшаться при закрытии части позиции
         public List<Deal> AllDeals { get; set; }
-        public double Deposit { get; set; }
+        public List<DepositCurrency> ForwardDepositCurrencies { get; set; }
     }
 }

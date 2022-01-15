@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models
 {
-    class Account
+    public class Account
     {
         public List<Order> Orders { get; set; }
         public List<Order> AllOrders { get; set; }

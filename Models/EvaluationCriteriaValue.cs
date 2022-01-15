@@ -7,7 +7,7 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
-    class EvaluationCriteriaValue
+    public class EvaluationCriteriaValue
     {
         public EvaluationCriteria EvaluationCriteria { get; set; }
         public double Value { get; set; }

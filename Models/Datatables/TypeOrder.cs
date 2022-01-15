@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models.Datatables
 {
-    class TypeOrder
+    public class TypeOrder
     {
         public int Id { get; set; }
         public string Name { get; set; }

@@ -435,38 +435,10 @@ namespace ktradesystem.Models
                 indicatorParameters = indicatorParameters.Substring(0, indicatorParameters.Length - 2); //удаляем последние 2 символа
 
                 //добавляем в текст скрипта приведение к double переменных и чисел в операциях деления и умножения (т.к. при делении типов int на int получится тип int и дробная часть потеряется), а так же возвращаемого значения
-                StringBuilder script = new StringBuilder();
-                //формируем строку script, в которой все повторяющиеся пробелы представлены одним пробелом
-                script.Append(indicators[i].Script[0]); //добавляем первый символ, т.к. script[script.Length-1] в цикле будет обращаться к -1 индексу
-                for (int k = 1; k < indicators[i].Script.Length; k++)
-                {
-                    if((script[script.Length-1] == ' ' && indicators[i].Script[k] == ' ') == false) //если последний символ в script = пробел и добавляемый = пробел, пропускаем, если же это ложно то добавляем символ в script
-                    {
-                        script.Append(indicators[i].Script[k]);
-                    }
-                }
+                //удаляем дублирующиеся пробелы
+                StringBuilder script = RemoveDuplicateSpaces(indicators[i].Script);
                 //находим все индексы в строке в которые нужно вставить "(double)"
-                List<int> indexesForInsert = new List<int>();
-                //проходим по всем символам, и если найден / или *, идем в направлении назад, пропуская первый пробел если он есть, и находим один из символов: " +-/*()&|!=<>". Индекс, следующий за найденным символом есть индекс для вставки "(double)"
-                string expressionEndSymbols = " +-/*()&|!=<>";
-                for (int k = 0; k < script.Length; k++)
-                {
-                    if (script[k] == '/' || script[k] == '*')
-                    {
-                        bool isEndExpression = false; //найдено ли окончания левой части выражения (деления или умножения)
-                        int a = k - 2; //вычитаем 2, т.к. если там пробел то мы переместимся на первый символ выражения, если там выражение, состоящее из 1 символа, мы переместимся на символ окончания выражения
-                        while(a >= 0 && isEndExpression == false)
-                        {
-                            if (expressionEndSymbols.Contains(script[a])) //если текущий символ найден в символх окончания выражения, запоминаем это
-                            {
-                                isEndExpression = true;
-                            }
-                            a--;
-                        }
-                        //добавляем в индексы индекс вставки приведения к double
-                        indexesForInsert.Add(a + 2); //+2 т.к. a--, и это символ перед первым символом выражения
-                    }
-                }
+                List<int> indexesForInsert = FindIndexesToInsertDouble(script);
                 //вставляем приведение к double
                 for (int k = indexesForInsert.Count - 1; k >= 0; k--)
                 {
@@ -483,16 +455,16 @@ namespace ktradesystem.Models
 
                 var compiled = provider.CompileAssemblyFromSource(param, new string[]
                 {
-                        @"
-                        using System;
-                        using ktradesystem.Models;
-                        public class CompiledIndicator_" + indicators[i].Name +
-                        @"{
-                            public double Calculate(" + indicatorParameters + @")
-                            {
-                                " + script +
-                            @"}
-                        }"
+                    @"
+                    using System;
+                    using ktradesystem.Models;
+                    public class CompiledIndicator_" + indicators[i].Name +
+                    @"{
+                        public double Calculate(" + indicatorParameters + @")
+                        {
+                            " + script +
+                        @"}
+                    }"
                 });
                 if (compiled.Errors.Count == 0)
                 {
@@ -506,19 +478,74 @@ namespace ktradesystem.Models
                     {
                         _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Ошибка при компиляции индикатора " + indicators[i].Name + ": " + compiled.Errors[0].ErrorText); }));
                     }
-                    
                 }
             }
-        }
 
-        private void TestRunExecute(TestRun testRun, ktradesystem.Models.Candle[] candles)
-        {
+            //создаем класс алгоритма
 
-        }
+            string algorithmParameters = ""; //описание принимаемых параметров методом алгоритма
+            //формируем параметры источников данных
+            for (int k = 0; k < Algorithm.DataSourceTemplates.Count; k++)
+            {
+                algorithmParameters += "DataSourceForCalculate datasource_" + Algorithm.DataSourceTemplates[k].Name + ", ";
+            }
+            //формируем параметры параметров алгоритма
+            for (int k = 0; k < Algorithm.AlgorithmParameters.Count; k++)
+            {
+                algorithmParameters += Algorithm.AlgorithmParameters[k].ParameterValueType.Id == 1 ? "int " : "double ";
+                algorithmParameters += "parameter_" + Algorithm.AlgorithmParameters[k].Name + ", ";
+            }
+            algorithmParameters = algorithmParameters.Substring(0, algorithmParameters.Length - 2); //удаляем последние 2 символа
+            //добавляем в текст скрипта приведение к double переменных и чисел в операциях деления и умножения (т.к. при делении типов int на int получится тип int и дробная часть потеряется), а так же возвращаемого значения
+            //удаляем дублирующиеся пробелы
+            StringBuilder scriptAlgorithm = RemoveDuplicateSpaces(Algorithm.Script);
+            //находим все индексы в строке в которые нужно вставить "(double)"
+            List<int> indexesAlgorithmForInsert = FindIndexesToInsertDouble(scriptAlgorithm);
+            //вставляем приведение к double
+            for (int k = indexesAlgorithmForInsert.Count - 1; k >= 0; k--)
+            {
+                scriptAlgorithm.Insert(indexesAlgorithmForInsert[k], "(double)");
+            }
 
-        private TestRun DeterminingTopModel(TestBatch testBatch) //определение топ-модели среди оптимизационных тестов
-        {
-            return new TestRun();
+            Microsoft.CSharp.CSharpCodeProvider providerAlgorithm = new Microsoft.CSharp.CSharpCodeProvider();
+            System.CodeDom.Compiler.CompilerParameters paramAlgorithm = new System.CodeDom.Compiler.CompilerParameters();
+            paramAlgorithm.ReferencedAssemblies.Add(Assembly.GetExecutingAssembly().Location);
+            paramAlgorithm.GenerateExecutable = false;
+            paramAlgorithm.GenerateInMemory = true;
+            
+            var compiledAlgorithm = providerAlgorithm.CompileAssemblyFromSource(paramAlgorithm, new string[]
+            {
+                @"
+                using System;
+                using System.Collections.Generic;
+                using ktradesystem.Models;
+                public class CompiledAlgorithm
+                {
+                    public List<Order> Calculate(" + algorithmParameters + @")
+                    {
+                        List<Order> newOrders = new List<Order>();
+                        " + scriptAlgorithm +
+                        @"return newOrders;
+                    }
+                }"
+            });
+            if (compiledAlgorithm.Errors.Count == 0)
+            {
+                CompiledAlgorithm = compiledAlgorithm.CompiledAssembly.CreateInstance("CompiledAlgorithm");
+            }
+            else
+            {
+                isErrorCompile = true;
+                //отправляем пользователю сообщения об ошибке
+                for (int r = 0; r < compiledAlgorithm.Errors.Count; r++)
+                {
+                    _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Ошибка при компиляции алгоритма: " + compiledAlgorithm.Errors[0].ErrorText); }));
+                }
+            }
+            
+
+
+
         }
 
         private List<int[]> CreateCombinations(List<int[]> combination, List<int> indexes) //принимает 2 списка, 1-й - содержит массив с комбинации индексов параметров: {[0,0],[0,1],[1,0],[1,1]}, второй только индексы: {0,1}, функция перебирает все комбинации элементов обоих списков и возвращает новый список в котором индексы 2-го списка добавлены в комбинацию 1-го: {[0,0,0],[0,0,1],[0,1,0]..}
@@ -538,6 +565,56 @@ namespace ktradesystem.Models
                 }
             }
             return newCombination;
+        }
+
+        private StringBuilder RemoveDuplicateSpaces(string str) //удаляет дублирующиеся пробелы в строке, и возвращает объект StringBuilder
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.Append(str[0]); //добавляем первый символ, т.к. stringBuilder[stringBuilder.Length-1] в цикле будет обращаться к -1 индексу
+            for (int k = 1; k < str.Length; k++)
+            {
+                if ((stringBuilder[stringBuilder.Length - 1] == ' ' && str[k] == ' ') == false) //если последний символ в stringBuilder = пробел и добавляемый = пробел, пропускаем, если же это ложно то добавляем символ в stringBuilder
+                {
+                    stringBuilder.Append(str[k]);
+                }
+            }
+            return stringBuilder;
+        }
+
+        private List<int> FindIndexesToInsertDouble(StringBuilder sb) //возвращает список с индексами, в которые нужно вставить приведение к double
+        {
+            List<int> indexes = new List<int>();
+            //проходим по всем символам, и если найден / или *, идем в направлении назад, пока не находим один из символов: " +-/*()&|!=<>". Индекс, следующий за найденным символом есть индекс для вставки "(double)"
+            string expressionEndSymbols = " +-/*()&|!=<>";
+            for (int k = 0; k < sb.Length; k++)
+            {
+                if (sb[k] == '/' || sb[k] == '*')
+                {
+                    bool isEndExpression = false; //найдено ли окончания левой части выражения (деления или умножения)
+                    int a = k - 2; //вычитаем 2, т.к. если там пробел то мы переместимся на последний символ выражения, если там выражение, состоящее из 1 символа, мы переместимся на символ окончания выражения
+                    while (a >= 0 && isEndExpression == false)
+                    {
+                        if (expressionEndSymbols.Contains(sb[a])) //если текущий символ найден в символх окончания выражения, запоминаем это
+                        {
+                            isEndExpression = true;
+                        }
+                        a--;
+                    }
+                    //добавляем в индексы индекс вставки приведения к double
+                    indexes.Add(a + 2); //+2 т.к. a--, и это символ перед первым символом выражения
+                }
+            }
+            return indexes;
+        }
+
+        private void TestRunExecute(TestRun testRun, ktradesystem.Models.Candle[] candles)
+        {
+
+        }
+
+        private TestRun DeterminingTopModel(TestBatch testBatch) //определение топ-модели среди оптимизационных тестов
+        {
+            return new TestRun();
         }
     }
 }

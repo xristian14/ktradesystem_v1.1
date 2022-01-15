@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models.Datatables
 {
-    class IndicatorParameterRange
+    public class IndicatorParameterRange
     {
         public int Id { get; set; }
         public double MinValue { get; set; }

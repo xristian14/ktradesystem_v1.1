@@ -7,7 +7,7 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
-    class TopModelCriteria
+    public class TopModelCriteria
     {
         public EvaluationCriteria EvaluationCriteria { get; set; }
         public string CompareSign { get; set; }

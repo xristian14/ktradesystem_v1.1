@@ -7,7 +7,7 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
-    class DataSourceGroup
+    public class DataSourceGroup
     {
         public List<DataSourceAccordance> DataSourceAccordances { get; set; }
     }

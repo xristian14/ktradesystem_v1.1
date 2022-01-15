@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models
 {
-    class CompareSign //класс для получения знаков сравнения для определения какой знак использован
+    public class CompareSign //класс для получения знаков сравнения для определения какой знак использован
     {
         public static string GetMax()
         {

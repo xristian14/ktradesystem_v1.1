@@ -7,7 +7,7 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
-    class Deal
+    public class Deal
     {
         public int Number { get; set; }
         public DataSource DataSource { get; set; }

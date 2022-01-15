@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models.Datatables
 {
-    class IndicatorParameterTemplate
+    public class IndicatorParameterTemplate
     {
         public int Id { get; set; }
         public string Name { get; set; }

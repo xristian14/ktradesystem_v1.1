@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models.Datatables
 {
-    class DataSourceFileWorkingPeriod
+    public class DataSourceFileWorkingPeriod
     {
         public int Id { get; set; }
         public DateTime StartPeriod { get; set; } //начало периода

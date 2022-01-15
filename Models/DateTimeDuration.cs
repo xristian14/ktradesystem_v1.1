@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models
 {
-    class DateTimeDuration
+    public class DateTimeDuration
     {
         public int Years { get; set; }
         public int Months { get; set; }

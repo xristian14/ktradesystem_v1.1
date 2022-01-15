@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models.Datatables
 {
-    class Interval
+    public class Interval
     {
         public int Id { get; set; }
         public string Name { get; set; }

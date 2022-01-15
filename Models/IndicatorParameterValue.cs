@@ -7,7 +7,7 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
-    class IndicatorParameterValue
+    public class IndicatorParameterValue
     {
         public IndicatorParameterTemplate IndicatorParameterTemplate { get; set; }
         public int IntValue { get; set; }

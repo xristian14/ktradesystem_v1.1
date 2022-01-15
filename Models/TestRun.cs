@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models
 {
-    class TestRun
+    public class TestRun
     {
         public TestBatch TestBatch { get; set; }
         public Account Account { get; set; }

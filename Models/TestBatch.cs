@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models
 {
-    class TestBatch //тестовая связка
+    public class TestBatch //тестовая связка
     {
         public DataSourceGroup DataSourceGroup { get; set; }
         public List<TestRun> TestRuns { get; set; }

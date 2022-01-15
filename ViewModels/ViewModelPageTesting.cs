@@ -356,7 +356,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "Parameter." + SelectedIndicatorParameterTemplateView.Name);
+                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "parameter_" + SelectedIndicatorParameterTemplateView.Name);
                 }, (obj) => SelectedIndicatorParameterTemplateView != null && IsAddOrEditIndicator());
             }
         }
@@ -645,48 +645,6 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-
-                    ///*
-                    Microsoft.CSharp.CSharpCodeProvider Provider = new Microsoft.CSharp.CSharpCodeProvider();
-                    System.CodeDom.Compiler.CompilerParameters Param = new System.CodeDom.Compiler.CompilerParameters();
-                    Param.GenerateExecutable = false;
-                    Param.GenerateInMemory = true;
-
-
-                    var Result = Provider.CompileAssemblyFromSource(Param, new string[]
-                    {
-                        @"
-                        using System;
-                        public class Test
-                        {
-                            public double Main()
-                            {
-                                double a = 5;
-                                for(int i = 0; i < 10000; i++)
-                                {
-                                    a /= 2;
-                                    a *= 2;
-                                    a += 1;
-                                }
-                                return a;
-                            }
-                        }"
-                    });
-                    /*dynamic test = Result.CompiledAssembly.CreateInstance("Test");
-
-                    Stopwatch stopwatch = new Stopwatch();
-                    stopwatch.Start();
-                    double b = test.Main();
-                    stopwatch.Stop();*/
-
-                    dynamic[] tests = new dynamic[4];
-                    tests[0] = Result.CompiledAssembly.CreateInstance("Test");
-                    Stopwatch stopwatch = new Stopwatch();
-                    stopwatch.Start();
-                    double b = tests[0].Main();
-                    stopwatch.Stop();
-                    MessageBox.Show("b= " + b.ToString() + " Milliseconds= " + stopwatch.Elapsed.TotalMilliseconds.ToString());
-                    //*/
 
                 }, (obj) => true );
             }

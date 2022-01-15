@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models
 {
-    class Candle
+    public class Candle
     {
-        DateTime dateTime { get; set; }
-        double O { get; set; }
-        double H { get; set; }
-        double L { get; set; }
-        double C { get; set; }
-        double V { get; set; }
+        public DateTime DateTime { get; set; }
+        public double O { get; set; }
+        public double H { get; set; }
+        public double L { get; set; }
+        public double C { get; set; }
+        public double V { get; set; }
     }
 }

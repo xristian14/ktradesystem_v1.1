@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using ktradesystem.Models.Datatables;
 using System.Diagnostics;
+using System.Reflection;
+using ktradesystem.CommunicationChannel;
 
 namespace ktradesystem.Models
 {
@@ -31,10 +33,12 @@ namespace ktradesystem.Models
         private dynamic CompiledEvaluationCriterias { get; set; } //объекты, содержащие метод, выполняющий расчет критерия оценки тестового прогона
 
         private ModelData _modelData;
+        private MainCommunicationChannel _mainCommunicationChannel;
 
         public Testing()
         {
             _modelData = ModelData.getInstance();
+            _mainCommunicationChannel = MainCommunicationChannel.getInstance();
         }
 
         public void LaunchTesting()
@@ -403,6 +407,7 @@ namespace ktradesystem.Models
             }
 
             //выполняем тесты
+            bool isErrorCompile = false; //были ли ошибки при компиляции
             //создаем классы индикаторов, алгоритма, и  критериев оценки
             //создаем классы индикаторов
             //определяем список используемых индикаторов
@@ -418,11 +423,6 @@ namespace ktradesystem.Models
             CompiledIndicators = new dynamic[indicators.Count];
             for(int i = 0; i < indicators.Count; i++)
             {
-                Microsoft.CSharp.CSharpCodeProvider provider = new Microsoft.CSharp.CSharpCodeProvider();
-                System.CodeDom.Compiler.CompilerParameters param = new System.CodeDom.Compiler.CompilerParameters();
-                param.GenerateExecutable = false;
-                param.GenerateInMemory = true;
-
                 string indicatorParameters = "Candle[] candles, "; //описание принимаемых параметров методом индикатора
                 for(int k = 0; k < Algorithm.IndicatorParameterRanges.Count; k++)
                 {
@@ -437,7 +437,8 @@ namespace ktradesystem.Models
                 //добавляем в текст скрипта приведение к double переменных и чисел в операциях деления и умножения (т.к. при делении типов int на int получится тип int и дробная часть потеряется), а так же возвращаемого значения
                 StringBuilder script = new StringBuilder();
                 //формируем строку script, в которой все повторяющиеся пробелы представлены одним пробелом
-                for (int k = 0; k < indicators[i].Script.Length; k++)
+                script.Append(indicators[i].Script[0]); //добавляем первый символ, т.к. script[script.Length-1] в цикле будет обращаться к -1 индексу
+                for (int k = 1; k < indicators[i].Script.Length; k++)
                 {
                     if((script[script.Length-1] == ' ' && indicators[i].Script[k] == ' ') == false) //если последний символ в script = пробел и добавляемый = пробел, пропускаем, если же это ложно то добавляем символ в script
                     {
@@ -445,39 +446,72 @@ namespace ktradesystem.Models
                     }
                 }
                 //находим все индексы в строке в которые нужно вставить "(double)"
+                List<int> indexesForInsert = new List<int>();
                 //проходим по всем символам, и если найден / или *, идем в направлении назад, пропуская первый пробел если он есть, и находим один из символов: " +-/*()&|!=<>". Индекс, следующий за найденным символом есть индекс для вставки "(double)"
+                string expressionEndSymbols = " +-/*()&|!=<>";
+                for (int k = 0; k < script.Length; k++)
+                {
+                    if (script[k] == '/' || script[k] == '*')
+                    {
+                        bool isEndExpression = false; //найдено ли окончания левой части выражения (деления или умножения)
+                        int a = k - 2; //вычитаем 2, т.к. если там пробел то мы переместимся на первый символ выражения, если там выражение, состоящее из 1 символа, мы переместимся на символ окончания выражения
+                        while(a >= 0 && isEndExpression == false)
+                        {
+                            if (expressionEndSymbols.Contains(script[a])) //если текущий символ найден в символх окончания выражения, запоминаем это
+                            {
+                                isEndExpression = true;
+                            }
+                            a--;
+                        }
+                        //добавляем в индексы индекс вставки приведения к double
+                        indexesForInsert.Add(a + 2); //+2 т.к. a--, и это символ перед первым символом выражения
+                    }
+                }
+                //вставляем приведение к double
+                for (int k = indexesForInsert.Count - 1; k >= 0; k--)
+                {
+                    script.Insert(indexesForInsert[k], "(double)");
+                }
+                //вставляем приведение к double для возвращаемого значения
+                script.Replace("return ", "return (double)");
+
+                Microsoft.CSharp.CSharpCodeProvider provider = new Microsoft.CSharp.CSharpCodeProvider();
+                System.CodeDom.Compiler.CompilerParameters param = new System.CodeDom.Compiler.CompilerParameters();
+                param.ReferencedAssemblies.Add(Assembly.GetExecutingAssembly().Location);
+                param.GenerateExecutable = false;
+                param.GenerateInMemory = true;
 
                 var compiled = provider.CompileAssemblyFromSource(param, new string[]
                 {
                         @"
                         using System;
+                        using ktradesystem.Models;
                         public class CompiledIndicator_" + indicators[i].Name +
-                        @"
-                        {
-                            public double Calculate(" + indicatorParameters + ")" +
-                            "{" +
-                                script +
-                            "}" +
-                        @"
+                        @"{
+                            public double Calculate(" + indicatorParameters + @")
+                            {
+                                " + script +
+                            @"}
                         }"
                 });
-                /*dynamic test = Result.CompiledAssembly.CreateInstance("Test");
-
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-                double b = test.Main();
-                stopwatch.Stop();*/
-
-                dynamic[] tests = new dynamic[4];
-                tests[0] = compiled.CompiledAssembly.CreateInstance("Test");
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-                double b = tests[0].Main();
-                stopwatch.Stop();
+                if (compiled.Errors.Count == 0)
+                {
+                    CompiledIndicators[i] = compiled.CompiledAssembly.CreateInstance("CompiledIndicator_" + indicators[i].Name);
+                }
+                else
+                {
+                    isErrorCompile = true;
+                    //отправляем пользователю сообщения об ошибке
+                    for (int r = 0; r < compiled.Errors.Count; r++)
+                    {
+                        _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Ошибка при компиляции индикатора " + indicators[i].Name + ": " + compiled.Errors[0].ErrorText); }));
+                    }
+                    
+                }
             }
         }
 
-        private void TestRunExecute(TestRun testRun)
+        private void TestRunExecute(TestRun testRun, ktradesystem.Models.Candle[] candles)
         {
 
         }

@@ -685,15 +685,7 @@ namespace ktradesystem.ViewModels
                     stopwatch.Start();
                     double b = tests[0].Main();
                     stopwatch.Stop();
-
-                    int d = 0;
-                    bool isDLessTen = d < 10;
-                    while (isDLessTen && d < 100)
-                    {
-                        d++;
-                    }
-                    MessageBox.Show("d= " + d.ToString());
-                    //MessageBox.Show("b= " + b.ToString() + " Milliseconds= " + stopwatch.Elapsed.TotalMilliseconds.ToString());
+                    MessageBox.Show("b= " + b.ToString() + " Milliseconds= " + stopwatch.Elapsed.TotalMilliseconds.ToString());
                     //*/
 
                 }, (obj) => true );

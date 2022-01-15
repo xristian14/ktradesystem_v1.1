@@ -423,19 +423,29 @@ namespace ktradesystem.Models
                 param.GenerateExecutable = false;
                 param.GenerateInMemory = true;
 
-                string indicatorParameters = ""; //описание принимаемых параметров методом индикатора
+                string indicatorParameters = "Candle[] candles, "; //описание принимаемых параметров методом индикатора
                 for(int k = 0; k < Algorithm.IndicatorParameterRanges.Count; k++)
                 {
                     if(Algorithm.IndicatorParameterRanges[k].Indicator == indicators[i])
                     {
                         indicatorParameters += Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? "int " : "double ";
-                        indicatorParameters += Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.Name + ", ";
+                        indicatorParameters += "parameter_" + Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.Name + ", ";
                     }
                 }
-                indicatorParameters = indicatorParameters.Length >= 2 ? indicatorParameters.Substring(0, indicatorParameters.Length - 2) : indicatorParameters; //удаляем последние 2 символа
+                indicatorParameters = indicatorParameters.Substring(0, indicatorParameters.Length - 2); //удаляем последние 2 символа
 
-                //редактируем текст скрипта
-                string script = indicators[i].Script;
+                //добавляем в текст скрипта приведение к double переменных и чисел в операциях деления и умножения (т.к. при делении типов int на int получится тип int и дробная часть потеряется), а так же возвращаемого значения
+                StringBuilder script = new StringBuilder();
+                //формируем строку script, в которой все повторяющиеся пробелы представлены одним пробелом
+                for (int k = 0; k < indicators[i].Script.Length; k++)
+                {
+                    if((script[script.Length-1] == ' ' && indicators[i].Script[k] == ' ') == false) //если последний символ в script = пробел и добавляемый = пробел, пропускаем, если же это ложно то добавляем символ в script
+                    {
+                        script.Append(indicators[i].Script[k]);
+                    }
+                }
+                //находим все индексы в строке в которые нужно вставить "(double)"
+                //проходим по всем символам, и если найден / или *, идем в направлении назад, пропуская первый пробел если он есть, и находим один из символов: " +-/*()&|!=<>". Индекс, следующий за найденным символом есть индекс для вставки "(double)"
 
                 var compiled = provider.CompileAssemblyFromSource(param, new string[]
                 {

@@ -489,6 +489,11 @@ namespace ktradesystem.Models
             {
                 algorithmParameters += "DataSourceForCalculate datasource_" + Algorithm.DataSourceTemplates[k].Name + ", ";
             }
+            //формируем параметры индикаторов
+            for(int k = 0; k < indicators.Count; k++)
+            {
+                algorithmParameters += "double indicator_" + indicators[k].Name + ", ";
+            }
             //формируем параметры параметров алгоритма
             for (int k = 0; k < Algorithm.AlgorithmParameters.Count; k++)
             {
@@ -506,15 +511,59 @@ namespace ktradesystem.Models
             {
                 scriptAlgorithm.Insert(indexesAlgorithmForInsert[k], "(double)");
             }
-
-            Microsoft.CSharp.CSharpCodeProvider providerAlgorithm = new Microsoft.CSharp.CSharpCodeProvider();
-            System.CodeDom.Compiler.CompilerParameters paramAlgorithm = new System.CodeDom.Compiler.CompilerParameters();
-            paramAlgorithm.ReferencedAssemblies.Add(Assembly.GetExecutingAssembly().Location);
-            paramAlgorithm.GenerateExecutable = false;
-            paramAlgorithm.GenerateInMemory = true;
-            
-            var compiledAlgorithm = providerAlgorithm.CompileAssemblyFromSource(paramAlgorithm, new string[]
+            //удаляем пробелы до и после открывающейся скобки после ключевого слова на создание заявки
+            string[] orderLetters = new string[] { "order_LimitSell", "order_LimitBuy", "order_StopSell", "order_StopBuy", "order_MarketSell", "order_MarketBuy" }; //слова создания заявок
+            foreach(string str in orderLetters)
             {
+                scriptAlgorithm.Replace(str + " (", str + "("); //удаляем пробел перед открывающейся скобкой
+                scriptAlgorithm.Replace(str + "( ", str + "("); //удаляем пробел после открывающейся скобки
+            }
+            //заменяем ключевые слова на создание заявок, на функцию добавления объекта типа Order в список orders
+            string[] orderCorrectLetters = new string[] { "orders.Add(new Order(1, false,", "orders.Add(new Order(1, true,", "orders.Add(new Order(3, false,", "orders.Add(new Order(3, true,", "orders.Add(new Order(2, false,", "orders.Add(new Order(2, true," };
+            for(int k = 0; k < orderLetters.Length; k++)
+            {
+                scriptAlgorithm.Replace(orderLetters[k] + "(", orderCorrectLetters[k]);
+            }
+            //добавляем закрывающую скобку для добавлений заявок
+            List<int> indexesSemicolon = new List<int>(); //список с индексами точек с запятой, следующих за словом добавления заявки
+            //находим индексы слов добавления заявок
+            bool isSemicolonFind = true; //найдена ли точка с запятой после слова на создание заявки
+            string scriptAlgorithmString = scriptAlgorithm.ToString(); //текст скрипта в формате string
+            //ищем вхождения всех ключевых слов
+            for (int k = 0; k < orderCorrectLetters.Length; k++)
+            {
+                int indexFindLetter = scriptAlgorithmString.IndexOf(orderCorrectLetters[k]); //индекс найденного слова
+                while(indexFindLetter != -1)
+                {
+                    int indexSemicolon = scriptAlgorithmString.IndexOf(";", indexFindLetter); //индекс первой найденной точки запятой, от индекса слова добавления заявки
+                    if(indexSemicolon != -1)
+                    {
+                        indexesSemicolon.Add(indexSemicolon);
+                    }
+                    else
+                    {
+                        isSemicolonFind = false; //указываем что после описания добавления заявки не найден символ точки с запятой
+                    }
+
+                    indexFindLetter = scriptAlgorithmString.IndexOf(orderCorrectLetters[k], indexFindLetter + 1); //ищем следующее вхождение данного слова
+                }
+            }
+            //вставляем закрывающую скобку
+            for (int k = indexesSemicolon.Count - 1; k >= 0; k--)
+            {
+                scriptAlgorithm.Insert(indexesSemicolon[k], ")");
+            }
+
+            if(isSemicolonFind == true) //если не было ошибок, компилируем
+            {
+                Microsoft.CSharp.CSharpCodeProvider providerAlgorithm = new Microsoft.CSharp.CSharpCodeProvider();
+                System.CodeDom.Compiler.CompilerParameters paramAlgorithm = new System.CodeDom.Compiler.CompilerParameters();
+                paramAlgorithm.ReferencedAssemblies.Add(Assembly.GetExecutingAssembly().Location);
+                paramAlgorithm.GenerateExecutable = false;
+                paramAlgorithm.GenerateInMemory = true;
+
+                var compiledAlgorithm = providerAlgorithm.CompileAssemblyFromSource(paramAlgorithm, new string[]
+                {
                 @"
                 using System;
                 using System.Collections.Generic;
@@ -523,25 +572,34 @@ namespace ktradesystem.Models
                 {
                     public List<Order> Calculate(" + algorithmParameters + @")
                     {
-                        List<Order> newOrders = new List<Order>();
+                        List<Order> orders = new List<Order>();
                         " + scriptAlgorithm +
-                        @"return newOrders;
+                        @"return orders;
                     }
                 }"
-            });
-            if (compiledAlgorithm.Errors.Count == 0)
-            {
-                CompiledAlgorithm = compiledAlgorithm.CompiledAssembly.CreateInstance("CompiledAlgorithm");
+                });
+                if (compiledAlgorithm.Errors.Count == 0)
+                {
+                    CompiledAlgorithm = compiledAlgorithm.CompiledAssembly.CreateInstance("CompiledAlgorithm");
+                }
+                else
+                {
+                    isErrorCompile = true;
+                    //отправляем пользователю сообщения об ошибке
+                    for (int r = 0; r < compiledAlgorithm.Errors.Count; r++)
+                    {
+                        _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Ошибка при компиляции алгоритма: " + compiledAlgorithm.Errors[0].ErrorText); }));
+                    }
+                }
             }
-            else
+            else //если были ошибки, сообщаем об ошибке, указываем что были ошибки
             {
                 isErrorCompile = true;
                 //отправляем пользователю сообщения об ошибке
-                for (int r = 0; r < compiledAlgorithm.Errors.Count; r++)
-                {
-                    _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Ошибка при компиляции алгоритма: " + compiledAlgorithm.Errors[0].ErrorText); }));
-                }
+                _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Синтаксическая ошибка в скрипте алгоритма: не найдена ; после добавления заявки."); }));
             }
+
+            
             
 
 

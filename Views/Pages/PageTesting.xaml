@@ -386,14 +386,14 @@
                                 <GroupBox Header="Заявки">
                                     <StackPanel Orientation="Vertical">
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Лимитная купить" Command="{Binding AlgorithmPasteOrderLimitBuy_Click}" Width="114"/>
-                                            <Button Content="Лимитная продать" Command="{Binding AlgorithmPasteOrderLimitSell_Click}" Width="114"/>
-                                            <Button Content="Рыночная купить" Command="{Binding AlgorithmPasteOrderMarketBuy_Click}" Width="114"/>
-                                            <Button Content="Рыночная продать" Command="{Binding AlgorithmPasteOrderMarketSell_Click}" Width="114"/>
+                                            <Button Content="Лимитная продать &quot;order__LimitSell&quot;" Command="{Binding AlgorithmPasteOrderLimitSell_Click}" Width="214"/>
+                                            <Button Content="Стоп продать &quot;order__StopSell&quot;" Command="{Binding AlgorithmPasteOrderStopSell_Click}" Width="182"/>
+                                            <Button Content="Рыночная продать &quot;order__MarketSell&quot;" Command="{Binding AlgorithmPasteOrderMarketSell_Click}" Width="224"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Стоп купить" Command="{Binding AlgorithmPasteStopOrderBuy_Click}" Width="114"/>
-                                            <Button Content="Стоп продать" Command="{Binding AlgorithmPasteStopOrderSell_Click}" Width="114"/>
+                                            <Button Content="Лимитная купить &quot;order__LimitBuy&quot;" Command="{Binding AlgorithmPasteOrderLimitBuy_Click}" Width="214"/>
+                                            <Button Content="Стоп купить &quot;order__StopBuy&quot;" Command="{Binding AlgorithmPasteOrderStopBuy_Click}" Width="182"/>
+                                            <Button Content="Рыночная купить &quot;order__MarketBuy&quot;" Command="{Binding AlgorithmPasteOrderMarketBuy_Click}" Width="224"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </GroupBox>

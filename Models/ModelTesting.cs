@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.ObjectModel;
 using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
@@ -28,6 +30,26 @@ namespace ktradesystem.Models
 
         ModelData _modelData;
         Database _database;
+
+        private ObservableCollection<Setting> _testings = new ObservableCollection<Setting>(); //тесты
+        public ObservableCollection<Setting> Testings
+        {
+            get { return _testings; }
+            set
+            {
+                _testings = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public CancellationTokenSource CancellationTokenTesting; //токен отмены тестирования
+        public void CancellationTokenTestingCancel()
+        {
+            if (CancellationTokenTesting != null)
+            {
+                CancellationTokenTesting.Cancel();
+            }
+        }
 
         public void IndicatorInsertUpdate(string name, string description, List<IndicatorParameterTemplate> indicatorParameterTemplates, string script, int id = -1) //если прислан id, отправляет запрос update, иначе insert
         {
@@ -322,6 +344,7 @@ namespace ktradesystem.Models
 
         public void TestingLaunch(Testing testing)
         {
+            CancellationTokenTesting = new CancellationTokenSource();
             testing.LaunchTesting();
         }
     }

@@ -159,8 +159,8 @@ namespace ktradesystem.Models
                 Stopwatch stopwatch = new Stopwatch();
                 stopwatch.Start();
                 int processorCount = Environment.ProcessorCount; //количество создаваемых потоков
-                processorCount -= _modelData.Settings.Where(i => i.Id == 1).First().BoolValue ? -1 : 0; //если в настройках выбрано оставлять один поток, вычитаем из количества потоков
-                if (dataSourceFiles.Count < processorCount) //если файлов меньше чем число доступных потоков, устанавливаем количество потоков на количество файлов, т.к. WaitAll ругается если поток в tasks null
+                processorCount -= _modelData.Settings.Where(i => i.Id == 1).First().BoolValue ? 1 : 0; //если в настройках выбрано оставлять один поток, вычитаем из количества потоков
+                if (dataSourceFiles.Count < processorCount) //если файлов меньше чем число доступных потоков, устанавливаем количество потоков на количество файлов, т.к. WaitAll ругается если задача в tasks null
                 {
                     processorCount = dataSourceFiles.Count;
                 }
@@ -183,7 +183,7 @@ namespace ktradesystem.Models
                     {
                         int indexCompleted = Task.WaitAny(tasks);
 
-                        if (cancellationToken.IsCancellationRequested) //если был запрос на отмену операци, прекращем функцию
+                        if (cancellationToken.IsCancellationRequested) //если был запрос на отмену операции, прекращем функцию
                         {
                             Task.WaitAll(tasks);
                             AddDataSourceEnding();

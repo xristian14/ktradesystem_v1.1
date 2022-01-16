@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using ktradesystem.Models.Datatables;
 using System.Diagnostics;
@@ -33,11 +34,13 @@ namespace ktradesystem.Models
         private dynamic CompiledEvaluationCriterias { get; set; } //объекты, содержащие метод, выполняющий расчет критерия оценки тестового прогона
 
         private ModelData _modelData;
+        private ModelTesting _modelTesting;
         private MainCommunicationChannel _mainCommunicationChannel;
 
         public Testing()
         {
             _modelData = ModelData.getInstance();
+            _modelTesting = ModelTesting.getInstance();
             _mainCommunicationChannel = MainCommunicationChannel.getInstance();
         }
 
@@ -379,7 +382,7 @@ namespace ktradesystem.Models
                             }
                             TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = optimizationStartDate, EndPeriod = optimizationEndDate, IndicatorParameterValues = indicatorParameterValues, AlgorithmParameterValues = algorithmParameterValues, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>() };
                         }
-                        testBatch.TestRuns = optimizationTestRuns;
+                        testBatch.OptimizationTestRuns = optimizationTestRuns;
 
                         //формируем форвардный тест
                         if (IsForwardTesting)
@@ -599,8 +602,86 @@ namespace ktradesystem.Models
                 _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Синтаксическая ошибка в скрипте алгоритма: не найдена ; после добавления заявки."); }));
             }
 
+            //определяем количество testRun без учета форвардных
+            int countTestRuns = 0;
+            foreach(TestBatch testBatch1 in TestBatches)
+            {
+                foreach(TestRun testRun in testBatch1.OptimizationTestRuns)
+                {
+                    countTestRuns++;
+                }
+            }
+            if(countTestRuns > 0) //если количество тестов больше нуля, переходим на создание задач и выполнение тестов
+            {
+                CancellationToken cancellationToken = _modelTesting.CancellationTokenTesting.Token;
+                //определяем количество используемых потоков
+                int processorCount = Environment.ProcessorCount;
+                processorCount -= _modelData.Settings.Where(i => i.Id == 1).First().BoolValue ? 1 : 0; //если в настройках выбрано оставлять один поток, вычитаем из количества потоков
+                if (countTestRuns < processorCount) //если тестов меньше чем число доступных потоков, устанавливаем количество потоков на количество тестов, т.к. WaitAll ругается если задача в tasks null
+                {
+                    processorCount = countTestRuns;
+                }
+                if (processorCount < 1)
+                {
+                    processorCount = 1;
+                }
+                Task[] tasks = new Task[processorCount]; //задачи
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+                int testBatchIndex = 0; //индекс тестовой связки, testRun-ы которой отправляются в задачи
+                int testRunIndex = 0; //индекс testRun-а, который отправляется в задачи
+                int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест массив бдет состоять только из 1 элемента: индекса testBatch-а)
+                int[][] testRunsStatus = new int[TestBatches.Count - 1][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у выполненного 1
+                //создаем для каждого testBatch массив равный количеству testRun
+                for(int k = 0; k < TestBatches.Count; k++)
+                {
+                    testRunsStatus[k] = new int[TestBatches[k].OptimizationTestRuns.Count];
+                    for(int y = 0; y < testRunsStatus[k].Length; y++) { testRunsStatus[k][y] = 0; } //заполняем статусы testRun нулями
+                }
+                bool isAllTestsFinish = false;
+                int n = 0; //номер прохождения цикла
+                while(isAllTestsFinish == false && cancellationToken.IsCancellationRequested == false)
+                {
+                    //если пока еще не заполнен массив с задачами, заполняем его
+                    if(tasks[tasks.Length-1] == null)
+                    {
+                        Task task = tasks[n];
+                        TestRun testRun = TestBatches[testBatchIndex].OptimizationTestRuns[testRunIndex];
+                        task = Task.Run(() => TestRunExecute(testRun));
+                        tasksExecutingTestRuns[n] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи
+                        testRunIndex++;
+                        testBatchIndex += TestBatches[testBatchIndex].OptimizationTestRuns.Count > testRunIndex ? 1 : 0; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
+                    }
+                    else //иначе обрабатываем выполненные задачи
+                    {
+                        int completedTaskIndex = Task.WaitAny(tasks);
+                        //если это форвардное тестирование, проверяем, выполнены ли все testRun-ы этого testBatch-а и форвардный не запущен, если да - определяем топ-модель и запускаем форвардный тест
+                        //отмечаем testRun как выполненный (если это не форвардный тест)
+                        if(tasksExecutingTestRuns[completedTaskIndex].Length == 2) //если в массиве 2 элемента, зачит это не форвардный тест, и его нужно записать
+                        {
+                            testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]][tasksExecutingTestRuns[completedTaskIndex][1]] = 1; //присваиваем статусу с сохраненным для этой задачи индексами testBatch и testRun, значение 1 (то есть выполнено)
+
+                            //проверяем, если все testRun для данного testBatch (к которому принадлежит выполненный) выполненны, определяем топ-модель и статистическую значимость
+                            bool isAllComplete = true;
+                            foreach(int a in testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]])
+                            {
+                                if(a == 0)
+                                {
+                                    isAllComplete = false;
+                                }
+                            }
+                            if (isAllComplete)
+                            {
+                                //определяем топ-модель и статистичекую значимость
+
+                            }
+                        }
+                    }
+                    n++;
+                }
+            }
             
-            
+
 
 
 
@@ -665,7 +746,7 @@ namespace ktradesystem.Models
             return indexes;
         }
 
-        private void TestRunExecute(TestRun testRun, ktradesystem.Models.Candle[] candles)
+        private void TestRunExecute(TestRun testRun)
         {
 
         }

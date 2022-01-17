@@ -8,6 +8,8 @@ using ktradesystem.Models.Datatables;
 using System.Diagnostics;
 using System.Reflection;
 using ktradesystem.CommunicationChannel;
+using System.IO;
+using System.Globalization;
 
 namespace ktradesystem.Models
 {
@@ -32,6 +34,7 @@ namespace ktradesystem.Models
         private dynamic[] CompiledIndicators { get; set; } //объекты, содержащие метод, выполняющий расчет индикатора
         private dynamic CompiledAlgorithm { get; set; } //объект, содержащий метод, вычисляющий работу алгоритма
         private dynamic CompiledEvaluationCriterias { get; set; } //объекты, содержащие метод, выполняющий расчет критерия оценки тестового прогона
+        private DataSourceCandles[] DataSourcesCandles { get; set; } //содержит массивы со свечками
 
         private ModelData _modelData;
         private ModelTesting _modelTesting;
@@ -381,6 +384,7 @@ namespace ktradesystem.Models
                                 alg++;
                             }
                             TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = optimizationStartDate, EndPeriod = optimizationEndDate, IndicatorParameterValues = indicatorParameterValues, AlgorithmParameterValues = algorithmParameterValues, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>() };
+                            optimizationTestRuns.Add(testRun);
                         }
                         testBatch.OptimizationTestRuns = optimizationTestRuns;
 
@@ -602,84 +606,155 @@ namespace ktradesystem.Models
                 _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Синтаксическая ошибка в скрипте алгоритма: не найдена ; после добавления заявки."); }));
             }
 
-            //определяем количество testRun без учета форвардных
-            int countTestRuns = 0;
-            foreach(TestBatch testBatch1 in TestBatches)
+            if(isErrorCompile == false)
             {
-                foreach(TestRun testRun in testBatch1.OptimizationTestRuns)
+                //определяем количество testRun без учета форвардных
+                int countTestRuns = 0;
+                foreach (TestBatch testBatch1 in TestBatches)
                 {
-                    countTestRuns++;
-                }
-            }
-            if(countTestRuns > 0) //если количество тестов больше нуля, переходим на создание задач и выполнение тестов
-            {
-                CancellationToken cancellationToken = _modelTesting.CancellationTokenTesting.Token;
-                //определяем количество используемых потоков
-                int processorCount = Environment.ProcessorCount;
-                processorCount -= _modelData.Settings.Where(i => i.Id == 1).First().BoolValue ? 1 : 0; //если в настройках выбрано оставлять один поток, вычитаем из количества потоков
-                if (countTestRuns < processorCount) //если тестов меньше чем число доступных потоков, устанавливаем количество потоков на количество тестов, т.к. WaitAll ругается если задача в tasks null
-                {
-                    processorCount = countTestRuns;
-                }
-                if (processorCount < 1)
-                {
-                    processorCount = 1;
-                }
-                Task[] tasks = new Task[processorCount]; //задачи
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-                int testBatchIndex = 0; //индекс тестовой связки, testRun-ы которой отправляются в задачи
-                int testRunIndex = 0; //индекс testRun-а, который отправляется в задачи
-                int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест массив бдет состоять только из 1 элемента: индекса testBatch-а)
-                int[][] testRunsStatus = new int[TestBatches.Count - 1][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у выполненного 1
-                //создаем для каждого testBatch массив равный количеству testRun
-                for(int k = 0; k < TestBatches.Count; k++)
-                {
-                    testRunsStatus[k] = new int[TestBatches[k].OptimizationTestRuns.Count];
-                    for(int y = 0; y < testRunsStatus[k].Length; y++) { testRunsStatus[k][y] = 0; } //заполняем статусы testRun нулями
-                }
-                bool isAllTestsFinish = false;
-                int n = 0; //номер прохождения цикла
-                while(isAllTestsFinish == false && cancellationToken.IsCancellationRequested == false)
-                {
-                    //если пока еще не заполнен массив с задачами, заполняем его
-                    if(tasks[tasks.Length-1] == null)
+                    foreach (TestRun testRun in testBatch1.OptimizationTestRuns)
                     {
-                        Task task = tasks[n];
-                        TestRun testRun = TestBatches[testBatchIndex].OptimizationTestRuns[testRunIndex];
-                        task = Task.Run(() => TestRunExecute(testRun));
-                        tasksExecutingTestRuns[n] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи
-                        testRunIndex++;
-                        testBatchIndex += TestBatches[testBatchIndex].OptimizationTestRuns.Count > testRunIndex ? 1 : 0; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
+                        countTestRuns++;
                     }
-                    else //иначе обрабатываем выполненные задачи
+                }
+                if (countTestRuns > 0) //если количество тестов больше нуля, переходим на создание задач и выполнение тестов
+                {
+                    CancellationToken cancellationToken = _modelTesting.CancellationTokenTesting.Token;
+                    //определяем количество используемых потоков
+                    int processorCount = Environment.ProcessorCount;
+                    processorCount -= _modelData.Settings.Where(i => i.Id == 1).First().BoolValue ? 1 : 0; //если в настройках выбрано оставлять один поток, вычитаем из количества потоков
+                    if (countTestRuns < processorCount) //если тестов меньше чем число доступных потоков, устанавливаем количество потоков на количество тестов, т.к. WaitAll ругается если задача в tasks null
                     {
-                        int completedTaskIndex = Task.WaitAny(tasks);
-                        //если это форвардное тестирование, проверяем, выполнены ли все testRun-ы этого testBatch-а и форвардный не запущен, если да - определяем топ-модель и запускаем форвардный тест
-                        //отмечаем testRun как выполненный (если это не форвардный тест)
-                        if(tasksExecutingTestRuns[completedTaskIndex].Length == 2) //если в массиве 2 элемента, зачит это не форвардный тест, и его нужно записать
+                        processorCount = countTestRuns;
+                    }
+                    if (processorCount < 1)
+                    {
+                        processorCount = 1;
+                    }
+
+
+                    NumberFormatInfo nfiComma = CultureInfo.GetCultureInfo("ru-RU").NumberFormat;
+                    NumberFormatInfo nfiDot = (NumberFormatInfo)nfiComma.Clone();
+                    nfiDot.NumberDecimalSeparator = nfiDot.CurrencyDecimalSeparator = nfiDot.PercentDecimalSeparator = "."; //эту переменнную нужно указать в методе double.Parse(string, nfiDot), чтобы преобразовался формат строки с разделителем дробной части в виде точки а не запятой
+
+                    //проходим по группам источников данных, и выполняем все тесты для каждой группы по очереди
+                    foreach (DataSourceGroup dataSourceGroup in DataSourceGroups)
+                    {
+                        DataSourcesCandles = new DataSourceCandles[dataSourceGroup.DataSourceAccordances.Count];
+                        //проходим по всем источникам данных группы и считываем файлы в массивы свечек
+                        for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
                         {
-                            testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]][tasksExecutingTestRuns[completedTaskIndex][1]] = 1; //присваиваем статусу с сохраненным для этой задачи индексами testBatch и testRun, значение 1 (то есть выполнено)
-
-                            //проверяем, если все testRun для данного testBatch (к которому принадлежит выполненный) выполненны, определяем топ-модель и статистическую значимость
-                            bool isAllComplete = true;
-                            foreach(int a in testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]])
+                            DataSourcesCandles[i] = new DataSourceCandles { DataSource = dataSourceGroup.DataSourceAccordances[i].DataSource, Candles = new Candle[dataSourceGroup.DataSourceAccordances[i].DataSource.DataSourceFiles.Count][] };
+                            //проходим по всем файлам источника данных
+                            for (int k = 0; k < dataSourceGroup.DataSourceAccordances[i].DataSource.DataSourceFiles.Count; k++)
                             {
-                                if(a == 0)
+                                string fileName = dataSourceGroup.DataSourceAccordances[i].DataSource.DataSourceFiles[k].Path;
+                                //определяем размер массива (исходя из количества строк в файле)
+                                FileStream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+                                StreamReader streamReader = new StreamReader(fileStream);
+                                string line = streamReader.ReadLine(); //пропускаем шапку файла
+                                line = streamReader.ReadLine();
+                                int count = 0;
+                                while (line != null)
                                 {
-                                    isAllComplete = false;
+                                    count++;
+                                    line = streamReader.ReadLine();
                                 }
-                            }
-                            if (isAllComplete)
-                            {
-                                //определяем топ-модель и статистичекую значимость
+                                streamReader.Close();
+                                fileStream.Close();
 
+                                //создаем массив
+                                Candle[] candles = new Candle[count];
+                                //заполняем массив
+                                fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+                                streamReader = new StreamReader(fileStream);
+                                line = streamReader.ReadLine(); //пропускаем шапку файла
+                                line = streamReader.ReadLine(); //счиытваем 1-ю строку с данными
+                                int r = 0;
+                                while (line != null)
+                                {
+                                    string[] lineArr = line.Split(',');
+                                    string dateTimeFormated = lineArr[2].Insert(6, "-").Insert(4, "-") + " " + lineArr[3].Insert(4, ":").Insert(2, ":");
+                                    candles[r] = new Candle { DateTime = DateTime.Parse(dateTimeFormated), O = double.Parse(lineArr[4], nfiDot), H = double.Parse(lineArr[5], nfiDot), L = double.Parse(lineArr[6], nfiDot), C = double.Parse(lineArr[7], nfiDot), V = double.Parse(lineArr[8], nfiDot) };
+                                    line = streamReader.ReadLine();
+                                    r++;
+                                }
+                                streamReader.Close();
+                                fileStream.Close();
+
+                                DataSourcesCandles[i].Candles[k] = candles;
                             }
                         }
+                        
+                        //выполняем тестирование для данной группы источников данных
+
                     }
-                    n++;
+
+
+
+
+
+
+
+
+                    Task[] tasks = new Task[processorCount]; //задачи
+                    Stopwatch stopwatch = new Stopwatch();
+                    stopwatch.Start();
+                    int testBatchIndex = 0; //индекс тестовой связки, testRun-ы которой отправляются в задачи
+                    int testRunIndex = 0; //индекс testRun-а, который отправляется в задачи
+                    int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест массив бдет состоять только из 1 элемента: индекса testBatch-а)
+                    int[][] testRunsStatus = new int[TestBatches.Count - 1][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у выполненного 1
+                    //создаем для каждого testBatch массив равный количеству testRun
+                    for (int k = 0; k < TestBatches.Count; k++)
+                    {
+                        testRunsStatus[k] = new int[TestBatches[k].OptimizationTestRuns.Count];
+                        for (int y = 0; y < testRunsStatus[k].Length; y++) { testRunsStatus[k][y] = 0; } //заполняем статусы testRun нулями
+                    }
+                    bool isAllTestsFinish = false;
+                    int n = 0; //номер прохождения цикла
+                    while (isAllTestsFinish == false && cancellationToken.IsCancellationRequested == false)
+                    {
+                        //если пока еще не заполнен массив с задачами, заполняем его
+                        if (tasks[tasks.Length - 1] == null)
+                        {
+                            Task task = tasks[n];
+                            TestRun testRun = TestBatches[testBatchIndex].OptimizationTestRuns[testRunIndex];
+                            task = Task.Run(() => TestRunExecute(testRun));
+                            tasksExecutingTestRuns[n] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
+                            testRunIndex++;
+                            testBatchIndex += TestBatches[testBatchIndex].OptimizationTestRuns.Count > testRunIndex ? 1 : 0; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
+                        }
+                        else //иначе обрабатываем выполненные задачи
+                        {
+                            int completedTaskIndex = Task.WaitAny(tasks);
+                            //если это форвардное тестирование, проверяем, выполнены ли все testRun-ы этого testBatch-а и форвардный не запущен, если да - определяем топ-модель и запускаем форвардный тест
+                            //отмечаем testRun как выполненный (если это не форвардный тест)
+                            if (tasksExecutingTestRuns[completedTaskIndex].Length == 2) //если в массиве 2 элемента, зачит это не форвардный тест, и его нужно записать
+                            {
+                                testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]][tasksExecutingTestRuns[completedTaskIndex][1]] = 1; //присваиваем статусу с сохраненным для этой задачи индексами testBatch и testRun, значение 1 (то есть выполнено)
+
+                                //проверяем, если все testRun для данного testBatch (к которому принадлежит выполненный) выполненны, определяем топ-модель и статистическую значимость
+                                bool isAllComplete = true;
+                                foreach (int a in testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]])
+                                {
+                                    if (a == 0)
+                                    {
+                                        isAllComplete = false;
+                                    }
+                                }
+                                if (isAllComplete)
+                                {
+                                    //определяем топ-модель и статистичекую значимость
+
+                                }
+                            }
+                        }
+                        n++;
+                    }
                 }
             }
+
+            
             
 
 
@@ -748,10 +823,19 @@ namespace ktradesystem.Models
 
         private void TestRunExecute(TestRun testRun)
         {
+            //открываем файлы группы источников данных
+            FileStream[] fileStreams = new FileStream[testRun.TestBatch.DataSourceGroup.DataSourceAccordances.Count];
+            for(int i = 0; i < fileStreams.Length; i++)
+            {
+                //fileStreams[i]=new FileStream(testRun.TestBatch.DataSourceGroup.DataSourceAccordances[i].DataSource.DataSourceFiles[0].Path, )
+            }
 
+            //FileStream fileStream = new FileStream(dataSourceFile.Path, FileMode.Open, FileAccess.Read);
+            //StreamReader streamReader = new StreamReader(fileStream);
+            //string line = streamReader.ReadLine(); //пропускаем шапку файла
         }
 
-        private TestRun DeterminingTopModel(TestBatch testBatch) //определение топ-модели среди оптимизационных тестов
+        private TestRun DeterminingTopModel(List<TestRun> testRuns) //определение топ-модели среди оптимизационных тестов
         {
             return new TestRun();
         }

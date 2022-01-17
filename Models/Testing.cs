@@ -34,7 +34,7 @@ namespace ktradesystem.Models
         private dynamic[] CompiledIndicators { get; set; } //объекты, содержащие метод, выполняющий расчет индикатора
         private dynamic CompiledAlgorithm { get; set; } //объект, содержащий метод, вычисляющий работу алгоритма
         private dynamic CompiledEvaluationCriterias { get; set; } //объекты, содержащие метод, выполняющий расчет критерия оценки тестового прогона
-        private DataSourceCandles[] DataSourcesCandles { get; set; } //содержит массивы со свечками
+        public List<DataSourceCandles> DataSourcesCandles { get; set; } //список с массивами свечек (для файлов) для источников данных (от сюда же будут браться данные для отображения графиков)
 
         private ModelData _modelData;
         private ModelTesting _modelTesting;
@@ -637,77 +637,83 @@ namespace ktradesystem.Models
                     NumberFormatInfo nfiDot = (NumberFormatInfo)nfiComma.Clone();
                     nfiDot.NumberDecimalSeparator = nfiDot.CurrencyDecimalSeparator = nfiDot.PercentDecimalSeparator = "."; //эту переменнную нужно указать в методе double.Parse(string, nfiDot), чтобы преобразовался формат строки с разделителем дробной части в виде точки а не запятой
 
-                    //проходим по группам источников данных, и выполняем все тесты для каждой группы по очереди
+                    //считываем свечки всех источников данных
+                    DataSourcesCandles = new List<DataSourceCandles>(); //инициализируем массив со всеми свечками источников данных
                     foreach (DataSourceGroup dataSourceGroup in DataSourceGroups)
                     {
-                        DataSourcesCandles = new DataSourceCandles[dataSourceGroup.DataSourceAccordances.Count];
-                        //проходим по всем источникам данных группы и считываем файлы в массивы свечек
                         for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
                         {
-                            DataSourcesCandles[i] = new DataSourceCandles { DataSource = dataSourceGroup.DataSourceAccordances[i].DataSource, Candles = new Candle[dataSourceGroup.DataSourceAccordances[i].DataSource.DataSourceFiles.Count][] };
-                            //проходим по всем файлам источника данных
-                            for (int k = 0; k < dataSourceGroup.DataSourceAccordances[i].DataSource.DataSourceFiles.Count; k++)
+                            //если такого источника данных еще нет в DataSourcesCandles, считываем его файлы
+                            if(DataSourcesCandles.Where(j => j.DataSource == dataSourceGroup.DataSourceAccordances[i].DataSource).Any() == false)
                             {
-                                string fileName = dataSourceGroup.DataSourceAccordances[i].DataSource.DataSourceFiles[k].Path;
-                                //определяем размер массива (исходя из количества строк в файле)
-                                FileStream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-                                StreamReader streamReader = new StreamReader(fileStream);
-                                string line = streamReader.ReadLine(); //пропускаем шапку файла
-                                line = streamReader.ReadLine();
-                                int count = 0;
-                                while (line != null)
+                                DataSourcesCandles.Add(new DataSourceCandles { DataSource = dataSourceGroup.DataSourceAccordances[i].DataSource, Candles = new Candle[dataSourceGroup.DataSourceAccordances[i].DataSource.DataSourceFiles.Count][] });
+                                //проходим по всем файлам источника данных
+                                for (int k = 0; k < dataSourceGroup.DataSourceAccordances[i].DataSource.DataSourceFiles.Count; k++)
                                 {
-                                    count++;
+                                    string fileName = dataSourceGroup.DataSourceAccordances[i].DataSource.DataSourceFiles[k].Path;
+                                    //определяем размер массива (исходя из количества строк в файле)
+                                    FileStream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+                                    StreamReader streamReader = new StreamReader(fileStream);
+                                    string line = streamReader.ReadLine(); //пропускаем шапку файла
                                     line = streamReader.ReadLine();
-                                }
-                                streamReader.Close();
-                                fileStream.Close();
+                                    int count = 0;
+                                    while (line != null)
+                                    {
+                                        count++;
+                                        line = streamReader.ReadLine();
+                                    }
+                                    streamReader.Close();
+                                    fileStream.Close();
 
-                                //создаем массив
-                                Candle[] candles = new Candle[count];
-                                //заполняем массив
-                                fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-                                streamReader = new StreamReader(fileStream);
-                                line = streamReader.ReadLine(); //пропускаем шапку файла
-                                line = streamReader.ReadLine(); //счиытваем 1-ю строку с данными
-                                int r = 0;
-                                while (line != null)
-                                {
-                                    string[] lineArr = line.Split(',');
-                                    string dateTimeFormated = lineArr[2].Insert(6, "-").Insert(4, "-") + " " + lineArr[3].Insert(4, ":").Insert(2, ":");
-                                    candles[r] = new Candle { DateTime = DateTime.Parse(dateTimeFormated), O = double.Parse(lineArr[4], nfiDot), H = double.Parse(lineArr[5], nfiDot), L = double.Parse(lineArr[6], nfiDot), C = double.Parse(lineArr[7], nfiDot), V = double.Parse(lineArr[8], nfiDot) };
-                                    line = streamReader.ReadLine();
-                                    r++;
-                                }
-                                streamReader.Close();
-                                fileStream.Close();
+                                    //создаем массив
+                                    Candle[] candles = new Candle[count];
+                                    //заполняем массив
+                                    fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+                                    streamReader = new StreamReader(fileStream);
+                                    line = streamReader.ReadLine(); //пропускаем шапку файла
+                                    line = streamReader.ReadLine(); //счиытваем 1-ю строку с данными
+                                    int r = 0;
+                                    while (line != null)
+                                    {
+                                        string[] lineArr = line.Split(',');
+                                        string dateTimeFormated = lineArr[2].Insert(6, "-").Insert(4, "-") + " " + lineArr[3].Insert(4, ":").Insert(2, ":");
+                                        candles[r] = new Candle { DateTime = DateTime.Parse(dateTimeFormated), O = double.Parse(lineArr[4], nfiDot), H = double.Parse(lineArr[5], nfiDot), L = double.Parse(lineArr[6], nfiDot), C = double.Parse(lineArr[7], nfiDot), V = double.Parse(lineArr[8], nfiDot) };
+                                        line = streamReader.ReadLine();
+                                        r++;
+                                    }
+                                    streamReader.Close();
+                                    fileStream.Close();
 
-                                DataSourcesCandles[i].Candles[k] = candles;
+                                    DataSourcesCandles.Last().Candles[k] = candles;
+                                }
                             }
+                            
                         }
-                        
-                        //выполняем тестирование для данной группы источников данных
-
                     }
 
-
-
-
-
-
-
+                    //выполняем тестирование для данной группы источников данных
+                    //формируем массив с ссылками на testBatch с текущей группой источников данных
+                    TestBatch[] currentTestBatches = new TestBatch[0];
+                    foreach(TestBatch testBatch in TestBatches)
+                    {
+                        if(testBatch.DataSourceGroup == dataSourceGroup)
+                        {
+                            Array.Resize(ref currentTestBatches, currentTestBatches.Length + 1);
+                            currentTestBatches[currentTestBatches.Length] = testBatch;
+                        }
+                    }
 
                     Task[] tasks = new Task[processorCount]; //задачи
                     Stopwatch stopwatch = new Stopwatch();
                     stopwatch.Start();
-                    int testBatchIndex = 0; //индекс тестовой связки, testRun-ы которой отправляются в задачи
+                    int testBatchIndex = 0; //индекс тестовой связки (в currentTestBatches), testRun-ы которой отправляются в задачи
                     int testRunIndex = 0; //индекс testRun-а, который отправляется в задачи
                     int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест массив бдет состоять только из 1 элемента: индекса testBatch-а)
-                    int[][] testRunsStatus = new int[TestBatches.Count - 1][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у выполненного 1
-                    //создаем для каждого testBatch массив равный количеству testRun
-                    for (int k = 0; k < TestBatches.Count; k++)
+                    int[][] testRunsStatus = new int[currentTestBatches.Length - 1][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у выполненного 1
+                                                                                //создаем для каждого testBatch массив равный количеству testRun
+                    for (int k = 0; k < currentTestBatches.Length; k++)
                     {
-                        testRunsStatus[k] = new int[TestBatches[k].OptimizationTestRuns.Count];
+                        testRunsStatus[k] = new int[currentTestBatches[k].OptimizationTestRuns.Count];
                         for (int y = 0; y < testRunsStatus[k].Length; y++) { testRunsStatus[k][y] = 0; } //заполняем статусы testRun нулями
                     }
                     bool isAllTestsFinish = false;
@@ -718,11 +724,11 @@ namespace ktradesystem.Models
                         if (tasks[tasks.Length - 1] == null)
                         {
                             Task task = tasks[n];
-                            TestRun testRun = TestBatches[testBatchIndex].OptimizationTestRuns[testRunIndex];
+                            TestRun testRun = currentTestBatches[testBatchIndex].OptimizationTestRuns[testRunIndex];
                             task = Task.Run(() => TestRunExecute(testRun));
                             tasksExecutingTestRuns[n] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
                             testRunIndex++;
-                            testBatchIndex += TestBatches[testBatchIndex].OptimizationTestRuns.Count > testRunIndex ? 1 : 0; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
+                            testBatchIndex += currentTestBatches[testBatchIndex].OptimizationTestRuns.Count > testRunIndex ? 1 : 0; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
                         }
                         else //иначе обрабатываем выполненные задачи
                         {
@@ -734,23 +740,39 @@ namespace ktradesystem.Models
                                 testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]][tasksExecutingTestRuns[completedTaskIndex][1]] = 1; //присваиваем статусу с сохраненным для этой задачи индексами testBatch и testRun, значение 1 (то есть выполнено)
 
                                 //проверяем, если все testRun для данного testBatch (к которому принадлежит выполненный) выполненны, определяем топ-модель и статистическую значимость
-                                bool isAllComplete = true;
+                                bool isOptimizationTestsComplete = true;
                                 foreach (int a in testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]])
                                 {
                                     if (a == 0)
                                     {
-                                        isAllComplete = false;
+                                        isOptimizationTestsComplete = false;
                                     }
                                 }
-                                if (isAllComplete)
+                                if (isOptimizationTestsComplete)
                                 {
                                     //определяем топ-модель и статистичекую значимость
+
+
+
+
 
                                 }
                             }
                         }
                         n++;
                     }
+
+
+
+
+
+
+
+
+
+
+
+                    
                 }
             }
 

@@ -35,7 +35,7 @@ namespace ktradesystem.Models
             DataTable dataIntervals = _database.QuerySelect("SELECT * FROM Intervals");
             foreach(DataRow row in dataIntervals.Rows)
             {
-                Interval interval = new Interval { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name") };
+                Interval interval = new Interval { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name"), Duration = TimeSpan.FromMinutes(row.Field<double>("duration")) };
                 Intervals.Add(interval);
             }
 

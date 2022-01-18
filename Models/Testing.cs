@@ -311,18 +311,18 @@ namespace ktradesystem.Models
                         if(DateTime.Compare(currentDateForCalculate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days), currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days)) > 0) //если текущая дата для расчетов + полная длительность позже текущей даты + полная длительность, значит не помещается
                         {
                             //определяем максимальную длительность, которая помещается в доступный промежуток
-                            int currentDurationPercent = 99;
-                            TimeSpan currentOptimizationDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days) - currentDate).TotalDays * ((double)currentDurationPercent / 100)));
+                            double currentDurationPercent = 99.75;
+                            TimeSpan currentOptimizationDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days) - currentDate).TotalDays * (currentDurationPercent / 100)));
                             currentOptimizationDuration = currentOptimizationDuration.TotalDays < 1 ? TimeSpan.FromDays(1) : currentOptimizationDuration; //если менее одного дня, устанавливаем в один день
-                            TimeSpan currentForwardDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days) - currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days)).TotalDays * ((double)currentDurationPercent / 100)));
+                            TimeSpan currentForwardDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days) - currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days)).TotalDays * (currentDurationPercent / 100)));
                             currentForwardDuration = currentForwardDuration.TotalDays < 1 && IsForwardTesting ? TimeSpan.FromDays(1) : currentForwardDuration; //если менее одного дня и это форвардное тестирование, устанавливаем в один день (при не форвардном будет 0)
                             //пока период с уменьшенной длительностью не поместится, уменьшаем длительность (пока текущая дата для расчетов + уменьшенная длительность больше текущей даты + полная длительность)
                             while (DateTime.Compare(currentDateForCalculate.Add(currentOptimizationDuration).Add(currentForwardDuration).Date, currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days)) > 0)
                             {
-                                currentDurationPercent--;
-                                currentOptimizationDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days) - currentDate).TotalDays * ((double)currentDurationPercent / 100)));
+                                currentDurationPercent -= 0.25;
+                                currentOptimizationDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days) - currentDate).TotalDays * (currentDurationPercent / 100)));
                                 currentOptimizationDuration = currentOptimizationDuration.TotalDays < 1 ? TimeSpan.FromDays(1) : currentOptimizationDuration; //если менее одного дня, устанавливаем в один день
-                                currentForwardDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days) - currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days)).TotalDays * ((double)currentDurationPercent / 100)));
+                                currentForwardDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days).AddYears(DurationForwardTest.Years).AddMonths(DurationForwardTest.Months).AddDays(DurationForwardTest.Days) - currentDate.AddYears(DurationOptimizationTests.Years).AddMonths(DurationOptimizationTests.Months).AddDays(DurationOptimizationTests.Days)).TotalDays * (currentDurationPercent / 100)));
                                 currentForwardDuration = currentForwardDuration.TotalDays < 1 && IsForwardTesting ? TimeSpan.FromDays(1) : currentForwardDuration; //если менее одного дня и это форвардное тестирование, устанавливаем в один день (при не форвардном будет 0)
                             }
 
@@ -451,8 +451,6 @@ namespace ktradesystem.Models
                 {
                     script.Insert(indexesForInsert[k], "(double)");
                 }
-                //вставляем приведение к double для возвращаемого значения
-                script.Replace("return ", "return (double)");
 
                 Microsoft.CSharp.CSharpCodeProvider provider = new Microsoft.CSharp.CSharpCodeProvider();
                 System.CodeDom.Compiler.CompilerParameters param = new System.CodeDom.Compiler.CompilerParameters();
@@ -467,10 +465,12 @@ namespace ktradesystem.Models
                     using ktradesystem.Models;
                     public class CompiledIndicator_" + indicators[i].Name +
                     @"{
-                        public double Calculate(" + indicatorParameters + @")
+                        public IndicatorCalculateResult Calculate(" + indicatorParameters + @")
                         {
+                            double indicator = 0;
                             " + script +
-                        @"}
+                            @"return new IndicatorCalculateResult { Value = indicator };
+                        }
                     }"
                 });
                 if (compiled.Errors.Count == 0)
@@ -581,7 +581,7 @@ namespace ktradesystem.Models
                     {
                         List<Order> orders = new List<Order>();
                         " + scriptAlgorithm +
-                        @"return orders;
+                        @"return new AlgorithmCalculateResult { Orders = orders };
                     }
                 }"
                 });
@@ -691,46 +691,35 @@ namespace ktradesystem.Models
                         }
                     }
 
-                    //выполняем тестирование для данной группы источников данных
-                    //формируем массив с ссылками на testBatch с текущей группой источников данных
-                    TestBatch[] currentTestBatches = new TestBatch[0];
-                    foreach(TestBatch testBatch in TestBatches)
-                    {
-                        if(testBatch.DataSourceGroup == dataSourceGroup)
-                        {
-                            Array.Resize(ref currentTestBatches, currentTestBatches.Length + 1);
-                            currentTestBatches[currentTestBatches.Length] = testBatch;
-                        }
-                    }
 
+                    //выполняем тестирование для всех TestBatches
                     Task[] tasks = new Task[processorCount]; //задачи
                     Stopwatch stopwatch = new Stopwatch();
                     stopwatch.Start();
-                    int testBatchIndex = 0; //индекс тестовой связки (в currentTestBatches), testRun-ы которой отправляются в задачи
+                    int testBatchIndex = 0; //индекс тестовой связки, testRun-ы которой отправляются в задачи
                     int testRunIndex = 0; //индекс testRun-а, который отправляется в задачи
                     int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест массив бдет состоять только из 1 элемента: индекса testBatch-а)
-                    int[][] testRunsStatus = new int[currentTestBatches.Length - 1][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у выполненного 1
+                    int[][] testRunsStatus = new int[TestBatches.Count - 1][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у выполненного 1
                                                                                 //создаем для каждого testBatch массив равный количеству testRun
-                    for (int k = 0; k < currentTestBatches.Length; k++)
+                    for (int k = 0; k < TestBatches.Count; k++)
                     {
-                        testRunsStatus[k] = new int[currentTestBatches[k].OptimizationTestRuns.Count];
+                        testRunsStatus[k] = new int[TestBatches[k].OptimizationTestRuns.Count];
                         for (int y = 0; y < testRunsStatus[k].Length; y++) { testRunsStatus[k][y] = 0; } //заполняем статусы testRun нулями
                     }
-                    bool isAllTestsFinish = false;
                     int n = 0; //номер прохождения цикла
-                    while (isAllTestsFinish == false && cancellationToken.IsCancellationRequested == false)
+                    while (testBatchIndex < TestBatches.Count && cancellationToken.IsCancellationRequested == false)
                     {
                         //если пока еще не заполнен массив с задачами, заполняем его
                         if (tasks[tasks.Length - 1] == null)
                         {
                             Task task = tasks[n];
-                            TestRun testRun = currentTestBatches[testBatchIndex].OptimizationTestRuns[testRunIndex];
+                            TestRun testRun = TestBatches[testBatchIndex].OptimizationTestRuns[testRunIndex];
                             task = Task.Run(() => TestRunExecute(testRun));
                             tasksExecutingTestRuns[n] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
                             testRunIndex++;
-                            testBatchIndex += currentTestBatches[testBatchIndex].OptimizationTestRuns.Count > testRunIndex ? 1 : 0; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
+                            testBatchIndex += TestBatches[testBatchIndex].OptimizationTestRuns.Count > testRunIndex ? 1 : 0; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
                         }
-                        else //иначе обрабатываем выполненные задачи
+                        else //иначе обрабатываем выполненную задачу
                         {
                             int completedTaskIndex = Task.WaitAny(tasks);
                             //если это форвардное тестирование, проверяем, выполнены ли все testRun-ы этого testBatch-а и форвардный не запущен, если да - определяем топ-модель и запускаем форвардный тест
@@ -820,11 +809,11 @@ namespace ktradesystem.Models
         private List<int> FindIndexesToInsertDouble(StringBuilder sb) //возвращает список с индексами, в которые нужно вставить приведение к double
         {
             List<int> indexes = new List<int>();
-            //проходим по всем символам, и если найден / или *, идем в направлении назад, пока не находим один из символов: " +-/*()&|!=<>". Индекс, следующий за найденным символом есть индекс для вставки "(double)"
+            //проходим по всем символам, и если найден /, идем в направлении назад, пока не находим один из символов: " +-/*()&|!=<>". Индекс, следующий за найденным символом есть индекс для вставки "(double)"
             string expressionEndSymbols = " +-/*()&|!=<>";
             for (int k = 0; k < sb.Length; k++)
             {
-                if (sb[k] == '/' || sb[k] == '*')
+                if (sb[k] == '/')
                 {
                     bool isEndExpression = false; //найдено ли окончания левой части выражения (деления или умножения)
                     int a = k - 2; //вычитаем 2, т.к. если там пробел то мы переместимся на последний символ выражения, если там выражение, состоящее из 1 символа, мы переместимся на символ окончания выражения
@@ -845,16 +834,136 @@ namespace ktradesystem.Models
 
         private void TestRunExecute(TestRun testRun)
         {
-            //открываем файлы группы источников данных
-            FileStream[] fileStreams = new FileStream[testRun.TestBatch.DataSourceGroup.DataSourceAccordances.Count];
-            for(int i = 0; i < fileStreams.Length; i++)
+            TimeSpan intervalDuration = testRun.TestBatch.DataSourceGroup.DataSourceAccordances[0].DataSource.Interval.Duration; //длительность интервала
+            DataSourceCandles[] dataSourceCandles = new DataSourceCandles[testRun.TestBatch.DataSourceGroup.DataSourceAccordances.Count]; //массив с ссылками на DataSourceCandles, соответствующими источникам данных группы источников данных
+            for(int i = 0; i < dataSourceCandles.Length; i++)
             {
-                //fileStreams[i]=new FileStream(testRun.TestBatch.DataSourceGroup.DataSourceAccordances[i].DataSource.DataSourceFiles[0].Path, )
+                dataSourceCandles[i] = DataSourcesCandles.Where(j => j.DataSource == testRun.TestBatch.DataSourceGroup.DataSourceAccordances[i].DataSource).First(); //DataSourceCandles для источника данных из DataSourceAccordances с индексом i в dataSourceCandles
+            }
+            int[] fileIndexes = new int[testRun.TestBatch.DataSourceGroup.DataSourceAccordances.Count]; //индексы (для всех источников данных группы) элемента массива Candle[][] Candles в DataSourcesCandles, соответствующий файлу источника данных
+            int[] candleIndexes = new int[testRun.TestBatch.DataSourceGroup.DataSourceAccordances.Count]; //индексы (для всех источников данных группы) элемента массива Candles[], сответствующий свечке
+            //устанавливаем начальные индексы файла и свечки для источников данных
+            for (int i = 0; i < fileIndexes.Length; i++)
+            {
+                fileIndexes[i] = 0;
+                candleIndexes[i] = 0;
             }
 
-            //FileStream fileStream = new FileStream(dataSourceFile.Path, FileMode.Open, FileAccess.Read);
-            //StreamReader streamReader = new StreamReader(fileStream);
-            //string line = streamReader.ReadLine(); //пропускаем шапку файла
+            //находим индексы файлов и свечек, дата и время которых позже или равняется дате и времени начала теста
+            for (int i = 0; i < dataSourceCandles.Length; i++)
+            {
+                //ищем индекс первого файла источника данных, дата начала которого позже текущей даты, если такой файл не найден, то индекс = -1
+                int fileIndex = -1;
+                for(int k = 0; k < dataSourceCandles[i].DataSource.DataSourceFiles.Count; k++)
+                {
+                    if(DateTime.Compare(dataSourceCandles[i].DataSource.DataSourceFiles[k].DataSourceFileWorkingPeriods[0].StartPeriod, testRun.StartPeriod) > 0)
+                    {
+                        fileIndex = k; //запоминаем индекс файла, дата начала которого позже даты начала тестирования
+                    }
+                }
+                if(fileIndex > 0)
+                {
+                    fileIndexes[i] = fileIndex - 1; //сохраняем индекс первого файла, дата начала которго <= дате начала теста
+                    //находим индекс свечки, дата и время которой >= дате начала теста
+                    DateTime candleDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                    while(DateTime.Compare(candleDateTime, testRun.StartPeriod) < 0 && fileIndexes[i] < dataSourceCandles[i].Candles.Length)
+                    {
+                        candleIndexes[i]++;
+                        //если массив со свечками файла подошел к концу, переходим на следующий файл
+                        if (candleIndexes[i] >= dataSourceCandles[i].Candles[fileIndexes[i]].Length)
+                        {
+                            fileIndexes[i]++;
+                            candleIndexes[i] = 0;
+                        }
+                        //если индекс файла не вышел за пределы массива, находим дату для текущей свечки
+                        if (fileIndexes[i] < dataSourceCandles[i].Candles.Length)
+                        {
+                            candleDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                        }
+                    }
+                }
+                else
+                {
+                    //доступных данных нет, присваиваем индексу файла значение, выходящее за пределы массива
+                    fileIndexes[i] = dataSourceCandles[i].Candles.Length;
+                }
+            }
+
+
+            //определяем текущую дату и время, взяв самую раннюю дату и время свечки (среди источников данных)
+            DateTime currentDateTime = dataSourceCandles[0].Candles[fileIndexes[0]][candleIndexes[0]].DateTime; //текущие дата и время
+            for(int i = 1; i < dataSourceCandles.Length; i++)
+            {
+                if(DateTime.Compare(currentDateTime, dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime) > 0)
+                {
+                    currentDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime; //самая ранняя дата и время свечки (среди источников данных)
+                }
+            }
+
+            bool isFileIndexesOverLimit = false; //вышел ли какой-либо из индексов файлов за границы массива файлов источника данных
+            for(int i = 0; i < fileIndexes.Length; i++)
+            {
+                if(fileIndexes[i] >= dataSourceCandles[i].Candles.Length)
+                {
+                    isFileIndexesOverLimit = true; //отмечаем что индекс файла вышел за границы массива
+                }
+            }
+            //проходим по всем свечкам источников данных, пока не достигнем времени окончания теста, или пока не выйдем за границы имеющихся файлов
+            while(DateTime.Compare(currentDateTime, testRun.EndPeriod) < 0 && isFileIndexesOverLimit)
+            {
+                //если свечки свех источников данных равняются текущей дате, вычисляем индикаторы и алгоритмы
+
+            }
+
+
+            //пока текущая дата раньше даты окончания, обрабатываем свечку и переходим на следующую свечку
+            while (DateTime.Compare(currentDateTime, testRun.EndPeriod) < 0)
+            {
+                //проходим по всем источникам данных, и проходим по элементам Candles пока не дойдем до даты >= текущей даты (при заканчивании массива, увеличиваем индекс файла). Так мы получим индексы файла и свечки которая равняется или позже текущей даты
+                for (int i = 0; i < dataSourceCandles.Length; i++)
+                {
+                    DateTime candleDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                    //пока не достигнем даты которая = или больше текущей, или пока индекс файла не выйдет за пределы массива файлов, переходим на следующую свечку файла
+                    while (DateTime.Compare(candleDateTime, currentDateTime) < 0 && fileIndexes[i] < dataSourceCandles[i].Candles.Length)
+                    {
+                        candleIndexes[i]++;
+                        //если массив со свечками файла подошел к концу, переходим на следующий файл
+                        if(candleIndexes[i] >= dataSourceCandles[i].Candles[fileIndexes[i]].Length)
+                        {
+                            fileIndexes[i]++;
+                            candleIndexes[i] = 0;
+                        }
+                        //если индекс файла не вышел за пределы массива, находим дату для текущей свечки
+                        if(fileIndexes[i] < dataSourceCandles[i].Candles.Length)
+                        {
+                            candleDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                        }
+                    }
+                }
+
+                //если все даты свечек файлов == текущей дате, и ни один из индексов файлов не вышел за границы массива, вычисляем индикаторы и алгоритм для текущей даты
+                bool isDatesEqualAndFileIndexesWithinLimit = true;
+                for (int i = 0; i < dataSourceCandles.Length; i++)
+                {
+                    if(DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) != 0) //если дата свечки не равняется текущей
+                    {
+                        isDatesEqualAndFileIndexesWithinLimit = false;
+                    }
+                    if(fileIndexes[i] >= dataSourceCandles[i].Candles.Length) //если индекс вышел за границы массива
+                    {
+                        isDatesEqualAndFileIndexesWithinLimit = false;
+                    }
+                }
+                if (isDatesEqualAndFileIndexesWithinLimit)
+                {
+                    //вычисляем индикаторы и алгоритм для текущей даты
+                    //добавить проверку для индикаторов размера массива и индекса
+                }
+
+
+                //при окончания торгового дня добавить переход на начало дня, чтобы не делть лишние итерации
+                currentDateTime.Add(intervalDuration);
+            }
         }
 
         private TestRun DeterminingTopModel(List<TestRun> testRuns) //определение топ-модели среди оптимизационных тестов

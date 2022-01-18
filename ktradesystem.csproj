@@ -83,6 +83,7 @@
     </ApplicationDefinition>
     <Compile Include="CommunicationChannel\DataSourceAddingProgress.cs" />
     <Compile Include="Models\Account.cs" />
+    <Compile Include="Models\AlgorithmCalculateResult.cs" />
     <Compile Include="Models\AlgorithmParameterValue.cs" />
     <Compile Include="Models\AxesParameter.cs" />
     <Compile Include="Models\CompareSign.cs" />
@@ -93,6 +94,7 @@
     <Compile Include="Models\Deal.cs" />
     <Compile Include="Models\DepositCurrency.cs" />
     <Compile Include="Models\EvaluationCriteriaValue.cs" />
+    <Compile Include="Models\IndicatorCalculateResult.cs" />
     <Compile Include="Models\IndicatorParameterValue.cs" />
     <Compile Include="Models\Order.cs" />
     <Compile Include="Models\TestBatch.cs" />

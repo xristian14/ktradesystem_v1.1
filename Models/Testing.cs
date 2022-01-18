@@ -911,59 +911,26 @@ namespace ktradesystem.Models
             //проходим по всем свечкам источников данных, пока не достигнем времени окончания теста, или пока не выйдем за границы имеющихся файлов
             while(DateTime.Compare(currentDateTime, testRun.EndPeriod) < 0 && isFileIndexesOverLimit)
             {
+                //проверяем, равняются ли все свечки источников данных текущей дате
+                bool isCandlesDateTimeEqual = true;
+                for(int i = 0; i < dataSourceCandles.Length; i++)
+                {
+                    if(DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) != 0)
+                    {
+                        isCandlesDateTimeEqual = false;
+                    }
+                }
                 //если свечки свех источников данных равняются текущей дате, вычисляем индикаторы и алгоритмы
+                if (isCandlesDateTimeEqual)
+                {
+                    //добавить проверки на выход за пределы массива candles в индикаторах и алгоритме
+                }
+                //переходим на следующую свечку (см. алгоритм на листке) (при переходе на следующий файл, нужно в нем дойти до даты, следующей за текущей)
 
             }
 
 
-            //пока текущая дата раньше даты окончания, обрабатываем свечку и переходим на следующую свечку
-            while (DateTime.Compare(currentDateTime, testRun.EndPeriod) < 0)
-            {
-                //проходим по всем источникам данных, и проходим по элементам Candles пока не дойдем до даты >= текущей даты (при заканчивании массива, увеличиваем индекс файла). Так мы получим индексы файла и свечки которая равняется или позже текущей даты
-                for (int i = 0; i < dataSourceCandles.Length; i++)
-                {
-                    DateTime candleDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
-                    //пока не достигнем даты которая = или больше текущей, или пока индекс файла не выйдет за пределы массива файлов, переходим на следующую свечку файла
-                    while (DateTime.Compare(candleDateTime, currentDateTime) < 0 && fileIndexes[i] < dataSourceCandles[i].Candles.Length)
-                    {
-                        candleIndexes[i]++;
-                        //если массив со свечками файла подошел к концу, переходим на следующий файл
-                        if(candleIndexes[i] >= dataSourceCandles[i].Candles[fileIndexes[i]].Length)
-                        {
-                            fileIndexes[i]++;
-                            candleIndexes[i] = 0;
-                        }
-                        //если индекс файла не вышел за пределы массива, находим дату для текущей свечки
-                        if(fileIndexes[i] < dataSourceCandles[i].Candles.Length)
-                        {
-                            candleDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
-                        }
-                    }
-                }
 
-                //если все даты свечек файлов == текущей дате, и ни один из индексов файлов не вышел за границы массива, вычисляем индикаторы и алгоритм для текущей даты
-                bool isDatesEqualAndFileIndexesWithinLimit = true;
-                for (int i = 0; i < dataSourceCandles.Length; i++)
-                {
-                    if(DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) != 0) //если дата свечки не равняется текущей
-                    {
-                        isDatesEqualAndFileIndexesWithinLimit = false;
-                    }
-                    if(fileIndexes[i] >= dataSourceCandles[i].Candles.Length) //если индекс вышел за границы массива
-                    {
-                        isDatesEqualAndFileIndexesWithinLimit = false;
-                    }
-                }
-                if (isDatesEqualAndFileIndexesWithinLimit)
-                {
-                    //вычисляем индикаторы и алгоритм для текущей даты
-                    //добавить проверку для индикаторов размера массива и индекса
-                }
-
-
-                //при окончания торгового дня добавить переход на начало дня, чтобы не делть лишние итерации
-                currentDateTime.Add(intervalDuration);
-            }
         }
 
         private TestRun DeterminingTopModel(List<TestRun> testRuns) //определение топ-модели среди оптимизационных тестов

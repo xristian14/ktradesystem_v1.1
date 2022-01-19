@@ -11,5 +11,6 @@ namespace ktradesystem.Models
     {
         public DataSource DataSource { get; set; }
         public Candle[][] Candles { get; set; } //массив содержит массивы свечек, соответствующие файлам источника данных
+        public IndicatorValues[] IndicatorsValues { get; set; } //массив содержит значения индикаторов
     }
 }

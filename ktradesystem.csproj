@@ -96,6 +96,7 @@
     <Compile Include="Models\EvaluationCriteriaValue.cs" />
     <Compile Include="Models\IndicatorCalculateResult.cs" />
     <Compile Include="Models\IndicatorParameterValue.cs" />
+    <Compile Include="Models\IndicatorValues.cs" />
     <Compile Include="Models\Order.cs" />
     <Compile Include="Models\TestBatch.cs" />
     <Compile Include="Models\TestRun.cs" />

@@ -430,16 +430,18 @@ namespace ktradesystem.Models
             CompiledIndicators = new dynamic[indicators.Count];
             for(int i = 0; i < indicators.Count; i++)
             {
-                string indicatorParameters = "Candle[] candles, int currentCandleIndex, "; //описание принимаемых параметров методом индикатора
+                string variablesParameters = ""; //инициализация и присвоение значений переменным, в которых хранятся значения параметров индикатора
+                int currentIndicatorParameterIndex = -1; //номер параметра для текущего индикатора (это число используется как индекс в массиве параметров который принимает скомпилированный индикатор)
                 for(int k = 0; k < Algorithm.IndicatorParameterRanges.Count; k++)
                 {
                     if(Algorithm.IndicatorParameterRanges[k].Indicator == indicators[i])
                     {
-                        indicatorParameters += Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? "int " : "double ";
-                        indicatorParameters += "parameter_" + Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.Name + ", ";
+                        currentIndicatorParameterIndex++;
+                        variablesParameters += Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? "int " : "double ";
+                        variablesParameters += "parameter_" + Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.Name;
+                        variablesParameters += Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? " = indicatorParametersIntValues[" + currentIndicatorParameterIndex + "]; " : " = indicatorParametersDoubleValues[" + currentIndicatorParameterIndex + "]; ";
                     }
                 }
-                indicatorParameters = indicatorParameters.Substring(0, indicatorParameters.Length - 2); //удаляем последние 2 символа
 
                 //добавляем в текст скрипта приведение к double переменных и чисел в операциях деления и умножения (т.к. при делении типов int на int получится тип int и дробная часть потеряется), а так же возвращаемого значения
                 //удаляем дублирующиеся пробелы
@@ -454,27 +456,35 @@ namespace ktradesystem.Models
                 //удаляем пробел между candles и [
                 script.Replace("candles [", "candles[");
                 //вставляем приведение значения индекса, указанного пользователем к реальному значению индекса
-                script.Replace("candles[", "candles[currentCandleIndex - ");
+                script.Replace("candles[", "candles[currentCandleIndex - (");
                 //определяем для всех обращений к candles[]: индекс начала ключевого слова candles и индекс первой закрывающей квадратной скобки (если для указания индекса использовался элемент массива будет ошибка, массив использовать нельзя для указания индекса, чтобы использовать элемент массива, нужно присвоить его переменной и передать переменную)
                 string scriptIndicatorString = script.ToString();
                 List<int> indexesCandles = new List<int>(); //индексы всех вхождений подстроки "candles["
                 if (scriptIndicatorString.IndexOf("candles[") != -1)
                 {
                     indexesCandles.Add(scriptIndicatorString.IndexOf("candles["));
-                }
-                while (scriptIndicatorString.IndexOf("candles[", indexesCandles.Last() + 1) != -1)
-                {
-                    indexesCandles.Add(scriptIndicatorString.IndexOf("candles[", indexesCandles.Last() + 1));
+                    while (scriptIndicatorString.IndexOf("candles[", indexesCandles.Last() + 1) != -1)
+                    {
+                        indexesCandles.Add(scriptIndicatorString.IndexOf("candles[", indexesCandles.Last() + 1));
+                    }
                 }
                 List<int> indexesClose = new List<int>(); //индексы первого вхождения подстроки "]" после индекса indexesCandles
-                foreach(int index in indexesCandles)
+                for(int k = 0; k < indexesCandles.Count; k++)
                 {
-                    indexesClose.Add(scriptIndicatorString.IndexOf("]", index));
+                    indexesClose.Add(scriptIndicatorString.IndexOf("]", indexesCandles[k]));
+                    //вставляем закрывающую круглую скобку
+                    scriptIndicatorString = scriptIndicatorString.Insert(indexesClose[indexesClose.Count - 1], ")");
+                    //сдвигаем все последующие индексы на 1, т.к. только что вставили символ
+                    indexesClose[indexesClose.Count - 1]++;
+                    for(int u = k + 1; u < indexesCandles.Count; u++)
+                    {
+                        indexesCandles[u]++;
+                    }
                 }
                 //вставляем перед обращением к массиву свечек candles проверку на допустимое значение индекса. Копируем все что заключено между [] и проверяем, это значение больше или рано 0 или нет. Если нет, то заканчиваем функцию и передаем значение, на которое индекс выходит за границы массива
                 for(int index = indexesCandles.Count - 1; index >= 0; index--)
                 {
-                    string conditionString = "if(" + scriptIndicatorString.Substring(indexesCandles[index] + 8, indexesClose[index] - (indexesCandles[index] + 8)) + " < 0){ return new IndicatorCalculateResult { OverIndex = 0 - " + scriptIndicatorString.Substring(indexesCandles[index] + 8, indexesClose[index] - (indexesCandles[index] + 8)) + " }; }";
+                    string conditionString = "if(" + scriptIndicatorString.Substring(indexesCandles[index] + 8, indexesClose[index] - (indexesCandles[index] + 8)) + " < 0){ return new IndicatorCalculateResult { OverIndex = - (" + scriptIndicatorString.Substring(indexesCandles[index] + 8, indexesClose[index] - (indexesCandles[index] + 8)) + ") }; }";
                     scriptIndicatorString = scriptIndicatorString.Insert(indexesCandles[index], conditionString);
                 }
 
@@ -494,8 +504,9 @@ namespace ktradesystem.Models
                     using ktradesystem.Models;
                     public class CompiledIndicator_" + indicators[i].Name +
                     @"{
-                        public IndicatorCalculateResult Calculate(" + indicatorParameters + @")
+                        public IndicatorCalculateResult Calculate(Candle[] candles, int currentCandleIndex, int[] indicatorParametersIntValues, double[] indicatorParametersDoubleValues)
                         {
+                            " + variablesParameters + @"
                             double indicator = 0;
                             " + script +
                             @"return new IndicatorCalculateResult { Value = indicator, OverIndex = 0 };
@@ -938,7 +949,7 @@ namespace ktradesystem.Models
             for (int i = 0; i < dataSourceCandles.Candles[fileIndex].Length; i++) //проходим по всем свечкам
             {
                 //вычисляем значение индикатора
-                //CompiledIndicators[indicatorIndex].Calculate(dataSourceCandles.Candles[fileIndex],)
+                //CompiledIndicators[indicatorIndex].Calculate(dataSourceCandles.Candles[fileIndex], i, )
             }
         }
 

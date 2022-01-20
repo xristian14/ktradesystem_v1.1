@@ -438,7 +438,7 @@ namespace ktradesystem.Models
                     {
                         currentIndicatorParameterIndex++;
                         variablesParameters += Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? "int " : "double ";
-                        variablesParameters += "parameter_" + Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.Name;
+                        variablesParameters += "Parameter_" + Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.Name;
                         variablesParameters += Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? " = indicatorParametersIntValues[" + currentIndicatorParameterIndex + "]; " : " = indicatorParametersDoubleValues[" + currentIndicatorParameterIndex + "]; ";
                     }
                 }
@@ -446,49 +446,53 @@ namespace ktradesystem.Models
                 //добавляем в текст скрипта приведение к double переменных и чисел в операциях деления и умножения (т.к. при делении типов int на int получится тип int и дробная часть потеряется), а так же возвращаемого значения
                 //удаляем дублирующиеся пробелы
                 StringBuilder script = RemoveDuplicateSpaces(indicators[i].Script);
-                //находим все индексы в строке в которые нужно вставить "(double)"
-                List<int> indexesForInsert = FindIndexesToInsertDouble(script);
-                //вставляем приведение к double
-                for (int k = indexesForInsert.Count - 1; k >= 0; k--)
-                {
-                    script.Insert(indexesForInsert[k], "(double)");
-                }
-                //удаляем пробел между candles и [
-                script.Replace("candles [", "candles[");
-                //вставляем приведение значения индекса, указанного пользователем к реальному значению индекса
-                script.Replace("candles[", "candles[currentCandleIndex - (");
-                //определяем для всех обращений к candles[]: индекс начала ключевого слова candles и индекс первой закрывающей квадратной скобки (если для указания индекса использовался элемент массива будет ошибка, массив использовать нельзя для указания индекса, чтобы использовать элемент массива, нужно присвоить его переменной и передать переменную)
+                //добавляем приведение к double правой части операции деления, чтобы результат int/int был с дробной частью
+                script.Replace("/", "/(double)");
+                //удаляем пробел между Candles и [
+                script.Replace("Candles [", "Candles[");
+                //определяем для всех обращений к Candles[]: индекс начала ключевого слова Candles[ и индекс закрывающей квардратной скобки, если внутри были еще квадратные скобки, их нужно пропустить и дойти до закрывающей
                 string scriptIndicatorString = script.ToString();
-                List<int> indexesCandles = new List<int>(); //индексы всех вхождений подстроки "candles["
-                if (scriptIndicatorString.IndexOf("candles[") != -1)
+                List<int> indexesCandles = new List<int>(); //индексы всех вхождений подстроки "Candles["
+                if (scriptIndicatorString.IndexOf("Candles[") != -1)
                 {
-                    indexesCandles.Add(scriptIndicatorString.IndexOf("candles["));
-                    while (scriptIndicatorString.IndexOf("candles[", indexesCandles.Last() + 1) != -1)
+                    indexesCandles.Add(scriptIndicatorString.IndexOf("Candles["));
+                    while (scriptIndicatorString.IndexOf("Candles[", indexesCandles.Last() + 1) != -1)
                     {
-                        indexesCandles.Add(scriptIndicatorString.IndexOf("candles[", indexesCandles.Last() + 1));
+                        indexesCandles.Add(scriptIndicatorString.IndexOf("Candles[", indexesCandles.Last() + 1));
                     }
                 }
-                List<int> indexesClose = new List<int>(); //индексы первого вхождения подстроки "]" после индекса indexesCandles
-                for(int k = 0; k < indexesCandles.Count; k++)
+                //проходим по всем indexesCandles с конца к началу, и заменяем все закрывающие квадратные скобки которые закрывают Candles[ на круглые, при этом внутренние квадратные скобки будет игнорироваться, и заменена будет только закрывающая Candles[
+                for(int k = indexesCandles.Count - 1; k >= 0; k--)
                 {
-                    indexesClose.Add(scriptIndicatorString.IndexOf("]", indexesCandles[k]));
-                    //вставляем закрывающую круглую скобку
-                    scriptIndicatorString = scriptIndicatorString.Insert(indexesClose[indexesClose.Count - 1], ")");
-                    //сдвигаем все последующие индексы на 1, т.к. только что вставили символ
-                    indexesClose[indexesClose.Count - 1]++;
-                    for(int u = k + 1; u < indexesCandles.Count; u++)
+                    int countOpen = 1; //количество найденных открывающих скобок на текущий момент
+                    int countClose = 0; //количество найденных закрывающих скобок на текущий момент
+                    int currentIndex = indexesCandles[k] + 8; //индекс текущего символа
+                    //пока количество открывающи не будет равно количеству закрывающих, или пока не превысим длину строки
+                    while(countOpen != countClose && currentIndex < scriptIndicatorString.Length)
                     {
-                        indexesCandles[u]++;
+                        if(scriptIndicatorString[currentIndex] == '[')
+                        {
+                            countOpen++;
+                        }
+                        if (scriptIndicatorString[currentIndex] == ']')
+                        {
+                            countClose++;
+                        }
+                        currentIndex++;
                     }
-                }
-                //вставляем перед обращением к массиву свечек candles проверку на допустимое значение индекса. Копируем все что заключено между [] и проверяем, это значение больше или рано 0 или нет. Если нет, то заканчиваем функцию и передаем значение, на которое индекс выходит за границы массива
-                for(int index = indexesCandles.Count - 1; index >= 0; index--)
-                {
-                    string conditionString = "if(" + scriptIndicatorString.Substring(indexesCandles[index] + 8, indexesClose[index] - (indexesCandles[index] + 8)) + " < 0){ return new IndicatorCalculateResult { OverIndex = - (" + scriptIndicatorString.Substring(indexesCandles[index] + 8, indexesClose[index] - (indexesCandles[index] + 8)) + ") }; }";
-                    scriptIndicatorString = scriptIndicatorString.Insert(indexesCandles[index], conditionString);
+                    if(countOpen != countClose) //не найдена закрывающия скобка, выводим сообщение
+                    {
+                        isErrorCompile = true;
+                        _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Ошибка в скрипте индикатора: отсутствует закрывающая скобка \"]\" при обращении к массиву Candles."); }));
+                    }
+                    //заменяем закрывающую квадратную скобку на круглую
+                    scriptIndicatorString = scriptIndicatorString.Remove(currentIndex - 1, 1);
+                    scriptIndicatorString = scriptIndicatorString.Insert(currentIndex - 1, ")");
                 }
 
                 script = new StringBuilder(scriptIndicatorString);
+                //заменяем все Canldes[ на GetCandle(
+                script.Replace("Candles[", "GetCandle(");
 
 
                 Microsoft.CSharp.CSharpCodeProvider provider = new Microsoft.CSharp.CSharpCodeProvider();
@@ -504,14 +508,35 @@ namespace ktradesystem.Models
                     using ktradesystem.Models;
                     public class CompiledIndicator_" + indicators[i].Name +
                     @"{
-                        public IndicatorCalculateResult Calculate(Candle[] candles, int currentCandleIndex, int[] indicatorParametersIntValues, double[] indicatorParametersDoubleValues)
+                        public int MaxOverIndex;
+                        public Candle[] Candles;
+                        public int CurrentCandleIndex;
+                        public IndicatorCalculateResult Calculate(Candle[] inputCandles, int currentCandleIndex, int[] indicatorParametersIntValues, double[] indicatorParametersDoubleValues)
                         {
                             " + variablesParameters + @"
+                            MaxOverIndex = 0;
+                            Candles = inputCandles;
+                            CurrentCandleIndex = currentCandleIndex;
                             double indicator = 0;
                             " + script +
-                            @"return new IndicatorCalculateResult { Value = indicator, OverIndex = 0 };
+                            @"return new IndicatorCalculateResult { Value = indicator, OverIndex = MaxOverIndex };
                         }
-                    }"
+                        public Candle GetCandle(int userIndex)
+                        {
+                            int realIndex = CurrentCandleIndex - userIndex;
+                            Candle result = Candles[0];
+                            if(realIndex < 0)
+                            {
+                                MaxOverIndex = - realIndex > MaxOverIndex? - realIndex: MaxOverIndex;
+                                result = new Candle { DateTime = Candles[0].DateTime, O = Candles[0].O, H = Candles[0].H, L = Candles[0].L, C = Candles[0].C, V = Candles[0].V };
+                            }
+                            else
+                            {
+                                result = new Candle { DateTime = Candles[realIndex].DateTime, O = Candles[realIndex].O, H = Candles[realIndex].H, L = Candles[realIndex].L, C = Candles[realIndex].C, V = Candles[realIndex].V };
+                            }
+                            return result;
+                        }
+                    }" //MaxOverIndex - максимальное превышение индекса массива со свечками; GetCandle() создает новый объект Candle для того чтобы в скрипте нельзя было переопределить значения свечки
                 });
                 if (compiled.Errors.Count == 0)
                 {
@@ -545,21 +570,16 @@ namespace ktradesystem.Models
             for (int k = 0; k < Algorithm.AlgorithmParameters.Count; k++)
             {
                 algorithmParameters += Algorithm.AlgorithmParameters[k].ParameterValueType.Id == 1 ? "int " : "double ";
-                algorithmParameters += "parameter_" + Algorithm.AlgorithmParameters[k].Name + ", ";
+                algorithmParameters += "Parameter_" + Algorithm.AlgorithmParameters[k].Name + ", ";
             }
             algorithmParameters = algorithmParameters.Substring(0, algorithmParameters.Length - 2); //удаляем последние 2 символа
             //добавляем в текст скрипта приведение к double переменных и чисел в операциях деления и умножения (т.к. при делении типов int на int получится тип int и дробная часть потеряется), а так же возвращаемого значения
             //удаляем дублирующиеся пробелы
             StringBuilder scriptAlgorithm = RemoveDuplicateSpaces(Algorithm.Script);
-            //находим все индексы в строке в которые нужно вставить "(double)"
-            List<int> indexesAlgorithmForInsert = FindIndexesToInsertDouble(scriptAlgorithm);
-            //вставляем приведение к double
-            for (int k = indexesAlgorithmForInsert.Count - 1; k >= 0; k--)
-            {
-                scriptAlgorithm.Insert(indexesAlgorithmForInsert[k], "(double)");
-            }
+            //добавляем приведение к double правой части операции деления, чтобы результат int/int был с дробной частью
+            scriptAlgorithm.Replace("/", "/(double)");
             //удаляем пробелы до и после открывающейся скобки после ключевого слова на создание заявки
-            string[] orderLetters = new string[] { "order_LimitSell", "order_LimitBuy", "order_StopSell", "order_StopBuy", "order_MarketSell", "order_MarketBuy" }; //слова создания заявок
+            string[] orderLetters = new string[] { "Order_LimitSell", "Order_LimitBuy", "Order_StopSell", "Order_StopBuy", "Order_MarketSell", "Order_MarketBuy" }; //слова создания заявок
             foreach(string str in orderLetters)
             {
                 scriptAlgorithm.Replace(str + " (", str + "("); //удаляем пробел перед открывающейся скобкой
@@ -915,32 +935,6 @@ namespace ktradesystem.Models
                 }
             }
             return stringBuilder;
-        }
-
-        private List<int> FindIndexesToInsertDouble(StringBuilder sb) //возвращает список с индексами, в которые нужно вставить приведение к double
-        {
-            List<int> indexes = new List<int>();
-            //проходим по всем символам, и если найден /, идем в направлении назад, пока не находим один из символов: " +-/*()&|!=<>". Индекс, следующий за найденным символом есть индекс для вставки "(double)"
-            string expressionEndSymbols = " +-/*()&|!=<>";
-            for (int k = 0; k < sb.Length; k++)
-            {
-                if (sb[k] == '/')
-                {
-                    bool isEndExpression = false; //найдено ли окончания левой части выражения (деления или умножения)
-                    int a = k - 2; //вычитаем 2, т.к. если там пробел то мы переместимся на последний символ выражения, если там выражение, состоящее из 1 символа, мы переместимся на символ окончания выражения
-                    while (a >= 0 && isEndExpression == false)
-                    {
-                        if (expressionEndSymbols.Contains(sb[a])) //если текущий символ найден в символх окончания выражения, запоминаем это
-                        {
-                            isEndExpression = true;
-                        }
-                        a--;
-                    }
-                    //добавляем в индексы индекс вставки приведения к double
-                    indexes.Add(a + 2); //+2 т.к. a--, и это символ перед первым символом выражения
-                }
-            }
-            return indexes;
         }
 
         private void IndicatorValuesForFileCalculate(DataSourceCandles dataSourceCandles, int indicatorIndex, int fileIndex) //выполняет расчет значений индикатора на основе массива свечек для файла, и помещает в элемент элемента массива IndicatorsValues по индексу файла

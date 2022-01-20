@@ -536,7 +536,7 @@ namespace ktradesystem.Models
                             }
                             return result;
                         }
-                    }" //MaxOverIndex - максимальное превышение индекса массива со свечками; GetCandle() создает новый объект Candle для того чтобы в скрипте нельзя было переопределить значения свечки
+                    }" //MaxOverIndex - максимальное превышение индекса массива со свечками; GetCandle() создает и возвращает новый объект Candle для того чтобы в скрипте нельзя было переопределить значения свечки
                 });
                 if (compiled.Errors.Count == 0)
                 {
@@ -760,68 +760,6 @@ namespace ktradesystem.Models
                         }
                     }
 
-                    //вычисляем индикаторы для всех DataSourcesCandles, делаем это несколькими потоками
-                    Task[] tasksIndicator = new Task[processorCount]; //задачи
-                    Stopwatch stopwatchIndicator = new Stopwatch();
-                    stopwatchIndicator.Start();
-                    int dataSourceIndex = 0; //индекс DataSourcesCandles
-                    int indicatorIndex = 0; //индекс индиктора в массиве IndicatorsValues
-                    int fileIndex = 0; //индекс массива Candles[], соответствующего файлу
-                    int m = 0; //номер прохождения цикла
-                    //вычисляем индикаторы в следующей последовательности: проходим по DataSourcesCandles => проходим по IndicatorsValues, и для каждого перебираем все файлы, после чего присваиваем элементу массива IndicatorsValues созданный объект IndicatorValues
-                    while (dataSourceIndex < DataSourcesCandles.Count && cancellationToken.IsCancellationRequested == false)
-                    {
-                        //если пока еще не заполнен массив с задачами, заполняем его
-                        if (tasksIndicator[tasksIndicator.Length - 1] == null)
-                        {
-                            Task task = tasksIndicator[m];
-                            DataSourceCandles dataSourceCandles = DataSourcesCandles[dataSourceIndex];
-                            int iIndex = indicatorIndex;
-                            int fIndex = fileIndex;
-                            task = Task.Run(() => IndicatorValuesForFileCalculate(dataSourceCandles, iIndex, fIndex));
-                            //переходим на следующий элемент
-                            fileIndex++;
-                            if(fileIndex >= DataSourcesCandles[dataSourceIndex].DataSource.DataSourceFiles.Count)
-                            {
-                                fileIndex = 0;
-                                indicatorIndex++;
-                            }
-                            if(indicatorIndex >= DataSourcesCandles[dataSourceIndex].IndicatorsValues.Length)
-                            {
-                                indicatorIndex = 0;
-                                dataSourceIndex++;
-                            }
-                        }
-                        else
-                        {
-                            int completedTaskIndex = Task.WaitAny(tasksIndicator);
-
-                            if(cancellationToken.IsCancellationRequested == false)
-                            {
-                                Task task = tasksIndicator[completedTaskIndex];
-                                DataSourceCandles dataSourceCandles = DataSourcesCandles[dataSourceIndex];
-                                int iIndex = indicatorIndex;
-                                int fIndex = fileIndex;
-                                task = Task.Run(() => IndicatorValuesForFileCalculate(dataSourceCandles, iIndex, fIndex));
-                                //переходим на следующий элемент
-                                fileIndex++;
-                                if (fileIndex >= DataSourcesCandles[dataSourceIndex].DataSource.DataSourceFiles.Count)
-                                {
-                                    fileIndex = 0;
-                                    indicatorIndex++;
-                                }
-                                if (indicatorIndex >= DataSourcesCandles[dataSourceIndex].IndicatorsValues.Length)
-                                {
-                                    indicatorIndex = 0;
-                                    dataSourceIndex++;
-                                }
-                            }
-                        }
-                        m++;
-                    }
-                    Task.WaitAll(tasksIndicator);
-                    stopwatchIndicator.Stop();
-
 
                     //выполняем тестирование для всех TestBatches
                     Task[] tasks = new Task[processorCount]; //задачи
@@ -831,7 +769,7 @@ namespace ktradesystem.Models
                     int testRunIndex = 0; //индекс testRun-а, который отправляется в задачи
                     int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест массив бдет состоять только из 1 элемента: индекса testBatch-а)
                     int[][] testRunsStatus = new int[TestBatches.Count - 1][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у выполненного 1
-                                                                                //создаем для каждого testBatch массив равный количеству testRun
+                    //создаем для каждого testBatch массив равный количеству testRun
                     for (int k = 0; k < TestBatches.Count; k++)
                     {
                         testRunsStatus[k] = new int[TestBatches[k].OptimizationTestRuns.Count];
@@ -845,7 +783,7 @@ namespace ktradesystem.Models
                         {
                             Task task = tasks[n];
                             TestRun testRun = TestBatches[testBatchIndex].OptimizationTestRuns[testRunIndex];
-                            task = Task.Run(() => TestRunExecute(testRun));
+                            task = Task.Run(() => TestRunExecute(testRun, indicators));
                             tasksExecutingTestRuns[n] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
                             testRunIndex++;
                             testBatchIndex += TestBatches[testBatchIndex].OptimizationTestRuns.Count > testRunIndex ? 1 : 0; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
@@ -940,15 +878,112 @@ namespace ktradesystem.Models
         private void IndicatorValuesForFileCalculate(DataSourceCandles dataSourceCandles, int indicatorIndex, int fileIndex) //выполняет расчет значений индикатора на основе массива свечек для файла, и помещает в элемент элемента массива IndicatorsValues по индексу файла
         {
             dataSourceCandles.IndicatorsValues[indicatorIndex].Values[fileIndex] = new double[dataSourceCandles.Candles[fileIndex].Length]; //создаем массив размерностью с количество свечек для значений индикатора
-            for (int i = 0; i < dataSourceCandles.Candles[fileIndex].Length; i++) //проходим по всем свечкам
+            int i = 0;
+            while (i < dataSourceCandles.Candles[fileIndex].Length) //проходим по всем свечкам
             {
                 //вычисляем значение индикатора
-                //CompiledIndicators[indicatorIndex].Calculate(dataSourceCandles.Candles[fileIndex], i, )
+                //IndicatorCalculateResult indicatorCalculateResult = CompiledIndicators[indicatorIndex].Calculate(dataSourceCandles.Candles[fileIndex], i, )
+                //Calculate(Candle[] inputCandles, int currentCandleIndex, int[] indicatorParametersIntValues, double[] indicatorParametersDoubleValues)
+                i++;
             }
         }
 
-        private void TestRunExecute(TestRun testRun)
+        public void IndicatorValuesWithParameterCalculate(TestRun testRun) //вычисляет индикаторы для всех источников данных testRun-а, с параметрами индикатора, взятыми из testRun-а, и помещает их в IndicatorsValues объекта DataSourceCandles, теперь для свечек файлов будут так же значения индикаторов для каждой свечки, эта функция будет использоваться для вычисления индикаторов которые будут отображаться на графике конкретного testRun-а
         {
+            //вычисляем индикаторы для всех DataSourcesCandles, делаем это несколькими потоками
+            /*int processorCount = Environment.ProcessorCount;
+            processorCount -= _modelData.Settings.Where(i => i.Id == 1).First().BoolValue ? 1 : 0; //если в настройках выбрано оставлять один поток, вычитаем из количества потоков
+            if (countTestRuns < processorCount) //если тестов меньше чем число доступных потоков, устанавливаем количество потоков на количество тестов, т.к. WaitAll ругается если задача в tasks null
+            {
+                processorCount = countTestRuns;
+            }
+            if (processorCount < 1)
+            {
+                processorCount = 1;
+            }
+            Task[] tasksIndicator = new Task[processorCount]; //задачи
+            Stopwatch stopwatchIndicator = new Stopwatch();
+            stopwatchIndicator.Start();
+            int dataSourceIndex = 0; //индекс DataSourcesCandles
+            int indicatorIndex = 0; //индекс индиктора в массиве IndicatorsValues
+            int fileIndex = 0; //индекс массива Candles[], соответствующего файлу
+            int m = 0; //номер прохождения цикла
+                       //вычисляем индикаторы в следующей последовательности: проходим по DataSourcesCandles => проходим по IndicatorsValues, и для каждого перебираем все файлы, после чего присваиваем элементу массива IndicatorsValues созданный объект IndicatorValues
+            while (dataSourceIndex < DataSourcesCandles.Count)
+            {
+                //если пока еще не заполнен массив с задачами, заполняем его
+                if (tasksIndicator[tasksIndicator.Length - 1] == null)
+                {
+                    Task task = tasksIndicator[m];
+                    DataSourceCandles dataSourceCandles = DataSourcesCandles[dataSourceIndex];
+                    int iIndex = indicatorIndex;
+                    int fIndex = fileIndex;
+                    task = Task.Run(() => IndicatorValuesForFileCalculate(dataSourceCandles, iIndex, fIndex));
+                    //переходим на следующий элемент
+                    fileIndex++;
+                    if (fileIndex >= DataSourcesCandles[dataSourceIndex].DataSource.DataSourceFiles.Count)
+                    {
+                        fileIndex = 0;
+                        indicatorIndex++;
+                    }
+                    if (indicatorIndex >= DataSourcesCandles[dataSourceIndex].IndicatorsValues.Length)
+                    {
+                        indicatorIndex = 0;
+                        dataSourceIndex++;
+                    }
+                }
+                else
+                {
+                    int completedTaskIndex = Task.WaitAny(tasksIndicator);
+
+                    Task task = tasksIndicator[completedTaskIndex];
+                    DataSourceCandles dataSourceCandles = DataSourcesCandles[dataSourceIndex];
+                    int iIndex = indicatorIndex;
+                    int fIndex = fileIndex;
+                    task = Task.Run(() => IndicatorValuesForFileCalculate(dataSourceCandles, iIndex, fIndex));
+                    //переходим на следующий элемент
+                    fileIndex++;
+                    if (fileIndex >= DataSourcesCandles[dataSourceIndex].DataSource.DataSourceFiles.Count)
+                    {
+                        fileIndex = 0;
+                        indicatorIndex++;
+                    }
+                    if (indicatorIndex >= DataSourcesCandles[dataSourceIndex].IndicatorsValues.Length)
+                    {
+                        indicatorIndex = 0;
+                        dataSourceIndex++;
+                    }
+                }
+                m++;
+            }
+            Task.WaitAll(tasksIndicator);
+            stopwatchIndicator.Stop();*/
+        }
+
+        private void TestRunExecute(TestRun testRun, List<Indicator> indicators)
+        {
+            //формируем массивы с int и double значениями параметров для каждого индикатора
+            int[][] indicatorParametersIntValues = new int[indicators.Count][];
+            double[][] indicatorParametersDoubleValues = new double[indicators.Count][];
+            for (int i = 0; i < indicators.Count; i++)
+            {
+                List<int> indexesThisIndicatorInIndicatorParameterValues = new List<int>(); //список с индексами параметров, которые относятся к текущему индикатору
+                for(int k = 0; k < testRun.IndicatorParameterValues.Count; k++)
+                {
+                    if(testRun.IndicatorParameterValues[k].IndicatorParameterTemplate.Indicator == indicators[i]) //если индикатор параметра совпадает с текущим
+                    {
+                        indexesThisIndicatorInIndicatorParameterValues.Add(k); //добавляем индекс этого параметра в список параметров текущего индикатора
+                    }
+                }
+                indicatorParametersIntValues[i] = new int[indexesThisIndicatorInIndicatorParameterValues.Count];
+                indicatorParametersDoubleValues[i] = new double[indexesThisIndicatorInIndicatorParameterValues.Count];
+                for(int y = 0; y < indexesThisIndicatorInIndicatorParameterValues.Count; y++)
+                {
+                    indicatorParametersIntValues[i][y] = testRun.IndicatorParameterValues[indexesThisIndicatorInIndicatorParameterValues[y]].IntValue;
+                    indicatorParametersDoubleValues[i][y] = testRun.IndicatorParameterValues[indexesThisIndicatorInIndicatorParameterValues[y]].DoubleValue;
+                }
+            }
+
             TimeSpan intervalDuration = testRun.TestBatch.DataSourceGroup.DataSourceAccordances[0].DataSource.Interval.Duration; //длительность интервала
             DataSourceCandles[] dataSourceCandles = new DataSourceCandles[testRun.TestBatch.DataSourceGroup.DataSourceAccordances.Count]; //массив с ссылками на DataSourceCandles, соответствующими источникам данных группы источников данных
             for(int i = 0; i < dataSourceCandles.Length; i++)
@@ -1011,7 +1046,7 @@ namespace ktradesystem.Models
             {
                 if(DateTime.Compare(currentDateTime, dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime) > 0)
                 {
-                    currentDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime; //самая ранняя дата и время свечки (среди источников данных)
+                    currentDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime; //самая ранняя дата и время свечки (которая >= дате начала теста) (среди источников данных)
                 }
             }
 
@@ -1038,7 +1073,24 @@ namespace ktradesystem.Models
                 //если свечки свех источников данных равняются текущей дате, вычисляем индикаторы и алгоритмы
                 if (isCandlesDateTimeEqual)
                 {
-                    //добавить проверки на выход за пределы массива candles в индикаторах и алгоритме
+                    int maxOverIndex = 0; //максимальное превышение индекса в индикаторах и алгоритме
+                    double[][] indicatorsValues = new double[fileIndexes.Length][];
+                    //проходим по всем файлам и вычисляем значения всех индикаторов для каждого файла
+                    for(int i = 0; i < fileIndexes.Length; i++)
+                    {
+                        //вычисляем значения всех индикаторов
+                        indicatorsValues[i] = new double[indicators.Count];
+                        for (int k = 0; k < indicatorsValues.Length; k++)
+                        {
+                            //вычисляем значение индикатора
+                            IndicatorCalculateResult indicatorCalculateResult = CompiledIndicators[k].Calculate(dataSourceCandles[fileIndexes[i]].Candles[fileIndexes[i]], candleIndexes[i], indicatorParametersIntValues[k], indicatorParametersDoubleValues[k]); //indicatorParametersIntValues[индекс_индикатора]
+                            //Calculate(Candle[] inputCandles, int currentCandleIndex, int[] indicatorParametersIntValues, double[] indicatorParametersDoubleValues)
+                            maxOverIndex = indicatorCalculateResult.OverIndex > maxOverIndex ? indicatorCalculateResult.OverIndex : maxOverIndex; //если првышение индекса больше максимального, обновляем его максимальное значение
+                            indicatorsValues[i][k] = indicatorCalculateResult.Value; //запоминаем значение индикатора для файла i и индикатора k
+                        }
+                    }
+                    //вычисляем алгоритм
+
                 }
                 //переходим на следующую свечку (см. алгоритм на листке) (при переходе на следующий файл, нужно в нем дойти до даты, следующей за текущей)
 

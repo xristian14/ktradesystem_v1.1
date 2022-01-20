@@ -555,7 +555,7 @@ namespace ktradesystem.Models
 
             //создаем класс алгоритма
 
-            string algorithmParameters = ""; //описание принимаемых параметров методом алгоритма
+            string algorithmVariables = ""; //инициализация и присвоение значений переменным, с которыми будет работать пользователь
             //формируем параметры источников данных
             for (int k = 0; k < Algorithm.DataSourceTemplates.Count; k++)
             {
@@ -630,18 +630,21 @@ namespace ktradesystem.Models
                 paramAlgorithm.GenerateInMemory = true;
 
                 var compiledAlgorithm = providerAlgorithm.CompileAssemblyFromSource(paramAlgorithm, new string[]
-                {
+                {//Calculate(Candle[] inputCandles, int currentCandleIndex, int[] indicatorParametersIntValues, double[] indicatorParametersDoubleValues)
                 @"
                 using System;
                 using System.Collections.Generic;
                 using ktradesystem.Models;
                 public class CompiledAlgorithm
                 {
-                    public List<Order> Calculate(" + algorithmParameters + @")
+                    int MaxOverIndex;
+                    public AlgorithmCalculateResult Calculate(AccountForCalculate accountForCalculate, DataSourceForCalculate[] dataSourcesForCalculate, double[] indicatorValues, int[] algorithmParametersIntValues, double[] algorithmParametersDoubleValues)
                     {
+                        " + algorithmVariables + @"
+                        MaxOverIndex = 0;
                         List<Order> orders = new List<Order>();
                         " + scriptAlgorithm +
-                        @"return new AlgorithmCalculateResult { Orders = orders };
+                        @"return new AlgorithmCalculateResult { Orders = orders, OverIndex = MaxOverIndex };
                     }
                 }"
                 });

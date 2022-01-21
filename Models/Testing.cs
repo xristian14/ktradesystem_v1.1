@@ -517,14 +517,14 @@ namespace ktradesystem.Models
                             MaxOverIndex = 0;
                             Candles = inputCandles;
                             CurrentCandleIndex = currentCandleIndex;
-                            double indicator = 0;
+                            double Indicator = 0;
                             " + script +
-                            @"return new IndicatorCalculateResult { Value = indicator, OverIndex = MaxOverIndex };
+                            @"return new IndicatorCalculateResult { Value = Indicator, OverIndex = MaxOverIndex };
                         }
                         public Candle GetCandle(int userIndex)
                         {
                             int realIndex = CurrentCandleIndex - userIndex;
-                            Candle result = Candles[0];
+                            Candle result;
                             if(realIndex < 0)
                             {
                                 MaxOverIndex = - realIndex > MaxOverIndex? - realIndex: MaxOverIndex;
@@ -554,26 +554,32 @@ namespace ktradesystem.Models
             }
 
             //создаем класс алгоритма
-
-            string algorithmVariables = ""; //инициализация и присвоение значений переменным, с которыми будет работать пользователь
-            //формируем параметры источников данных
+            string dataSourcesForCalculateVariables = ""; //объявление переменных для класса, в которых будут храниться DataSourcesForCalculate
+            List<string> dsVariablesNames = new List<string>(); //список с названиями переменных dataSourceForCalculate
             for (int k = 0; k < Algorithm.DataSourceTemplates.Count; k++)
             {
-                algorithmParameters += "DataSourceForCalculate datasource_" + Algorithm.DataSourceTemplates[k].Name + ", ";
+                dsVariablesNames.Add("Datasource_" + Algorithm.DataSourceTemplates[k].Name);
+                dataSourcesForCalculateVariables += "public DataSourceForCalculate " + dsVariablesNames[k] + "; ";
+            }
+
+            string algorithmVariables = ""; //инициализация и присвоение значений переменным, с которыми будет работать пользователь
+            //присваиваем переменным источников данных значения
+            for (int k = 0; k < Algorithm.DataSourceTemplates.Count; k++)
+            {
+                algorithmVariables += dsVariablesNames[k] + " = dataSourcesForCalculate[" + k +"]; ";
             }
             //формируем параметры индикаторов
             for(int k = 0; k < indicators.Count; k++)
             {
-                algorithmParameters += "double indicator_" + indicators[k].Name + ", ";
+                algorithmVariables += "double Indicator_" + indicators[k].Name + " = indicatorsValues[" + k + "]; ";
             }
-            //формируем параметры параметров алгоритма
+            //формируем параметры алгоритма
             for (int k = 0; k < Algorithm.AlgorithmParameters.Count; k++)
             {
-                algorithmParameters += Algorithm.AlgorithmParameters[k].ParameterValueType.Id == 1 ? "int " : "double ";
-                algorithmParameters += "Parameter_" + Algorithm.AlgorithmParameters[k].Name + ", ";
+                algorithmVariables += Algorithm.AlgorithmParameters[k].ParameterValueType.Id == 1 ? "int " : "double ";
+                algorithmVariables += "Parameter_" + Algorithm.AlgorithmParameters[k].Name + " = ";
+                algorithmVariables += Algorithm.AlgorithmParameters[k].ParameterValueType.Id == 1 ? "algorithmParametersIntValues[" + k + "]; " : "algorithmParametersDoubleValues[" + k + "]; ";
             }
-            algorithmParameters = algorithmParameters.Substring(0, algorithmParameters.Length - 2); //удаляем последние 2 символа
-            //добавляем в текст скрипта приведение к double переменных и чисел в операциях деления и умножения (т.к. при делении типов int на int получится тип int и дробная часть потеряется), а так же возвращаемого значения
             //удаляем дублирующиеся пробелы
             StringBuilder scriptAlgorithm = RemoveDuplicateSpaces(Algorithm.Script);
             //добавляем приведение к double правой части операции деления, чтобы результат int/int был с дробной частью
@@ -615,30 +621,83 @@ namespace ktradesystem.Models
                     indexFindLetter = scriptAlgorithmString.IndexOf(orderCorrectLetters[k], indexFindLetter + 1); //ищем следующее вхождение данного слова
                 }
             }
+            if (isSemicolonFind == false)
+            {
+                isErrorCompile = true;
+                //отправляем пользователю сообщения об ошибке
+                _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Синтаксическая ошибка в скрипте алгоритма: не найдена \";\" после добавления заявки."); }));
+            }
             //вставляем закрывающую скобку
             for (int k = indexesSemicolon.Count - 1; k >= 0; k--)
             {
                 scriptAlgorithm.Insert(indexesSemicolon[k], ")");
             }
-
-            if(isSemicolonFind == true) //если не было ошибок, компилируем
+            //заменяем для всех источников данных обращение типа: Datasource_maket.Candles[5] на GetCandle(Datasource_maket, 5)
+            scriptAlgorithm.Replace("Candles [", "Candles["); //удаляем пробел
+            scriptAlgorithmString = scriptAlgorithm.ToString(); //текст скрипта в формате string
+            //заменяем все закрывающие скобки "]" при обращении к Candles на круглые ")"
+            List<int> algorithmIndexesCandles = new List<int>(); //индексы всех вхождений подстроки "Candles["
+            if (scriptAlgorithmString.IndexOf("Candles[") != -1)
             {
-                Microsoft.CSharp.CSharpCodeProvider providerAlgorithm = new Microsoft.CSharp.CSharpCodeProvider();
-                System.CodeDom.Compiler.CompilerParameters paramAlgorithm = new System.CodeDom.Compiler.CompilerParameters();
-                paramAlgorithm.ReferencedAssemblies.Add(Assembly.GetExecutingAssembly().Location);
-                paramAlgorithm.GenerateExecutable = false;
-                paramAlgorithm.GenerateInMemory = true;
+                algorithmIndexesCandles.Add(scriptAlgorithmString.IndexOf("Candles["));
+                while (scriptAlgorithmString.IndexOf("Candles[", algorithmIndexesCandles.Last() + 1) != -1)
+                {
+                    algorithmIndexesCandles.Add(scriptAlgorithmString.IndexOf("Candles[", algorithmIndexesCandles.Last() + 1));
+                }
+            }
+            //проходим по всем indexesCandles с конца к началу, и заменяем все закрывающие квадратные скобки которые закрывают Candles[ на круглые, при этом внутренние квадратные скобки будет игнорироваться, и заменена будет только закрывающая Candles[
+            for(int k = algorithmIndexesCandles.Count - 1; k >= 0; k--)
+            {
+                int countOpen = 1; //количество найденных открывающих скобок на текущий момент
+                int countClose = 0; //количество найденных закрывающих скобок на текущий момент
+                int currentIndex = algorithmIndexesCandles[k] + 8; //индекс текущего символа
+                //пока количество открывающи не будет равно количеству закрывающих, или пока не превысим длину строки
+                while(countOpen != countClose && currentIndex < scriptAlgorithmString.Length)
+                {
+                    if(scriptAlgorithmString[currentIndex] == '[')
+                    {
+                        countOpen++;
+                    }
+                    if (scriptAlgorithmString[currentIndex] == ']')
+                    {
+                        countClose++;
+                    }
+                    currentIndex++;
+                }
+                if(countOpen != countClose) //не найдена закрывающия скобка, выводим сообщение
+                {
+                    isErrorCompile = true;
+                    _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Ошибка в скрипте алгоритма: отсутствует закрывающая скобка \"]\" при обращении к массиву Candles."); }));
+                }
+                //заменяем закрывающую квадратную скобку на круглую
+                scriptAlgorithmString = scriptAlgorithmString.Remove(currentIndex - 1, 1);
+                scriptAlgorithmString = scriptAlgorithmString.Insert(currentIndex - 1, ")");
+            }
+            scriptAlgorithm = new StringBuilder(scriptAlgorithmString);
+            //заменяем все обращения типа: Datasource_maket.Candles[ на GetCandle(Datasource_maket, 
+            for (int k = 0; k < dsVariablesNames.Count; k++)
+            {
+                //находим индексы начала обращения к Datasource_maket.Candles[
+                scriptAlgorithm.Replace(dsVariablesNames[k] + ".Candles[", "GetCandle(" + dsVariablesNames[k] + ", ");
+            }
+            
+            Microsoft.CSharp.CSharpCodeProvider providerAlgorithm = new Microsoft.CSharp.CSharpCodeProvider();
+            System.CodeDom.Compiler.CompilerParameters paramAlgorithm = new System.CodeDom.Compiler.CompilerParameters();
+            paramAlgorithm.ReferencedAssemblies.Add(Assembly.GetExecutingAssembly().Location);
+            paramAlgorithm.GenerateExecutable = false;
+            paramAlgorithm.GenerateInMemory = true;
 
-                var compiledAlgorithm = providerAlgorithm.CompileAssemblyFromSource(paramAlgorithm, new string[]
-                {//Calculate(Candle[] inputCandles, int currentCandleIndex, int[] indicatorParametersIntValues, double[] indicatorParametersDoubleValues)
+            var compiledAlgorithm = providerAlgorithm.CompileAssemblyFromSource(paramAlgorithm, new string[]
+            {
                 @"
                 using System;
                 using System.Collections.Generic;
                 using ktradesystem.Models;
                 public class CompiledAlgorithm
                 {
+                    " + dataSourcesForCalculateVariables + @"
                     int MaxOverIndex;
-                    public AlgorithmCalculateResult Calculate(AccountForCalculate accountForCalculate, DataSourceForCalculate[] dataSourcesForCalculate, double[] indicatorValues, int[] algorithmParametersIntValues, double[] algorithmParametersDoubleValues)
+                    public AlgorithmCalculateResult Calculate(AccountForCalculate accountForCalculate, DataSourceForCalculate[] dataSourcesForCalculate, double[] indicatorsValues, int[] algorithmParametersIntValues, double[] algorithmParametersDoubleValues)
                     {
                         " + algorithmVariables + @"
                         MaxOverIndex = 0;
@@ -646,30 +705,38 @@ namespace ktradesystem.Models
                         " + scriptAlgorithm +
                         @"return new AlgorithmCalculateResult { Orders = orders, OverIndex = MaxOverIndex };
                     }
-                }"
-                });
-                if (compiledAlgorithm.Errors.Count == 0)
-                {
-                    CompiledAlgorithm = compiledAlgorithm.CompiledAssembly.CreateInstance("CompiledAlgorithm");
-                }
-                else
-                {
-                    isErrorCompile = true;
-                    //отправляем пользователю сообщения об ошибке
-                    for (int r = 0; r < compiledAlgorithm.Errors.Count; r++)
+                    public Candle GetCandle(DataSourceForCalculate dataSourcesForCalculate, int userIndex)
                     {
-                        _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Ошибка при компиляции алгоритма: " + compiledAlgorithm.Errors[0].ErrorText); }));
+                        int realIndex = dataSourcesForCalculate.CurrentCandleIndex - userIndex;
+                        Candle result;
+                        if(realIndex < 0)
+                        {
+                            MaxOverIndex = - realIndex > MaxOverIndex? - realIndex: MaxOverIndex;
+                            result = new Candle { DateTime = dataSourcesForCalculate.Candles[0].DateTime, O = dataSourcesForCalculate.Candles[0].O, H = dataSourcesForCalculate.Candles[0].H, L = dataSourcesForCalculate.Candles[0].L, C = dataSourcesForCalculate.Candles[0].C, V = dataSourcesForCalculate.Candles[0].V };
+                        }
+                        else
+                        {
+                            result = new Candle { DateTime = dataSourcesForCalculate.Candles[realIndex].DateTime, O = dataSourcesForCalculate.Candles[realIndex].O, H = dataSourcesForCalculate.Candles[realIndex].H, L = dataSourcesForCalculate.Candles[realIndex].L, C = dataSourcesForCalculate.Candles[realIndex].C, V = dataSourcesForCalculate.Candles[realIndex].V };
+                        }
+                        return result;
                     }
-                }
+                }"
+            });
+            if (compiledAlgorithm.Errors.Count == 0)
+            {
+                CompiledAlgorithm = compiledAlgorithm.CompiledAssembly.CreateInstance("CompiledAlgorithm");
             }
-            else //если были ошибки, сообщаем об ошибке, указываем что были ошибки
+            else
             {
                 isErrorCompile = true;
                 //отправляем пользователю сообщения об ошибке
-                _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Синтаксическая ошибка в скрипте алгоритма: не найдена ; после добавления заявки."); }));
+                for (int r = 0; r < compiledAlgorithm.Errors.Count; r++)
+                {
+                    _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Ошибка при компиляции алгоритма: " + compiledAlgorithm.Errors[0].ErrorText); }));
+                }
             }
 
-            if(isErrorCompile == false)
+            if (isErrorCompile == false)
             {
                 //определяем количество testRun без учета форвардных
                 int countTestRuns = 0;

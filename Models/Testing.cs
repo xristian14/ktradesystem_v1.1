@@ -568,10 +568,13 @@ namespace ktradesystem.Models
             {
                 algorithmVariables += dsVariablesNames[k] + " = dataSourcesForCalculate[" + k +"]; ";
             }
-            //формируем параметры индикаторов
-            for(int k = 0; k < indicators.Count; k++)
+            //формируем параметры индикаторов для источников данных
+            for(int i = 0; i < Algorithm.DataSourceTemplates.Count; i++)
             {
-                algorithmVariables += "double Indicator_" + indicators[k].Name + " = indicatorsValues[" + k + "]; ";
+                for (int k = 0; k < indicators.Count; k++)
+                {
+                    algorithmVariables += "double " + dsVariablesNames[i] + "_Indicator_" + indicators[k].Name + " = dataSourcesForCalculate[" + i + "].IndicatorsValues[" + k + "]; ";
+                }
             }
             //формируем параметры алгоритма
             for (int k = 0; k < Algorithm.AlgorithmParameters.Count; k++)
@@ -584,6 +587,14 @@ namespace ktradesystem.Models
             StringBuilder scriptAlgorithm = RemoveDuplicateSpaces(Algorithm.Script);
             //добавляем приведение к double правой части операции деления, чтобы результат int/int был с дробной частью
             scriptAlgorithm.Replace("/", "/(double)");
+            //заменяем все обращения к конкретному индикатору типа: Datasource_maket.Indicator_sma на Datasource_maket_Indicator_sma
+            for (int i = 0; i < Algorithm.DataSourceTemplates.Count; i++)
+            {
+                for (int k = 0; k < indicators.Count; k++)
+                {
+                    scriptAlgorithm.Replace(dsVariablesNames[i] + ".Indicator_" + indicators[k].Name, dsVariablesNames[i] + "_Indicator_" + indicators[k].Name);
+                }
+            }
             //удаляем пробелы до и после открывающейся скобки после ключевого слова на создание заявки
             string[] orderLetters = new string[] { "Order_LimitSell", "Order_LimitBuy", "Order_StopSell", "Order_StopBuy", "Order_MarketSell", "Order_MarketBuy" }; //слова создания заявок
             foreach(string str in orderLetters)
@@ -697,7 +708,7 @@ namespace ktradesystem.Models
                 {
                     " + dataSourcesForCalculateVariables + @"
                     int MaxOverIndex;
-                    public AlgorithmCalculateResult Calculate(AccountForCalculate accountForCalculate, DataSourceForCalculate[] dataSourcesForCalculate, double[] indicatorsValues, int[] algorithmParametersIntValues, double[] algorithmParametersDoubleValues)
+                    public AlgorithmCalculateResult Calculate(AccountForCalculate accountForCalculate, DataSourceForCalculate[] dataSourcesForCalculate, int[] algorithmParametersIntValues, double[] algorithmParametersDoubleValues)
                     {
                         " + algorithmVariables + @"
                         MaxOverIndex = 0;
@@ -1160,13 +1171,25 @@ namespace ktradesystem.Models
                         }
                     }
                     //вычисляем алгоритм
+                    /*AccountForCalculate accountForCalculate
+                    AlgorithmCalculateResult algorithmCalculateResult = CompiledAlgorithm.Calculate(accountForCalculate, DataSourceForCalculate[] dataSourcesForCalculate, int[] algorithmParametersIntValues, double[] algorithmParametersDoubleValues);
+                    maxOverIndex = algorithmCalculateResult.OverIndex > maxOverIndex ? algorithmCalculateResult.OverIndex : maxOverIndex;*/ //если првышение индекса больше максимального, обновляем его максимальное значение
+                    if(maxOverIndex == 0) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
+                    {
 
+                    }
                 }
-                //переходим на следующую свечку (см. алгоритм на листке) (при переходе на следующий файл, нужно в нем дойти до даты, следующей за текущей)
+                //переходим на следующую свечку (см. алгоритм на листке) (при переходе на следующий файл, нужно в нем дойти до даты, следующей за текущей) (переходим не на следующую, а на количество, равное 1 + maxOverIndex)
 
             }
 
 
+
+        }
+
+        public void MakingDeals(DataSourceCandles[] dataSourceCandles, Account account, bool isStopOnly = false) //функция проверяет заявки на их исполнение в текущей свечке. isStopOnly - если указан как true, будут проверяться на исполнение только стоп-заявки
+        {
+            //проверяем стоп-заявки на исполнение
 
         }
 

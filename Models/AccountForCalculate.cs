@@ -8,5 +8,8 @@ namespace ktradesystem.Models
 {
     public class AccountForCalculate
     {
+        public double Countbuy { get; set; }
+        public double Countsell { get; set; }
+        public double Price { get; set; }
     }
 }

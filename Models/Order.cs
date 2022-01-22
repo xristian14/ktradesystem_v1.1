@@ -28,5 +28,6 @@ namespace ktradesystem.Models
         public double Count { get; set; }
         public DateTime DateTimeSubmit { get; set; }
         public DateTime DateTimeRemove { get; set; }
+        public Order LinkedOrder { get; set; } //связанная заявка (тейк-профит для стоп-заявки или стоп-лосс для лимитной заявки на тейк профит)
     }
 }

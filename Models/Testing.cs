@@ -1187,10 +1187,52 @@ namespace ktradesystem.Models
 
         }
 
-        public void MakingDeals(DataSourceCandles[] dataSourceCandles, Account account, bool isStopOnly = false) //функция проверяет заявки на их исполнение в текущей свечке. isStopOnly - если указан как true, будут проверяться на исполнение только стоп-заявки
+        public void CheckOrdersExecution(DataSourceCandles[] dataSourcesCandles, Account account, int[] fileIndexes, int[] candleIndexes, bool isMarketOnly = false) //функция проверяет заявки на их исполнение в текущей свечке. isMarketOnly - если указан как true, будут проверяться на исполнение только рыночные заявки
         {
+            //исполняем рыночные заявки
+            foreach(Order order in account.Orders)
+            {
+                if(order.TypeOrder.Id == 2)
+                {
+                    //определяем индекс источника данных со свечками текущей заявки
+                    int dataSourcesCandlesIndex = 0;
+                    for (int i = 0; i < dataSourcesCandles.Length; i++)
+                    {
+                        if (dataSourcesCandles[i].DataSource == order.DataSource)
+                        {
+                            dataSourcesCandlesIndex = i;
+                        }
+                    }
+                    int slippage = Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //проскальзывание
+
+                }
+            }
+            //закрываем заявки которые были полностью исполнены
             //проверяем стоп-заявки на исполнение
 
+        }
+
+        private void MakeADeal(Order order, double lotsCount, double price) //совершает сделку
+        {
+
+        }
+
+        private int Slippage(DataSourceCandles dataSourceCandles, int fileIndex, int candleIndex, double lotsCountInOrder) //возвращает размер проскальзывания
+        {
+            int candleCount = 20; //количество свечек для определения среднего количества лотов на 1 пункт цены
+            candleCount = candleIndex < candleCount ? candleIndex + 1 : candleCount; //чтобы избежать обращения к несуществующему индексу
+            double lotsCount = 0; //количество лотов
+            int pointsCount = 0; //количество пунктов цены на которых было куплено/продано данное количество лотов
+            for (int i = 0; i < candleCount; i++)
+            {
+                lotsCount += dataSourceCandles.Candles[fileIndex][candleIndex - i].V;
+                pointsCount += (int)Math.Round((dataSourceCandles.Candles[fileIndex][candleIndex - i].H - dataSourceCandles.Candles[fileIndex][candleIndex - i].L) / dataSourceCandles.DataSource.CostPriceStep); //делим high - low на стоимость 1 пункта цены и получаем количество пунктов
+            }
+            pointsCount = pointsCount == 0 ? 1 : pointsCount; //чтобы избежать деления на 0
+            double lotsInOnePoint = lotsCount / pointsCount; //количество лотов в 1 пункте цены
+            lotsInOnePoint = lotsInOnePoint == 0 ? 0.01 : lotsInOnePoint; //чтобы избежать деления на 0
+            int slippage = (int)Math.Round(lotsCountInOrder / lotsInOnePoint / 2); //делю количество лотов в заявке на количество лотов в 1 пункте и получаю количество пунктов на которое размажется цена, поделив это количество на 2 получаю среднее значение проскальзывания
+            return slippage;
         }
 
         private TestRun DeterminingTopModel(List<TestRun> testRuns) //определение топ-модели среди оптимизационных тестов

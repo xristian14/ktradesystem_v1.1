@@ -10,7 +10,7 @@ namespace ktradesystem.Models
     public class DataSourceCandles //класс содержит источник данных, и массив массивов свечек которые содержат данные файлов
     {
         public DataSource DataSource { get; set; }
-        public Candle[][] Candles { get; set; } //массив содержит массивы свечек, соответствующие файлам источника данных
+        public Candle[][] Candles { get; set; } //массив со свечками на каждый файл источника данных
         public IndicatorValues[] IndicatorsValues { get; set; } //массив содержит значения индикаторов
     }
 }

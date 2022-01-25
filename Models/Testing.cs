@@ -391,8 +391,14 @@ namespace ktradesystem.Models
                         //формируем форвардный тест
                         if (IsForwardTesting)
                         {
+                            List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //средства в открытых позициях
+                            foreach(DepositCurrency depositCurrency in ForwardDepositCurrencies)
+                            {
+                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
+                            }
+
                             Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>() };
-                            Account accountDepositTrading = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), ForwardDepositCurrencies = ForwardDepositCurrencies };
+                            Account accountDepositTrading = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), FreeForwardDepositCurrencies = ForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies };
                             TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, AccountDepositTrading = accountDepositTrading, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>() };
                             //добавляем форвардный тест в testBatch
                             testBatch.ForwardTestRun = testRun;
@@ -1212,9 +1218,78 @@ namespace ktradesystem.Models
 
         }
 
-        private void MakeADeal(Order order, double lotsCount, double price) //совершает сделку
+        private void MakeADeal(Account account, Order order, double lotsCount, double price, DateTime dateTime) //совершает сделку
         {
+            //определяем хватает ли средств на 1 лот, если да, определяем хватает ли средств на lotsCount, если нет устанавливаем минимально доступное количество
+            //стоимость 1 лота
+            double lotsCost = order.DataSource.Instrument.Id == 2 ? (double)order.DataSource.Cost : price; //если инструмент источника данных - фьючерс, устанавливаем стоимость в стоимость фьючерса, иначе - устанавливаем стоимость 1 лота в стоимость с графика
+            double freeDeposit = account.FreeForwardDepositCurrencies.Where(i => i.Currency == order.DataSource.Currency).First().Deposit; //свободный остаток в валюте источника данных
+            //определяем максимально доступное количество лотов
+            double maxLotsCount = Math.Truncate(freeDeposit / lotsCost);
+            double reverseLotsCount = 0;//количество лотов в открытой позиции с обратным направлением
+            foreach(Deal deal in account.CurrentPosition)
+            {
+                if(deal.DataSource == order.DataSource && deal.Order.Direction != order.Direction) //если сделка совершена по тому же источнику данных что и заявка, но отличается с ней в направлении
+                {
+                    reverseLotsCount += deal.Count;
+                }
+            }
+            maxLotsCount += reverseLotsCount; //прибавляем к максимально доступному количеству лотов, количество лотов в открытой позиции с обратным направлением
+            if (maxLotsCount > 0) //если максимально доступное количество лотов для совершения сделки по заявке > 0, совершаем сделку
+            {
+                double dealLotsCount = lotsCost > maxLotsCount ? maxLotsCount : lotsCost; //если количество лотов для сделки больше максимально доступного, устанавливаем в максимально доступное
+                //вычитаем из неисполненных лотов заявки dealLotsCount
+                order.Count -= dealLotsCount;
+                if(order.LinkedOrder != null)
+                {
+                    order.LinkedOrder.Count -= dealLotsCount;
+                }
+                //если заявка полностью исполнена, снимаем её
+                if(order.Count == 0)
+                {
+                    order.DateTimeRemove = dateTime;
+                    account.Orders.Remove(order);
+                    if (order.LinkedOrder != null)
+                    {
+                        order.LinkedOrder.DateTimeRemove = dateTime;
+                        account.Orders.Remove(order.LinkedOrder);
+                    }
+                }
+                //записываем сделку
+                account.AllDeals.Add(new Deal { Number = account.AllDeals.Count + 1, DataSource = order.DataSource, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime });
+                Deal currentDeal = new Deal { Number = account.AllDeals.Count + 1, DataSource = order.DataSource, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime };
+                account.CurrentPosition.Add(currentDeal);
+                //закрываем открытые позиции которые были закрыты данной сделкой
+                int i = 0;
+                while(i < account.CurrentPosition.Count - 1 && currentDeal.Count > 0) //проходим по всем сделкам кроме последней (только что добавленной)
+                {
+                    if(account.CurrentPosition[i].DataSource == currentDeal.DataSource && account.CurrentPosition[i].Order.Direction != currentDeal.Order.Direction) //если совпадает источник данных, но отличается направление сделки
+                    {
+                        //из сделки с большим вычитаем сделку с меньшим количеством, а меньшую обнуляем
+                        if(account.CurrentPosition[i].Count > currentDeal.Count)
+                        {
+                            account.CurrentPosition[i].Count -= currentDeal.Count;
+                            currentDeal.Count = 0;
+                        }
+                        else
+                        {
+                            currentDeal.Count -= account.CurrentPosition[i].Count;
+                            account.CurrentPosition[i].Count = 0;
+                        }
+                    }
+                    i--;
+                }
+                //удаляем из открытых позиций сделки с нулевым количеством
+                for(int j = account.CurrentPosition.Count - 1; j >= 0; j--)
+                {
+                    if(account.CurrentPosition[j].Count == 0)
+                    {
+                        account.CurrentPosition.RemoveAt(j);
+                    }
+                }
+                //обновляем свободные и занятые средства
 
+            }
         }
 
         private int Slippage(DataSourceCandles dataSourceCandles, int fileIndex, int candleIndex, double lotsCountInOrder) //возвращает размер проскальзывания

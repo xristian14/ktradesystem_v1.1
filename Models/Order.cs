@@ -18,6 +18,7 @@ namespace ktradesystem.Models
             DataSource = dataSourceForCalculate.DataSource;
             Price = price;
             Count = count;
+            StartCount = count;
         }
         private ModelData _modelData;
         public int Number { get; set; }
@@ -25,7 +26,8 @@ namespace ktradesystem.Models
         public TypeOrder TypeOrder { get; set; }
         public bool Direction { get; set; } //true - купить, false - продать
         public double Price { get; set; }
-        public double Count { get; set; }
+        public double Count { get; set; } //текущее количество, изменяется при совершении сделок по данной заявке
+        public double StartCount { get; set; } //начальное количество
         public DateTime DateTimeSubmit { get; set; }
         public DateTime DateTimeRemove { get; set; }
         public Order LinkedOrder { get; set; } //связанная заявка (тейк-профит для стоп-заявки или стоп-лосс для лимитной заявки на тейк профит)

@@ -13,7 +13,7 @@ namespace ktradesystem.Models
         public DataSource DataSource { get; set; }
         public Order Order { get; set; }
         public double Price { get; set; }
-        public double Count { get; set; }
+        public decimal Count { get; set; }
         public DateTime DateTime { get; set; }
     }
 }

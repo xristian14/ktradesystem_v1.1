@@ -13,7 +13,7 @@ namespace ktradesystem.Models.Datatables
         public Instrument Instrument { get; set; } //тип инстрмента: фьючерс, акция
         public Interval Interval { get; set; } //временной интервал
         public Currency Currency { get; set; } //валюта
-        public double? Cost { get; set; } //стоимость 1 фьючерса (для акций стоимость берется с графика)
+        public double Cost { get; set; } //стоимость 1 фьючерса (для акций стоимость берется с графика)
         public Comissiontype Comissiontype { get; set; } //тип комисси (денежный, процентный)
         public double Comission { get; set; } //комиссия на одну операцию, куплю или продажу
         public double PriceStep { get; set; } //шаг цены для 1 пункта

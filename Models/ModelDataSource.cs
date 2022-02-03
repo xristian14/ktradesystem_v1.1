@@ -48,7 +48,7 @@ namespace ktradesystem.Models
         }
 
         //создание объекта из данных которые набрал пользователь и добавление в DataSources
-        public void CreateDataSourceInsertUpdate(string name, Instrument instrument, Currency currency, double? cost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, List<DataSourceFile> dataSourceFiles, int id = -1) //метод проверяет присланные данные на корректность и вызывает метод добавления записи в бд или обновления существующей записи если был прислан id
+        public void CreateDataSourceInsertUpdate(string name, Instrument instrument, Currency currency, double cost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, List<DataSourceFile> dataSourceFiles, int id = -1) //метод проверяет присланные данные на корректность и вызывает метод добавления записи в бд или обновления существующей записи если был прислан id
         {
             _cancellationTokenSourceDataSource = new CancellationTokenSource();
             CancellationToken cancellationToken = _cancellationTokenSourceDataSource.Token;
@@ -258,15 +258,9 @@ namespace ktradesystem.Models
                 //если интервалы корректны, выполняем добавление или обновление записей в БД
                 if (isAllFilesCorrect)
                 {
-                    bool isAddCost = true; //нужно ли добавлять стоимость в запись (у акции нет стоимости)
-                    if (instrument.Id == 1)
-                    {
-                        isAddCost = false;
-                    }
-
                     if (id == -1)
                     {
-                        _database.InsertDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, startDate, endDate, isAddCost);
+                        _database.InsertDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, startDate, endDate);
                         _modelData.ReadDataSources();
 
                         int a = 1;
@@ -453,7 +447,7 @@ namespace ktradesystem.Models
                         }
 
                         //обновляю DataSource
-                        _database.UpdateDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, startDate, endDate, isAddCost, id);
+                        _database.UpdateDataSource(name, instrument, intervalsInFiles[0], currency, cost, comissiontype, comission, priceStep, costPriceStep, startDate, endDate, id);
                     };
 
                     _modelData.ReadDataSources();

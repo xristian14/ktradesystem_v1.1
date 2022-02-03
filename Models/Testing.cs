@@ -1218,15 +1218,17 @@ namespace ktradesystem.Models
 
         }
 
-        private void MakeADeal(Account account, Order order, double lotsCount, double price, DateTime dateTime) //совершает сделку
+        private void MakeADeal(Account account, Order order, decimal lotsCount, double price, DateTime dateTime) //совершает сделку
         {
             //определяем хватает ли средств на 1 лот, если да, определяем хватает ли средств на lotsCount, если нет устанавливаем минимально доступное количество
             //стоимость 1 лота
-            double lotsCost = order.DataSource.Instrument.Id == 2 ? (double)order.DataSource.Cost : price; //если инструмент источника данных - фьючерс, устанавливаем стоимость в стоимость фьючерса, иначе - устанавливаем стоимость 1 лота в стоимость с графика
+            double lotsCost = order.DataSource.Instrument.Id == 2 ? order.DataSource.Cost : price; //если инструмент источника данных - фьючерс, устанавливаем стоимость в стоимость фьючерса, иначе - устанавливаем стоимость 1 лота в стоимость с графика
+            double lotsComission = order.DataSource.Comissiontype.Id == 2 ? lotsCost * order.DataSource.Comission : order.DataSource.Comission; //комиссия на 1 лот
             double freeDeposit = account.FreeForwardDepositCurrencies.Where(i => i.Currency == order.DataSource.Currency).First().Deposit; //свободный остаток в валюте источника данных
+            double takenDeposit = account.TakenForwardDepositCurrencies.Where(i => i.Currency == order.DataSource.Currency).First().Deposit; //занятые средства на открытые позиции в валюте источника данных
             //определяем максимально доступное количество лотов
-            double maxLotsCount = Math.Truncate(freeDeposit / lotsCost);
-            double reverseLotsCount = 0;//количество лотов в открытой позиции с обратным направлением
+            decimal maxLotsCount = Math.Truncate((decimal)freeDeposit / (decimal)(lotsCost + lotsComission));
+            decimal reverseLotsCount = 0;//количество лотов в открытой позиции с обратным направлением
             foreach(Deal deal in account.CurrentPosition)
             {
                 if(deal.DataSource == order.DataSource && deal.Order.Direction != order.Direction) //если сделка совершена по тому же источнику данных что и заявка, но отличается с ней в направлении
@@ -1237,12 +1239,12 @@ namespace ktradesystem.Models
             maxLotsCount += reverseLotsCount; //прибавляем к максимально доступному количеству лотов, количество лотов в открытой позиции с обратным направлением
             if (maxLotsCount > 0) //если максимально доступное количество лотов для совершения сделки по заявке > 0, совершаем сделку
             {
-                double dealLotsCount = lotsCost > maxLotsCount ? maxLotsCount : lotsCost; //если количество лотов для сделки больше максимально доступного, устанавливаем в максимально доступное
+                decimal dealLotsCount = lotsCount > maxLotsCount ? maxLotsCount : lotsCount; //если количество лотов для сделки больше максимально доступного, устанавливаем в максимально доступное
                 //вычитаем из неисполненных лотов заявки dealLotsCount
                 order.Count -= dealLotsCount;
                 if(order.LinkedOrder != null)
                 {
-                    order.LinkedOrder.Count -= dealLotsCount;
+                    order.LinkedOrder.Count = order.Count;
                 }
                 //если заявка полностью исполнена, снимаем её
                 if(order.Count == 0)
@@ -1259,56 +1261,68 @@ namespace ktradesystem.Models
                 account.AllDeals.Add(new Deal { Number = account.AllDeals.Count + 1, DataSource = order.DataSource, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime });
                 Deal currentDeal = new Deal { Number = account.AllDeals.Count + 1, DataSource = order.DataSource, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime };
                 account.CurrentPosition.Add(currentDeal);
+                //вычитаем комиссию на сделку из свободных средств
+                freeDeposit -= (double)((decimal)lotsComission * dealLotsCount);
                 //закрываем открытые позиции которые были закрыты данной сделкой
                 int i = 0;
                 while(i < account.CurrentPosition.Count - 1 && currentDeal.Count > 0) //проходим по всем сделкам кроме последней (только что добавленной)
                 {
                     if(account.CurrentPosition[i].DataSource == currentDeal.DataSource && account.CurrentPosition[i].Order.Direction != currentDeal.Order.Direction) //если совпадает источник данных, но отличается направление сделки
                     {
-                        //из сделки с большим вычитаем сделку с меньшим количеством, а меньшую обнуляем
-                        if(account.CurrentPosition[i].Count > currentDeal.Count)
-                        {
-                            account.CurrentPosition[i].Count -= currentDeal.Count;
-                            currentDeal.Count = 0;
-                        }
-                        else
-                        {
-                            currentDeal.Count -= account.CurrentPosition[i].Count;
-                            account.CurrentPosition[i].Count = 0;
-                        }
+                        decimal decrementCount = account.CurrentPosition[i].Count > currentDeal.Count ? currentDeal.Count : account.CurrentPosition[i].Count; //количество для уменьшения лотов в сделке
+                        //определяем денежный результат трейда и прибавляем его к свободным средствам
+                        double priceSell = account.CurrentPosition[i].Order.Direction == false ? account.CurrentPosition[i].Price : currentDeal.Price; //цена продажи в трейде
+                        double priceBuy = account.CurrentPosition[i].Order.Direction == true ? account.CurrentPosition[i].Price : currentDeal.Price; //цена покупки в трейде
+                        double resultMoney = (double)(decrementCount * (decimal)(((priceSell - priceBuy) / account.CurrentPosition[i].DataSource.PriceStep) * account.CurrentPosition[i].DataSource.CostPriceStep)); //определяю разность цен между проджей и покупкой, делю на шаг цены и умножаю на стоимость шага цены, получаю денежное значение для 1 лота, и умножаю на количество лотов
+                        freeDeposit += resultMoney;
+                        //определяем стоимость закрытых лотов в открытой позиции, вычитаем её из занятых средств и прибавляем к свободным
+                        double closedCost = account.CurrentPosition[i].Order.DataSource.Instrument.Id == 2 ? account.CurrentPosition[i].Order.DataSource.Cost : account.CurrentPosition[i].Price;
+                        closedCost = (double)((decimal)closedCost * decrementCount); //умножаем стоимость на количество
+                        takenDeposit -= closedCost; //вычитаем из занятых на открытые позиции средств
+                        freeDeposit += closedCost; //прибавляем к свободным средствам
+                        //вычитаем закрытое количесво из открытых позиций
+                        account.CurrentPosition[i].Count -= decrementCount;
+                        currentDeal.Count -= decrementCount;
                     }
-                    i--;
+                    i++;
                 }
+                //определяем стоимость занятых средств на оставшееся (незакрытое) количество лотов текущей сделки, вычитаем её из сободных средств и добавляем к занятым
+                double currentCost = currentDeal.DataSource.Instrument.Id == 2 ? currentDeal.DataSource.Cost : currentDeal.Price;
+                currentCost = (double)((decimal)currentCost * currentDeal.Count); //умножаем стоимость на количество
+                freeDeposit -= currentCost; //вычитаем из свободных средств
+                takenDeposit += currentCost; //добавляем к занятым на открытые позиции средствам
                 //удаляем из открытых позиций сделки с нулевым количеством
-                for(int j = account.CurrentPosition.Count - 1; j >= 0; j--)
+                for (int j = account.CurrentPosition.Count - 1; j >= 0; j--)
                 {
                     if(account.CurrentPosition[j].Count == 0)
                     {
                         account.CurrentPosition.RemoveAt(j);
                     }
                 }
-                //обновляем свободные и занятые средства
-
+                //обновляем средства в валютах
+                //если занятые средства = 0, записываем новое состояние депозита
             }
         }
 
-        private int Slippage(DataSourceCandles dataSourceCandles, int fileIndex, int candleIndex, double lotsCountInOrder) //возвращает размер проскальзывания
+        private int Slippage(DataSourceCandles dataSourceCandles, int fileIndex, int candleIndex, decimal lotsCountInOrder) //возвращает размер проскальзывания
         {
             int candleCount = 20; //количество свечек для определения среднего количества лотов на 1 пункт цены
             candleCount = candleIndex < candleCount ? candleIndex + 1 : candleCount; //чтобы избежать обращения к несуществующему индексу
-            double lotsCount = 0; //количество лотов
+            decimal lotsCount = 0; //количество лотов
             int pointsCount = 0; //количество пунктов цены на которых было куплено/продано данное количество лотов
             for (int i = 0; i < candleCount; i++)
             {
-                lotsCount += dataSourceCandles.Candles[fileIndex][candleIndex - i].V;
+                lotsCount += (decimal)dataSourceCandles.Candles[fileIndex][candleIndex - i].V;
                 pointsCount += (int)Math.Round((dataSourceCandles.Candles[fileIndex][candleIndex - i].H - dataSourceCandles.Candles[fileIndex][candleIndex - i].L) / dataSourceCandles.DataSource.CostPriceStep); //делим high - low на стоимость 1 пункта цены и получаем количество пунктов
             }
             pointsCount = pointsCount == 0 ? 1 : pointsCount; //чтобы избежать деления на 0
-            double lotsInOnePoint = lotsCount / pointsCount; //количество лотов в 1 пункте цены
-            lotsInOnePoint = lotsInOnePoint == 0 ? 0.01 : lotsInOnePoint; //чтобы избежать деления на 0
+            decimal lotsInOnePoint = lotsCount / pointsCount; //количество лотов в 1 пункте цены
+            lotsInOnePoint = lotsInOnePoint == 0 ? (decimal)0.001 : lotsInOnePoint; //чтобы избежать деления на 0
             int slippage = (int)Math.Round(lotsCountInOrder / lotsInOnePoint / 2); //делю количество лотов в заявке на количество лотов в 1 пункте и получаю количество пунктов на которое размажется цена, поделив это количество на 2 получаю среднее значение проскальзывания
             return slippage;
         }
+
+
 
         private TestRun DeterminingTopModel(List<TestRun> testRuns) //определение топ-модели среди оптимизационных тестов
         {

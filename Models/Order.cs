@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using ktradesystem.Models.Datatables;
+using System;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
     public class Order
     {
-        public Order(int idTypeOrder, bool direction, DataSourceForCalculate dataSourceForCalculate, double price, double count)
+        public Order(int idTypeOrder, bool direction, DataSourceForCalculate dataSourceForCalculate, double price, decimal count)
         {
             _modelData = ModelData.getInstance();
 
@@ -26,8 +23,8 @@ namespace ktradesystem.Models
         public TypeOrder TypeOrder { get; set; }
         public bool Direction { get; set; } //true - купить, false - продать
         public double Price { get; set; }
-        public double Count { get; set; } //текущее количество, изменяется при совершении сделок по данной заявке
-        public double StartCount { get; set; } //начальное количество
+        public decimal Count { get; set; } //текущее количество, изменяется при совершении сделок по данной заявке
+        public decimal StartCount { get; set; } //начальное количество
         public DateTime DateTimeSubmit { get; set; }
         public DateTime DateTimeRemove { get; set; }
         public Order LinkedOrder { get; set; } //связанная заявка (тейк-профит для стоп-заявки или стоп-лосс для лимитной заявки на тейк профит)

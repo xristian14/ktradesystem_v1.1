@@ -327,7 +327,7 @@ namespace ktradesystem.Models
                         ds.Instrument = instrument;
                     }
                 }
-                ds.Cost = row.Field<double?>("cost");
+                ds.Cost = row.Field<double>("cost");
                 int idComissiontype = (int)row.Field<long>("idComissiontype");
                 foreach (Comissiontype comissiontype in Comissiontypes)
                 {
@@ -398,7 +398,7 @@ namespace ktradesystem.Models
                         ds.Instrument = instrument;
                     }
                 }
-                ds.Cost = row.Field<double?>("cost");
+                ds.Cost = row.Field<double>("cost");
                 int idComissiontype = (int)row.Field<long>("idComissiontype");
                 foreach (Comissiontype comissiontype in Comissiontypes)
                 {

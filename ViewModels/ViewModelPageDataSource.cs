@@ -757,12 +757,8 @@ namespace ktradesystem.ViewModels
                             addComissiontype = comissiontype;
                         }
                     }
-                    //формирует стоимость в формате nullable<double>
-                    double? cost = null;
-                    if (double.TryParse(AddDsCost, out double costdouble))
-                    {
-                        cost = costdouble;
-                    }
+                    //формирует стоимость
+                    double cost = AddDsInstrument == InstrumentsView[1] ? double.Parse(AddDsCost) : 0;
 
                     //показываем statusBarDataSource
                     ViewmodelData.StatusBarDataSourceShow();
@@ -887,11 +883,8 @@ namespace ktradesystem.ViewModels
                             addComissiontype = comissiontype;
                         }
                     }
-                    //формирует стоимость в формате nullable<double>
-                    double? cost = null;
-                    if(double.TryParse(AddDsCost, out double costdouble)){
-                        cost = costdouble;
-                    }
+                    //формирует стоимость
+                    double cost = AddDsInstrument == InstrumentsView[1] ? double.Parse(AddDsCost) : 0;
 
                     //показываем statusBarDataSource
                     ViewmodelData.StatusBarDataSourceShow();

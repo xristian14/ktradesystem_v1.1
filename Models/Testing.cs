@@ -1191,34 +1191,73 @@ namespace ktradesystem.Models
 
 
 
+
+
         }
 
-        public void CheckOrdersExecution(DataSourceCandles[] dataSourcesCandles, Account account, int[] fileIndexes, int[] candleIndexes, bool isMarketOnly = false) //функция проверяет заявки на их исполнение в текущей свечке. isMarketOnly - если указан как true, будут проверяться на исполнение только рыночные заявки
+        public void CheckOrdersExecution(DataSourceCandles[] dataSourcesCandles, Account account, int[] fileIndexes, int[] candleIndexes, bool isMarket = false, bool isLimit = false, bool isStop = false) //функция проверяет заявки на их исполнение в текущей свечке. isMarket, isLimit, isStop - если указан как true, будут проверяться на исполнение эти заявки
         {
             //исполняем рыночные заявки
-            foreach(Order order in account.Orders)
+            if (isMarket)
             {
-                if(order.TypeOrder.Id == 2)
+                List<Order> ordersToRemove = new List<Order>(); //заявки которые нужно удалить из заявок
+                List<DateTime> ordersToRemoveDateTime = new List<DateTime>(); //дата снятия заявок
+                foreach (Order order in account.Orders)
                 {
-                    //определяем индекс источника данных со свечками текущей заявки
-                    int dataSourcesCandlesIndex = 0;
-                    for (int i = 0; i < dataSourcesCandles.Length; i++)
+                    if (order.TypeOrder.Id == 2) //рыночная заявка
                     {
-                        if (dataSourcesCandles[i].DataSource == order.DataSource)
+                        //определяем индекс источника данных со свечками текущей заявки
+                        int dataSourcesCandlesIndex = 0;
+                        for (int i = 0; i < dataSourcesCandles.Length; i++)
                         {
-                            dataSourcesCandlesIndex = i;
+                            if (dataSourcesCandles[i].DataSource == order.DataSource)
+                            {
+                                dataSourcesCandlesIndex = i;
+                            }
+                        }
+                        int slippage = _modelData.Settings.Where(i => i.Id == 3).First().IntValue; //количество пунктов на которое цена исполнения рыночной заявки будет хуже
+                        slippage += Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //добавляем проскальзывание
+                        slippage = order.Direction == true ? slippage : -slippage; //для покупки проскальзывание идет вверх, для продажи вниз
+                        MakeADeal(account, order, order.Count, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].C + slippage, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
+                        if (order.Count == 0)
+                        {
+                            ordersToRemove.Add(order);
+                            ordersToRemoveDateTime.Add(dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
                         }
                     }
-                    int slippage = Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //проскальзывание
-
+                }
+                //снимаем полностью исполненные заявки
+                for(int i = 0; i < ordersToRemove.Count; i++)
+                {
+                    ordersToRemove[i].DateTimeRemove = ordersToRemoveDateTime[i];
+                    account.Orders.Remove(ordersToRemove[i]);
+                    if (ordersToRemove[i].LinkedOrder != null)
+                    {
+                        ordersToRemove[i].LinkedOrder.DateTimeRemove = ordersToRemoveDateTime[i];
+                        account.Orders.Remove(ordersToRemove[i].LinkedOrder);
+                    }
                 }
             }
-            //закрываем заявки которые были полностью исполнены
+
+            //проверяем лимитные заявки на исполнение
+            if (isLimit)
+            {
+                List<Order> ordersToRemove = new List<Order>(); //заявки которые нужно удалить из заявок
+                List<DateTime> ordersToRemoveDateTime = new List<DateTime>(); //дата снятия заявок
+                foreach (Order order in account.Orders)
+                {
+                    if (order.TypeOrder.Id == 1) //лимитная заявка
+                    {
+
+                    }
+                }
+            }
+
             //проверяем стоп-заявки на исполнение
 
         }
 
-        private void MakeADeal(Account account, Order order, decimal lotsCount, double price, DateTime dateTime) //совершает сделку
+        private void MakeADeal(Account account, Order order, decimal lotsCount, double price, DateTime dateTime) //совершает сделку. Закрывает открытые позиции если они есть, и открывает новые если заявка не была исполнена полностью на закрытие позиций, высчитывает результат трейда, обновляет занятые и свободные средства во всех валютах, удаляет закрытые сделки в открытых позициях
         {
             //определяем хватает ли средств на 1 лот, если да, определяем хватает ли средств на lotsCount, если нет устанавливаем минимально доступное количество
             //стоимость 1 лота
@@ -1245,17 +1284,6 @@ namespace ktradesystem.Models
                 if(order.LinkedOrder != null)
                 {
                     order.LinkedOrder.Count = order.Count;
-                }
-                //если заявка полностью исполнена, снимаем её
-                if(order.Count == 0)
-                {
-                    order.DateTimeRemove = dateTime;
-                    account.Orders.Remove(order);
-                    if (order.LinkedOrder != null)
-                    {
-                        order.LinkedOrder.DateTimeRemove = dateTime;
-                        account.Orders.Remove(order.LinkedOrder);
-                    }
                 }
                 //записываем сделку
                 account.AllDeals.Add(new Deal { Number = account.AllDeals.Count + 1, DataSource = order.DataSource, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime });
@@ -1299,9 +1327,30 @@ namespace ktradesystem.Models
                         account.CurrentPosition.RemoveAt(j);
                     }
                 }
-                //обновляем средства в валютах
-                //если занятые средства = 0, записываем новое состояние депозита
+                //обновляем средства во всех валютах
+                account.FreeForwardDepositCurrencies = CalculateDepositCurrrencies(freeDeposit, order.DataSource.Currency);
+                account.TakenForwardDepositCurrencies = CalculateDepositCurrrencies(takenDeposit, order.DataSource.Currency);
+                //если открытые позиции пусты, записываем состояние депозита
+                if(account.CurrentPosition.Count == 0)
+                {
+                    account.DepositCurrenciesChanges.Add(account.FreeForwardDepositCurrencies);
+                }
             }
+        }
+
+        private List<DepositCurrency> CalculateDepositCurrrencies(double deposit, Currency inputCurrency) //возвращает значения депозита во всех валютах
+        {
+            List<DepositCurrency> depositCurrencies = new List<DepositCurrency>();
+
+            double dollarCostDeposit = deposit / inputCurrency.DollarCost; //определяем долларовую стоимость
+            foreach (Currency currency in _modelData.Currencies)
+            {
+                //переводим доллоровую стоимость в валютную, умножая на стоимость 1 доллара
+                double cost = Math.Round(dollarCostDeposit * currency.DollarCost, 2);
+                depositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = cost });
+            }
+
+            return depositCurrencies;
         }
 
         private int Slippage(DataSourceCandles dataSourceCandles, int fileIndex, int candleIndex, decimal lotsCountInOrder) //возвращает размер проскальзывания
@@ -1321,8 +1370,6 @@ namespace ktradesystem.Models
             int slippage = (int)Math.Round(lotsCountInOrder / lotsInOnePoint / 2); //делю количество лотов в заявке на количество лотов в 1 пункте и получаю количество пунктов на которое размажется цена, поделив это количество на 2 получаю среднее значение проскальзывания
             return slippage;
         }
-
-
 
         private TestRun DeterminingTopModel(List<TestRun> testRuns) //определение топ-модели среди оптимизационных тестов
         {

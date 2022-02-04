@@ -1277,7 +1277,8 @@ namespace ktradesystem.Models
                             }
                             if(overLots > 0) //если есть лоты которые могли быть исполнены на текущей свечке, совершаем сделку
                             {
-                                MakeADeal(account, order, order.Count, order.Price, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
+                                decimal dealCount = order.Count >= overLots ? order.Count : overLots;
+                                MakeADeal(account, order, dealCount, order.Price, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
                                 if (order.Count == 0)
                                 {
                                     ordersToRemove.Add(order);
@@ -1301,7 +1302,51 @@ namespace ktradesystem.Models
             }
 
             //проверяем стоп-заявки на исполнение
-
+            if (isStop)
+            {
+                List<Order> ordersToRemove = new List<Order>(); //заявки которые нужно удалить из заявок
+                List<DateTime> ordersToRemoveDateTime = new List<DateTime>(); //дата снятия заявок
+                foreach (Order order in account.Orders)
+                {
+                    if (order.TypeOrder.Id == 3) //стоп-заявка
+                    {
+                        //определяем индекс источника данных со свечками текущей заявки
+                        int dataSourcesCandlesIndex = 0;
+                        for (int i = 0; i < dataSourcesCandles.Length; i++)
+                        {
+                            if (dataSourcesCandles[i].DataSource == order.DataSource)
+                            {
+                                dataSourcesCandlesIndex = i;
+                            }
+                        }
+                        //проверяем, зашла ли цена в текущей свечке за цену заявки
+                        bool isStopExecute = (order.Direction == true && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H >= order.Price) || (order.Direction == false && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L <= order.Price); //заявка на покупку, и верхняя цена выше цены заявки или заявка на продажу, и нижняя цена ниже цены заявки
+                        if (isStopExecute)
+                        {
+                            int slippage = _modelData.Settings.Where(i => i.Id == 3).First().IntValue; //количество пунктов на которое цена исполнения рыночной заявки будет хуже
+                            slippage += Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //добавляем проскальзывание
+                            slippage = order.Direction == true ? slippage : -slippage; //для покупки проскальзывание идет вверх, для продажи вниз
+                            MakeADeal(account, order, order.Count, order.Price + slippage, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
+                            if (order.Count == 0)
+                            {
+                                ordersToRemove.Add(order);
+                                ordersToRemoveDateTime.Add(dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
+                            }
+                        }
+                    }
+                }
+                //снимаем полностью исполненные заявки
+                for (int i = 0; i < ordersToRemove.Count; i++)
+                {
+                    ordersToRemove[i].DateTimeRemove = ordersToRemoveDateTime[i];
+                    account.Orders.Remove(ordersToRemove[i]);
+                    if (ordersToRemove[i].LinkedOrder != null)
+                    {
+                        ordersToRemove[i].LinkedOrder.DateTimeRemove = ordersToRemoveDateTime[i];
+                        account.Orders.Remove(ordersToRemove[i].LinkedOrder);
+                    }
+                }
+            }
         }
 
         private void MakeADeal(Account account, Order order, decimal lotsCount, double price, DateTime dateTime) //совершает сделку. Закрывает открытые позиции если они есть, и открывает новые если заявка не была исполнена полностью на закрытие позиций, высчитывает результат трейда, обновляет занятые и свободные средства во всех валютах, удаляет закрытые сделки в открытых позициях

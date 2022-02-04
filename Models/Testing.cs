@@ -1248,7 +1248,54 @@ namespace ktradesystem.Models
                 {
                     if (order.TypeOrder.Id == 1) //лимитная заявка
                     {
-
+                        //определяем индекс источника данных со свечками текущей заявки
+                        int dataSourcesCandlesIndex = 0;
+                        for (int i = 0; i < dataSourcesCandles.Length; i++)
+                        {
+                            if (dataSourcesCandles[i].DataSource == order.DataSource)
+                            {
+                                dataSourcesCandlesIndex = i;
+                            }
+                        }
+                        //проверяем, зашла ли цена в текущей свечке за цену заявки
+                        bool isLimitExecute = (order.Direction == true && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L < order.Price) || (order.Direction == false && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H > order.Price); //заявка на покупку, и нижняя цена ниже цены покупки или заявка на продажу, и верхняя цена выше цены продажи
+                        if (isLimitExecute)
+                        {
+                            //определяем количество лотов, которое находится за ценой заявки, и которое могло быть куплено/продано на текущей свечке
+                            bool isVolumeFractional = false; //содержит ли объём дробную часть. Если да, то количество лотов будет округляться до целого, иначе - не будет окргляться.
+                            if(dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].V - Math.Truncate(dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].V) > 0)
+                            {
+                                isVolumeFractional = true; //если дробная часть больше 0, устанавливаем что объем с дробой частью (для криптовалюты)
+                            }
+                            int stepCount = (int)Math.Round((dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H - dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L) / order.DataSource.PriceStep); //количество пунктов цены
+                            decimal stepLots = (decimal)dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].V / stepCount; //среднее количество лотов на 1 пункт цены
+                            int stepsOver = order.Direction ? (int)Math.Round((order.Price - dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L) / order.DataSource.PriceStep) : (int)Math.Round((dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H - order.Price) / order.DataSource.PriceStep); //количество пунктов за ценой заявки
+                            decimal overLots = stepLots * stepsOver / 2; //количество лотов которое могло быть куплено/продано на текущей свечке (делить на 2 т.к. лишь половина от лотов - это сделки в нужной нам операции (купить или продать))
+                            if(isVolumeFractional == false) //если это не криптовалюта с дробным количеством лотов, округляем количество лотов до целого
+                            {
+                                overLots = Math.Round(overLots);
+                            }
+                            if(overLots > 0) //если есть лоты которые могли быть исполнены на текущей свечке, совершаем сделку
+                            {
+                                MakeADeal(account, order, order.Count, order.Price, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
+                                if (order.Count == 0)
+                                {
+                                    ordersToRemove.Add(order);
+                                    ordersToRemoveDateTime.Add(dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
+                                }
+                            }
+                        }
+                    }
+                }
+                //снимаем полностью исполненные заявки
+                for (int i = 0; i < ordersToRemove.Count; i++)
+                {
+                    ordersToRemove[i].DateTimeRemove = ordersToRemoveDateTime[i];
+                    account.Orders.Remove(ordersToRemove[i]);
+                    if (ordersToRemove[i].LinkedOrder != null)
+                    {
+                        ordersToRemove[i].LinkedOrder.DateTimeRemove = ordersToRemoveDateTime[i];
+                        account.Orders.Remove(ordersToRemove[i].LinkedOrder);
                     }
                 }
             }

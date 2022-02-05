@@ -1165,6 +1165,20 @@ namespace ktradesystem.Models
             //проходим по всем свечкам источников данных, пока не достигнем времени окончания теста, или пока не выйдем за границы имеющихся файлов
             while(DateTime.Compare(currentDateTime, testRun.EndPeriod) < 0 && isFileIndexesOverLimit == false)
             {
+                //обрабатываем текущие заявки (только тех источников данных, текущие свечки которых равняются текущей дате)
+                //формируем список источников данных для которых будут проверяться заявки на исполнение (те, даты которых равняются текущей дате)
+                List<DataSource> approvedDataSources = new List<DataSource>();
+                for(int i = 0; i < dataSourceCandles.Length; i++)
+                {
+                    if(DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) == 0)
+                    {
+                        approvedDataSources.Add(dataSourceCandles[i].DataSource);
+                    }
+                }
+                //проверяем заявки на исполнение
+                CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, true, true, true);
+                //CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, false, true, false); //проверяем только стоп-заявки. Лимитные исполняются последними, и если они исполнились и открыли позицию нужно проверить
+
                 //проверяем, равняются ли все свечки источников данных текущей дате
                 bool isCandlesDateTimeEqual = true;
                 for(int i = 0; i < dataSourceCandles.Length; i++)
@@ -1285,10 +1299,52 @@ namespace ktradesystem.Models
                         }
                         //добавляем оставшиеся заявки пользователя к новым текущим
                         newAccountOrders.AddRange(algorithmCalculateResult.Orders);
+                        testRun.Account.Orders = newAccountOrders; //обновляем текущие заявки
                     }
                 }
-                //переходим на следующую свечку (см. алгоритм на листке) (при переходе на следующий файл, нужно в нем дойти до даты, следующей за текущей) (переходим не на следующую, а на количество, равное 1 + maxOverIndex)
 
+                //для каждого источника данных доходим до даты, которая позже текущей
+                for(int i = 0; i < dataSourceCandles.Length; i++)
+                {
+                    //переходим на следующую свечку, пока не дойдем до даты которая позже текущей
+                    bool isOverDate = DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) >= 0; //дошли ли до даты которая позже текущей
+                    bool isOverFileIndex = false; //превысили ли индекс файла
+
+                    //переходим на следующую свечку, пока не дойдем до даты которая позже текущей или пока не выйдем за пределы файлов
+                    while (isOverDate == false && isOverFileIndex == false)
+                    {
+                        candleIndexes[i]++;
+                        //если массив со свечками файла подошел к концу, переходим на следующий файл
+                        if (candleIndexes[i] >= dataSourceCandles[i].Candles[fileIndexes[i]].Length)
+                        {
+                            fileIndexes[i]++;
+                            candleIndexes[i] = 0;
+                        }
+                        //если индекс файла не вышел за пределы массива, проверяем, дошли ли до даты которая позже текущей
+                        if (fileIndexes[i] < dataSourceCandles[i].Candles.Length)
+                        {
+                            isOverDate = DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) >= 0;
+                        }
+                        else
+                        {
+                            isOverFileIndex = true;
+                            isFileIndexesOverLimit = true;
+                        }
+                    }
+                }
+
+                //обновляем текущую дату (берем самую раннюю дату из источников данных)
+                if(isFileIndexesOverLimit == false)
+                {
+                    currentDateTime = dataSourceCandles[0].Candles[fileIndexes[0]][candleIndexes[0]].DateTime;
+                    for(int i = 1; i < dataSourceCandles.Length; i++)
+                    {
+                        if(DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) < 0)
+                        {
+                            currentDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                        }
+                    }
+                }
             }
 
 
@@ -1297,7 +1353,7 @@ namespace ktradesystem.Models
 
         }
 
-        public void CheckOrdersExecution(DataSourceCandles[] dataSourcesCandles, Account account, int[] fileIndexes, int[] candleIndexes, bool isMarket, bool isLimit, bool isStop) //функция проверяет заявки на их исполнение в текущей свечке. isMarket, isLimit, isStop - если true, будут проверяться на исполнение эти заявки
+        public void CheckOrdersExecution(DataSourceCandles[] dataSourcesCandles, Account account, List<DataSource> approvedDataSources, int[] fileIndexes, int[] candleIndexes, bool isMarket, bool isStop, bool isLimit) //функция проверяет заявки на их исполнение в текущей свечке. approvedDataSources - список с источниками данных, заявки которых будут проверяться на исполнение. isMarket, isStop, isLimit - если true, будут проверяться на исполнение эти заявки
         {
             //исполняем рыночные заявки
             if (isMarket)
@@ -1306,7 +1362,7 @@ namespace ktradesystem.Models
                 List<DateTime> ordersToRemoveDateTime = new List<DateTime>(); //дата снятия заявок
                 foreach (Order order in account.Orders)
                 {
-                    if (order.TypeOrder.Id == 2) //рыночная заявка
+                    if (order.TypeOrder.Id == 2 && approvedDataSources.Contains(order.DataSource)) //рыночная заявка
                     {
                         //определяем индекс источника данных со свечками текущей заявки
                         int dataSourcesCandlesIndex = 0;
@@ -1341,6 +1397,53 @@ namespace ktradesystem.Models
                 }
             }
 
+            //проверяем стоп-заявки на исполнение
+            if (isStop)
+            {
+                List<Order> ordersToRemove = new List<Order>(); //заявки которые нужно удалить из заявок
+                List<DateTime> ordersToRemoveDateTime = new List<DateTime>(); //дата снятия заявок
+                foreach (Order order in account.Orders)
+                {
+                    if (order.TypeOrder.Id == 3 && approvedDataSources.Contains(order.DataSource)) //стоп-заявка
+                    {
+                        //определяем индекс источника данных со свечками текущей заявки
+                        int dataSourcesCandlesIndex = 0;
+                        for (int i = 0; i < dataSourcesCandles.Length; i++)
+                        {
+                            if (dataSourcesCandles[i].DataSource == order.DataSource)
+                            {
+                                dataSourcesCandlesIndex = i;
+                            }
+                        }
+                        //проверяем, зашла ли цена в текущей свечке за цену заявки
+                        bool isStopExecute = (order.Direction == true && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H >= order.Price) || (order.Direction == false && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L <= order.Price); //заявка на покупку, и верхняя цена выше цены заявки или заявка на продажу, и нижняя цена ниже цены заявки
+                        if (isStopExecute)
+                        {
+                            int slippage = _modelData.Settings.Where(i => i.Id == 3).First().IntValue; //количество пунктов на которое цена исполнения рыночной заявки будет хуже
+                            slippage += Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //добавляем проскальзывание
+                            slippage = order.Direction == true ? slippage : -slippage; //для покупки проскальзывание идет вверх, для продажи вниз
+                            MakeADeal(account, order, order.Count, order.Price + slippage, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
+                            if (order.Count == 0)
+                            {
+                                ordersToRemove.Add(order);
+                                ordersToRemoveDateTime.Add(dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
+                            }
+                        }
+                    }
+                }
+                //снимаем полностью исполненные заявки
+                for (int i = 0; i < ordersToRemove.Count; i++)
+                {
+                    ordersToRemove[i].DateTimeRemove = ordersToRemoveDateTime[i];
+                    account.Orders.Remove(ordersToRemove[i]);
+                    if (ordersToRemove[i].LinkedOrder != null)
+                    {
+                        ordersToRemove[i].LinkedOrder.DateTimeRemove = ordersToRemoveDateTime[i];
+                        account.Orders.Remove(ordersToRemove[i].LinkedOrder);
+                    }
+                }
+            }
+
             //проверяем лимитные заявки на исполнение
             if (isLimit)
             {
@@ -1348,7 +1451,7 @@ namespace ktradesystem.Models
                 List<DateTime> ordersToRemoveDateTime = new List<DateTime>(); //дата снятия заявок
                 foreach (Order order in account.Orders)
                 {
-                    if (order.TypeOrder.Id == 1) //лимитная заявка
+                    if (order.TypeOrder.Id == 1 && approvedDataSources.Contains(order.DataSource)) //лимитная заявка
                     {
                         //определяем индекс источника данных со свечками текущей заявки
                         int dataSourcesCandlesIndex = 0;
@@ -1381,53 +1484,6 @@ namespace ktradesystem.Models
                                     ordersToRemove.Add(order);
                                     ordersToRemoveDateTime.Add(dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
                                 }
-                            }
-                        }
-                    }
-                }
-                //снимаем полностью исполненные заявки
-                for (int i = 0; i < ordersToRemove.Count; i++)
-                {
-                    ordersToRemove[i].DateTimeRemove = ordersToRemoveDateTime[i];
-                    account.Orders.Remove(ordersToRemove[i]);
-                    if (ordersToRemove[i].LinkedOrder != null)
-                    {
-                        ordersToRemove[i].LinkedOrder.DateTimeRemove = ordersToRemoveDateTime[i];
-                        account.Orders.Remove(ordersToRemove[i].LinkedOrder);
-                    }
-                }
-            }
-
-            //проверяем стоп-заявки на исполнение
-            if (isStop)
-            {
-                List<Order> ordersToRemove = new List<Order>(); //заявки которые нужно удалить из заявок
-                List<DateTime> ordersToRemoveDateTime = new List<DateTime>(); //дата снятия заявок
-                foreach (Order order in account.Orders)
-                {
-                    if (order.TypeOrder.Id == 3) //стоп-заявка
-                    {
-                        //определяем индекс источника данных со свечками текущей заявки
-                        int dataSourcesCandlesIndex = 0;
-                        for (int i = 0; i < dataSourcesCandles.Length; i++)
-                        {
-                            if (dataSourcesCandles[i].DataSource == order.DataSource)
-                            {
-                                dataSourcesCandlesIndex = i;
-                            }
-                        }
-                        //проверяем, зашла ли цена в текущей свечке за цену заявки
-                        bool isStopExecute = (order.Direction == true && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H >= order.Price) || (order.Direction == false && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L <= order.Price); //заявка на покупку, и верхняя цена выше цены заявки или заявка на продажу, и нижняя цена ниже цены заявки
-                        if (isStopExecute)
-                        {
-                            int slippage = _modelData.Settings.Where(i => i.Id == 3).First().IntValue; //количество пунктов на которое цена исполнения рыночной заявки будет хуже
-                            slippage += Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //добавляем проскальзывание
-                            slippage = order.Direction == true ? slippage : -slippage; //для покупки проскальзывание идет вверх, для продажи вниз
-                            MakeADeal(account, order, order.Count, order.Price + slippage, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
-                            if (order.Count == 0)
-                            {
-                                ordersToRemove.Add(order);
-                                ordersToRemoveDateTime.Add(dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
                             }
                         }
                     }

@@ -2759,7 +2759,7 @@ namespace ktradesystem.ViewModels
             EvaluationCriteriasView.Clear();
             foreach (EvaluationCriteria evaluationCriteria in EvaluationCriterias)
             {
-                EvaluationCriteriasView.Add(new EvaluationCriteriaView { EvaluationCriteria = evaluationCriteria, Name = evaluationCriteria.ShortName + " (" + evaluationCriteria.Name + ")" });
+                EvaluationCriteriasView.Add(new EvaluationCriteriaView { EvaluationCriteria = evaluationCriteria, Name = evaluationCriteria.Name });
             }
             SelectedCompareSignsEvaluationCriteria = CompareSignsEvaluationCriteria[0];
         }

@@ -1236,6 +1236,7 @@ namespace ktradesystem.Models
                                     else //если это не первая сделка по данному источнику данных, определяем среднюю цену и обновляем объем
                                     {
                                         averagePricePosition = (double)(((decimal)averagePricePosition * volumePosition + (decimal)deal.Price * deal.Count) / (volumePosition + deal.Count)); //(средняя цена * объем средней цены + текущая цена * текущий объем)/(объем средней цены + текущий объем)
+                                        averagePricePosition = RoundToIncrement(averagePricePosition, deal.DataSource.PriceStep); //округляем среднюю цену позиции до шага 1 пункта цены данного инструмента
                                         volumePosition += deal.Count;
                                     }
                                     if (deal.Order.Direction)
@@ -1362,6 +1363,11 @@ namespace ktradesystem.Models
                     }
                 }
             }
+        }
+
+        public double RoundToIncrement(double x, double m) //функция округляет число до определенного множителя, например, RoundToIncrement(3.14, 0.2) вернет 3.2
+        {
+            return Math.Round(x / m) * m;
         }
 
         public bool CheckOrdersExecution(DataSourceCandles[] dataSourcesCandles, Account account, List<DataSource> approvedDataSources, int[] fileIndexes, int[] candleIndexes, bool isMarket, bool isStop, bool isLimit) //функция проверяет заявки на их исполнение в текущей свечке, возвращает false если не было сделок, и true если были совершены сделки. approvedDataSources - список с источниками данных, заявки которых будут проверяться на исполнение. isMarket, isStop, isLimit - если true, будут проверяться на исполнение эти заявки

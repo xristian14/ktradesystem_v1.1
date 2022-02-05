@@ -43,11 +43,12 @@
                     </GridView>
                 </ListView.View>
             </ListView>
-            <Grid Grid.Column="1" Visibility="Hidden" Margin="0,0,70,0">
+            <Grid Grid.Column="1" Visibility="Visible">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="50"/>
                     <ColumnDefinition Width="60"/>
                     <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="33"/>
                 </Grid.ColumnDefinitions>
                 <Grid Grid.Column="0" x:Name="helperMsg0"/>
                 <Grid Grid.Column="1" x:Name="helperMsg1"/>

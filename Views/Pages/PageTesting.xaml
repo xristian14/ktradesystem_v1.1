@@ -376,13 +376,12 @@
                                 <GroupBox Header="Счет">
                                     <StackPanel Orientation="Vertical">
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Количество купленных лотов в открытой позиции" Command="{Binding AlgorithmPasteOpenPositionBuy_Click}" Width="290"/>
-                                            <Button Content="Количество проданных лотов в открытой позиции" Command="{Binding AlgorithmPasteOpenPositionBuy_Click}" Width="290"/>
+                                            <Button Content="Свободный остаток в рублях" Command="{Binding AlgorithmPastePriceOpenPosition_Click}" Width="180"/>
+                                            <Button Content="Свободный остаток в долларах" Command="{Binding AlgorithmPastePriceOpenPosition_Click}" Width="180"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Средняя цена открытой позиции" Command="{Binding AlgorithmPastePriceOpenPosition_Click}" Width="290"/>
-                                            <Button Content="Остаток в рублях" Command="{Binding AlgorithmPastePriceOpenPosition_Click}" Width="145"/>
-                                            <Button Content="Остаток в долларах" Command="{Binding AlgorithmPastePriceOpenPosition_Click}" Width="145"/>
+                                            <Button Content="Занятые средства в рублях" Command="{Binding AlgorithmPastePriceOpenPosition_Click}" Width="180"/>
+                                            <Button Content="Занятые средства в долларах" Command="{Binding AlgorithmPastePriceOpenPosition_Click}" Width="180"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </GroupBox>
@@ -421,6 +420,13 @@
                                             <Button Content="Время открытия дня" Command="{Binding AlgorithmPasteIndicator_Click}" Width="146"/>
                                             <Button Content="Время закрытия дня" Command="{Binding AlgorithmPasteParameter_Click}" Width="146"/>
                                             <Button Content="Стоимость 1 фьючерса" Command="{Binding AlgorithmPasteParameter_Click}" Width="146"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Количество купленных лотов в открытой позиции" Command="{Binding AlgorithmPasteOpenPositionBuy_Click}" Width="290"/>
+                                            <Button Content="Количество проданных лотов в открытой позиции" Command="{Binding AlgorithmPasteOpenPositionBuy_Click}" Width="290"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Средняя цена открытой позиции" Command="{Binding AlgorithmPastePriceOpenPosition_Click}" Width="290"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </GroupBox>

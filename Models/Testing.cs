@@ -1071,6 +1071,15 @@ namespace ktradesystem.Models
                 }
             }
 
+            //формируем массивы с int и double значениями параметров для алгоритма
+            int[] algorithmParametersIntValues = new int[testRun.AlgorithmParameterValues.Count];
+            double[] algorithmParametersDoubleValues = new double[testRun.AlgorithmParameterValues.Count];
+            for(int i = 0; i < testRun.AlgorithmParameterValues.Count; i++)
+            {
+                algorithmParametersIntValues[i] = testRun.AlgorithmParameterValues[i].IntValue;
+                algorithmParametersDoubleValues[i] = testRun.AlgorithmParameterValues[i].DoubleValue;
+            }
+
             TimeSpan intervalDuration = testRun.TestBatch.DataSourceGroup.DataSourceAccordances[0].DataSource.Interval.Duration; //длительность интервала
             DataSourceCandles[] dataSourceCandles = new DataSourceCandles[testRun.TestBatch.DataSourceGroup.DataSourceAccordances.Count]; //массив с ссылками на DataSourceCandles, соответствующими источникам данных группы источников данных
             for(int i = 0; i < dataSourceCandles.Length; i++)
@@ -1146,7 +1155,7 @@ namespace ktradesystem.Models
                 }
             }
             //проходим по всем свечкам источников данных, пока не достигнем времени окончания теста, или пока не выйдем за границы имеющихся файлов
-            while(DateTime.Compare(currentDateTime, testRun.EndPeriod) < 0 && isFileIndexesOverLimit)
+            while(DateTime.Compare(currentDateTime, testRun.EndPeriod) < 0 && isFileIndexesOverLimit == false)
             {
                 //проверяем, равняются ли все свечки источников данных текущей дате
                 bool isCandlesDateTimeEqual = true;
@@ -1157,7 +1166,7 @@ namespace ktradesystem.Models
                         isCandlesDateTimeEqual = false;
                     }
                 }
-                //если свечки свех источников данных равняются текущей дате, вычисляем индикаторы и алгоритмы
+                //если свечки всех источников данных равняются текущей дате, вычисляем индикаторы и алгоритм
                 if (isCandlesDateTimeEqual)
                 {
                     int maxOverIndex = 0; //максимальное превышение индекса в индикаторах и алгоритме
@@ -1172,17 +1181,61 @@ namespace ktradesystem.Models
                             //вычисляем значение индикатора
                             IndicatorCalculateResult indicatorCalculateResult = CompiledIndicators[k].Calculate(dataSourceCandles[fileIndexes[i]].Candles[fileIndexes[i]], candleIndexes[i], indicatorParametersIntValues[k], indicatorParametersDoubleValues[k]); //indicatorParametersIntValues[индекс_индикатора]
                             //Calculate(Candle[] inputCandles, int currentCandleIndex, int[] indicatorParametersIntValues, double[] indicatorParametersDoubleValues)
-                            maxOverIndex = indicatorCalculateResult.OverIndex > maxOverIndex ? indicatorCalculateResult.OverIndex : maxOverIndex; //если првышение индекса больше максимального, обновляем его максимальное значение
+                            maxOverIndex = indicatorCalculateResult.OverIndex > maxOverIndex ? indicatorCalculateResult.OverIndex : maxOverIndex; //если превышение индекса больше максимального, обновляем его максимальное значение
                             indicatorsValues[i][k] = indicatorCalculateResult.Value; //запоминаем значение индикатора для файла i и индикатора k
                         }
                     }
                     //вычисляем алгоритм
-                    /*AccountForCalculate accountForCalculate
-                    AlgorithmCalculateResult algorithmCalculateResult = CompiledAlgorithm.Calculate(accountForCalculate, DataSourceForCalculate[] dataSourcesForCalculate, int[] algorithmParametersIntValues, double[] algorithmParametersDoubleValues);
-                    maxOverIndex = algorithmCalculateResult.OverIndex > maxOverIndex ? algorithmCalculateResult.OverIndex : maxOverIndex;*/ //если првышение индекса больше максимального, обновляем его максимальное значение
+                    //формируем dataSourcesForCalculate
+                    DataSourceForCalculate[] dataSourcesForCalculate = new DataSourceForCalculate[dataSourceCandles.Length];
+                    for(int i = 0; i < dataSourceCandles.Length; i++)
+                    {
+                        //определяем среднюю цену и объем позиции
+                        double averagePricePosition = 0; //средняя цена позиции
+                        decimal volumePosition = 0; //объем позиции
+                        bool isBuyDirection = false;
+                        foreach(Deal deal in testRun.Account.CurrentPosition)
+                        {
+                            if (deal.DataSource == dataSourceCandles[i].DataSource) //если сделка относится к текущему источнику данных
+                            {
+                                if(volumePosition == 0) //если это первая сделка по данному источнику данных, запоминаем цену и объем
+                                {
+                                    averagePricePosition = deal.Price;
+                                    volumePosition = deal.Count;
+                                }
+                                else //если это не первая сделка по данному источнику данных, определяем среднюю цену и обновляем объем
+                                {
+                                    averagePricePosition = (double)(((decimal)averagePricePosition * volumePosition + (decimal)deal.Price * deal.Count) / (volumePosition + deal.Count)); //(средняя цена * объем средней цены + текущая цена * текущий объем)/(объем средней цены + текущий объем)
+                                    volumePosition += deal.Count;
+                                }
+                                if (deal.Order.Direction)
+                                {
+                                    isBuyDirection = true;
+                                }
+                            }
+                        }
+                        dataSourcesForCalculate[i] = new DataSourceForCalculate();
+                        dataSourcesForCalculate[i].DataSource = dataSourceCandles[i].DataSource;
+                        dataSourcesForCalculate[i].IndicatorsValues = indicatorsValues[i];
+                        dataSourcesForCalculate[i].Price = averagePricePosition;
+                        dataSourcesForCalculate[i].CountBuy = isBuyDirection ? volumePosition : 0;
+                        dataSourcesForCalculate[i].CountSell = isBuyDirection ? 0 : volumePosition;
+                        dataSourcesForCalculate[i].Candles = dataSourceCandles[i].Candles[fileIndexes[i]];
+                        dataSourcesForCalculate[i].CurrentCandleIndex = candleIndexes[i];
+                    }
+
+                    AccountForCalculate accountForCalculate = new AccountForCalculate { FreeRubleMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, FreeDollarMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit, TakenRubleMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, TakenDollarMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit };
+                    AlgorithmCalculateResult algorithmCalculateResult = CompiledAlgorithm.Calculate(accountForCalculate, dataSourcesForCalculate, algorithmParametersIntValues, algorithmParametersDoubleValues);
+                    maxOverIndex = algorithmCalculateResult.OverIndex > maxOverIndex ? algorithmCalculateResult.OverIndex : maxOverIndex; //если првышение индекса больше максимального, обновляем его максимальное значение
                     if(maxOverIndex == 0) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
                     {
-
+                        //приводим заявки к виду который прислал пользователь в алгоритме
+                        List<int> fullMatchOrders = new List<int>(); //индексы полностью совпадающих заявок по источнику данных, направлению, цене, и количеству
+                        //находим полностью совпадающие заявки
+                        for(int i = 0; i < testRun.Account.Orders.Count; i++)
+                        {
+                            
+                        }
                     }
                 }
                 //переходим на следующую свечку (см. алгоритм на листке) (при переходе на следующий файл, нужно в нем дойти до даты, следующей за текущей) (переходим не на следующую, а на количество, равное 1 + maxOverIndex)
@@ -1195,7 +1248,7 @@ namespace ktradesystem.Models
 
         }
 
-        public void CheckOrdersExecution(DataSourceCandles[] dataSourcesCandles, Account account, int[] fileIndexes, int[] candleIndexes, bool isMarket = false, bool isLimit = false, bool isStop = false) //функция проверяет заявки на их исполнение в текущей свечке. isMarket, isLimit, isStop - если указан как true, будут проверяться на исполнение эти заявки
+        public void CheckOrdersExecution(DataSourceCandles[] dataSourcesCandles, Account account, int[] fileIndexes, int[] candleIndexes, bool isMarket, bool isLimit, bool isStop) //функция проверяет заявки на их исполнение в текущей свечке. isMarket, isLimit, isStop - если true, будут проверяться на исполнение эти заявки
         {
             //исполняем рыночные заявки
             if (isMarket)
@@ -1262,16 +1315,11 @@ namespace ktradesystem.Models
                         if (isLimitExecute)
                         {
                             //определяем количество лотов, которое находится за ценой заявки, и которое могло быть куплено/продано на текущей свечке
-                            bool isVolumeFractional = false; //содержит ли объём дробную часть. Если да, то количество лотов будет округляться до целого, иначе - не будет окргляться.
-                            if(dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].V - Math.Truncate(dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].V) > 0)
-                            {
-                                isVolumeFractional = true; //если дробная часть больше 0, устанавливаем что объем с дробой частью (для криптовалюты)
-                            }
                             int stepCount = (int)Math.Round((dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H - dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L) / order.DataSource.PriceStep); //количество пунктов цены
                             decimal stepLots = (decimal)dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].V / stepCount; //среднее количество лотов на 1 пункт цены
                             int stepsOver = order.Direction ? (int)Math.Round((order.Price - dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L) / order.DataSource.PriceStep) : (int)Math.Round((dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H - order.Price) / order.DataSource.PriceStep); //количество пунктов за ценой заявки
                             decimal overLots = stepLots * stepsOver / 2; //количество лотов которое могло быть куплено/продано на текущей свечке (делить на 2 т.к. лишь половина от лотов - это сделки в нужной нам операции (купить или продать))
-                            if(isVolumeFractional == false) //если это не криптовалюта с дробным количеством лотов, округляем количество лотов до целого
+                            if (order.DataSource.Instrument.Id != 3) //если это не криптовалюта, округляем количество лотов до целого
                             {
                                 overLots = Math.Round(overLots);
                             }

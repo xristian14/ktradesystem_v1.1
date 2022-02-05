@@ -11,6 +11,9 @@ namespace ktradesystem.Models
     {
         public DataSource DataSource { get; set; }
         public double[] IndicatorsValues { get; set; }
+        public double Price { get; set; } //средняя цена позиции для данного источника данных
+        public decimal CountBuy { get; set; } //количество купленных лотов для данного источника данных
+        public decimal CountSell { get; set; } //количество проданных лотов для данного источника данных
         public Candle[] Candles { get; set; }
         public int CurrentCandleIndex { get; set; }
     }

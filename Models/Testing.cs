@@ -1176,8 +1176,7 @@ namespace ktradesystem.Models
                     }
                 }
                 //проверяем заявки на исполнение
-                CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, true, true, true);
-                //CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, false, true, false); //проверяем только стоп-заявки. Лимитные исполняются последними, и если они исполнились и открыли позицию нужно проверить
+                bool isWereDeals = CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, true, true, true); //были ли совершены сделки при проверке исполнения заявок
 
                 //проверяем, равняются ли все свечки источников данных текущей дате
                 bool isCandlesDateTimeEqual = true;
@@ -1191,6 +1190,8 @@ namespace ktradesystem.Models
                 //если свечки всех источников данных равняются текущей дате, вычисляем индикаторы и алгоритм
                 if (isCandlesDateTimeEqual)
                 {
+                    //если были совершены сделки на текущей свечке, дважды выполняем алгоритм: первый раз обновляем заявки и проверяем на исполнение стоп-заявки (если была открыта позиция на текущей свечке, нужно выставить стоп и проверить мог ли он на этой же свечке исполнится), и если были сделки то выполняем алгоритм еще раз и обновляем заявки, после чего переходим на следующую свечку
+
                     int maxOverIndex = 0; //максимальное превышение индекса в индикаторах и алгоритме
                     double[][] indicatorsValues = new double[fileIndexes.Length][];
                     //проходим по всем файлам и вычисляем значения всех индикаторов для каждого файла
@@ -1207,100 +1208,115 @@ namespace ktradesystem.Models
                             indicatorsValues[i][k] = indicatorCalculateResult.Value; //запоминаем значение индикатора для файла i и индикатора k
                         }
                     }
-                    //вычисляем алгоритм
-                    //формируем dataSourcesForCalculate
-                    DataSourceForCalculate[] dataSourcesForCalculate = new DataSourceForCalculate[dataSourceCandles.Length];
-                    for(int i = 0; i < dataSourceCandles.Length; i++)
-                    {
-                        //определяем среднюю цену и объем позиции
-                        double averagePricePosition = 0; //средняя цена позиции
-                        decimal volumePosition = 0; //объем позиции
-                        bool isBuyDirection = false;
-                        foreach(Deal deal in testRun.Account.CurrentPosition)
-                        {
-                            if (deal.DataSource == dataSourceCandles[i].DataSource) //если сделка относится к текущему источнику данных
-                            {
-                                if(volumePosition == 0) //если это первая сделка по данному источнику данных, запоминаем цену и объем
-                                {
-                                    averagePricePosition = deal.Price;
-                                    volumePosition = deal.Count;
-                                }
-                                else //если это не первая сделка по данному источнику данных, определяем среднюю цену и обновляем объем
-                                {
-                                    averagePricePosition = (double)(((decimal)averagePricePosition * volumePosition + (decimal)deal.Price * deal.Count) / (volumePosition + deal.Count)); //(средняя цена * объем средней цены + текущая цена * текущий объем)/(объем средней цены + текущий объем)
-                                    volumePosition += deal.Count;
-                                }
-                                if (deal.Order.Direction)
-                                {
-                                    isBuyDirection = true;
-                                }
-                            }
-                        }
-                        dataSourcesForCalculate[i] = new DataSourceForCalculate();
-                        dataSourcesForCalculate[i].DataSource = dataSourceCandles[i].DataSource;
-                        dataSourcesForCalculate[i].IndicatorsValues = indicatorsValues[i];
-                        dataSourcesForCalculate[i].Price = averagePricePosition;
-                        dataSourcesForCalculate[i].CountBuy = isBuyDirection ? volumePosition : 0;
-                        dataSourcesForCalculate[i].CountSell = isBuyDirection ? 0 : volumePosition;
-                        dataSourcesForCalculate[i].Candles = dataSourceCandles[i].Candles[fileIndexes[i]];
-                        dataSourcesForCalculate[i].CurrentCandleIndex = candleIndexes[i];
-                    }
 
-                    AccountForCalculate accountForCalculate = new AccountForCalculate { FreeRubleMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, FreeDollarMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit, TakenRubleMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, TakenDollarMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit };
-                    AlgorithmCalculateResult algorithmCalculateResult = CompiledAlgorithm.Calculate(accountForCalculate, dataSourcesForCalculate, algorithmParametersIntValues, algorithmParametersDoubleValues);
-                    maxOverIndex = algorithmCalculateResult.OverIndex > maxOverIndex ? algorithmCalculateResult.OverIndex : maxOverIndex; //если првышение индекса больше максимального, обновляем его максимальное значение
-                    if(maxOverIndex == 0) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
+                    //если были сделки на этой свечке, то для того чтобы проверить мог ли исполниться стоп-лосс на текущей свечке, выполняем алгоритм (после чего для открытой позиции будет выставлен стоп-лосс) и проверяем исполнение стоп-заявок. Если в процессе выполнения стоп-заявок были совершены сделки, еще раз выполняем алгоритм, обновляем заявки и переходим на следующую свечку
+                    int iteration = 0; //номер итерации
+                    bool isWereDealsStopLoss = false; //были ли совешены сделки при проверки стоп-заявок на исполнение
+                    do
                     {
-                        //устанавливаем DateTimeSubmit для заявок пользователя
-                        foreach(Order order in algorithmCalculateResult.Orders)
+                        iteration++;
+                        //вычисляем алгоритм
+                        //формируем dataSourcesForCalculate
+                        DataSourceForCalculate[] dataSourcesForCalculate = new DataSourceForCalculate[dataSourceCandles.Length];
+                        for (int i = 0; i < dataSourceCandles.Length; i++)
                         {
-                            order.DateTimeSubmit = currentDateTime;
-                        }
-                        //приводим заявки к виду который прислал пользователь в алгоритме
-                        List<Order> newAccountOrders = new List<Order>(); //новый список с текущими заявками
-                        //проходим по заявкам пользователя, и для каждой ищем совпадение в текущих заявках. Если находим, то добавляем эту заявку в newAccountOrders, и удаляем из заявок пользователя и текущих заявок
-                        for(int i = algorithmCalculateResult.Orders.Count - 1; i >= 0; i--)
-                        {
-                            bool isFindInOrders = false;
-                            int orderIndex = 0;
-                            //проходим по всем текущим заявкам
-                            while(isFindInOrders == false && orderIndex < testRun.Account.Orders.Count)
+                            //определяем среднюю цену и объем позиции
+                            double averagePricePosition = 0; //средняя цена позиции
+                            decimal volumePosition = 0; //объем позиции
+                            bool isBuyDirection = false;
+                            foreach (Deal deal in testRun.Account.CurrentPosition)
                             {
-                                //если заявка пользователя соответствует заявке из текущих заявок
-                                bool isEqual = testRun.Account.Orders[orderIndex].DataSource == algorithmCalculateResult.Orders[i].DataSource && testRun.Account.Orders[orderIndex].TypeOrder == algorithmCalculateResult.Orders[i].TypeOrder && testRun.Account.Orders[orderIndex].Direction == algorithmCalculateResult.Orders[i].Direction && testRun.Account.Orders[orderIndex].Price == algorithmCalculateResult.Orders[i].Price && testRun.Account.Orders[orderIndex].Count == algorithmCalculateResult.Orders[i].Count; //проверка на соответстве источника данных, типа заявки, направления, цены, количества
-                                isEqual = isEqual && ((testRun.Account.Orders[orderIndex].LinkedOrder != null && algorithmCalculateResult.Orders[i].LinkedOrder != null) || (testRun.Account.Orders[orderIndex].LinkedOrder == null && algorithmCalculateResult.Orders[i].LinkedOrder == null)); //проверка на соответствие наличия/отсутствия связаной заявки
-                                if (isEqual)
+                                if (deal.DataSource == dataSourceCandles[i].DataSource) //если сделка относится к текущему источнику данных
                                 {
-                                    isFindInOrders = true;
-                                }
-                                else
-                                {
-                                    orderIndex++;
+                                    if (volumePosition == 0) //если это первая сделка по данному источнику данных, запоминаем цену и объем
+                                    {
+                                        averagePricePosition = deal.Price;
+                                        volumePosition = deal.Count;
+                                    }
+                                    else //если это не первая сделка по данному источнику данных, определяем среднюю цену и обновляем объем
+                                    {
+                                        averagePricePosition = (double)(((decimal)averagePricePosition * volumePosition + (decimal)deal.Price * deal.Count) / (volumePosition + deal.Count)); //(средняя цена * объем средней цены + текущая цена * текущий объем)/(объем средней цены + текущий объем)
+                                        volumePosition += deal.Count;
+                                    }
+                                    if (deal.Order.Direction)
+                                    {
+                                        isBuyDirection = true;
+                                    }
                                 }
                             }
-                            //если такая же заявка найдена в текущих, добавляем её в newAccountOrders, и удаляем из заявок пользователя и текущих заявок
-                            if (isFindInOrders)
+                            dataSourcesForCalculate[i] = new DataSourceForCalculate();
+                            dataSourcesForCalculate[i].DataSource = dataSourceCandles[i].DataSource;
+                            dataSourcesForCalculate[i].IndicatorsValues = indicatorsValues[i];
+                            dataSourcesForCalculate[i].Price = averagePricePosition;
+                            dataSourcesForCalculate[i].CountBuy = isBuyDirection ? volumePosition : 0;
+                            dataSourcesForCalculate[i].CountSell = isBuyDirection ? 0 : volumePosition;
+                            dataSourcesForCalculate[i].Candles = dataSourceCandles[i].Candles[fileIndexes[i]];
+                            dataSourcesForCalculate[i].CurrentCandleIndex = candleIndexes[i];
+                        }
+
+                        AccountForCalculate accountForCalculate = new AccountForCalculate { FreeRubleMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, FreeDollarMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit, TakenRubleMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, TakenDollarMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit };
+                        AlgorithmCalculateResult algorithmCalculateResult = CompiledAlgorithm.Calculate(accountForCalculate, dataSourcesForCalculate, algorithmParametersIntValues, algorithmParametersDoubleValues);
+                        maxOverIndex = algorithmCalculateResult.OverIndex > maxOverIndex ? algorithmCalculateResult.OverIndex : maxOverIndex; //если првышение индекса больше максимального, обновляем его максимальное значение
+                        if (maxOverIndex == 0) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
+                        {
+                            //устанавливаем DateTimeSubmit для заявок пользователя
+                            foreach (Order order in algorithmCalculateResult.Orders)
                             {
-                                newAccountOrders.Add(testRun.Account.Orders[orderIndex]); //добавляем заявку из текущих в новые текущие заявки
-                                if(testRun.Account.Orders[orderIndex].LinkedOrder != null)
+                                order.DateTimeSubmit = currentDateTime;
+                            }
+                            //приводим заявки к виду который прислал пользователь в алгоритме
+                            List<Order> newAccountOrders = new List<Order>(); //новый список с текущими заявками
+                                                                              //проходим по заявкам пользователя, и для каждой ищем совпадение в текущих заявках. Если находим, то добавляем эту заявку в newAccountOrders, и удаляем из заявок пользователя и текущих заявок
+                            for (int i = algorithmCalculateResult.Orders.Count - 1; i >= 0; i--)
+                            {
+                                bool isFindInOrders = false;
+                                int orderIndex = 0;
+                                //проходим по всем текущим заявкам
+                                while (isFindInOrders == false && orderIndex < testRun.Account.Orders.Count)
                                 {
-                                    newAccountOrders.Add(testRun.Account.Orders[orderIndex].LinkedOrder); //добавляем связанную заявку из текущих в новые текущие
-                                    testRun.Account.Orders.Remove(testRun.Account.Orders[orderIndex].LinkedOrder); //удаляем связанную заявку из текущих
-                                    algorithmCalculateResult.Orders.Remove(algorithmCalculateResult.Orders[i].LinkedOrder); //удаляем связанную заявку из заявок пользователя
+                                    //если заявка пользователя соответствует заявке из текущих заявок
+                                    bool isEqual = testRun.Account.Orders[orderIndex].DataSource == algorithmCalculateResult.Orders[i].DataSource && testRun.Account.Orders[orderIndex].TypeOrder == algorithmCalculateResult.Orders[i].TypeOrder && testRun.Account.Orders[orderIndex].Direction == algorithmCalculateResult.Orders[i].Direction && testRun.Account.Orders[orderIndex].Price == algorithmCalculateResult.Orders[i].Price && testRun.Account.Orders[orderIndex].Count == algorithmCalculateResult.Orders[i].Count; //проверка на соответстве источника данных, типа заявки, направления, цены, количества
+                                    isEqual = isEqual && ((testRun.Account.Orders[orderIndex].LinkedOrder != null && algorithmCalculateResult.Orders[i].LinkedOrder != null) || (testRun.Account.Orders[orderIndex].LinkedOrder == null && algorithmCalculateResult.Orders[i].LinkedOrder == null)); //проверка на соответствие наличия/отсутствия связаной заявки
+                                    if (isEqual)
+                                    {
+                                        isFindInOrders = true;
+                                    }
+                                    else
+                                    {
+                                        orderIndex++;
+                                    }
                                 }
-                                testRun.Account.Orders.RemoveAt(orderIndex); //удаляем заявку из текущих
-                                algorithmCalculateResult.Orders.RemoveAt(i); //удаляем заявку из заявок пользователя
+                                //если такая же заявка найдена в текущих, добавляем её в newAccountOrders, и удаляем из заявок пользователя и текущих заявок
+                                if (isFindInOrders)
+                                {
+                                    newAccountOrders.Add(testRun.Account.Orders[orderIndex]); //добавляем заявку из текущих в новые текущие заявки
+                                    if (testRun.Account.Orders[orderIndex].LinkedOrder != null)
+                                    {
+                                        newAccountOrders.Add(testRun.Account.Orders[orderIndex].LinkedOrder); //добавляем связанную заявку из текущих в новые текущие
+                                        testRun.Account.Orders.Remove(testRun.Account.Orders[orderIndex].LinkedOrder); //удаляем связанную заявку из текущих
+                                        algorithmCalculateResult.Orders.Remove(algorithmCalculateResult.Orders[i].LinkedOrder); //удаляем связанную заявку из заявок пользователя
+                                    }
+                                    testRun.Account.Orders.RemoveAt(orderIndex); //удаляем заявку из текущих
+                                    algorithmCalculateResult.Orders.RemoveAt(i); //удаляем заявку из заявок пользователя
+                                }
+                            }
+                            //устанавливаем дату снятия заявок для текущих которые не соответствуют заявкам пользователя
+                            foreach (Order order in testRun.Account.Orders)
+                            {
+                                order.DateTimeRemove = currentDateTime;
+                            }
+                            //добавляем оставшиеся заявки пользователя к новым текущим
+                            newAccountOrders.AddRange(algorithmCalculateResult.Orders);
+                            testRun.Account.Orders = newAccountOrders; //обновляем текущие заявки
+
+                            //если на текущей свечке были совершены сделки, проверяем стоп-заявки на исполнение (чтобы если на текущей свечке была открыта позиция, после выставления стоп-заявки проверить её на исполнение на текущей свечке)
+                            if (isWereDeals && iteration == 1)
+                            {
+                                isWereDealsStopLoss = CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, false, true, false); //были ли совершены сделки при проверке исполнения стоп-заявок
                             }
                         }
-                        //устанавливаем дату снятия заявок для текущих которые не соответствуют заявкам пользователя
-                        foreach(Order order in testRun.Account.Orders)
-                        {
-                            order.DateTimeRemove = currentDateTime;
-                        }
-                        //добавляем оставшиеся заявки пользователя к новым текущим
-                        newAccountOrders.AddRange(algorithmCalculateResult.Orders);
-                        testRun.Account.Orders = newAccountOrders; //обновляем текущие заявки
                     }
+                    while (isWereDealsStopLoss && iteration == 1); //если этой первое исполнение алгоритма, и при проверке стоп-заявок были сделки, еще раз прогоняем алгоритм чтобы обновить заявки
                 }
 
                 //для каждого источника данных доходим до даты, которая позже текущей
@@ -1346,15 +1362,11 @@ namespace ktradesystem.Models
                     }
                 }
             }
-
-
-
-
-
         }
 
-        public void CheckOrdersExecution(DataSourceCandles[] dataSourcesCandles, Account account, List<DataSource> approvedDataSources, int[] fileIndexes, int[] candleIndexes, bool isMarket, bool isStop, bool isLimit) //функция проверяет заявки на их исполнение в текущей свечке. approvedDataSources - список с источниками данных, заявки которых будут проверяться на исполнение. isMarket, isStop, isLimit - если true, будут проверяться на исполнение эти заявки
+        public bool CheckOrdersExecution(DataSourceCandles[] dataSourcesCandles, Account account, List<DataSource> approvedDataSources, int[] fileIndexes, int[] candleIndexes, bool isMarket, bool isStop, bool isLimit) //функция проверяет заявки на их исполнение в текущей свечке, возвращает false если не было сделок, и true если были совершены сделки. approvedDataSources - список с источниками данных, заявки которых будут проверяться на исполнение. isMarket, isStop, isLimit - если true, будут проверяться на исполнение эти заявки
         {
+            bool isMakeADeals = false; //были ли совершены сделки
             //исполняем рыночные заявки
             if (isMarket)
             {
@@ -1376,7 +1388,7 @@ namespace ktradesystem.Models
                         int slippage = _modelData.Settings.Where(i => i.Id == 3).First().IntValue; //количество пунктов на которое цена исполнения рыночной заявки будет хуже
                         slippage += Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //добавляем проскальзывание
                         slippage = order.Direction == true ? slippage : -slippage; //для покупки проскальзывание идет вверх, для продажи вниз
-                        MakeADeal(account, order, order.Count, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].C + slippage, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
+                        isMakeADeals = MakeADeal(account, order, order.Count, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].C + slippage, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime) ? true : isMakeADeals;
                         if (order.Count == 0)
                         {
                             ordersToRemove.Add(order);
@@ -1422,7 +1434,7 @@ namespace ktradesystem.Models
                             int slippage = _modelData.Settings.Where(i => i.Id == 3).First().IntValue; //количество пунктов на которое цена исполнения рыночной заявки будет хуже
                             slippage += Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //добавляем проскальзывание
                             slippage = order.Direction == true ? slippage : -slippage; //для покупки проскальзывание идет вверх, для продажи вниз
-                            MakeADeal(account, order, order.Count, order.Price + slippage, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
+                            isMakeADeals = MakeADeal(account, order, order.Count, order.Price + slippage, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime) ? true : isMakeADeals;
                             if (order.Count == 0)
                             {
                                 ordersToRemove.Add(order);
@@ -1478,7 +1490,7 @@ namespace ktradesystem.Models
                             if(overLots > 0) //если есть лоты которые могли быть исполнены на текущей свечке, совершаем сделку
                             {
                                 decimal dealCount = order.Count >= overLots ? order.Count : overLots;
-                                MakeADeal(account, order, dealCount, order.Price, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime);
+                                isMakeADeals = MakeADeal(account, order, dealCount, order.Price, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime) ? true : isMakeADeals;
                                 if (order.Count == 0)
                                 {
                                     ordersToRemove.Add(order);
@@ -1500,10 +1512,12 @@ namespace ktradesystem.Models
                     }
                 }
             }
+            return isMakeADeals;
         }
 
-        private void MakeADeal(Account account, Order order, decimal lotsCount, double price, DateTime dateTime) //совершает сделку. Закрывает открытые позиции если они есть, и открывает новые если заявка не была исполнена полностью на закрытие позиций, высчитывает результат трейда, обновляет занятые и свободные средства во всех валютах, удаляет закрытые сделки в открытых позициях
+        private bool MakeADeal(Account account, Order order, decimal lotsCount, double price, DateTime dateTime) //совершает сделку, возвращает false если сделка не была совершена, и true если была совершена. Закрывает открытые позиции если они есть, и открывает новые если заявка не была исполнена полностью на закрытие позиций, высчитывает результат трейда, обновляет занятые и свободные средства во всех валютах, удаляет закрытые сделки в открытых позициях
         {
+            bool isMakeADeal = false; //была ли совершена сделка
             //определяем хватает ли средств на 1 лот, если да, определяем хватает ли средств на lotsCount, если нет устанавливаем минимально доступное количество
             //стоимость 1 лота
             double lotsCost = order.DataSource.Instrument.Id == 2 ? order.DataSource.Cost : price; //если инструмент источника данных - фьючерс, устанавливаем стоимость в стоимость фьючерса, иначе - устанавливаем стоимость 1 лота в стоимость с графика
@@ -1534,6 +1548,7 @@ namespace ktradesystem.Models
                 account.AllDeals.Add(new Deal { Number = account.AllDeals.Count + 1, DataSource = order.DataSource, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime });
                 Deal currentDeal = new Deal { Number = account.AllDeals.Count + 1, DataSource = order.DataSource, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime };
                 account.CurrentPosition.Add(currentDeal);
+                isMakeADeal = true; //запоминаем что была совершена сделка
                 //вычитаем комиссию на сделку из свободных средств
                 freeDeposit -= (double)((decimal)lotsComission * dealLotsCount);
                 //закрываем открытые позиции которые были закрыты данной сделкой
@@ -1581,6 +1596,7 @@ namespace ktradesystem.Models
                     account.DepositCurrenciesChanges.Add(account.FreeForwardDepositCurrencies);
                 }
             }
+            return isMakeADeal;
         }
 
         private List<DepositCurrency> CalculateDepositCurrrencies(double deposit, Currency inputCurrency) //возвращает значения депозита во всех валютах

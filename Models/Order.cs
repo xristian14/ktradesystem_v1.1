@@ -18,7 +18,6 @@ namespace ktradesystem.Models
             StartCount = count;
         }
         private ModelData _modelData;
-        public int Number { get; set; }
         public DataSource DataSource { get; set; }
         public TypeOrder TypeOrder { get; set; }
         public bool Direction { get; set; } //true - купить, false - продать

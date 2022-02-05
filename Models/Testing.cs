@@ -602,14 +602,14 @@ namespace ktradesystem.Models
                 }
             }
             //удаляем пробелы до и после открывающейся скобки после ключевого слова на создание заявки
-            string[] orderLetters = new string[] { "Order_LimitSell", "Order_LimitBuy", "Order_StopSell", "Order_StopBuy", "Order_MarketSell", "Order_MarketBuy" }; //слова создания заявок
+            string[] orderLetters = new string[] { "Order_LimitSell", "Order_LimitBuy", "Order_StopSell", "Order_StopBuy", "Order_MarketSell", "Order_MarketBuy", "Order_StopTakeBuy", "Order_StopTakeSell" }; //слова создания заявок
             foreach(string str in orderLetters)
             {
                 scriptAlgorithm.Replace(str + " (", str + "("); //удаляем пробел перед открывающейся скобкой
                 scriptAlgorithm.Replace(str + "( ", str + "("); //удаляем пробел после открывающейся скобки
             }
             //заменяем ключевые слова на создание заявок, на функцию добавления объекта типа Order в список orders
-            string[] orderCorrectLetters = new string[] { "orders.Add(new Order(1, false,", "orders.Add(new Order(1, true,", "orders.Add(new Order(3, false,", "orders.Add(new Order(3, true,", "orders.Add(new Order(2, false,", "orders.Add(new Order(2, true," };
+            string[] orderCorrectLetters = new string[] { "orders.Add(new Order(1, false,", "orders.Add(new Order(1, true,", "orders.Add(new Order(3, false,", "orders.Add(new Order(3, true,", "orders.Add(new Order(2, false,", "orders.Add(new Order(2, true,", "orders.AddRange(GetStopTake(true,", "orders.AddRange(GetStopTake(false," };
             for(int k = 0; k < orderLetters.Length; k++)
             {
                 scriptAlgorithm.Replace(orderLetters[k] + "(", orderCorrectLetters[k]);
@@ -736,6 +736,14 @@ namespace ktradesystem.Models
                             result = new Candle { DateTime = dataSourcesForCalculate.Candles[realIndex].DateTime, O = dataSourcesForCalculate.Candles[realIndex].O, H = dataSourcesForCalculate.Candles[realIndex].H, L = dataSourcesForCalculate.Candles[realIndex].L, C = dataSourcesForCalculate.Candles[realIndex].C, V = dataSourcesForCalculate.Candles[realIndex].V };
                         }
                         return result;
+                    }
+                    public List<Order> GetStopTake(bool direction, DataSourceForCalculate dataSourceForCalculate, double stopPrice, double takePrice, decimal count)
+                    {
+                        Order stopOrder = new Order(3, direction, dataSourceForCalculate, stopPrice, count);
+                        Order takeOrder = new Order(1, direction, dataSourceForCalculate, takePrice, count);
+                        stopOrder.LinkedOrder = takeOrder;
+                        takeOrder.LinkedOrder = stopOrder;
+                        return new List<Order> { stopOrder, takeOrder };
                     }
                 }"
             });
@@ -1229,13 +1237,54 @@ namespace ktradesystem.Models
                     maxOverIndex = algorithmCalculateResult.OverIndex > maxOverIndex ? algorithmCalculateResult.OverIndex : maxOverIndex; //если првышение индекса больше максимального, обновляем его максимальное значение
                     if(maxOverIndex == 0) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
                     {
-                        //приводим заявки к виду который прислал пользователь в алгоритме
-                        List<int> fullMatchOrders = new List<int>(); //индексы полностью совпадающих заявок по источнику данных, направлению, цене, и количеству
-                        //находим полностью совпадающие заявки
-                        for(int i = 0; i < testRun.Account.Orders.Count; i++)
+                        //устанавливаем DateTimeSubmit для заявок пользователя
+                        foreach(Order order in algorithmCalculateResult.Orders)
                         {
-                            
+                            order.DateTimeSubmit = currentDateTime;
                         }
+                        //приводим заявки к виду который прислал пользователь в алгоритме
+                        List<Order> newAccountOrders = new List<Order>(); //новый список с текущими заявками
+                        //проходим по заявкам пользователя, и для каждой ищем совпадение в текущих заявках. Если находим, то добавляем эту заявку в newAccountOrders, и удаляем из заявок пользователя и текущих заявок
+                        for(int i = algorithmCalculateResult.Orders.Count - 1; i >= 0; i--)
+                        {
+                            bool isFindInOrders = false;
+                            int orderIndex = 0;
+                            //проходим по всем текущим заявкам
+                            while(isFindInOrders == false && orderIndex < testRun.Account.Orders.Count)
+                            {
+                                //если заявка пользователя соответствует заявке из текущих заявок
+                                bool isEqual = testRun.Account.Orders[orderIndex].DataSource == algorithmCalculateResult.Orders[i].DataSource && testRun.Account.Orders[orderIndex].TypeOrder == algorithmCalculateResult.Orders[i].TypeOrder && testRun.Account.Orders[orderIndex].Direction == algorithmCalculateResult.Orders[i].Direction && testRun.Account.Orders[orderIndex].Price == algorithmCalculateResult.Orders[i].Price && testRun.Account.Orders[orderIndex].Count == algorithmCalculateResult.Orders[i].Count; //проверка на соответстве источника данных, типа заявки, направления, цены, количества
+                                isEqual = isEqual && ((testRun.Account.Orders[orderIndex].LinkedOrder != null && algorithmCalculateResult.Orders[i].LinkedOrder != null) || (testRun.Account.Orders[orderIndex].LinkedOrder == null && algorithmCalculateResult.Orders[i].LinkedOrder == null)); //проверка на соответствие наличия/отсутствия связаной заявки
+                                if (isEqual)
+                                {
+                                    isFindInOrders = true;
+                                }
+                                else
+                                {
+                                    orderIndex++;
+                                }
+                            }
+                            //если такая же заявка найдена в текущих, добавляем её в newAccountOrders, и удаляем из заявок пользователя и текущих заявок
+                            if (isFindInOrders)
+                            {
+                                newAccountOrders.Add(testRun.Account.Orders[orderIndex]); //добавляем заявку из текущих в новые текущие заявки
+                                if(testRun.Account.Orders[orderIndex].LinkedOrder != null)
+                                {
+                                    newAccountOrders.Add(testRun.Account.Orders[orderIndex].LinkedOrder); //добавляем связанную заявку из текущих в новые текущие
+                                    testRun.Account.Orders.Remove(testRun.Account.Orders[orderIndex].LinkedOrder); //удаляем связанную заявку из текущих
+                                    algorithmCalculateResult.Orders.Remove(algorithmCalculateResult.Orders[i].LinkedOrder); //удаляем связанную заявку из заявок пользователя
+                                }
+                                testRun.Account.Orders.RemoveAt(orderIndex); //удаляем заявку из текущих
+                                algorithmCalculateResult.Orders.RemoveAt(i); //удаляем заявку из заявок пользователя
+                            }
+                        }
+                        //устанавливаем дату снятия заявок для текущих которые не соответствуют заявкам пользователя
+                        foreach(Order order in testRun.Account.Orders)
+                        {
+                            order.DateTimeRemove = currentDateTime;
+                        }
+                        //добавляем оставшиеся заявки пользователя к новым текущим
+                        newAccountOrders.AddRange(algorithmCalculateResult.Orders);
                     }
                 }
                 //переходим на следующую свечку (см. алгоритм на листке) (при переходе на следующий файл, нужно в нем дойти до даты, следующей за текущей) (переходим не на следующую, а на количество, равное 1 + maxOverIndex)

@@ -761,6 +761,8 @@ namespace ktradesystem.Models
                 }
             }
 
+            //создаем классы критериев оценки
+
             if (isErrorCompile == false)
             {
                 //определяем количество testRun без учета форвардных
@@ -853,6 +855,46 @@ namespace ktradesystem.Models
                         {
                             DataSourcesCandles[i].IndicatorsValues[k] = new IndicatorValues { Indicator = indicators[i], Values = new double[DataSourcesCandles[i].Candles.Length][] };
                         }
+                    }
+
+                    //вычисляем идеальную прибыль дял каждого DataSourceCandles
+                    foreach(DataSourceCandles dataSourceCandles in DataSourcesCandles)
+                    {
+                        double pricesAmount = 0; //сумма разности цен закрытия, взятой по модулю
+                        int fileIndex = 0;
+                        int candleIndex = 0;
+                        DateTime currentDateTime = dataSourceCandles.Candles[fileIndex][candleIndex].DateTime;
+                        bool isOverFileIndex = false; //вышел ли какой-либо из индексов файлов за границы массива файлов источника данных
+                        while(isOverFileIndex == false)
+                        {
+                            if(candleIndex > 0) //чтобы не обращатсья к прошлой свечке при смне файла
+                            {
+                                currentDateTime = dataSourceCandles.Candles[fileIndex][candleIndex].DateTime;
+                                pricesAmount += Math.Abs(dataSourceCandles.Candles[fileIndex][candleIndex].C - dataSourceCandles.Candles[fileIndex][candleIndex - 1].C); //прибавляем разность цен закрытия, взятую по модулю
+                            }
+                            //переходим на следующую свечку, пока не дойдем до даты которая позже текущей или пока не выйдем за пределы файлов
+                            bool isOverDate = DateTime.Compare(dataSourceCandles.Candles[fileIndex][candleIndex].DateTime, currentDateTime) > 0; //дошли ли до даты которая позже текущей
+                            while (isOverDate == false && isOverFileIndex == false)
+                            {
+                                candleIndex++;
+                                //если массив со свечками файла подошел к концу, переходим на следующий файл
+                                if (candleIndex >= dataSourceCandles.Candles[fileIndex].Length)
+                                {
+                                    fileIndex++;
+                                    candleIndex = 0;
+                                }
+                                //если индекс файла не вышел за пределы массива, проверяем, дошли ли до даты которая позже текущей
+                                if (fileIndex < dataSourceCandles.Candles.Length)
+                                {
+                                    isOverDate = DateTime.Compare(dataSourceCandles.Candles[fileIndex][candleIndex].DateTime, currentDateTime) > 0;
+                                }
+                                else
+                                {
+                                    isOverFileIndex = true;
+                                }
+                            }
+                        }
+                        dataSourceCandles.PerfectProfit = pricesAmount / dataSourceCandles.DataSource.PriceStep * dataSourceCandles.DataSource.CostPriceStep; //записываем идеальную прибыль
                     }
 
 
@@ -1154,16 +1196,16 @@ namespace ktradesystem.Models
                 }
             }
 
-            bool isFileIndexesOverLimit = false; //вышел ли какой-либо из индексов файлов за границы массива файлов источника данных
+            bool isOverFileIndex = false; //вышел ли какой-либо из индексов файлов за границы массива файлов источника данных
             for(int i = 0; i < fileIndexes.Length; i++)
             {
                 if(fileIndexes[i] >= dataSourceCandles[i].Candles.Length)
                 {
-                    isFileIndexesOverLimit = true; //отмечаем что индекс файла вышел за границы массива
+                    isOverFileIndex = true; //отмечаем что индекс файла вышел за границы массива
                 }
             }
             //проходим по всем свечкам источников данных, пока не достигнем времени окончания теста, или пока не выйдем за границы имеющихся файлов
-            while(DateTime.Compare(currentDateTime, testRun.EndPeriod) < 0 && isFileIndexesOverLimit == false)
+            while(DateTime.Compare(currentDateTime, testRun.EndPeriod) < 0 && isOverFileIndex == false)
             {
                 //обрабатываем текущие заявки (только тех источников данных, текущие свечки которых равняются текущей дате)
                 //формируем список источников данных для которых будут проверяться заявки на исполнение (те, даты которых равняются текущей дате)
@@ -1324,8 +1366,7 @@ namespace ktradesystem.Models
                 for(int i = 0; i < dataSourceCandles.Length; i++)
                 {
                     //переходим на следующую свечку, пока не дойдем до даты которая позже текущей
-                    bool isOverDate = DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) >= 0; //дошли ли до даты которая позже текущей
-                    bool isOverFileIndex = false; //превысили ли индекс файла
+                    bool isOverDate = DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) > 0; //дошли ли до даты которая позже текущей
 
                     //переходим на следующую свечку, пока не дойдем до даты которая позже текущей или пока не выйдем за пределы файлов
                     while (isOverDate == false && isOverFileIndex == false)
@@ -1340,18 +1381,17 @@ namespace ktradesystem.Models
                         //если индекс файла не вышел за пределы массива, проверяем, дошли ли до даты которая позже текущей
                         if (fileIndexes[i] < dataSourceCandles[i].Candles.Length)
                         {
-                            isOverDate = DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) >= 0;
+                            isOverDate = DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) > 0;
                         }
                         else
                         {
                             isOverFileIndex = true;
-                            isFileIndexesOverLimit = true;
                         }
                     }
                 }
 
                 //обновляем текущую дату (берем самую раннюю дату из источников данных)
-                if(isFileIndexesOverLimit == false)
+                if(isOverFileIndex == false)
                 {
                     currentDateTime = dataSourceCandles[0].Candles[fileIndexes[0]][candleIndexes[0]].DateTime;
                     for(int i = 1; i < dataSourceCandles.Length; i++)

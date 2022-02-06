@@ -12,5 +12,6 @@ namespace ktradesystem.Models.Datatables
         public string Name { get; set; }
         public string Description { get; set; }
         public string Script { get; set; }
+        public bool IsDoubleValue { get; set; } //данный параметр имеет числовое значение или не. Если нет - то значение хранится в строке
     }
 }

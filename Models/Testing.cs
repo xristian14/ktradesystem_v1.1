@@ -762,6 +762,48 @@ namespace ktradesystem.Models
             }
 
             //создаем классы критериев оценки
+            CompiledEvaluationCriterias = new dynamic[_modelData.EvaluationCriterias.Count];
+            for(int i = 0; i < _modelData.EvaluationCriterias.Count; i++)
+            {
+                string script = _modelData.EvaluationCriterias[i].Script;
+
+                Microsoft.CSharp.CSharpCodeProvider provider = new Microsoft.CSharp.CSharpCodeProvider();
+                System.CodeDom.Compiler.CompilerParameters param = new System.CodeDom.Compiler.CompilerParameters();
+                param.ReferencedAssemblies.Add(Assembly.GetExecutingAssembly().Location);
+                param.GenerateExecutable = false;
+                param.GenerateInMemory = true;
+                
+                var compiled = provider.CompileAssemblyFromSource(param, new string[]
+                {
+                    @"
+                    using System;
+                    using ktradesystem.Models;
+                    public class CompiledEvaluationCriteria_" + _modelData.EvaluationCriterias[i].Name +
+                    @"{
+                        public EvaluationCriteriaValue Calculate(DataSourceCandles dataSourceCandles, List<EvaluationCriteriaValue> evaluationCriteriaValues, ObservableCollection<Setting> settings)
+                        {
+                            double doubleValue = 0;
+                            string stringValue = """";
+                            " + script +
+                            @"return new EvaluationCriteriaValue { DoubleValue = doubleValue, StringValue = stringValue };
+                        }
+                    }"
+                });
+                if (compiled.Errors.Count == 0)
+                {
+                    CompiledEvaluationCriterias[i] = compiled.CompiledAssembly.CreateInstance("CompiledEvaluationCriteria_" + _modelData.EvaluationCriterias[i].Name);
+                }
+                else
+                {
+                    isErrorCompile = true;
+                    //отправляем пользователю сообщения об ошибке
+                    for (int r = 0; r < compiled.Errors.Count; r++)
+                    {
+                        _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Ошибка при компиляции критерия оценки " + _modelData.EvaluationCriterias[i].Name + ": " + compiled.Errors[0].ErrorText); }));
+                    }
+                }
+            }
+
 
             if (isErrorCompile == false)
             {
@@ -946,9 +988,56 @@ namespace ktradesystem.Models
                                 if (isOptimizationTestsComplete)
                                 {
                                     //определяем топ-модель и статистичекую значимость
-
-
-
+                                    //определяем оси двумерной плоскости поиска топ-модели с соседями, для которых волатильность критерия оценки максимальная
+                                    //рассматриваются только те пары осей, площадь которых не менее 60% от максимальной площади. Чтобы исключить выбор осей с небольшой площадью но большой средней волатильностью
+                                    //формируем список со всеми параметрами
+                                    List<int[]> indicatorsAndAlgorithmParameters = new List<int[]>(); //список с параметрами (0-й элемент массива - тип параметра: 1-индикатор, 2-алгоритм, 1-й элемент массива - индекс параметра)
+                                    for(int i = 0; i < IndicatorsParametersAllIntValues.Length; i++)
+                                    {
+                                        indicatorsAndAlgorithmParameters.Add(new int[2] { 1, i }); //запоминаем что параметр индикатор с индексом i
+                                    }
+                                    for(int i = 0; i < AlgorithmParametersAllIntValues.Length; i++)
+                                    {
+                                        indicatorsAndAlgorithmParameters.Add(new int[2] { 2, i }); //запоминаем что параметр индикатор с индексом i
+                                    }
+                                    //находим максимальную площадь плоскости
+                                    int maxArea = 0;
+                                    int axisX = 0; //одна ось плоскости
+                                    int axisY = 0; //вторая ось плоскости
+                                    for(int i = 0; i < indicatorsAndAlgorithmParameters.Count; i++)
+                                    {
+                                        for(int k = 0; k < indicatorsAndAlgorithmParameters.Count; k++)
+                                        {
+                                            if (i != k)
+                                            {
+                                                int iCount = 0; //количество элементов в параметре с индексом i
+                                                if(indicatorsAndAlgorithmParameters[i][0] == 1) //если параметр индикатор
+                                                {
+                                                    iCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
+                                                }
+                                                else //если параметр алгоритм
+                                                {
+                                                    iCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
+                                                }
+                                                int kCount = 0; //количество элементов в параметре с индексом k
+                                                if (indicatorsAndAlgorithmParameters[k][0] == 1) //если параметр индикатор
+                                                {
+                                                    kCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
+                                                }
+                                                else //если параметр алгоритм
+                                                {
+                                                    kCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
+                                                }
+                                                if(iCount * kCount > maxArea) //если площадь данной комбинации больше максимальной, запоминаем площадь плоскости и её оси
+                                                {
+                                                    maxArea = iCount * kCount;
+                                                    axisX = i;
+                                                    axisY = k;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    //формируем
 
 
                                 }
@@ -1402,6 +1491,23 @@ namespace ktradesystem.Models
                         }
                     }
                 }
+            }
+            //рассчитываем критерии оценки для данного testRun
+            for (int i = 0; i < _modelData.EvaluationCriterias.Count; i++)
+            {
+                //CompiledEvaluationCriterias[i].Calculate(DataSourceCandles dataSourceCandles, List < EvaluationCriteriaValue > evaluationCriteriaValues)
+                //определяем индекс источника данных, с наибольшей идеальной прибылью
+                int index = 0;
+                for(int k = 1; k < dataSourceCandles.Length; k++)
+                {
+                    if(dataSourceCandles[index].PerfectProfit < dataSourceCandles[k].PerfectProfit)
+                    {
+                        index = k;
+                    }
+                }
+                EvaluationCriteriaValue evaluationCriteriaValue = CompiledEvaluationCriterias[i].Calculate(dataSourceCandles[index], testRun.EvaluationCriteriaValues, _modelData.Settings);
+                evaluationCriteriaValue.EvaluationCriteria = _modelData.EvaluationCriterias[i];
+                testRun.EvaluationCriteriaValues.Add(evaluationCriteriaValue);
             }
         }
 

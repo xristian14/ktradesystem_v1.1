@@ -10,6 +10,7 @@ namespace ktradesystem.Models
     public class EvaluationCriteriaValue
     {
         public EvaluationCriteria EvaluationCriteria { get; set; }
-        public double Value { get; set; }
+        public double DoubleValue { get; set; }
+        public string StringValue { get; set; }
     }
 }

@@ -75,7 +75,14 @@ namespace ktradesystem.Models
             DataTable dataEvaluationCriterias = _database.QuerySelect("SELECT * FROM EvaluationCriterias");
             foreach (DataRow row in dataEvaluationCriterias.Rows)
             {
-                EvaluationCriteria evaluationCriteria = new EvaluationCriteria { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name"), Description = row.Field<string>("description"), Script = row.Field<string>("script") };
+                EvaluationCriteria evaluationCriteria = new EvaluationCriteria
+                {
+                    Id = (int)row.Field<long>("id"),
+                    Name = row.Field<string>("name"),
+                    Description = row.Field<string>("description"),
+                    Script = row.Field<string>("script"),
+                    IsDoubleValue = int.Parse(row.Field<string>("isDoubleValue")) == 1 ? true : false
+                };
                 EvaluationCriterias.Add(evaluationCriteria);
             }
 

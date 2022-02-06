@@ -989,7 +989,6 @@ namespace ktradesystem.Models
                                 {
                                     //определяем топ-модель и статистичекую значимость
                                     //определяем оси двумерной плоскости поиска топ-модели с соседями, для которых волатильность критерия оценки максимальная
-                                    //рассматриваются только те пары осей, площадь которых не менее 60% от максимальной площади. Чтобы исключить выбор осей с небольшой площадью но большой средней волатильностью
                                     //формируем список со всеми параметрами
                                     List<int[]> indicatorsAndAlgorithmParameters = new List<int[]>(); //список с параметрами (0-й элемент массива - тип параметра: 1-индикатор, 2-алгоритм, 1-й элемент массива - индекс параметра)
                                     for(int i = 0; i < IndicatorsParametersAllIntValues.Length; i++)
@@ -1037,7 +1036,86 @@ namespace ktradesystem.Models
                                             }
                                         }
                                     }
-                                    //формируем
+                                    //формируем список с комбинациями параметров, которые имеют минимально допустимую площадь плоскости
+                                    double minMaxArea = 0.6; //минимально допустимая площадь плоскости от максимального. Чтобы исключить выбор осей с небольшой площадью но большой средней волатильностью
+                                    List<int[]> parametersCombination = new List<int[]>(); //комбинации из 2-х параметров, площадь которых в пределах допустимой
+                                    for (int i = 0; i < indicatorsAndAlgorithmParameters.Count; i++)
+                                    {
+                                        for (int k = 0; k < indicatorsAndAlgorithmParameters.Count; k++)
+                                        {
+                                            if (i != k)
+                                            {
+                                                int iCount = 0; //количество элементов в параметре с индексом i
+                                                if (indicatorsAndAlgorithmParameters[i][0] == 1) //если параметр индикатор
+                                                {
+                                                    iCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                                }
+                                                else //если параметр алгоритм
+                                                {
+                                                    iCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                                }
+                                                int kCount = 0; //количество элементов в параметре с индексом k
+                                                if (indicatorsAndAlgorithmParameters[k][0] == 1) //если параметр индикатор
+                                                {
+                                                    kCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                                }
+                                                else //если параметр алгоритм
+                                                {
+                                                    kCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                                }
+                                                if (iCount * kCount >= maxArea * minMaxArea) //если площадь данной комбинации в пределах минимальной, сохраняем комбинацию
+                                                {
+                                                    //проверяем есть ли уже такая комбинация, чтобы не записать одну и ту же несколько раз
+                                                    bool isFind = parametersCombination.Where(j => (j[0] == i && j[1] == k) || (j[0] == k && j[1] == i)).Any();
+                                                    if(isFind == false)
+                                                    {
+                                                        parametersCombination.Add(new int[2] { i, k }); //запоминаем комбинацию
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    //определяем волатильность критерия оценки для каждой комбинации параметров
+                                    List<double> averageVolatilityParametersCombination = new List<double>(); //средняя волатильность на еденицу параметра (суммарная волатильность/площадь) для комбинаций параметров
+                                    for (int i = 0; i < parametersCombination.Count; i++)
+                                    {
+                                        //parametersCombination[i][0] - индекс первого параметра (в indicatorsAndAlgorithmParameters) комбинации
+                                        //parametersCombination[i][1] - индекс второго параметра (в indicatorsAndAlgorithmParameters) комбинации
+                                        int xParameterCountValues = 0; //количество элементов в параметре X
+                                        if (indicatorsAndAlgorithmParameters[i][0] == 1) //если параметр индикатор
+                                        {
+                                            xParameterCountValues = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                        }
+                                        else //если параметр алгоритм
+                                        {
+                                            xParameterCountValues = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                        }
+
+                                        int yParameterCountValues = 0; //количество элементов в параметре Y
+                                        if (indicatorsAndAlgorithmParameters[i][0] == 1) //если параметр индикатор
+                                        {
+                                            xParameterCountValues = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                        }
+                                        else //если параметр алгоритм
+                                        {
+                                            xParameterCountValues = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                        }
+
+                                        TestBatch testBatch = TestBatches[tasksExecutingTestRuns[completedTaskIndex][0]]; //tasksExecutingTestRuns[completedTaskIndex][0] - testBatchIndex
+                                        double amountVolatility = 0; //суммарная волатильность
+                                        //перебираем все testRun-ы слева направо, переходя на следующую строку, и суммируем разности соседних тестов взятые по модулю
+                                        for (int x = 0; x < xParameterCountValues; x++) 
+                                        {
+                                            for (int y = 1; y < yParameterCountValues; y++) 
+                                            {
+                                                //находим testRun с такими параметрами x и y, а так же с параметрами x и y - 1
+                                                TestRun testRunPrevious = new TestRun();
+                                                bool isParameterPreviousXInt = 
+                                            }
+                                        }
+                                    }
+
+
 
 
                                 }

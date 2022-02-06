@@ -1081,24 +1081,62 @@ namespace ktradesystem.Models
                                     {
                                         //parametersCombination[i][0] - индекс первого параметра (в indicatorsAndAlgorithmParameters) комбинации
                                         //parametersCombination[i][1] - индекс второго параметра (в indicatorsAndAlgorithmParameters) комбинации
+                                        bool xParameterIsInt = false; //параметр типа int, true - int, false - double
+                                        bool yParameterIsInt = false; //параметр типа int, true - int, false - double
                                         int xParameterCountValues = 0; //количество элементов в параметре X
-                                        if (indicatorsAndAlgorithmParameters[i][0] == 1) //если параметр индикатор
+                                        if (indicatorsAndAlgorithmParameters[parametersCombination[i][0]][0] == 1) //если параметр индикатор
                                         {
-                                            xParameterCountValues = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                            //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                            if(IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count > 0)
+                                            {
+                                                xParameterCountValues = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
+                                                xParameterIsInt = true;
+                                            }
+                                            else
+                                            {
+                                                xParameterCountValues = IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
+                                            }
                                         }
                                         else //если параметр алгоритм
                                         {
-                                            xParameterCountValues = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                            //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                            if(AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count > 0)
+                                            {
+                                                xParameterCountValues = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
+                                                xParameterIsInt = true;
+                                            }
+                                            else
+                                            {
+                                                xParameterCountValues = AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
+                                            }
                                         }
 
                                         int yParameterCountValues = 0; //количество элементов в параметре Y
-                                        if (indicatorsAndAlgorithmParameters[i][0] == 1) //если параметр индикатор
+                                        if (indicatorsAndAlgorithmParameters[parametersCombination[i][1]][0] == 1) //если параметр индикатор
                                         {
-                                            xParameterCountValues = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                            //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                            if(IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count > 0)
+                                            {
+                                                yParameterCountValues = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
+                                                yParameterIsInt = true;
+                                            }
+                                            else
+                                            {
+                                                yParameterCountValues = IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
+                                            }
                                         }
                                         else //если параметр алгоритм
                                         {
-                                            xParameterCountValues = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                            //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                            if(AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count > 0)
+                                            {
+                                                yParameterCountValues = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
+                                                yParameterIsInt = true;
+                                            }
+                                            else
+                                            {
+                                                yParameterCountValues = AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
+                                            }
                                         }
 
                                         TestBatch testBatch = TestBatches[tasksExecutingTestRuns[completedTaskIndex][0]]; //tasksExecutingTestRuns[completedTaskIndex][0] - testBatchIndex
@@ -1108,9 +1146,15 @@ namespace ktradesystem.Models
                                         {
                                             for (int y = 1; y < yParameterCountValues; y++) 
                                             {
-                                                //находим testRun с такими параметрами x и y, а так же с параметрами x и y - 1
+                                                //находим testRun с параметрами x и y - 1, а так же testRun с параметрами x и y
                                                 TestRun testRunPrevious = new TestRun();
-                                                bool isParameterPreviousXInt = 
+                                                for(int k = 0; k < testBatch.OptimizationTestRuns.Count; k++)
+                                                {
+                                                    TestRun testRun = testBatch.OptimizationTestRuns[k];
+                                                    //определить, это параметр индикатора или алгоритма
+                                                }
+
+
                                             }
                                         }
                                     }

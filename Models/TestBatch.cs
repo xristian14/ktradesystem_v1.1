@@ -10,6 +10,7 @@ namespace ktradesystem.Models
     {
         public DataSourceGroup DataSourceGroup { get; set; }
         public List<TestRun> OptimizationTestRuns { get; set; }
+        public List<AxesParameter> AxesTopModelSearchPlane { get; set; } //оси плоскости для поиска топ-модели с соседями
         public TestRun TopModelTestRun { get; set; } //ссылка на testRun, определенный как лучшая модель
         public TestRun ForwardTestRun { get; set; }
         public List<string[]> StatisticalSignificance { get; set; }

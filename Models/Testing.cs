@@ -1076,13 +1076,15 @@ namespace ktradesystem.Models
                                         }
                                     }
                                     //определяем волатильность критерия оценки для каждой комбинации параметров
-                                    List<double> averageVolatilityParametersCombination = new List<double>(); //средняя волатильность на еденицу параметра (суммарная волатильность/площадь) для комбинаций параметров
+                                    List<double> averageVolatilityParametersCombination = new List<double>(); //средняя волатильность на еденицу параметра (суммарная волатильность/количество элементов) для комбинаций параметров
                                     for (int i = 0; i < parametersCombination.Count; i++)
                                     {
                                         //parametersCombination[i][0] - индекс первого параметра (в indicatorsAndAlgorithmParameters) комбинации
                                         //parametersCombination[i][1] - индекс второго параметра (в indicatorsAndAlgorithmParameters) комбинации
                                         bool xParameterIsInt = false; //параметр типа int, true - int, false - double
                                         bool yParameterIsInt = false; //параметр типа int, true - int, false - double
+                                        bool xParameterIsIndicator = false; //true - параметр индикатора, false - алгоритма
+                                        bool yParameterIsIndicator = false; //true - параметр индикатора, false - алгоритма
                                         int xParameterCountValues = 0; //количество элементов в параметре X
                                         if (indicatorsAndAlgorithmParameters[parametersCombination[i][0]][0] == 1) //если параметр индикатор
                                         {
@@ -1096,6 +1098,7 @@ namespace ktradesystem.Models
                                             {
                                                 xParameterCountValues = IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
                                             }
+                                            xParameterIsIndicator = true;
                                         }
                                         else //если параметр алгоритм
                                         {
@@ -1124,6 +1127,7 @@ namespace ktradesystem.Models
                                             {
                                                 yParameterCountValues = IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
                                             }
+                                            yParameterIsIndicator = true;
                                         }
                                         else //если параметр алгоритм
                                         {
@@ -1141,24 +1145,340 @@ namespace ktradesystem.Models
 
                                         TestBatch testBatch = TestBatches[tasksExecutingTestRuns[completedTaskIndex][0]]; //tasksExecutingTestRuns[completedTaskIndex][0] - testBatchIndex
                                         double amountVolatility = 0; //суммарная волатильность
+                                        int countIncreaseVolatility = 0; //количество прибавлений суммарной волатильности. На это значение будет делиться суммарная волатильность для получения средней
                                         //перебираем все testRun-ы слева направо, переходя на следующую строку, и суммируем разности соседних тестов взятые по модулю
                                         for (int x = 0; x < xParameterCountValues; x++) 
                                         {
                                             for (int y = 1; y < yParameterCountValues; y++) 
                                             {
                                                 //находим testRun с параметрами x и y - 1, а так же testRun с параметрами x и y
-                                                TestRun testRunPrevious = new TestRun();
-                                                for(int k = 0; k < testBatch.OptimizationTestRuns.Count; k++)
+                                                TestRun testRunPrevious = new TestRun(); //testRun с параметрами x и y - 1
+                                                TestRun testRunNext = new TestRun(); //testRun с параметрами x и y
+                                                for (int k = 0; k < testBatch.OptimizationTestRuns.Count; k++)
                                                 {
                                                     TestRun testRun = testBatch.OptimizationTestRuns[k];
-                                                    //определить, это параметр индикатора или алгоритма
+                                                    //определяем, соответствует ли testRun testRunPrevious
+                                                    int xParameterIntValue = 0; //значение X параметра у данного теста
+                                                    double xParameterDoubleValue = 0; //значение X параметра у данного теста
+                                                    if (xParameterIsIndicator) //если параметр индикатора, ищем значение в параметрах индикаторов
+                                                    {
+                                                        xParameterIntValue = testRun.IndicatorParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]/*индекс параметра индикатора*/].IntValue;
+                                                        xParameterDoubleValue = testRun.IndicatorParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]/*индекс параметра индикатора*/].DoubleValue;
+                                                        //indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1] - индекс X параметра в индикаторах или алгоритмах
+                                                    }
+                                                    else //если параметр алгоритма, ищем значение в параметрах алгоритма
+                                                    {
+                                                        xParameterIntValue = testRun.AlgorithmParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]/*индекс параметра алгоритма*/].IntValue;
+                                                        xParameterDoubleValue = testRun.AlgorithmParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]/*индекс параметра алгоритма*/].DoubleValue;
+                                                    }
+                                                    int yParameterIntValue = 0; //значение Y параметра у данного теста
+                                                    double yParameterDoubleValue = 0; //значение Y параметра у данного теста
+                                                    if (yParameterIsIndicator) //если параметр индикатора, ищем значение в параметрах индикаторов
+                                                    {
+                                                        yParameterIntValue = testRun.IndicatorParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].IntValue;
+                                                        yParameterDoubleValue = testRun.IndicatorParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].DoubleValue;
+                                                        //indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1] - индекс Y параметра в параметрах индикаторов или алгоритма
+                                                    }
+                                                    else //если параметр алгоритма, ищем значение в параметрах алгоритма
+                                                    {
+                                                        yParameterIntValue = testRun.AlgorithmParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].IntValue;
+                                                        yParameterDoubleValue = testRun.AlgorithmParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].DoubleValue;
+                                                    }
+
+                                                    //сравниваем значения параметров X и Y - 1, а так же X и Y с значениями X и Y параметров данного testRun-а
+                                                    bool isXEqual = false; //равны ли параметры X
+                                                    if (xParameterIsIndicator)
+                                                    {
+                                                        if (xParameterIsInt)
+                                                        {
+                                                            if (IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]][x] == xParameterIntValue)
+                                                            {
+                                                                isXEqual = true;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]][x] == xParameterDoubleValue)
+                                                            {
+                                                                isXEqual = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (xParameterIsInt)
+                                                        {
+                                                            if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]][x] == xParameterIntValue)
+                                                            {
+                                                                isXEqual = true;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]][x] == xParameterDoubleValue)
+                                                            {
+                                                                isXEqual = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    bool isYDecrementEqual = false; //равны ли параметры Y - 1
+                                                    if (yParameterIsIndicator)
+                                                    {
+                                                        if (yParameterIsInt)
+                                                        {
+                                                            if (IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y - 1] == xParameterIntValue)
+                                                            {
+                                                                isYDecrementEqual = true;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y - 1] == xParameterDoubleValue)
+                                                            {
+                                                                isYDecrementEqual = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (yParameterIsInt)
+                                                        {
+                                                            if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y - 1] == xParameterIntValue)
+                                                            {
+                                                                isYDecrementEqual = true;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y - 1] == xParameterDoubleValue)
+                                                            {
+                                                                isYDecrementEqual = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    bool isYEqual = false; //равны ли параметры Y
+                                                    if (yParameterIsIndicator)
+                                                    {
+                                                        if (yParameterIsInt)
+                                                        {
+                                                            if (IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == xParameterIntValue)
+                                                            {
+                                                                isYEqual = true;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == xParameterDoubleValue)
+                                                            {
+                                                                isYEqual = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (yParameterIsInt)
+                                                        {
+                                                            if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == xParameterIntValue)
+                                                            {
+                                                                isYEqual = true;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == xParameterDoubleValue)
+                                                            {
+                                                                isYEqual = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    //определяем, найден ли нужный testRun
+                                                    if (isXEqual)
+                                                    {
+                                                        if (isYDecrementEqual)
+                                                        {
+                                                            testRunPrevious = testRun;
+                                                        }
+                                                        if (isYEqual)
+                                                        {
+                                                            testRunNext = testRun;
+                                                        }
+                                                    }
                                                 }
 
-
+                                                //прибавляем волатильность между соседними testRun-ми к суммарной волатильности
+                                                amountVolatility += Math.Abs(testRunNext.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue - testRunPrevious.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue);
+                                                countIncreaseVolatility++;
                                             }
                                         }
+
+                                        //перебираем все testRun-ы сверху-вниз, переходя на следующую колонку, и суммируем разности соседних тестов взятые по модулю
+                                        for (int y = 0; y < yParameterCountValues; y++)
+                                        {
+                                            for (int x = 1; x < xParameterCountValues; x++)
+                                            {
+                                                //находим testRun с параметрами y и x - 1, а так же testRun с параметрами y и x
+                                                TestRun testRunPrevious = new TestRun(); //testRun с параметрами x и y - 1
+                                                TestRun testRunNext = new TestRun(); //testRun с параметрами x и y
+                                                for (int k = 0; k < testBatch.OptimizationTestRuns.Count; k++)
+                                                {
+                                                    TestRun testRun = testBatch.OptimizationTestRuns[k];
+                                                    //определяем, соответствует ли testRun testRunPrevious
+                                                    int xParameterIntValue = 0; //значение X параметра у данного теста
+                                                    double xParameterDoubleValue = 0; //значение X параметра у данного теста
+                                                    if (xParameterIsIndicator) //если параметр индикатора, ищем значение в параметрах индикаторов
+                                                    {
+                                                        xParameterIntValue = testRun.IndicatorParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]/*индекс параметра индикатора*/].IntValue;
+                                                        xParameterDoubleValue = testRun.IndicatorParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]/*индекс параметра индикатора*/].DoubleValue;
+                                                        //indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1] - индекс X параметра в индикаторах или алгоритмах
+                                                    }
+                                                    else //если параметр алгоритма, ищем значение в параметрах алгоритма
+                                                    {
+                                                        xParameterIntValue = testRun.AlgorithmParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]/*индекс параметра алгоритма*/].IntValue;
+                                                        xParameterDoubleValue = testRun.AlgorithmParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]/*индекс параметра алгоритма*/].DoubleValue;
+                                                    }
+                                                    int yParameterIntValue = 0; //значение Y параметра у данного теста
+                                                    double yParameterDoubleValue = 0; //значение Y параметра у данного теста
+                                                    if (yParameterIsIndicator) //если параметр индикатора, ищем значение в параметрах индикаторов
+                                                    {
+                                                        yParameterIntValue = testRun.IndicatorParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].IntValue;
+                                                        yParameterDoubleValue = testRun.IndicatorParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].DoubleValue;
+                                                        //indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1] - индекс Y параметра в параметрах индикаторов или алгоритма
+                                                    }
+                                                    else //если параметр алгоритма, ищем значение в параметрах алгоритма
+                                                    {
+                                                        yParameterIntValue = testRun.AlgorithmParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].IntValue;
+                                                        yParameterDoubleValue = testRun.AlgorithmParameterValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].DoubleValue;
+                                                    }
+
+                                                    //сравниваем значения параметров X - 1 и Y, а так же X и Y с значениями X и Y параметров данного testRun-а
+                                                    bool isXDecrementEqual = false; //равны ли параметры X
+                                                    if (xParameterIsIndicator)
+                                                    {
+                                                        if (xParameterIsInt)
+                                                        {
+                                                            if (IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]][x - 1] == xParameterIntValue)
+                                                            {
+                                                                isXDecrementEqual = true;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]][x - 1] == xParameterDoubleValue)
+                                                            {
+                                                                isXDecrementEqual = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (xParameterIsInt)
+                                                        {
+                                                            if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]][x - 1] == xParameterIntValue)
+                                                            {
+                                                                isXDecrementEqual = true;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]][x - 1] == xParameterDoubleValue)
+                                                            {
+                                                                isXDecrementEqual = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    bool isXEqual = false; //равны ли параметры X
+                                                    if (xParameterIsIndicator)
+                                                    {
+                                                        if (xParameterIsInt)
+                                                        {
+                                                            if (IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]][x] == xParameterIntValue)
+                                                            {
+                                                                isXEqual = true;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]][x] == xParameterDoubleValue)
+                                                            {
+                                                                isXEqual = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (xParameterIsInt)
+                                                        {
+                                                            if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]][x] == xParameterIntValue)
+                                                            {
+                                                                isXEqual = true;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]][x] == xParameterDoubleValue)
+                                                            {
+                                                                isXEqual = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    bool isYEqual = false; //равны ли параметры Y
+                                                    if (yParameterIsIndicator)
+                                                    {
+                                                        if (yParameterIsInt)
+                                                        {
+                                                            if (IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == xParameterIntValue)
+                                                            {
+                                                                isYEqual = true;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == xParameterDoubleValue)
+                                                            {
+                                                                isYEqual = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (yParameterIsInt)
+                                                        {
+                                                            if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == xParameterIntValue)
+                                                            {
+                                                                isYEqual = true;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == xParameterDoubleValue)
+                                                            {
+                                                                isYEqual = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    //определяем, найден ли нужный testRun
+                                                    if (isYEqual)
+                                                    {
+                                                        if (isXDecrementEqual)
+                                                        {
+                                                            testRunPrevious = testRun;
+                                                        }
+                                                        if (isXEqual)
+                                                        {
+                                                            testRunNext = testRun;
+                                                        }
+                                                    }
+                                                }
+
+                                                //прибавляем волатильность между соседними testRun-ми к суммарной волатильности
+                                                amountVolatility += Math.Abs(testRunNext.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue - testRunPrevious.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue);
+                                                countIncreaseVolatility++;
+                                            }
+                                        }
+                                        averageVolatilityParametersCombination.Add(amountVolatility / (countIncreaseVolatility / 2)); //записываем среднюю волатильность для данной комбинации (делим на 2, т.к. мы дважды проходились по плоскости и суммировали общую волатильность: слева направо и вниз, а так же сверху-вниз и направо)
                                     }
 
+                                    //выбираем комбинацию параметров с самой высокой средней волатильностью
 
 
 

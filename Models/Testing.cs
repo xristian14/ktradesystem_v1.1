@@ -1011,9 +1011,103 @@ namespace ktradesystem.Models
                                             xAxisGroupSize = xAxisGroupSize < 2 ? 2 : xAxisGroupSize; //если меньше 2-х, устанавливаем как 2
                                             xAxisGroupSize = xAxisCountParameterValue < 2 ? 1 : xAxisGroupSize; //если количество значений параметра меньше 2-х, устанавливаем как 1
 
-                                            //формируем список с группами
+                                            List<TestRun[]> testRunGroups = new List<TestRun[]>(); //список с группами
+                                            List<double> amountGroupsValue = new List<double>(); //суммарное значение критерия оценки для групп
+                                            //формируем группы
+                                            int startIndex = 0; //индекс первого элемента для группы
+                                            int endIndex = startIndex + xAxisGroupSize - 1; //индекс последнего элемента для группы
+                                            while (endIndex < testBatch.OptimizationTestRuns.Count)
+                                            {
+                                                TestRun[] testRuns = new TestRun[xAxisGroupSize];
+                                                for(int i = 0; i < xAxisGroupSize; i++)
+                                                {
+                                                    testRuns[i] = testBatch.OptimizationTestRuns[startIndex + i];
+                                                }
+                                                startIndex++;
+                                                endIndex = startIndex + xAxisGroupSize - 1;
+                                            }
+                                            //вычисляем суммарные значения критерия оценки для групп
+                                            for(int i = 0; i < testRunGroups.Count; i++)
+                                            {
+                                                double amountValue = 0;
+                                                for(int k = 0; k < testRunGroups[i].Length; k++)
+                                                {
+                                                    amountValue += testRunGroups[i][k].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue;
+                                                }
+                                                amountGroupsValue.Add(amountValue);
+                                            }
+                                            //сортируем список групп по убыванию суммарного значения критерия оценки
+                                            TestRun[] saveGroup; //элемент списка для сохранения после удаления из списка
+                                            double saveValue; //элемент списка для сохранения после удаления из списка
+                                            for (int i = 0; i < amountGroupsValue.Count; i++)
+                                            {
+                                                for (int k = 0; k < amountGroupsValue.Count - 1; k++)
+                                                {
+                                                    if(amountGroupsValue[k] < amountGroupsValue[k + 1])
+                                                    {
+                                                        saveGroup = testRunGroups[k];
+                                                        testRunGroups[k] = testRunGroups[k + 1];
+                                                        testRunGroups[k + 1] = saveGroup;
 
-
+                                                        saveValue = amountGroupsValue[k];
+                                                        amountGroupsValue[k] = amountGroupsValue[k + 1];
+                                                        amountGroupsValue[k + 1] = saveValue;
+                                                    }
+                                                }
+                                            }
+                                            //сортируем testRun-ы в группах в порядке убытвания критерия оценки
+                                            TestRun saveTestRun; //элемент списка для сохранения после удаления из списка
+                                            for (int u = 0; u < testRunGroups.Count; u++)
+                                            {
+                                                for (int i = 0; i < testRunGroups[u].Length; i++)
+                                                {
+                                                    for (int k = 0; k < testRunGroups[u].Length - 1; k++)
+                                                    {
+                                                        if (testRunGroups[u][k].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue < testRunGroups[u][k + 1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue)
+                                                        {
+                                                            saveTestRun = testRunGroups[u][k];
+                                                            testRunGroups[u][k] = testRunGroups[u][k + 1];
+                                                            testRunGroups[u][k + 1] = saveTestRun;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            //проходим по всем группам, и в каждой группе проходим по всем testRun-ам, и ищем первый который соответствует фильтрам
+                                            bool isFindTopModel = false;
+                                            int groupIndex = 0;
+                                            while(isFindTopModel == false && groupIndex < testRunGroups.Count)
+                                            {
+                                                int testRunIndex1 = 0;
+                                                while(isFindTopModel == false && testRunIndex1 < testRunGroups[groupIndex].Length)
+                                                {
+                                                    //проходим по всем фильтрам
+                                                    bool isFilterFail = false;
+                                                    foreach(TopModelFilter topModelFilter in TopModelCriteria.TopModelFilters)
+                                                    {
+                                                        if (topModelFilter.CompareSign == CompareSign.GetMore()) //знак сравнения фильтра Больше
+                                                        {
+                                                            if(testRunGroups[groupIndex][testRunIndex1].EvaluationCriteriaValues.Where(j=>j.EvaluationCriteria== topModelFilter.EvaluationCriteria).First().DoubleValue <= topModelFilter.Value)
+                                                            {
+                                                                isFilterFail = true;
+                                                            }
+                                                        }
+                                                        else //знак сравнения фильтра Меньше
+                                                        {
+                                                            if (testRunGroups[groupIndex][testRunIndex1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue >= topModelFilter.Value)
+                                                            {
+                                                                isFilterFail = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    //если testRun удовлетворяет всем фильтрам, записываем его как топ-модель
+                                                    if(isFilterFail == false)
+                                                    {
+                                                        testBatch.TopModelTestRun = testRunGroups[groupIndex][testRunIndex1];
+                                                        isFindTopModel = true;
+                                                    }
+                                                }
+                                                groupIndex++;
+                                            }
                                         }
                                         else //если параметров 2 и более
                                         {

@@ -1645,7 +1645,67 @@ namespace ktradesystem.Models
                                                 axesTopModelSearchPlane.Add(axesParameterY);
                                                 testBatch.AxesTopModelSearchPlane = axesTopModelSearchPlane;
                                             }
+
                                             //оси определили, далее определяем размер группы соседних тестов
+                                            //определяем размер двумерной плоскости с выбранными осями
+                                            //количество значений параметра X
+                                            int xAxisCountParameterValue = 0;
+                                            bool isXAxisIndicatorParameter = testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate != null ? true : false;
+                                            bool isXAxisIntValue = testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
+                                            if (isXAxisIndicatorParameter) //параметр индикатора
+                                            {
+                                                int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
+                                                xAxisCountParameterValue = isXAxisIntValue ? IndicatorsParametersAllIntValues[parameterIndex].Count : AlgorithmParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
+                                            }
+                                            else //параметр алгоритма
+                                            {
+                                                int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter).First()); //индекс параметра в списке параметров
+                                                xAxisCountParameterValue = isXAxisIntValue ? AlgorithmParametersAllIntValues[parameterIndex].Count : AlgorithmParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
+                                            }
+
+                                            //количество значений параметра Y
+                                            int yAxisCountParameterValue = 0;
+                                            bool isYAxisIndicatorParameter = testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate != null ? true : false;
+                                            bool isYAxisIntValue = testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
+                                            if (isYAxisIndicatorParameter) //параметр индикатора
+                                            {
+                                                int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
+                                                yAxisCountParameterValue = isYAxisIntValue ? IndicatorsParametersAllIntValues[parameterIndex].Count : AlgorithmParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
+                                            }
+                                            else //параметр алгоритма
+                                            {
+                                                int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter).First()); //индекс параметра в списке параметров
+                                                yAxisCountParameterValue = isYAxisIntValue ? AlgorithmParametersAllIntValues[parameterIndex].Count : AlgorithmParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
+                                            }
+
+                                            //определяем размер группы соседних тестов
+                                            double groupArea = xAxisCountParameterValue * yAxisCountParameterValue * (SizeNeighboursGroupPercent / 100); //площадь группы соседних тестов
+                                            int xAxisSize = (int)Math.Round(Math.Sqrt(groupArea)); //размер группы по оси X
+                                            int yAxisSize = xAxisSize; //размер группы по оси Y
+                                            //если размер сторон группы меньше 2, устанавливаем в 2, если размер оси позволяет
+                                            xAxisSize = xAxisSize < 2 && xAxisCountParameterValue >= 2 ? 2 : xAxisSize;
+                                            yAxisSize = yAxisSize < 2 && yAxisCountParameterValue >= 2 ? 2 : yAxisSize;
+                                            //если размер сторон группы меньше 1, устанавливаем в 1
+                                            xAxisSize = xAxisSize < 1 ? 1 : xAxisSize;
+                                            yAxisSize = yAxisSize < 1 ? 1 : yAxisSize;
+                                            //если одна из сторон группы больше размера оси
+                                            if (xAxisSize > xAxisCountParameterValue || yAxisSize > yAxisCountParameterValue)
+                                            {
+                                                if(xAxisSize > xAxisCountParameterValue)
+                                                {
+                                                    xAxisSize = xAxisCountParameterValue; //устанавливаем размер стороны группы в размер оси
+                                                    yAxisSize = (int)Math.Round(groupArea / xAxisSize); //размер второй стороны высчитываем как площадь группы / размер первой оси
+                                                }
+                                                if (yAxisSize > yAxisCountParameterValue)
+                                                {
+                                                    yAxisSize = yAxisCountParameterValue; //устанавливаем размер стороны группы в размер оси
+                                                    xAxisSize = (int)Math.Round(groupArea / yAxisSize); //размер второй стороны высчитываем как площадь группы / размер первой оси
+                                                }
+                                            }
+
+                                            //формируем список с комбинациями параметров тестов групп
+                                            List<int[]> parameterCombinationsGroups = new List<int[]>(); //
+
 
                                         }
                                     }

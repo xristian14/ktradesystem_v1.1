@@ -81,7 +81,7 @@ namespace ktradesystem.Models
                     Name = row.Field<string>("name"),
                     Description = row.Field<string>("description"),
                     Script = row.Field<string>("script"),
-                    IsDoubleValue = int.Parse(row.Field<string>("isDoubleValue")) == 1 ? true : false
+                    IsDoubleValue = (int)row.Field<long>("isDoubleValue") == 1 ? true : false
                 };
                 EvaluationCriterias.Add(evaluationCriteria);
             }

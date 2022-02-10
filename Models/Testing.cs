@@ -397,11 +397,24 @@ namespace ktradesystem.Models
                                 takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
                             }
 
-                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>() };
-                            Account accountDepositTrading = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), FreeForwardDepositCurrencies = ForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies };
-                            TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, AccountDepositTrading = accountDepositTrading, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>() };
+                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), IsForwardDepositTrading = false };
+                            TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>() };
                             //добавляем форвардный тест в testBatch
                             testBatch.ForwardTestRun = testRun;
+                        }
+                        //формируем форвардный тест с торговлей депозитом
+                        if (IsForwardTesting && IsForwardDepositTrading)
+                        {
+                            List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //средства в открытых позициях
+                            foreach(DepositCurrency depositCurrency in ForwardDepositCurrencies)
+                            {
+                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
+                            }
+
+                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), IsForwardDepositTrading = true, FreeForwardDepositCurrencies = ForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies };
+                            TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>() };
+                            //добавляем форвардный тест с торговлей депозитом в testBatch
+                            testBatch.ForwardTestRunDepositTrading = testRun;
                         }
 
                         TestBatches.Add(testBatch);
@@ -945,7 +958,7 @@ namespace ktradesystem.Models
                     stopwatch.Start();
                     int testBatchIndex = 0; //индекс тестовой связки, testRun-ы которой отправляются в задачи
                     int testRunIndex = 0; //индекс testRun-а, который отправляется в задачи
-                    int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест массив бдет состоять только из 1 элемента: индекса testBatch-а)
+                    int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест, в 1-м элементе будет -1, если это форвардный тест с торговлей депозитом в 1-м элементе будет -2)
                     int[][] testRunsStatus = new int[TestBatches.Count - 1][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у выполненного 1
                     //создаем для каждого testBatch массив равный количеству testRun
                     for (int k = 0; k < TestBatches.Count; k++)
@@ -968,14 +981,18 @@ namespace ktradesystem.Models
                         }
                         else //иначе обрабатываем выполненную задачу
                         {
+                            bool isStartOptimizationTestRun = false; //на текущей итерации отправить в задачу следующий оптимизационный тест
+                            bool isStartForwardTestRun = false; //на текущей итерации отправить в задачу форвардный тест
+                            bool isStartForwardTestRunDepositTrading = false; //на текущей итерации отправить в задачу форвардный тест с торговлей депозитом
+
                             int completedTaskIndex = Task.WaitAny(tasks);
-                            //если это форвардное тестирование, проверяем, выполнены ли все testRun-ы этого testBatch-а и форвардный не запущен, если да - определяем топ-модель и запускаем форвардный тест
+                            //если это форвардное тестирование, проверяем, выполнены ли все testRun-ы этого testBatch-а и форвардный не запущен, если да - определяем топ-модель и отмечаем что нужно запустить форвардный тест
                             //отмечаем testRun как выполненный (если это не форвардный тест)
-                            if (tasksExecutingTestRuns[completedTaskIndex].Length == 2) //если в массиве 2 элемента, зачит это не форвардный тест, и его нужно записать
+                            if (tasksExecutingTestRuns[completedTaskIndex][1] >= 0) //если индекс testRun-а больше или равен 0, зачит это оптимизационный тест, и его нужно записать
                             {
                                 testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]][tasksExecutingTestRuns[completedTaskIndex][1]] = 1; //присваиваем статусу с сохраненным для этой задачи индексами testBatch и testRun, значение 1 (то есть выполнено)
 
-                                //проверяем, если все testRun для данного testBatch (к которому принадлежит выполненный) выполненны, определяем топ-модель и статистическую значимость
+                                //проверяем, если все testRun для данного testBatch (к которому принадлежит выполненный) выполненны, определяем топ-модель и статистическую значимость, и если это форвардное тестирование, запускаем форвардный тест
                                 bool isOptimizationTestsComplete = true;
                                 int a = 0;
                                 while(isOptimizationTestsComplete && a < testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]].Length)
@@ -2072,7 +2089,61 @@ namespace ktradesystem.Models
                                     testBatch.StatisticalSignificance.Add(totalTests);
                                     testBatch.StatisticalSignificance.Add(lossTests);
                                     testBatch.StatisticalSignificance.Add(profitTests);
+
+                                    //если это форвардное тестирование, записываем параметра для форвардного теста и отмечаем что нужно запустить форвардный тест
+                                    if (IsForwardTesting)
+                                    {
+                                        testBatch.ForwardTestRun.IndicatorParameterValues = testBatch.TopModelTestRun.IndicatorParameterValues;
+                                        testBatch.ForwardTestRun.AlgorithmParameterValues = testBatch.TopModelTestRun.AlgorithmParameterValues;
+                                        isStartForwardTestRun = true;
+                                        //если это форвардное тестирование с торговлей депозитом, записываем параметра для форвардного теста с торговлей депозитом
+                                        if (IsForwardDepositTrading)
+                                        {
+                                            testBatch.ForwardTestRunDepositTrading.IndicatorParameterValues = testBatch.TopModelTestRun.IndicatorParameterValues;
+                                            testBatch.ForwardTestRunDepositTrading.AlgorithmParameterValues = testBatch.TopModelTestRun.AlgorithmParameterValues;
+                                        }
+                                    }
                                 }
+                                else //если выполненный тест - оптимизационный, и все оптимизационные тесты текущего testRun не выолнены, отмечаем что нужно запустить следующий оптимизационный тест
+                                {
+                                    isStartOptimizationTestRun = true;
+                                }
+                            }
+                            else if(tasksExecutingTestRuns[completedTaskIndex][1] == -1) //если выполненный тест - форвардный тест и указано что проводим форвардный тест с торговлей депозитом, - отмечаем что нужно запустить форвардный тест с торговлей депозитом
+                            {
+                                if (IsForwardDepositTrading)
+                                {
+                                    isStartForwardTestRunDepositTrading = true;
+                                }
+                            }
+                            else if(tasksExecutingTestRuns[completedTaskIndex][1] == -2) //если выполненный тест - форвардный тест с торговлей депозитом, отмечаем что нужно запустить следующий оптимизационный тест
+                            {
+                                isStartOptimizationTestRun = true;
+                            }
+
+                            //запускаем testRun
+                            if (isStartOptimizationTestRun) //запускаем оптимизационный тест, и переходим на следующий оптимизационный тест
+                            {
+                                Task task = tasks[completedTaskIndex];
+                                TestRun testRun = TestBatches[testBatchIndex].OptimizationTestRuns[testRunIndex];
+                                task = Task.Run(() => TestRunExecute(testRun, indicators));
+                                tasksExecutingTestRuns[completedTaskIndex] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
+                                testRunIndex++;
+                                testBatchIndex += TestBatches[testBatchIndex].OptimizationTestRuns.Count >= testRunIndex ? 1 : 0; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
+                            }
+                            else if (isStartForwardTestRun) //запускаем форвардный тест
+                            {
+                                Task task = tasks[completedTaskIndex];
+                                TestRun testRun = TestBatches[testBatchIndex].ForwardTestRun;
+                                task = Task.Run(() => TestRunExecute(testRun, indicators));
+                                tasksExecutingTestRuns[completedTaskIndex] = new int[2] { testBatchIndex, -1 }; //запоминаем индексы testBatch и -1 (как флаг того что это форвардный тест), который выполняется в текущей задачи (в элементе массива tasks с индексом completedTaskIndex)
+                            }
+                            else if (isStartForwardTestRunDepositTrading) //запускаем форвардный тест с торговлей депозитом
+                            {
+                                Task task = tasks[completedTaskIndex];
+                                TestRun testRun = TestBatches[testBatchIndex].ForwardTestRunDepositTrading;
+                                task = Task.Run(() => TestRunExecute(testRun, indicators));
+                                tasksExecutingTestRuns[completedTaskIndex] = new int[2] { testBatchIndex, -2 }; //запоминаем индексы testBatch и -2 (как флаг того что это форвардный тест с торговлей депозитом), который выполняется в текущей задачи (в элементе массива tasks с индексом completedTaskIndex)
                             }
                         }
                         n++;

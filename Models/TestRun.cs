@@ -10,7 +10,6 @@ namespace ktradesystem.Models
     {
         public TestBatch TestBatch { get; set; }
         public Account Account { get; set; }
-        public Account AccountDepositTrading { get; set; }
         public DateTime StartPeriod { get; set; }
         public DateTime EndPeriod { get; set; }
         public List<IndicatorParameterValue> IndicatorParameterValues { get; set; }

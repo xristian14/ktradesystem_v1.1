@@ -13,6 +13,7 @@ namespace ktradesystem.Models
         public List<AxesParameter> AxesTopModelSearchPlane { get; set; } //оси плоскости для поиска топ-модели с соседями
         public TestRun TopModelTestRun { get; set; } //ссылка на testRun, определенный как лучшая модель
         public TestRun ForwardTestRun { get; set; }
+        public TestRun ForwardTestRunDepositTrading { get; set; }
         public List<string[]> StatisticalSignificance { get; set; }
     }
 }

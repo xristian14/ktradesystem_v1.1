@@ -1939,18 +1939,106 @@ namespace ktradesystem.Models
                                                 }
                                             }
 
+                                            bool isTopModelFind = false;
+                                            int groupIndex = 0;
                                             //проходим по всем группам, сортируем тесты в группе в порядке убывания критерия оценки, и ищем тест в группе который соответствует фильтрам
-                                            for(int i = 0; i < testRunsGroups.Count; i++)
+                                            while (isTopModelFind == false && groupIndex < testRunsGroups.Count)
                                             {
-
+                                                //сортируем тесты в группе в порядке убывания критерия оценки
+                                                for (int i = 0; i < testRunsGroups[groupIndex].Length; i++)
+                                                {
+                                                    for (int k = 0; k < testRunsGroups[groupIndex].Length - 1; k++)
+                                                    {
+                                                        if (testRunsGroups[groupIndex][k].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue < testRunsGroups[groupIndex][k + 1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue)
+                                                        {
+                                                            TestRun saveTestRun = testRunsGroups[groupIndex][k];
+                                                            testRunsGroups[groupIndex][k] = testRunsGroups[groupIndex][k + 1];
+                                                            testRunsGroups[groupIndex][k + 1] = saveTestRun;
+                                                        }
+                                                    }
+                                                }
+                                                //проходим по тестам группы, и ищем первый, который соответствует фильтрам
+                                                int tRunIndex = 0;
+                                                while (isTopModelFind == false && tRunIndex < testRunsGroups[groupIndex].Length)
+                                                {
+                                                    //проходим по всем фильтрам
+                                                    bool isFilterFail = false;
+                                                    foreach (TopModelFilter topModelFilter in TopModelCriteria.TopModelFilters)
+                                                    {
+                                                        if (topModelFilter.CompareSign == CompareSign.GetMore()) //знак сравнения фильтра Больше
+                                                        {
+                                                            if (testRunsGroups[groupIndex][tRunIndex].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue <= topModelFilter.Value)
+                                                            {
+                                                                isFilterFail = true;
+                                                            }
+                                                        }
+                                                        else //знак сравнения фильтра Меньше
+                                                        {
+                                                            if (testRunsGroups[groupIndex][tRunIndex].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue >= topModelFilter.Value)
+                                                            {
+                                                                isFilterFail = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    //если testRun удовлетворяет всем фильтрам, записываем его как топ-модель
+                                                    if (isFilterFail == false)
+                                                    {
+                                                        testBatch.TopModelTestRun = testRunsGroups[groupIndex][tRunIndex];
+                                                        isTopModelFind = true;
+                                                    }
+                                                    tRunIndex++;
+                                                }
+                                                groupIndex++;
                                             }
-
-
                                         }
                                     }
                                     else //если поиск топ-модели не учитывает соседей, ищем топ-модель среди оптимизационных тестов
                                     {
-
+                                        //проходим по всем оптимизационным тестами, и ищем топ-модель, которая соответствует фильтрам
+                                        bool isFirstTopModelFind = false; //найден ли первый тест, удовлетворяющий условиям фильтров, чтобы понять есть с чем сравнивать или нет
+                                        double topModelValue = 0;
+                                        TestRun topModelTestRun = new TestRun();
+                                        foreach(TestRun testRun in testBatch.OptimizationTestRuns)
+                                        {
+                                            //проверяем, соответствует ли текущий testRun условиям фильтров
+                                            bool isFilterFail = false;
+                                            //проходим по всем фильтрам
+                                            foreach (TopModelFilter topModelFilter in TopModelCriteria.TopModelFilters)
+                                            {
+                                                if (topModelFilter.CompareSign == CompareSign.GetMore()) //знак сравнения фильтра Больше
+                                                {
+                                                    if (testRun.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue <= topModelFilter.Value)
+                                                    {
+                                                        isFilterFail = true;
+                                                    }
+                                                }
+                                                else //знак сравнения фильтра Меньше
+                                                {
+                                                    if (testRun.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue >= topModelFilter.Value)
+                                                    {
+                                                        isFilterFail = true;
+                                                    }
+                                                }
+                                            }
+                                            
+                                            if (isFilterFail == false) //если testRun удовлетворяет всем фильтрам
+                                            {
+                                                if(isFirstTopModelFind == false) //если первая топ-модель еще не найдена, записываем текущий testRun как топ-модель
+                                                {
+                                                    topModelTestRun = testRun;
+                                                    topModelValue = testRun.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue;
+                                                    isFirstTopModelFind = true;
+                                                }
+                                                else //если уже есть топ-модель с которой можно сравнивать, сравниваем текущий testRun с топ-моделью
+                                                {
+                                                    if(testRun.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue >  topModelValue)
+                                                    {
+                                                        topModelTestRun = testRun;
+                                                        topModelValue = testRun.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue;
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                     
                                     

@@ -2039,6 +2039,10 @@ namespace ktradesystem.Models
                                                 }
                                             }
                                         }
+                                        if (isFirstTopModelFind)
+                                        {
+                                            testBatch.TopModelTestRun = topModelTestRun;
+                                        }
                                     }
                                     
                                     

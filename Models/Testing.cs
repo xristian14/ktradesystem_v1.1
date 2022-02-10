@@ -1814,10 +1814,59 @@ namespace ktradesystem.Models
                                                     //проходим по всем значениям параметра
                                                     for(int k = 0; k < countValues; k++)
                                                     {
+                                                        //копируем старую группу, и в каждую комбинацию параметров вставляем значение текущего параметра
+                                                        List<List<int[][]>> currentNewGroupsParametersCombinations = new List<List<int[][]>>();
+                                                        //проходим по всем старым группам
+                                                        for(int u = 0; u < groupsParametersCombinations.Capacity; u++)
+                                                        {
+                                                            List<int[][]> newParameterCombinations = new List<int[][]>();
+                                                            //проходим по всем комбинациям группы
+                                                            for (int r = 0; r < groupsParametersCombinations[u].Count; r++)
+                                                            {
+                                                                int[][] newParameterCombination = new int[2][];
+                                                                //копируем параметры индикаторов
+                                                                for(int indicatorParameterIndex = 0; indicatorParameterIndex < groupsParametersCombinations[u][r][0].Length; indicatorParameterIndex++)
+                                                                {
+                                                                    newParameterCombination[0][indicatorParameterIndex] = groupsParametersCombinations[u][r][0][indicatorParameterIndex];
+                                                                }
+                                                                //копируем прааметры алгоритма
+                                                                for (int algorithmParameterIndex = 0; algorithmParameterIndex < groupsParametersCombinations[u][r][1].Length; algorithmParameterIndex++)
+                                                                {
+                                                                    newParameterCombination[1][algorithmParameterIndex] = groupsParametersCombinations[u][r][1][algorithmParameterIndex];
+                                                                }
 
+                                                                //вставляем индекс значения текущего параметра
+                                                                if(indicatorsAlgorithmParameters[i][0] == 1) //если текущий параметр - параметр индикатора
+                                                                {
+                                                                    newParameterCombination[0][indicatorsAlgorithmParameters[i][1]] = k; //вставляем индекс значения текущего параметра
+                                                                }
+                                                                else //текущий параметр - параметр алгоритма
+                                                                {
+                                                                    newParameterCombination[1][indicatorsAlgorithmParameters[i][1]] = k; //вставляем индекс значения текущего параметра
+                                                                }
+                                                                newParameterCombinations.Add(newParameterCombination);
+                                                            }
+                                                            currentNewGroupsParametersCombinations.Add(newParameterCombinations); //формируем группы с текущим значением текущего параметра
+                                                        }
+                                                        newGroupsParametersCombinations.AddRange(currentNewGroupsParametersCombinations); //добавляем в новые группы, группы с текущим значением текущего парамета
                                                     }
+                                                    groupsParametersCombinations = newGroupsParametersCombinations; //обновляем все группы. Теперь для нового параметра будут использоваться группы с новым количеством комбинаций параметров
                                                 }
                                             }
+
+                                            //формируем список групп с тестами на основе групп с комбинациями параметров теста
+                                            List<List<TestRun>> testRunsGroups = new List<List<TestRun>>();
+                                            for(int i = 0; i < groupsParametersCombinations.Count; i++)
+                                            {
+                                                List<TestRun> testRunsGroup = new List<TestRun>(); //группа с testRun-ами
+                                                for(int k = 0; k < groupsParametersCombinations[i].Count; k++)
+                                                {
+                                                    //находим testRun с текущей комбинацией параметров
+
+                                                }
+                                                testRunsGroups.Add(testRunsGroup);
+                                            }
+
 
 
                                         }

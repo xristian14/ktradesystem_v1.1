@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.ObjectModel;
 using ktradesystem.Models.Datatables;
+using ktradesystem.CommunicationChannel;
 
 namespace ktradesystem.Models
 {
@@ -26,10 +27,12 @@ namespace ktradesystem.Models
         {
             _modelData = ModelData.getInstance();
             _database = Database.getInstance();
+            _mainCommunicationChannel = MainCommunicationChannel.getInstance();
         }
 
-        ModelData _modelData;
-        Database _database;
+        private ModelData _modelData;
+        private Database _database;
+        private MainCommunicationChannel _mainCommunicationChannel;
 
         private ObservableCollection<Setting> _testings = new ObservableCollection<Setting>(); //тесты
         public ObservableCollection<Setting> Testings
@@ -345,6 +348,7 @@ namespace ktradesystem.Models
         public void TestingLaunch(Testing testing)
         {
             CancellationTokenTesting = new CancellationTokenSource();
+            DispatcherInvoke((Action)(() => { _mainCommunicationChannel.TestingProgress.Clear(); }));
             testing.LaunchTesting();
         }
     }

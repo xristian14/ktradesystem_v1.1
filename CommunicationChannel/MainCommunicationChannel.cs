@@ -63,5 +63,16 @@ namespace ktradesystem.CommunicationChannel
                 OnPropertyChanged();
             }
         }
+
+        private ObservableCollection<TestingProgress> _testingProgress = new ObservableCollection<TestingProgress>(); //прогресс выполнения тестирования
+        public ObservableCollection<TestingProgress> TestingProgress
+        {
+            get { return _testingProgress; }
+            private set
+            {
+                _testingProgress = value;
+                OnPropertyChanged();
+            }
+        }
     }
 }

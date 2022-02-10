@@ -829,6 +829,15 @@ namespace ktradesystem.Models
                         countTestRuns++;
                     }
                 }
+
+                int countTestRunWithForward = countTestRuns;
+                countTestRunWithForward += IsForwardTesting ? TestBatches.Count : 0;
+                countTestRunWithForward += IsForwardTesting && IsForwardDepositTrading ? TestBatches.Count : 0;
+                _modelData.DispatcherInvoke((Action)(() => {
+                    _mainCommunicationChannel.TestingProgress.Clear();
+                    _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { Header = "", TasksCount = countTestRunWithForward, CompletedTasksCount = 0, ElapsedTime = TimeSpan.FromSeconds(0), CancelPossibility = true, IsFinish = false });
+                }));
+
                 if (countTestRuns > 0) //если количество тестов больше нуля, переходим на создание задач и выполнение тестов
                 {
                     CancellationToken cancellationToken = _modelTesting.CancellationTokenTesting.Token;
@@ -967,7 +976,7 @@ namespace ktradesystem.Models
                         for (int y = 0; y < testRunsStatus[k].Length; y++) { testRunsStatus[k][y] = 0; } //заполняем статусы testRun нулями
                     }
                     int n = 0; //номер прохождения цикла
-                    while (testBatchIndex < TestBatches.Count && cancellationToken.IsCancellationRequested == false)
+                    while (testBatchIndex < TestBatches.Count)
                     {
                         //если пока еще не заполнен массив с задачами, заполняем его
                         if (tasks[tasks.Length - 1] == null)
@@ -986,6 +995,18 @@ namespace ktradesystem.Models
                             bool isStartForwardTestRunDepositTrading = false; //на текущей итерации отправить в задачу форвардный тест с торговлей депозитом
 
                             int completedTaskIndex = Task.WaitAny(tasks);
+
+                            if (cancellationToken.IsCancellationRequested) //если был запрос на отмену операции, прекращем функцию
+                            {
+                                Task.WaitAll(tasks);
+                                TestingEnding(false);
+                                return;
+                            }
+                            _modelData.DispatcherInvoke((Action)(() => {
+                                _mainCommunicationChannel.TestingProgress.Clear();
+                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { Header = "", TasksCount = countTestRunWithForward, CompletedTasksCount = n, ElapsedTime = stopwatch.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
+                            }));
+
                             //если это форвардное тестирование, проверяем, выполнены ли все testRun-ы этого testBatch-а и форвардный не запущен, если да - определяем топ-модель и отмечаем что нужно запустить форвардный тест
                             //отмечаем testRun как выполненный (если это не форвардный тест)
                             if (tasksExecutingTestRuns[completedTaskIndex][1] >= 0) //если индекс testRun-а больше или равен 0, зачит это оптимизационный тест, и его нужно записать
@@ -2148,6 +2169,8 @@ namespace ktradesystem.Models
                         }
                         n++;
                     }
+                    Task.WaitAll(tasks);
+                    TestingEnding(true);
 
 
 
@@ -2158,8 +2181,6 @@ namespace ktradesystem.Models
 
 
 
-
-                    
                 }
             }
 
@@ -2215,6 +2236,14 @@ namespace ktradesystem.Models
                 //Calculate(Candle[] inputCandles, int currentCandleIndex, int[] indicatorParametersIntValues, double[] indicatorParametersDoubleValues)
                 i++;
             }
+        }
+
+        private void TestingEnding(bool isSuccess) //оповещение представления о том что тестирование закончено
+        {
+            _modelData.DispatcherInvoke((Action)(() => {
+                _mainCommunicationChannel.TestingProgress.Clear();
+                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { Header = "", TasksCount = 1, CompletedTasksCount = 1, ElapsedTime = TimeSpan.FromSeconds(1), CancelPossibility = false, IsFinish = true, IsSuccess = isSuccess });
+            }));
         }
 
         public void IndicatorValuesWithParameterCalculate(TestRun testRun) //вычисляет индикаторы для всех источников данных testRun-а, с параметрами индикатора, взятыми из testRun-а, и помещает их в IndicatorsValues объекта DataSourceCandles, теперь для свечек файлов будут так же значения индикаторов для каждой свечки, эта функция будет использоваться для вычисления индикаторов которые будут отображаться на графике конкретного testRun-а

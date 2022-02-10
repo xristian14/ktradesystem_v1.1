@@ -1015,7 +1015,7 @@ namespace ktradesystem.Models
                                             List<double> amountGroupsValue = new List<double>(); //суммарное значение критерия оценки для групп
                                             //формируем группы
                                             int startIndex = 0; //индекс первого элемента для группы
-                                            int endIndex = startIndex + xAxisGroupSize - 1; //индекс последнего элемента для группы
+                                            int endIndex = startIndex + (xAxisGroupSize - 1); //индекс последнего элемента для группы
                                             while (endIndex < testBatch.OptimizationTestRuns.Count)
                                             {
                                                 TestRun[] testRuns = new TestRun[xAxisGroupSize];
@@ -1024,7 +1024,7 @@ namespace ktradesystem.Models
                                                     testRuns[i] = testBatch.OptimizationTestRuns[startIndex + i];
                                                 }
                                                 startIndex++;
-                                                endIndex = startIndex + xAxisGroupSize - 1;
+                                                endIndex = startIndex + (xAxisGroupSize - 1);
                                             }
                                             //вычисляем суммарные значения критерия оценки для групп
                                             for(int i = 0; i < testRunGroups.Count; i++)
@@ -1670,7 +1670,7 @@ namespace ktradesystem.Models
                                             if (isYAxisIndicatorParameter) //параметр индикатора
                                             {
                                                 int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
-                                                yAxisCountParameterValue = isYAxisIntValue ? IndicatorsParametersAllIntValues[parameterIndex].Count : AlgorithmParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
+                                                yAxisCountParameterValue = isYAxisIntValue ? IndicatorsParametersAllIntValues[parameterIndex].Count : IndicatorsParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
                                             }
                                             else //параметр алгоритма
                                             {
@@ -1704,7 +1704,120 @@ namespace ktradesystem.Models
                                             }
 
                                             //формируем список с комбинациями параметров тестов групп
-                                            List<int[]> parameterCombinationsGroups = new List<int[]>(); //
+                                            List<List<int[][]>> groupsParametersCombinations = new List<List<int[][]>>(); //список групп, група содержит список тестов, тест содержит: 0-й элемент с массивом индексов значений из IndicatorsParametersAllIntValues или AlgorithmParametersAllDoubleValues для параметров индикаторов, 1-й элемент с массивом индексов значений из AlgorithmParametersAllIntValues или AlgorithmParametersAllDoubleValues для параметров алгоритма
+                                            /*
+                                            groupsParameterCombinations{
+                                                [0](1-я группа) => {
+                                                    [0](1-й тест группы) => {
+                                                        [0] => индексы_значений_индикаторов{ 1, 5 },
+                                                        [1] => индексы_значений_алгоритма{ 4, 2 }
+                                                    }
+                                                }
+                                            }
+                                            */
+                                            //формируем группы с комбинациями параметров плоскости поиска топ-модели
+                                            //проходим по оси X столько раз, сколько помещается размер стороны группы по оси X
+                                            for (int x = 0; x < xAxisCountParameterValue - (xAxisSize - 1); x++)
+                                            {
+                                                List<int[][]> currentGroup = new List<int[][]>();
+                                                //проходим по оси Y столько раз, сколько помещается размер стороны группы по оси Y
+                                                for (int y = 0; y < yAxisCountParameterValue - (yAxisSize - 1); y++)
+                                                {
+                                                    int[][] testRunParametersCombination = new int[2][]; //определили 2 массива 0-й элемент - индексы значений индикаторов, 1-й - индексы значений алгоритма
+                                                    testRunParametersCombination[0] = new int[Algorithm.IndicatorParameterRanges.Count];
+                                                    testRunParametersCombination[1] = new int[Algorithm.AlgorithmParameters.Count];
+
+                                                    //записываем параметр оси X
+                                                    if (isXAxisIndicatorParameter) //параметр индикатора
+                                                    {
+                                                        int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
+                                                        testRunParametersCombination[0][parameterIndex] = x; //записываем индекс значения параметра в значениях параметра индикатора
+                                                    }
+                                                    else //параметр алгоритма
+                                                    {
+                                                        int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter).First()); //индекс параметра в списке параметров
+                                                        testRunParametersCombination[1][parameterIndex] = x; //записываем индекс значения параметра в значениях параметра алгоритма
+                                                    }
+
+                                                    //записываем параметр оси Y
+                                                    if (isYAxisIndicatorParameter) //параметр индикатора
+                                                    {
+                                                        int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
+                                                        testRunParametersCombination[0][parameterIndex] = y; //записываем индекс значения параметра в значениях параметра индикатора
+                                                    }
+                                                    else //параметр алгоритма
+                                                    {
+                                                        int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter).First()); //индекс параметра в списке параметров
+                                                        testRunParametersCombination[1][parameterIndex] = y; //записываем индекс значения параметра в значениях параметра алгоритма
+                                                    }
+                                                    currentGroup.Add(testRunParametersCombination);
+                                                }
+                                                groupsParametersCombinations.Add(currentGroup);
+                                            }
+                                            //формируем группы с оставшимися параметрами
+                                            //формируем список со всеми параметрами
+                                            List<int[]> indicatorsAlgorithmParameters = new List<int[]>(); //список с параметрами (0-й элемент массива - тип параметра: 1-индикатор, 2-алгоритм, 1-й элемент массива - индекс параметра)
+                                            for (int i = 0; i < IndicatorsParametersAllIntValues.Length; i++)
+                                            {
+                                                indicatorsAlgorithmParameters.Add(new int[2] { 1, i }); //запоминаем что параметр индикатор с индексом i
+                                            }
+                                            for (int i = 0; i < AlgorithmParametersAllIntValues.Length; i++)
+                                            {
+                                                indicatorsAlgorithmParameters.Add(new int[2] { 2, i }); //запоминаем что параметр индикатор с индексом i
+                                            }
+
+                                            //проходим по всем параметрами
+                                            for(int i = 0; i < indicatorsAlgorithmParameters.Count; i++)
+                                            {
+                                                bool isXParameter = false;
+                                                //если текущий параметр и X параметр, параметры индикатора
+                                                if(indicatorsAlgorithmParameters[i][0] == 1 && isXAxisIndicatorParameter)
+                                                {
+                                                    if(Algorithm.IndicatorParameterRanges[indicatorsAlgorithmParameters[i][1]].IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate)
+                                                    {
+                                                        isXParameter = true;
+                                                    }
+                                                }
+                                                //если текущий параметр и X параметр, параметры алгоритма
+                                                if(indicatorsAlgorithmParameters[i][0] == 2 && isXAxisIndicatorParameter == false)
+                                                {
+                                                    if(Algorithm.AlgorithmParameters[indicatorsAlgorithmParameters[i][1]] == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter)
+                                                    {
+                                                        isXParameter = true;
+                                                    }
+                                                }
+
+                                                bool isYParameter = false;
+                                                //если текущий параметр и Y параметр, параметры индикатора
+                                                if(indicatorsAlgorithmParameters[i][0] == 1 && isYAxisIndicatorParameter)
+                                                {
+                                                    if(Algorithm.IndicatorParameterRanges[indicatorsAlgorithmParameters[i][1]].IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate)
+                                                    {
+                                                        isYParameter = true;
+                                                    }
+                                                }
+                                                //если текущий параметр и X параметр, параметры алгоритма
+                                                if(indicatorsAlgorithmParameters[i][0] == 2 && isXAxisIndicatorParameter == false)
+                                                {
+                                                    if(Algorithm.AlgorithmParameters[indicatorsAlgorithmParameters[i][1]] == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter)
+                                                    {
+                                                        isYParameter = true;
+                                                    }
+                                                }
+
+                                                //если параметр не X и не Y
+                                                if (isXParameter == false && isYParameter == false)
+                                                {
+                                                    //формируем новые группы с комбинациями значений текущего параметра
+                                                    List<List<int[][]>> newGroupsParametersCombinations = new List<List<int[][]>>();
+                                                    int countValues = indicatorsAlgorithmParameters[i][0] == 1 ? IndicatorsParametersAllIntValues[indicatorsAlgorithmParameters[i][1]].Count : AlgorithmParametersAllIntValues[indicatorsAlgorithmParameters[i][1]].Count; //количество значений параметра
+                                                    //проходим по всем значениям параметра
+                                                    for(int k = 0; k < countValues; k++)
+                                                    {
+
+                                                    }
+                                                }
+                                            }
 
 
                                         }

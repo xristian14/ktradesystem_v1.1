@@ -1855,18 +1855,95 @@ namespace ktradesystem.Models
                                             }
 
                                             //формируем список групп с тестами на основе групп с комбинациями параметров теста
-                                            List<List<TestRun>> testRunsGroups = new List<List<TestRun>>();
+                                            List<TestRun[]> testRunsGroups = new List<TestRun[]>();
                                             for(int i = 0; i < groupsParametersCombinations.Count; i++)
                                             {
-                                                List<TestRun> testRunsGroup = new List<TestRun>(); //группа с testRun-ами
+                                                TestRun[] testRunsGroup = new TestRun[groupsParametersCombinations[i].Count]; //группа с testRun-ами
                                                 for(int k = 0; k < groupsParametersCombinations[i].Count; k++)
                                                 {
                                                     //находим testRun с текущей комбинацией параметров
+                                                    int tRunIndex = 0;
+                                                    bool isTestRunFind = false;
+                                                    while(tRunIndex < testBatch.OptimizationTestRuns.Count && isTestRunFind == false)
+                                                    {
+                                                        bool isAllEqual = true; //все ли значения параметров testRun-а равны текущей комбинации
+                                                        //проходим по всем параметрам индикаторов, и сравниваем значения параметров индикаторов текущей комбинации со значениями параметров индикаторов текущего testRun-а
+                                                        for (int indParIndex = 0; indParIndex < groupsParametersCombinations[i][k][0].Length; indParIndex++)
+                                                        {
+                                                            if(testBatch.OptimizationTestRuns[tRunIndex].IndicatorParameterValues[indParIndex].IndicatorParameterTemplate.ParameterValueType.Id == 1) //если параметр тип int
+                                                            {
+                                                                isAllEqual = testBatch.OptimizationTestRuns[tRunIndex].IndicatorParameterValues[indParIndex].IntValue != IndicatorsParametersAllIntValues[indParIndex][groupsParametersCombinations[i][k][0][indParIndex]] ? false : isAllEqual; //если значение параметра testRun != значению параметра текущей комбинации, отмечаем что isAllEqual == false;
+                                                            }
+                                                            else //параметр типа double
+                                                            {
+                                                                isAllEqual = testBatch.OptimizationTestRuns[tRunIndex].IndicatorParameterValues[indParIndex].DoubleValue != IndicatorsParametersAllDoubleValues[indParIndex][groupsParametersCombinations[i][k][0][indParIndex]] ? false : isAllEqual; //если значение параметра testRun != значению параметра текущей комбинации, отмечаем что isAllEqual == false;
+                                                            }
+                                                        }
 
+                                                        //проходим по всем параметрам алгоритма, и сравниваем значения параметров алгоритма текущей комбинации со значениями параметров алгоритма текущего testRun-а
+                                                        for (int algParIndex = 0; algParIndex < groupsParametersCombinations[i][k][1].Length; algParIndex++)
+                                                        {
+                                                            if (testBatch.OptimizationTestRuns[tRunIndex].AlgorithmParameterValues[algParIndex].AlgorithmParameter.ParameterValueType.Id == 1) //если параметр тип int
+                                                            {
+                                                                isAllEqual = testBatch.OptimizationTestRuns[tRunIndex].AlgorithmParameterValues[algParIndex].IntValue != AlgorithmParametersAllIntValues[algParIndex][groupsParametersCombinations[i][k][1][algParIndex]] ? false : isAllEqual; //если значение параметра testRun != значению параметра текущей комбинации, отмечаем что isAllEqual == false;
+                                                            }
+                                                            else //параметр типа double
+                                                            {
+                                                                isAllEqual = testBatch.OptimizationTestRuns[tRunIndex].AlgorithmParameterValues[algParIndex].DoubleValue != AlgorithmParametersAllDoubleValues[algParIndex][groupsParametersCombinations[i][k][1][algParIndex]] ? false : isAllEqual; //если значение параметра testRun != значению параметра текущей комбинации, отмечаем что isAllEqual == false;
+                                                            }
+                                                        }
+                                                        if (isAllEqual) //если все параметры текущей комбинации равны параметрам текущего testRun-а, отмечаем что testRun найден
+                                                        {
+                                                            isTestRunFind = true;
+                                                        }
+                                                        else
+                                                        {
+                                                            tRunIndex++;
+                                                        }
+                                                    }
+                                                    testRunsGroup[k] = testBatch.OptimizationTestRuns[tRunIndex]; //добавляем testRun в группу соседних тестов
                                                 }
-                                                testRunsGroups.Add(testRunsGroup);
+                                                testRunsGroups.Add(testRunsGroup); //добавляем в группы, группу соседних тестов
                                             }
 
+                                            //формируем список со средними значениями критерия оценки групп
+                                            List<double> averageGroupsValues = new List<double>();
+                                            //проходим по всем группам
+                                            for(int i = 0; i < testRunsGroups.Count; i++)
+                                            {
+                                                double totalGroupValue = 0;
+                                                for(int k = 0; k < testRunsGroups[i].Length; k++)
+                                                {
+                                                    totalGroupValue += testRunsGroups[i][k].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue;
+                                                }
+                                                averageGroupsValues.Add(totalGroupValue / testRunsGroups[i].Length);
+                                            }
+
+                                            //сортируем группы по среднему значению критерия оценки в порядке убывания
+                                            TestRun[] saveGroup; //элемент списка для сохранения после удаления из списка
+                                            double saveValue; //элемент списка для сохранения после удаления из списка
+                                            for (int i = 0; i < averageGroupsValues.Count; i++)
+                                            {
+                                                for (int k = 0; k < averageGroupsValues.Count - 1; k++)
+                                                {
+                                                    if (averageGroupsValues[k] < averageGroupsValues[k + 1])
+                                                    {
+                                                        saveGroup = testRunsGroups[k];
+                                                        testRunsGroups[k] = testRunsGroups[k + 1];
+                                                        testRunsGroups[k + 1] = saveGroup;
+
+                                                        saveValue = averageGroupsValues[k];
+                                                        averageGroupsValues[k] = averageGroupsValues[k + 1];
+                                                        averageGroupsValues[k + 1] = saveValue;
+                                                    }
+                                                }
+                                            }
+
+                                            //проходим по всем группам, сортируем тесты в группе в порядке убывания критерия оценки, и ищем тест в группе который соответствует фильтрам
+                                            for(int i = 0; i < testRunsGroups.Count; i++)
+                                            {
+
+                                            }
 
 
                                         }

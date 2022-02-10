@@ -819,18 +819,6 @@ namespace ktradesystem.Models
                 if (countTestRuns > 0) //если количество тестов больше нуля, переходим на создание задач и выполнение тестов
                 {
                     CancellationToken cancellationToken = _modelTesting.CancellationTokenTesting.Token;
-                    //определяем количество используемых потоков
-                    int processorCount = Environment.ProcessorCount;
-                    processorCount -= _modelData.Settings.Where(i => i.Id == 1).First().BoolValue ? 1 : 0; //если в настройках выбрано оставлять один поток, вычитаем из количества потоков
-                    if (countTestRuns < processorCount) //если тестов меньше чем число доступных потоков, устанавливаем количество потоков на количество тестов, т.к. WaitAll ругается если задача в tasks null
-                    {
-                        processorCount = countTestRuns;
-                    }
-                    if (processorCount < 1)
-                    {
-                        processorCount = 1;
-                    }
-
 
                     NumberFormatInfo nfiComma = CultureInfo.GetCultureInfo("ru-RU").NumberFormat;
                     NumberFormatInfo nfiDot = (NumberFormatInfo)nfiComma.Clone();
@@ -941,6 +929,17 @@ namespace ktradesystem.Models
 
 
                     //выполняем тестирование для всех TestBatches
+                    //определяем количество используемых потоков
+                    int processorCount = Environment.ProcessorCount;
+                    processorCount -= _modelData.Settings.Where(i => i.Id == 1).First().BoolValue ? 1 : 0; //если в настройках выбрано оставлять один поток, вычитаем из количества потоков
+                    if (countTestRuns < processorCount) //если тестов меньше чем число доступных потоков, устанавливаем количество потоков на количество тестов, т.к. WaitAll ругается если задача в tasks null
+                    {
+                        processorCount = countTestRuns;
+                    }
+                    if (processorCount < 1)
+                    {
+                        processorCount = 1;
+                    }
                     Task[] tasks = new Task[processorCount]; //задачи
                     Stopwatch stopwatch = new Stopwatch();
                     stopwatch.Start();
@@ -965,7 +964,7 @@ namespace ktradesystem.Models
                             task = Task.Run(() => TestRunExecute(testRun, indicators));
                             tasksExecutingTestRuns[n] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
                             testRunIndex++;
-                            testBatchIndex += TestBatches[testBatchIndex].OptimizationTestRuns.Count > testRunIndex ? 1 : 0; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
+                            testBatchIndex += TestBatches[testBatchIndex].OptimizationTestRuns.Count >= testRunIndex ? 1 : 0; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
                         }
                         else //иначе обрабатываем выполненную задачу
                         {
@@ -978,9 +977,10 @@ namespace ktradesystem.Models
 
                                 //проверяем, если все testRun для данного testBatch (к которому принадлежит выполненный) выполненны, определяем топ-модель и статистическую значимость
                                 bool isOptimizationTestsComplete = true;
-                                foreach (int a in testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]])
+                                int a = 0;
+                                while(isOptimizationTestsComplete && a < testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]].Length)
                                 {
-                                    if (a == 0)
+                                    if(testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]][a] == 0)
                                     {
                                         isOptimizationTestsComplete = false;
                                     }
@@ -2044,8 +2044,34 @@ namespace ktradesystem.Models
                                             testBatch.TopModelTestRun = topModelTestRun;
                                         }
                                     }
-                                    
-                                    
+
+                                    //определяем статистическую значимость
+                                    int lossCount = 0;
+                                    double lossMoney = 0;
+                                    int profitCount = 0;
+                                    double profitMoney = 0;
+                                    //проходим по всем testRun-ам
+                                    for (int i = 0; i < testBatch.OptimizationTestRuns.Count; i++)
+                                    {
+                                        double testRunProfit = testBatch.OptimizationTestRuns[i].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == 1).First().DoubleValue; //EvaluationCriteria.Id == 1 - Чистая доходность
+                                        if (testRunProfit < 0)
+                                        {
+                                            lossCount++;
+                                            lossMoney += testRunProfit;
+                                        }
+                                        else
+                                        {
+                                            profitCount++;
+                                            profitMoney += testRunProfit;
+                                        }
+                                    }
+                                    //записываем статистическую значимость
+                                    string[] totalTests = new string[3] { (lossCount + profitCount).ToString(), "100.0%", (lossMoney + profitMoney).ToString() };
+                                    string[] lossTests = new string[3] { lossCount.ToString(), Math.Round((double)lossCount / (lossCount + profitCount) * 100, 1).ToString() + "%", lossMoney.ToString() };
+                                    string[] profitTests = new string[3] { profitCount.ToString(), Math.Round((double)profitCount / (lossCount + profitCount) * 100, 1).ToString() + "%", profitMoney.ToString() };
+                                    testBatch.StatisticalSignificance.Add(totalTests);
+                                    testBatch.StatisticalSignificance.Add(lossTests);
+                                    testBatch.StatisticalSignificance.Add(profitTests);
                                 }
                             }
                         }

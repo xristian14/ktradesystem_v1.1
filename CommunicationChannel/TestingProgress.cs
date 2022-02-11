@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ktradesystem.Models;
 
 namespace ktradesystem.CommunicationChannel
 {
@@ -15,5 +16,6 @@ namespace ktradesystem.CommunicationChannel
         public bool CancelPossibility { get; set; } //возможность отмены операции
         public bool IsFinish { get; set; } //завершен процесс или нет
         public bool IsSuccess { get; set; } //успешно ли завершено тестирование. Нужно ли переходить на отображение результатов
+        public Testing Testing { get; set; } //выполненное тестирование
     }
 }

@@ -4058,6 +4058,9 @@ namespace ktradesystem.ViewModels
                     testing.OptimizationTestSpacing = optimizationTestSpacing;
                     testing.DurationForwardTest = durationForwardTest;
 
+                    _viewmodelData.IsPagesAndMainMenuButtonsEnabled = false; //делаем форму недоступной для действий пользователя
+                    _viewmodelData.StatusBarTestingShow(); //показываем строку состояния
+
                     //передаем объект в модель
                     Task.Run(() => _modelTesting.TestingLaunch(testing)); //запускаем в отдельном потоке чтобы форма обновлялась
 

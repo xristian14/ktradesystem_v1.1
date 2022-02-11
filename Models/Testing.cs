@@ -967,11 +967,11 @@ namespace ktradesystem.Models
                         double pricesAmount = 0; //сумма разности цен закрытия, взятой по модулю
                         int fileIndex = 0;
                         int candleIndex = 0;
-                        DateTime currentDateTime = dataSourceCandles.Candles[fileIndex][candleIndex].DateTime;
                         bool isOverFileIndex = false; //вышел ли какой-либо из индексов файлов за границы массива файлов источника данных
                         while(isOverFileIndex == false)
                         {
-                            if(candleIndex > 0) //чтобы не обращатсья к прошлой свечке при смене файла
+                            DateTime currentDateTime = dataSourceCandles.Candles[fileIndex][candleIndex].DateTime;
+                            if(candleIndex > 0) //чтобы не обращаться к прошлой свечке при смене файла
                             {
                                 currentDateTime = dataSourceCandles.Candles[fileIndex][candleIndex].DateTime;
                                 pricesAmount += Math.Abs(dataSourceCandles.Candles[fileIndex][candleIndex].C - dataSourceCandles.Candles[fileIndex][candleIndex - 1].C); //прибавляем разность цен закрытия, взятую по модулю
@@ -1020,7 +1020,7 @@ namespace ktradesystem.Models
                     int testBatchIndex = 0; //индекс тестовой связки, testRun-ы которой отправляются в задачи
                     int testRunIndex = 0; //индекс testRun-а, который отправляется в задачи
                     int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест, в 1-м элементе будет -1, если это форвардный тест с торговлей депозитом в 1-м элементе будет -2)
-                    int[][] testRunsStatus = new int[TestBatches.Count - 1][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у выполненного 1
+                    int[][] testRunsStatus = new int[TestBatches.Count][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у выполненного 1
                     //создаем для каждого testBatch массив равный количеству testRun
                     for (int k = 0; k < TestBatches.Count; k++)
                     {
@@ -1034,12 +1034,12 @@ namespace ktradesystem.Models
                         //если пока еще не заполнен массив с задачами, заполняем его
                         if (tasks[tasks.Length - 1] == null)
                         {
-                            Task task = tasks[n];
                             TestRun testRun = TestBatches[testBatchIndex].OptimizationTestRuns[testRunIndex];
-                            task = Task.Run(() => TestRunExecute(testRun, indicators, cancellationToken));
+                            Task task = Task.Run(() => TestRunExecute(testRun, indicators, cancellationToken));
+                            tasks[n] = task;
                             tasksExecutingTestRuns[n] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
                             testRunIndex++;
-                            testBatchIndex += TestBatches[testBatchIndex].OptimizationTestRuns.Count >= testRunIndex ? 1 : 0; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
+                            testBatchIndex += testRunIndex < TestBatches[testBatchIndex].OptimizationTestRuns.Count ? 0 : 1; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
                         }
                         else //иначе обрабатываем выполненную задачу
                         {

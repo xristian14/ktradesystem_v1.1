@@ -420,9 +420,12 @@
                                             <Button Content="Средняя цена открытой позиции" Command="{Binding AlgorithmPasteDataSourcePriceOpenPosition_Click}" Width="290"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Время в 1 свечке" Command="{Binding AlgorithmPasteDatasource_Click}" Width="110"/>
-                                            <Button Content="Время открытия дня" Command="{Binding AlgorithmPasteIndicator_Click}" Width="146"/>
-                                            <Button Content="Время закрытия дня" Command="{Binding AlgorithmPasteParameter_Click}" Width="146"/>
+                                            <Button Content="Время в 1 свечке" Command="{Binding AlgorithmPasteDataSourceTimeInCandle_Click}" Width="110"/>
+                                            <Button Content="Время открытия дня" Command="{Binding AlgorithmPasteDataSourceTradingStartTimeOfDay_Click}" Width="146"/>
+                                            <Button Content="Время закрытия дня" Command="{Binding AlgorithmPasteDataSourceTradingEndTimeOfDay_Click}" Width="146"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Выбранный индикатор" Command="{Binding AlgorithmPasteDataSourceIndicator_Click}" Width="140"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </GroupBox>
@@ -431,21 +434,14 @@
                                 <GroupBox Header="Базовые выражения">
                                     <StackPanel Orientation="Vertical">
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Выбранный индикатор" Command="{Binding AlgorithmPasteIndicator_Click}" Width="140"/>
-                                            <Button Content="Выбранный параметр алгоритма" Command="{Binding AlgorithmPasteParameter_Click}" Width="190"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </GroupBox>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <GroupBox Header="Условия и циклы">
-                                    <StackPanel Orientation="Vertical">
-                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Выбранный параметр алгоритма" Command="{Binding AlgorithmPasteAlgorithmParameter_Click}" Width="190"/>
                                             <Button Content="Условие if()" Command="{Binding AlgorithmPasteCondition_Click}" Width="90"/>
                                             <Button Content="Цикл while()" Command="{Binding AlgorithmPasteWhile_Click}" Width="90"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </GroupBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
                                 <GroupBox Header="Логические операторы">
                                     <StackPanel Orientation="Horizontal">
                                         <Button Content="&gt;" Command="{Binding AlgorithmPasteLogicMore_Click}" Width="30"/>

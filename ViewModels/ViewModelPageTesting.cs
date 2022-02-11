@@ -334,7 +334,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    IndicatorScript = Environment.NewLine + Environment.NewLine + "return 0;";
+                    IndicatorScript = Environment.NewLine + Environment.NewLine + "Indicator = 0;";
                 }, (obj) => IsAddOrEditIndicator());
             }
         }
@@ -389,7 +389,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "int i = 1;" + Environment.NewLine + "while (  ) {" + Environment.NewLine + Environment.NewLine + Environment.NewLine + Environment.NewLine + "i++;" + Environment.NewLine + "}");
+                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "int i = 1;" + Environment.NewLine + "while (  ) {" + Environment.NewLine + Environment.NewLine + "i++;" + Environment.NewLine + "}");
                 }, (obj) => IsAddOrEditIndicator());
             }
         }
@@ -1310,8 +1310,8 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, SelectedDataSourceTemplateView.Name + ".Candles[0]");
-                }, (obj) => IsAddOrEditAlgorithm());
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + ".Candles[0]");
+                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
             }
         }
         public ICommand AlgorithmPasteDatasourcePriceStep_Click
@@ -1320,8 +1320,8 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, SelectedDataSourceTemplateView.Name + ".PriceStep");
-                }, (obj) => IsAddOrEditAlgorithm());
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + ".PriceStep");
+                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
             }
         }
         public ICommand AlgorithmPasteDatasourceCostPriceStep_Click
@@ -1330,8 +1330,8 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, SelectedDataSourceTemplateView.Name + ".CostPriceStep");
-                }, (obj) => IsAddOrEditAlgorithm());
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + ".CostPriceStep");
+                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
             }
         }
         public ICommand AlgorithmPasteDatasourceOneLotCost_Click
@@ -1340,8 +1340,8 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, SelectedDataSourceTemplateView.Name + ".OneLotCost");
-                }, (obj) => IsAddOrEditAlgorithm());
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + ".OneLotCost");
+                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
             }
         }
         public ICommand AlgorithmPasteDatasourceCountLotsBuy_Click
@@ -1350,8 +1350,8 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, SelectedDataSourceTemplateView.Name + ".CountBuy");
-                }, (obj) => IsAddOrEditAlgorithm());
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + ".CountBuy");
+                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
             }
         }
         public ICommand AlgorithmPasteDatasourceCountLotsSell_Click
@@ -1360,8 +1360,8 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, SelectedDataSourceTemplateView.Name + ".CountSell");
-                }, (obj) => IsAddOrEditAlgorithm());
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + ".CountSell");
+                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
             }
         }
         public ICommand AlgorithmPasteDataSourcePriceOpenPosition_Click
@@ -1370,7 +1370,185 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, SelectedDataSourceTemplateView.Name + ".Price");
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + ".Price");
+                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteDataSourceTimeInCandle_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + ".TimeInCandle");
+                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteDataSourceTradingStartTimeOfDay_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + ".TradingStartTimeOfDay");
+                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteDataSourceTradingEndTimeOfDay_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + ".TradingEndTimeOfDay");
+                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteDataSourceIndicator_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + "_Indicator_" + SelectedAlgorithmIndicator.Name);
+                }, (obj) => SelectedDataSourceTemplateView != null && SelectedAlgorithmIndicator != null && IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteAlgorithmParameter_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Parameter_" + SelectedAlgorithmParameterView.Name);
+                }, (obj) => SelectedAlgorithmParameterView != null && IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteCondition_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "if (  ) {" + Environment.NewLine + Environment.NewLine + "} else {" + Environment.NewLine + Environment.NewLine + "}");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteWhile_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "int i = 1;" + Environment.NewLine + "while (  ) {" + Environment.NewLine + Environment.NewLine + "i++;" + Environment.NewLine + "}");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+
+        public ICommand AlgorithmPasteLogicMore_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, ">");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+
+        public ICommand AlgorithmPasteLogicLess_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "<");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+
+        public ICommand AlgorithmPasteLogicMoreOrEqual_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, ">=");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+
+        public ICommand AlgorithmPasteLogicLessOrEqual_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "<=");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+
+        public ICommand AlgorithmPasteLogicEqual_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "==");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+
+        public ICommand AlgorithmPasteLogicUnequal_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "!=");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+
+        public ICommand AlgorithmPasteLogicAnd_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "&&");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+
+        public ICommand AlgorithmPasteLogicOr_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "||");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteVarInt_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "int var1 = 0;");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteVarDouble_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "double var1 = 0;");
                 }, (obj) => IsAddOrEditAlgorithm());
             }
         }

@@ -2576,6 +2576,8 @@ namespace ktradesystem.Models
                                     }
                                 }
                             }
+                            DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod = dataSourceCandles[i].DataSource.DataSourceFiles[fileIndexes[i]].DataSourceFileWorkingPeriods.Where(j => DateTime.Compare(currentDateTime, j.StartPeriod) >= 0).Last(); //последний период, дата начала которого раньше или равняется текущей дате
+
                             dataSourcesForCalculate[i] = new DataSourceForCalculate();
                             dataSourcesForCalculate[i].idDataSource = dataSourceCandles[i].DataSource.Id;
                             dataSourcesForCalculate[i].IndicatorsValues = indicatorsValues[i];
@@ -2586,6 +2588,8 @@ namespace ktradesystem.Models
                             dataSourcesForCalculate[i].CountBuy = isBuyDirection ? volumePosition : 0;
                             dataSourcesForCalculate[i].CountSell = isBuyDirection ? 0 : volumePosition;
                             dataSourcesForCalculate[i].TimeInCandle = dataSourceCandles[i].DataSource.Interval.Duration;
+                            dataSourcesForCalculate[i].TradingStartTimeOfDay = dataSourceFileWorkingPeriod.TradingStartTime;
+                            dataSourcesForCalculate[i].TradingEndTimeOfDay = dataSourceFileWorkingPeriod.TradingEndTime;
                             dataSourcesForCalculate[i].Candles = dataSourceCandles[i].Candles[fileIndexes[i]];
                             dataSourcesForCalculate[i].CurrentCandleIndex = candleIndexes[i];
                         }
@@ -2595,9 +2599,14 @@ namespace ktradesystem.Models
                         maxOverIndex = algorithmCalculateResult.OverIndex > maxOverIndex ? algorithmCalculateResult.OverIndex : maxOverIndex; //если првышение индекса больше максимального, обновляем его максимальное значение
                         if (maxOverIndex == 0) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
                         {
-                            //устанавливаем DateTimeSubmit для заявок пользователя
+                            //если это не форвардное тестирование с торговлей депозитом, устанавливаем размер заявок в 1 лот, а так же устанавливаем DateTimeSubmit для заявок
                             foreach (Order order in algorithmCalculateResult.Orders)
                             {
+                                if (testRun.Account.IsForwardDepositTrading == false)
+                                {
+                                    order.Count = 1;
+                                    order.StartCount = 1;
+                                }
                                 order.DateTimeSubmit = currentDateTime;
                             }
                             //приводим заявки к виду который прислал пользователь в алгоритме
@@ -2906,6 +2915,11 @@ namespace ktradesystem.Models
                 }
             }
             maxLotsCount += reverseLotsCount; //прибавляем к максимально доступному количеству лотов, количество лотов в открытой позиции с обратным направлением
+            //если это не форвардное тестирование с торговлей депозитом, устанавливаем максимально доступное количество лотов в 1
+            if(account.IsForwardDepositTrading == false)
+            {
+                maxLotsCount = 1;
+            }
             if (maxLotsCount > 0) //если максимально доступное количество лотов для совершения сделки по заявке > 0, совершаем сделку
             {
                 decimal dealLotsCount = lotsCount > maxLotsCount ? maxLotsCount : lotsCount; //если количество лотов для сделки больше максимально доступного, устанавливаем в максимально доступное

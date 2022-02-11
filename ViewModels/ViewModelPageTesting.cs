@@ -1184,24 +1184,193 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        public ICommand AlgorithmResetToTemplate_Click
+        public ICommand AlgorithmPasteAccountFreeRubleMoney_Click
         {
             get
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmScript = Environment.NewLine + Environment.NewLine + "return 0;";
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.FreeRubleMoney");
                 }, (obj) => IsAddOrEditAlgorithm());
             }
         }
-
-        public ICommand AlgorithmPasteCandles_Click
+        public ICommand AlgorithmPasteAccountTakenRubleMoney_Click
         {
             get
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "candles[0]");
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.TakenRubleMoney");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteAccountFreeDollarMoney_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.FreeDollarMoney");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteAccountTakenDollarMoney_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.TakenDollarMoney");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteOrderMarketSell_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Order_MarketSell(источникДанных, цена, количество);");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteOrderMarketBuy_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Order_MarketBuy(источникДанных, цена, количество);");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteOrderLimitSell_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Order_LimitSell(источникДанных, цена, количество);");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteOrderLimitBuy_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Order_LimitBuy(источникДанных, цена, количество);");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteOrderStopSell_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Order_StopSell(источникДанных, цена, количество);");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteOrderStopBuy_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Order_StopBuy(источникДанных, цена, количество);");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteOrderStopTakeBuy_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Order_StopTakeBuy(источникДанных, стопЦена, тейкЦена, количество);");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteOrderStopTakeSell_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Order_StopTakeSell(источникДанных, стопЦена, тейкЦена, количество);");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteDatasourceCandles_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, SelectedDataSourceTemplateView.Name + ".Candles[0]");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteDatasourcePriceStep_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, SelectedDataSourceTemplateView.Name + ".PriceStep");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteDatasourceCostPriceStep_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, SelectedDataSourceTemplateView.Name + ".CostPriceStep");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteDatasourceOneLotCost_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, SelectedDataSourceTemplateView.Name + ".OneLotCost");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteDatasourceCountLotsBuy_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, SelectedDataSourceTemplateView.Name + ".CountBuy");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteDatasourceCountLotsSell_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, SelectedDataSourceTemplateView.Name + ".CountSell");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteDataSourcePriceOpenPosition_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, SelectedDataSourceTemplateView.Name + ".Price");
                 }, (obj) => IsAddOrEditAlgorithm());
             }
         }

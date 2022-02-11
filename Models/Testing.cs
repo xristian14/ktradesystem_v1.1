@@ -773,7 +773,7 @@ namespace ktradesystem.Models
                 {
                     " + dataSourcesForCalculateVariables + @"
                     int MaxOverIndex;
-                    public AlgorithmCalculateResult Calculate(AccountForCalculate accountForCalculate, DataSourceForCalculate[] dataSourcesForCalculate, int[] algorithmParametersIntValues, double[] algorithmParametersDoubleValues)
+                    public AlgorithmCalculateResult Calculate(AccountForCalculate account, DataSourceForCalculate[] dataSourcesForCalculate, int[] algorithmParametersIntValues, double[] algorithmParametersDoubleValues)
                     {
                         " + algorithmVariables + @"
                         MaxOverIndex = 0;
@@ -2577,11 +2577,15 @@ namespace ktradesystem.Models
                                 }
                             }
                             dataSourcesForCalculate[i] = new DataSourceForCalculate();
-                            dataSourcesForCalculate[i].DataSource = dataSourceCandles[i].DataSource;
+                            dataSourcesForCalculate[i].idDataSource = dataSourceCandles[i].DataSource.Id;
                             dataSourcesForCalculate[i].IndicatorsValues = indicatorsValues[i];
+                            dataSourcesForCalculate[i].PriceStep = dataSourceCandles[i].DataSource.PriceStep;
+                            dataSourcesForCalculate[i].CostPriceStep = dataSourceCandles[i].DataSource.CostPriceStep;
+                            dataSourcesForCalculate[i].OneLotCost = dataSourceCandles[i].DataSource.Instrument.Id == 2 ? dataSourceCandles[i].DataSource.Cost : dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].C;
                             dataSourcesForCalculate[i].Price = averagePricePosition;
                             dataSourcesForCalculate[i].CountBuy = isBuyDirection ? volumePosition : 0;
                             dataSourcesForCalculate[i].CountSell = isBuyDirection ? 0 : volumePosition;
+                            dataSourcesForCalculate[i].TimeInCandle = dataSourceCandles[i].DataSource.Interval.Duration;
                             dataSourcesForCalculate[i].Candles = dataSourceCandles[i].Candles[fileIndexes[i]];
                             dataSourcesForCalculate[i].CurrentCandleIndex = candleIndexes[i];
                         }

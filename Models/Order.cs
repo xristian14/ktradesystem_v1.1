@@ -12,7 +12,7 @@ namespace ktradesystem.Models
 
             TypeOrder = _modelData.TypeOrders.Where(i => i.Id == idTypeOrder).First();
             Direction = direction;
-            DataSource = dataSourceForCalculate.DataSource;
+            DataSource = _modelData.DataSources.Where(j => j.Id == dataSourceForCalculate.idDataSource).First();
             Price = price;
             Count = count;
             StartCount = count;

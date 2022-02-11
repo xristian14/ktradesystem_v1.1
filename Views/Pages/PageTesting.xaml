@@ -366,22 +366,19 @@
                             <Grid Grid.Column="3" x:Name="helperAlgPar4"/>
                             <Grid Grid.Column="4" x:Name="helperAlgPar5"/>
                         </Grid>
-                        
-                        <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
-                            <TextBlock Text="Сценарий алгоритма" Margin="224 0 0 0"/>
-                            <Button Content="Сбросить до шаблона по умолчанию" Command="{Binding AlgorithmResetToTemplate_Click}" Width="215" Margin="7 0 0 0"/>
-                        </StackPanel>
+
+                        <TextBlock Text="Сценарий алгоритма" HorizontalAlignment="Center" Margin="0 3 0 0"/>
                         <StackPanel Orientation="Vertical">
                             <StackPanel Orientation="Horizontal">
                                 <GroupBox Header="Счет">
                                     <StackPanel Orientation="Vertical">
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Свободный остаток в рублях" Command="{Binding AlgorithmPastePriceOpenPosition_Click}" Width="180"/>
-                                            <Button Content="Свободный остаток в долларах" Command="{Binding AlgorithmPastePriceOpenPosition_Click}" Width="180"/>
+                                            <Button Content="Свободный остаток в рублях" Command="{Binding AlgorithmPasteAccountFreeRubleMoney_Click}" Width="180"/>
+                                            <Button Content="Свободный остаток в долларах" Command="{Binding AlgorithmPasteAccountFreeDollarMoney_Click}" Width="180"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Занятые средства в рублях" Command="{Binding AlgorithmPastePriceOpenPosition_Click}" Width="180"/>
-                                            <Button Content="Занятые средства в долларах" Command="{Binding AlgorithmPastePriceOpenPosition_Click}" Width="180"/>
+                                            <Button Content="Занятые средства в рублях" Command="{Binding AlgorithmPasteAccountTakenRubleMoney_Click}" Width="180"/>
+                                            <Button Content="Занятые средства в долларах" Command="{Binding AlgorithmPasteAccountTakenDollarMoney_Click}" Width="180"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </GroupBox>
@@ -390,18 +387,18 @@
                                 <GroupBox Header="Заявки">
                                     <StackPanel Orientation="Vertical">
                                         <StackPanel Orientation="Horizontal">
+                                            <Button Content="Рыночная продать &quot;Order__MarketSell&quot;" Command="{Binding AlgorithmPasteOrderMarketSell_Click}" Width="224"/>
                                             <Button Content="Лимитная продать &quot;Order__LimitSell&quot;" Command="{Binding AlgorithmPasteOrderLimitSell_Click}" Width="214"/>
                                             <Button Content="Стоп продать &quot;Order__StopSell&quot;" Command="{Binding AlgorithmPasteOrderStopSell_Click}" Width="182"/>
-                                            <Button Content="Рыночная продать &quot;Order__MarketSell&quot;" Command="{Binding AlgorithmPasteOrderMarketSell_Click}" Width="224"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
+                                            <Button Content="Рыночная купить &quot;Order__MarketBuy&quot;" Command="{Binding AlgorithmPasteOrderMarketBuy_Click}" Width="224"/>
                                             <Button Content="Лимитная купить &quot;Order__LimitBuy&quot;" Command="{Binding AlgorithmPasteOrderLimitBuy_Click}" Width="214"/>
                                             <Button Content="Стоп купить &quot;Order__StopBuy&quot;" Command="{Binding AlgorithmPasteOrderStopBuy_Click}" Width="182"/>
-                                            <Button Content="Рыночная купить &quot;Order__MarketBuy&quot;" Command="{Binding AlgorithmPasteOrderMarketBuy_Click}" Width="224"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Стоп-лосс+тейк профит купить &quot;Order__StopTakeBuy&quot;" Command="{Binding AlgorithmPasteOrderLimitBuy_Click}" Width="310"/>
-                                            <Button Content="Стоп-лосс+тейк профит продать &quot;Order__StopTakeSell&quot;" Command="{Binding AlgorithmPasteOrderStopBuy_Click}" Width="310"/>
+                                            <Button Content="Стоп-лосс+тейк профит купить &quot;Order__StopTakeBuy&quot;" Command="{Binding AlgorithmPasteOrderStopTakeBuy_Click}" Width="310"/>
+                                            <Button Content="Стоп-лосс+тейк профит продать &quot;Order__StopTakeSell&quot;" Command="{Binding AlgorithmPasteOrderStopTakeSell_Click}" Width="310"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </GroupBox>
@@ -410,23 +407,22 @@
                                 <GroupBox Header="Источники данных">
                                     <StackPanel Orientation="Vertical">
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Данные графика" Command="{Binding AlgorithmPasteDatasource_Click}" Width="110"/>
-                                            <Button Content="Шаг одного пункта цены" Command="{Binding AlgorithmPasteIndicator_Click}" Width="146"/>
-                                            <Button Content="Фьючерсный контракт?" Command="{Binding AlgorithmPasteParameter_Click}" Width="146"/>
-                                            <Button Content="Валюта рубль?" Command="{Binding AlgorithmPasteParameter_Click}" Width="146"/>
+                                            <Button Content="Данные графика" Command="{Binding AlgorithmPasteDatasourceCandles_Click}" Width="110"/>
+                                            <Button Content="Шаг одного пункта цены" Command="{Binding AlgorithmPasteDatasourcePriceStep_Click}" Width="146"/>
+                                            <Button Content="Стоимость 1 пункта цены" Command="{Binding AlgorithmPasteDatasourceCostPriceStep_Click}" Width="146"/>
+                                            <Button Content="Стоимость 1 лота" Command="{Binding AlgorithmPasteDatasourceOneLotCost_Click}" Width="146"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Количество купленных лотов в открытой позиции" Command="{Binding AlgorithmPasteDatasourceCountLotsBuy_Click}" Width="290"/>
+                                            <Button Content="Количество проданных лотов в открытой позиции" Command="{Binding AlgorithmPasteDatasourceCountLotsSell_Click}" Width="290"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Средняя цена открытой позиции" Command="{Binding AlgorithmPasteDataSourcePriceOpenPosition_Click}" Width="290"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <Button Content="Время в 1 свечке" Command="{Binding AlgorithmPasteDatasource_Click}" Width="110"/>
                                             <Button Content="Время открытия дня" Command="{Binding AlgorithmPasteIndicator_Click}" Width="146"/>
                                             <Button Content="Время закрытия дня" Command="{Binding AlgorithmPasteParameter_Click}" Width="146"/>
-                                            <Button Content="Стоимость 1 фьючерса" Command="{Binding AlgorithmPasteParameter_Click}" Width="146"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Content="Количество купленных лотов в открытой позиции" Command="{Binding AlgorithmPasteOpenPositionBuy_Click}" Width="290"/>
-                                            <Button Content="Количество проданных лотов в открытой позиции" Command="{Binding AlgorithmPasteOpenPositionBuy_Click}" Width="290"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Content="Средняя цена открытой позиции" Command="{Binding AlgorithmPastePriceOpenPosition_Click}" Width="290"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </GroupBox>

@@ -829,6 +829,8 @@ namespace ktradesystem.Models
                 Microsoft.CSharp.CSharpCodeProvider provider = new Microsoft.CSharp.CSharpCodeProvider();
                 System.CodeDom.Compiler.CompilerParameters param = new System.CodeDom.Compiler.CompilerParameters();
                 param.ReferencedAssemblies.Add(Assembly.GetExecutingAssembly().Location);
+                param.ReferencedAssemblies.Add("System.dll");
+                param.ReferencedAssemblies.Add("System.Core.dll");
                 param.GenerateExecutable = false;
                 param.GenerateInMemory = true;
                 
@@ -836,10 +838,14 @@ namespace ktradesystem.Models
                 {
                     @"
                     using System;
+                    using System.Collections.Generic;
+                    using System.Collections.ObjectModel;
+                    using System.Linq;
                     using ktradesystem.Models;
-                    public class CompiledEvaluationCriteria_" + _modelData.EvaluationCriterias[i].Name +
+                    using ktradesystem.Models.Datatables;
+                    public class CompiledEvaluationCriteria_" + i.ToString() +
                     @"{
-                        public EvaluationCriteriaValue Calculate(List<DataSourceCandles> dataSourcesCandles, TestRun testRun, ObservableCollection<Setting> settings)
+                        public EvaluationCriteriaValue Calculate(List<DataSourceCandles> dataSourcesCandles, TestRun testRun, System.Collections.ObjectModel.ObservableCollection<Setting> settings)
                         {
                             double ResultDoubleValue = 0;
                             string ResultStringValue = """";
@@ -850,7 +856,7 @@ namespace ktradesystem.Models
                 });
                 if (compiled.Errors.Count == 0)
                 {
-                    CompiledEvaluationCriterias[i] = compiled.CompiledAssembly.CreateInstance("CompiledEvaluationCriteria_" + _modelData.EvaluationCriterias[i].Name);
+                    CompiledEvaluationCriterias[i] = compiled.CompiledAssembly.CreateInstance("CompiledEvaluationCriteria_" + i.ToString());
                 }
                 else
                 {
@@ -965,7 +971,7 @@ namespace ktradesystem.Models
                         bool isOverFileIndex = false; //вышел ли какой-либо из индексов файлов за границы массива файлов источника данных
                         while(isOverFileIndex == false)
                         {
-                            if(candleIndex > 0) //чтобы не обращатсья к прошлой свечке при смне файла
+                            if(candleIndex > 0) //чтобы не обращатсья к прошлой свечке при смене файла
                             {
                                 currentDateTime = dataSourceCandles.Candles[fileIndex][candleIndex].DateTime;
                                 pricesAmount += Math.Abs(dataSourceCandles.Candles[fileIndex][candleIndex].C - dataSourceCandles.Candles[fileIndex][candleIndex - 1].C); //прибавляем разность цен закрытия, взятую по модулю

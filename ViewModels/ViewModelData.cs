@@ -24,11 +24,13 @@ namespace ktradesystem.ViewModels
             _modelData = ModelData.getInstance();
             _modelDataSource = ModelDataSource.getInstance();
             _modelDataSource.PropertyChanged += Model_PropertyChanged;
+            _modelTesting = ModelTesting.getInstance();
 
             _mainCommunicationChannel = MainCommunicationChannel.getInstance();
             _mainCommunicationChannel.PropertyChanged += Model_PropertyChanged;
             _mainCommunicationChannel.MainMessages.CollectionChanged += MainCommunicationChannel_MainMessagesCollectionChanged;
             _mainCommunicationChannel.DataSourceAddingProgress.CollectionChanged += MainCommunicationChannel_DataSourceAddingProgressCollectionChanged;
+            _mainCommunicationChannel.TestingProgress.CollectionChanged += MainCommunicationChannel_TestingProgressCollectionChanged;
 
             _dataSource = new Views.Pages.PageDataSource();
             _testing = new Views.Pages.PageTesting();
@@ -47,6 +49,7 @@ namespace ktradesystem.ViewModels
         private ModelData _modelData;
         private MainCommunicationChannel _mainCommunicationChannel;
         private ModelDataSource _modelDataSource;
+        private ModelTesting _modelTesting;
 
         private Page _dataSource;
         private Page _testing;
@@ -286,16 +289,195 @@ namespace ktradesystem.ViewModels
 
         #endregion
 
-        private Visibility _statusBarTesting = Visibility.Collapsed;
-        public Visibility StatusBarTesting //видимость элементов строки состояния для тестирования
+
+
+
+        #region statusBarTesting
+        public void StatusBarTestingShow()
         {
-            get { return _statusBarTesting; }
+            StatusBarHeight = 25;
+            StatusBarTestingVisibility = Visibility.Visible;
+        }
+
+        public void StatusBarTestingHide()
+        {
+            StatusBarHeight = 0;
+            StatusBarTestingVisibility = Visibility.Collapsed;
+        }
+
+        private ObservableCollection<TestingProgress> _testingProgress = new ObservableCollection<TestingProgress>(); //прогресс выполнения тестирования
+        public ObservableCollection<TestingProgress> TestingProgress
+        {
+            get { return _testingProgress; }
             private set
             {
-                _statusBarTesting = value;
+                _testingProgress = value;
+                OnPropertyChanged();
+                DispatcherInvoke((Action)(() =>
+                {
+                    CreateStatusBarTestingContent();
+                }));
+            }
+        }
+
+        private void MainCommunicationChannel_TestingProgressCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            TestingProgress = (ObservableCollection<TestingProgress>)sender;
+        }
+
+        private Visibility _statusBarTestingVisibility = Visibility.Collapsed;
+        public Visibility StatusBarTestingVisibility //видимость элементов строки состояния для тестирования
+        {
+            get { return _statusBarTestingVisibility; }
+            private set
+            {
+                _statusBarTestingVisibility = value;
                 OnPropertyChanged();
             }
         }
+
+        private string _statusBarTestingHeader;
+        public string StatusBarTestingHeader //заголовок выполняемого действия
+        {
+            get { return _statusBarTestingHeader; }
+            private set
+            {
+                _statusBarTestingHeader = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _statusBarTestingDoneText;
+        public string StatusBarTestingDoneText //на сколько выполнено, в формате 1/20
+        {
+            get { return _statusBarTestingDoneText; }
+            private set
+            {
+                _statusBarTestingDoneText = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _statusBarTestingRemainingTime;
+        public string StatusBarTestingRemainingTime //оставшееся время
+        {
+            get { return _statusBarTestingRemainingTime; }
+            private set
+            {
+                _statusBarTestingRemainingTime = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private int _statusBarTestingProgressMinValue = 0;
+        public int StatusBarTestingProgressMinValue //минимальное значение для progress bar
+        {
+            get { return _statusBarTestingProgressMinValue; }
+            private set
+            {
+                _statusBarTestingProgressMinValue = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private int _statusBarTestingProgressMaxValue;
+        public int StatusBarTestingProgressMaxValue //максимальное значение для progress bar
+        {
+            get { return _statusBarTestingProgressMaxValue; }
+            private set
+            {
+                _statusBarTestingProgressMaxValue = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private int _statusBarTestingProgressValue;
+        public int StatusBarTestingProgressValue //значение для progress bar
+        {
+            get { return _statusBarTestingProgressValue; }
+            private set
+            {
+                _statusBarTestingProgressValue = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _statusBarTestingCancelPossibility = true;
+        public bool StatusBarTestingCancelPossibility //определяет возможность нажатия кнопки Отменить
+        {
+            get { return _statusBarTestingCancelPossibility; }
+            private set
+            {
+                _statusBarTestingCancelPossibility = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private void CreateStatusBarTestingContent()
+        {
+            if(TestingProgress.Count != 0)
+            {
+                if (TestingProgress[0].IsFinish)
+                {
+                    //закрываем statusBarTesting, делаем форму активной
+                    StatusBarTestingHide();
+                    IsPagesAndMainMenuButtonsEnabled = true;
+                    _mainCommunicationChannel.TestingProgress.Clear();
+                    //очищаем поля
+                    StatusBarTestingHeader = "";
+                    StatusBarTestingDoneText = "";
+                    StatusBarTestingRemainingTime = "";
+                    StatusBarTestingProgressMaxValue = 0;
+                    StatusBarTestingProgressValue = 0;
+                    StatusBarTestingCancelPossibility = true;
+                }
+                else
+                {
+                    //обновляем значения полей statusBarTesting
+                    StatusBarTestingHeader = TestingProgress[0].Header;
+                    StatusBarTestingDoneText = TestingProgress[0].CompletedTasksCount.ToString() + "/" + TestingProgress[0].TasksCount.ToString();
+                    int totalRemainingSeconds = (int)((TestingProgress[0].ElapsedTime.TotalSeconds / ((double)(TestingProgress[0].CompletedTasksCount) / (double)(TestingProgress[0].TasksCount))) - TestingProgress[0].ElapsedTime.TotalSeconds); //делим пройденное время на завершенную часть от целого и получаем общее время, необходимое для выполнения всей работы, и вычитаем из него пройденное время
+                    TimeSpan timeSpan = TimeSpan.FromSeconds(totalRemainingSeconds);
+                    string timeRemaining = timeSpan.Hours.ToString();
+                    if(timeRemaining.Length == 1)
+                    {
+                        timeRemaining = timeRemaining.Insert(0, "0");
+                    }
+                    timeRemaining += ":" + timeSpan.Minutes.ToString();
+                    if (timeRemaining.Length == 4)
+                    {
+                        timeRemaining = timeRemaining.Insert(3, "0");
+                    }
+                    timeRemaining += ":" + timeSpan.Seconds.ToString();
+                    if (timeRemaining.Length == 7)
+                    {
+                        timeRemaining = timeRemaining.Insert(6, "0");
+                    }
+                    if (timeSpan.Days > 0)
+                    {
+                        timeRemaining = timeRemaining.Insert(0, timeSpan.Days.ToString() + " дней ");
+                    }
+
+                    StatusBarTestingRemainingTime = timeRemaining;
+                    StatusBarTestingProgressMaxValue = TestingProgress[0].TasksCount;
+                    StatusBarTestingProgressValue = TestingProgress[0].CompletedTasksCount;
+                    StatusBarTestingCancelPossibility = TestingProgress[0].CancelPossibility;
+                }
+            }
+        }
+
+        public ICommand StatusBarTestingCancel_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    _modelTesting.CancellationTokenTestingCancel();
+                }, (obj) => true);
+            }
+        }
+
+        #endregion
 
         private ObservableCollection<Message> _mainMessages = new ObservableCollection<Message>(); //сообщения которые будут выводиться пользователю
         public ObservableCollection<Message> MainMessages

@@ -25,6 +25,7 @@ namespace ktradesystem.Models
         public bool IsForwardTesting { get; set; } //проводить ли форвардное тестирование
         public bool IsForwardDepositTrading { get; set; } //добавить ли для форвардного тестирования торговлю депозитом
         public List<DepositCurrency> ForwardDepositCurrencies { get; set; } //размер депозита форвардного тестирования во всех валютах
+        public Currency DefaultCurrency { get; set; } //валюта по умолчанию
         public DateTime StartPeriod { get; set; } //дата начала тестирования
         public DateTime EndPeriod { get; set; } //дата окончания тестирования
         public DateTimeDuration DurationOptimizationTests { get; set; } //длительность оптимизационных тестов
@@ -348,7 +349,26 @@ namespace ktradesystem.Models
                         List<TestRun> optimizationTestRuns = new List<TestRun>();
                         for (int i = 0; i < allCombinations.Count; i++)
                         {
-                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>() };
+                            List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //средства в открытых позициях
+                            foreach (DepositCurrency depositCurrency in ForwardDepositCurrencies)
+                            {
+                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
+                            }
+                            List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //средства в открытых позициях
+                            foreach (DepositCurrency depositCurrency in ForwardDepositCurrencies)
+                            {
+                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
+                            }
+
+                            List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
+                            foreach (DepositCurrency depositCurrency in ForwardDepositCurrencies)
+                            {
+                                firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
+                            }
+                            List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
+                            depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
+
+                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = DefaultCurrency, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges };
                             //формируем список со значениями параметров индикаторов
                             List<IndicatorParameterValue> indicatorParameterValues = new List<IndicatorParameterValue>();
                             int ind = 0;
@@ -391,13 +411,26 @@ namespace ktradesystem.Models
                         //формируем форвардный тест
                         if (IsForwardTesting)
                         {
+                            List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //средства в открытых позициях
+                            foreach (DepositCurrency depositCurrency in ForwardDepositCurrencies)
+                            {
+                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
+                            }
                             List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //средства в открытых позициях
                             foreach(DepositCurrency depositCurrency in ForwardDepositCurrencies)
                             {
                                 takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
                             }
 
-                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), IsForwardDepositTrading = false };
+                            List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
+                            foreach (DepositCurrency depositCurrency in ForwardDepositCurrencies)
+                            {
+                                firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
+                            }
+                            List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
+                            depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
+
+                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = DefaultCurrency, IsForwardDepositTrading = false, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges };
                             TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>() };
                             //добавляем форвардный тест в testBatch
                             testBatch.ForwardTestRun = testRun;
@@ -405,13 +438,26 @@ namespace ktradesystem.Models
                         //формируем форвардный тест с торговлей депозитом
                         if (IsForwardTesting && IsForwardDepositTrading)
                         {
+                            List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //средства в открытых позициях
+                            foreach (DepositCurrency depositCurrency in ForwardDepositCurrencies)
+                            {
+                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = depositCurrency.Deposit });
+                            }
                             List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //средства в открытых позициях
                             foreach(DepositCurrency depositCurrency in ForwardDepositCurrencies)
                             {
                                 takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
                             }
 
-                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), IsForwardDepositTrading = true, FreeForwardDepositCurrencies = ForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies };
+                            List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
+                            foreach (DepositCurrency depositCurrency in ForwardDepositCurrencies)
+                            {
+                                firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = depositCurrency.Deposit });
+                            }
+                            List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
+                            depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
+
+                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = DefaultCurrency, IsForwardDepositTrading = true, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges };
                             TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>() };
                             //добавляем форвардный тест с торговлей депозитом в testBatch
                             testBatch.ForwardTestRunDepositTrading = testRun;
@@ -793,12 +839,12 @@ namespace ktradesystem.Models
                     using ktradesystem.Models;
                     public class CompiledEvaluationCriteria_" + _modelData.EvaluationCriterias[i].Name +
                     @"{
-                        public EvaluationCriteriaValue Calculate(DataSourceCandles dataSourceCandles, List<EvaluationCriteriaValue> evaluationCriteriaValues, ObservableCollection<Setting> settings)
+                        public EvaluationCriteriaValue Calculate(List<DataSourceCandles> dataSourcesCandles, TestRun testRun, ObservableCollection<Setting> settings)
                         {
-                            double doubleValue = 0;
-                            string stringValue = """";
+                            double ResultDoubleValue = 0;
+                            string ResultStringValue = """";
                             " + script +
-                            @"return new EvaluationCriteriaValue { DoubleValue = doubleValue, StringValue = stringValue };
+                            @"return new EvaluationCriteriaValue { DoubleValue = ResultDoubleValue, StringValue = ResultStringValue };
                         }
                     }"
                 });
@@ -2199,7 +2245,7 @@ namespace ktradesystem.Models
                 }
                 else //если количество testRun-ов == 0, оповещаем пользователя и завершаем тестирование
                 {
-                    _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Тестирвоание не было выполнено, т.к. количество тестов равно нулю"); }));
+                    _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Тестирование не было выполнено, т.к. количество тестов равно нулю."); }));
                     TestingEnding(false);
                 }
             }
@@ -2653,7 +2699,6 @@ namespace ktradesystem.Models
                 {
                     break; //если был запрос на отмену тестирования, завершаем цикл
                 }
-                //CompiledEvaluationCriterias[i].Calculate(DataSourceCandles dataSourceCandles, List < EvaluationCriteriaValue > evaluationCriteriaValues)
                 //определяем индекс источника данных, с наибольшей идеальной прибылью
                 int index = 0;
                 for(int k = 1; k < dataSourceCandles.Length; k++)
@@ -2663,9 +2708,21 @@ namespace ktradesystem.Models
                         index = k;
                     }
                 }
-                EvaluationCriteriaValue evaluationCriteriaValue = CompiledEvaluationCriterias[i].Calculate(dataSourceCandles[index], testRun.EvaluationCriteriaValues, _modelData.Settings);
+                /*public EvaluationCriteriaValue Calculate(List<DataSourceCandles> dataSourcesCandles, TestRun testRun, ObservableCollection<Setting> settings)
+                {
+                    double ResultDoubleValue = 0;
+                    string ResultStringValue = """";
+                    " + script + @"
+                    return new EvaluationCriteriaValue { DoubleValue = ResultDoubleValue, StringValue = ResultStringValue };
+                }*/
+                EvaluationCriteriaValue evaluationCriteriaValue = CompiledEvaluationCriterias[i].Calculate(dataSourceCandles, testRun, _modelData.Settings);
                 evaluationCriteriaValue.EvaluationCriteria = _modelData.EvaluationCriterias[i];
                 testRun.EvaluationCriteriaValues.Add(evaluationCriteriaValue);
+
+
+                
+
+
             }
         }
 

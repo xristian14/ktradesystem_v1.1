@@ -345,7 +345,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "candles[0]");
+                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "Candles[0]");
                 }, (obj) => IsAddOrEditIndicator());
             }
         }
@@ -356,7 +356,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "parameter_" + SelectedIndicatorParameterTemplateView.Name);
+                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "Parameter_" + SelectedIndicatorParameterTemplateView.Name);
                 }, (obj) => SelectedIndicatorParameterTemplateView != null && IsAddOrEditIndicator());
             }
         }
@@ -367,7 +367,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "return 0;");
+                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "Indicator = ");
                 }, (obj) => IsAddOrEditIndicator());
             }
         }
@@ -3704,6 +3704,7 @@ namespace ktradesystem.ViewModels
                     testing.IsForwardTesting = IsForwardTesting;
                     testing.IsForwardDepositTrading = IsForwardDepositTesting;
                     testing.ForwardDepositCurrencies = forwardDepositCurrencies;
+                    testing.DefaultCurrency = SelectedCurrency;
                     testing.StartPeriod = StartPeriodTesting.Date;
                     testing.EndPeriod = EndPeriodTesting.Date;
                     testing.DurationOptimizationTests = durationOptimizationTests;

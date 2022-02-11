@@ -34,17 +34,6 @@ namespace ktradesystem.Models
         private Database _database;
         private MainCommunicationChannel _mainCommunicationChannel;
 
-        private ObservableCollection<Setting> _testings = new ObservableCollection<Setting>(); //тесты
-        public ObservableCollection<Setting> Testings
-        {
-            get { return _testings; }
-            set
-            {
-                _testings = value;
-                OnPropertyChanged();
-            }
-        }
-
         public CancellationTokenSource CancellationTokenTesting; //токен отмены тестирования
         public void CancellationTokenTestingCancel()
         {

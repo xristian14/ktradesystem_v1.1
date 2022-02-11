@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
@@ -16,5 +17,6 @@ namespace ktradesystem.Models
         public List<DepositCurrency> FreeForwardDepositCurrencies { get; set; } //свободные средства
         public List<DepositCurrency> TakenForwardDepositCurrencies { get; set; } //занятые средства (в открытых позициях)
         public List<List<DepositCurrency>> DepositCurrenciesChanges { get; set; } //изменения депозита в разных валютах
+        public Currency DefaultCurrency { get; set; } //валюта по умолчанию
     }
 }

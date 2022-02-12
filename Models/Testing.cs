@@ -1470,14 +1470,14 @@ namespace ktradesystem.Models
                                                                 {
                                                                     if (yParameterIsInt)
                                                                     {
-                                                                        if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y - 1] == xParameterIntValue)
+                                                                        if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y - 1] == yParameterIntValue)
                                                                         {
                                                                             isYDecrementEqual = true;
                                                                         }
                                                                     }
                                                                     else
                                                                     {
-                                                                        if (AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y - 1] == xParameterDoubleValue)
+                                                                        if (AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y - 1] == yParameterDoubleValue)
                                                                         {
                                                                             isYDecrementEqual = true;
                                                                         }
@@ -1488,14 +1488,14 @@ namespace ktradesystem.Models
                                                                 {
                                                                     if (yParameterIsInt)
                                                                     {
-                                                                        if (IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == xParameterIntValue)
+                                                                        if (IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == yParameterIntValue)
                                                                         {
                                                                             isYEqual = true;
                                                                         }
                                                                     }
                                                                     else
                                                                     {
-                                                                        if (IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == xParameterDoubleValue)
+                                                                        if (IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == yParameterDoubleValue)
                                                                         {
                                                                             isYEqual = true;
                                                                         }
@@ -1505,14 +1505,14 @@ namespace ktradesystem.Models
                                                                 {
                                                                     if (yParameterIsInt)
                                                                     {
-                                                                        if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == xParameterIntValue)
+                                                                        if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == yParameterIntValue)
                                                                         {
                                                                             isYEqual = true;
                                                                         }
                                                                     }
                                                                     else
                                                                     {
-                                                                        if (AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == xParameterDoubleValue)
+                                                                        if (AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]][y] == yParameterDoubleValue)
                                                                         {
                                                                             isYEqual = true;
                                                                         }
@@ -2758,19 +2758,19 @@ namespace ktradesystem.Models
             //рассчитываем критерии оценки для данного testRun
             for (int i = 0; i < _modelData.EvaluationCriterias.Count; i++)
             {
-                if (cancellationToken.IsCancellationRequested)
+                /*if (cancellationToken.IsCancellationRequested)
                 {
                     break; //если был запрос на отмену тестирования, завершаем цикл
-                }
+                }*/
                 //определяем индекс источника данных, с наибольшей идеальной прибылью
-                int index = 0;
+                /*int index = 0;
                 for(int k = 1; k < dataSourceCandles.Length; k++)
                 {
                     if(dataSourceCandles[index].PerfectProfit < dataSourceCandles[k].PerfectProfit)
                     {
                         index = k;
                     }
-                }
+                }*/
                 /*public EvaluationCriteriaValue Calculate(List<DataSourceCandles> dataSourcesCandles, TestRun testRun, ObservableCollection<Setting> settings)
                 {
                     double ResultDoubleValue = 0;

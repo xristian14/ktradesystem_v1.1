@@ -592,6 +592,10 @@ namespace ktradesystem.Models
                             }
                             return result;
                         }
+                        public CompiledIndicator_" + indicators[i].Name + @" Clone()
+                        {
+                            return new CompiledIndicator_" + indicators[i].Name + @"();
+                        }
                     }" //MaxOverIndex - максимальное превышение индекса массива со свечками; GetCandle() создает и возвращает новый объект Candle для того чтобы в скрипте нельзя было переопределить значения свечки
                 });
                 if (compiled.Errors.Count == 0)
@@ -795,6 +799,10 @@ namespace ktradesystem.Models
                         takeOrder.LinkedOrder = stopOrder;
                         return new List<Order> { stopOrder, takeOrder };
                     }
+                    public CompiledAlgorithm Clone()
+                    {
+                        return new CompiledAlgorithm();
+                    }
                 }"
             });
             if (compiledAlgorithm.Errors.Count == 0)
@@ -842,6 +850,10 @@ namespace ktradesystem.Models
                             string ResultStringValue = """";
                             " + script +
                             @"return new EvaluationCriteriaValue { DoubleValue = ResultDoubleValue, StringValue = ResultStringValue };
+                        }
+                        public CompiledEvaluationCriteria_" + i.ToString() + @" Clone()
+                        {
+                            return new CompiledEvaluationCriteria_" + i.ToString() + @"();
                         }
                     }"
                 });
@@ -2533,16 +2545,18 @@ namespace ktradesystem.Models
                     //если были совершены сделки на текущей свечке, дважды выполняем алгоритм: первый раз обновляем заявки и проверяем на исполнение стоп-заявки (если была открыта позиция на текущей свечке, нужно выставить стоп и проверить мог ли он на этой же свечке исполнится), и если были сделки то выполняем алгоритм еще раз и обновляем заявки, после чего переходим на следующую свечку
 
                     int maxOverIndex = 0; //максимальное превышение индекса в индикаторах и алгоритме
-                    double[][] indicatorsValues = new double[fileIndexes.Length][];
-                    //проходим по всем файлам и вычисляем значения всех индикаторов для каждого файла
-                    for(int i = 0; i < fileIndexes.Length; i++)
+                    double[][] indicatorsValues = new double[dataSourceCandles.Length][];
+                    //проходим по всем источникам данных и вычисляем значения всех индикаторов для каждого источника данных
+                    for(int i = 0; i < dataSourceCandles.Length; i++)
                     {
                         //вычисляем значения всех индикаторов
                         indicatorsValues[i] = new double[indicators.Count];
                         for (int k = 0; k < indicatorsValues.Length; k++)
                         {
+                            //копируем объект скомпилированного индикатора, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
+                            dynamic CompiledIndicatorCopy = CompiledIndicators[k].Clone();
                             //вычисляем значение индикатора
-                            IndicatorCalculateResult indicatorCalculateResult = CompiledIndicators[k].Calculate(dataSourceCandles[fileIndexes[i]].Candles[fileIndexes[i]], candleIndexes[i], indicatorParametersIntValues[k], indicatorParametersDoubleValues[k]); //indicatorParametersIntValues[индекс_индикатора]
+                            IndicatorCalculateResult indicatorCalculateResult = CompiledIndicatorCopy.Calculate(dataSourceCandles[i].Candles[fileIndexes[i]], candleIndexes[i], indicatorParametersIntValues[k], indicatorParametersDoubleValues[k]); //indicatorParametersIntValues[индекс_индикатора]
                             //Calculate(Candle[] inputCandles, int currentCandleIndex, int[] indicatorParametersIntValues, double[] indicatorParametersDoubleValues)
                             maxOverIndex = indicatorCalculateResult.OverIndex > maxOverIndex ? indicatorCalculateResult.OverIndex : maxOverIndex; //если превышение индекса больше максимального, обновляем его максимальное значение
                             indicatorsValues[i][k] = indicatorCalculateResult.Value; //запоминаем значение индикатора для файла i и индикатора k
@@ -2604,7 +2618,9 @@ namespace ktradesystem.Models
                         }
 
                         AccountForCalculate accountForCalculate = new AccountForCalculate { FreeRubleMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, FreeDollarMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit, TakenRubleMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, TakenDollarMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit };
-                        AlgorithmCalculateResult algorithmCalculateResult = CompiledAlgorithm.Calculate(accountForCalculate, dataSourcesForCalculate, algorithmParametersIntValues, algorithmParametersDoubleValues);
+                        //копируем объект скомпилированного алгоритма, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
+                        dynamic CompiledAlgorithmCopy = CompiledAlgorithm.Clone();
+                        AlgorithmCalculateResult algorithmCalculateResult = CompiledAlgorithmCopy.Calculate(accountForCalculate, dataSourcesForCalculate, algorithmParametersIntValues, algorithmParametersDoubleValues);
                         maxOverIndex = algorithmCalculateResult.OverIndex > maxOverIndex ? algorithmCalculateResult.OverIndex : maxOverIndex; //если првышение индекса больше максимального, обновляем его максимальное значение
                         if (maxOverIndex == 0) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
                         {
@@ -2762,14 +2778,11 @@ namespace ktradesystem.Models
                     " + script + @"
                     return new EvaluationCriteriaValue { DoubleValue = ResultDoubleValue, StringValue = ResultStringValue };
                 }*/
-                EvaluationCriteriaValue evaluationCriteriaValue = CompiledEvaluationCriterias[i].Calculate(dataSourceCandles, testRun, _modelData.Settings);
+                //копируем объект скомпилированного критерия оценки, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
+                dynamic CompiledEvaluationCriteriaCopy = CompiledEvaluationCriterias[i].Clone();
+                EvaluationCriteriaValue evaluationCriteriaValue = CompiledEvaluationCriteriaCopy.Calculate(dataSourceCandles, testRun, _modelData.Settings);
                 evaluationCriteriaValue.EvaluationCriteria = _modelData.EvaluationCriterias[i];
                 testRun.EvaluationCriteriaValues.Add(evaluationCriteriaValue);
-
-
-                
-
-
             }
         }
 
@@ -2893,7 +2906,7 @@ namespace ktradesystem.Models
                         if (isLimitExecute)
                         {
                             //определяем количество лотов, которое находится за ценой заявки, и которое могло быть куплено/продано на текущей свечке
-                            int stepCount = (int)Math.Round((dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H - dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L) / order.DataSource.PriceStep); //количество пунктов цены
+                            int stepCount = (int)Math.Round((dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H - dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L + 1) / order.DataSource.PriceStep); //количество пунктов цены
                             decimal stepLots = (decimal)dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].V / stepCount; //среднее количество лотов на 1 пункт цены
                             int stepsOver = order.Direction ? (int)Math.Round((order.Price - dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L) / order.DataSource.PriceStep) : (int)Math.Round((dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H - order.Price) / order.DataSource.PriceStep); //количество пунктов за ценой заявки
                             decimal overLots = stepLots * stepsOver / 2; //количество лотов которое могло быть куплено/продано на текущей свечке (делить на 2 т.к. лишь половина от лотов - это сделки в нужной нам операции (купить или продать))

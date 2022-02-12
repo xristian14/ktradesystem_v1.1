@@ -349,19 +349,16 @@ namespace ktradesystem.Models
                         List<TestRun> optimizationTestRuns = new List<TestRun>();
                         for (int i = 0; i < allCombinations.Count; i++)
                         {
-                            List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //средства в открытых позициях
-                            foreach (DepositCurrency depositCurrency in ForwardDepositCurrencies)
+                            List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //свободные средства в открытых позициях
+                            List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
+                            foreach (Currency currency in _modelData.Currencies)
                             {
-                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
-                            }
-                            List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //средства в открытых позициях
-                            foreach (DepositCurrency depositCurrency in ForwardDepositCurrencies)
-                            {
-                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
+                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0 });
+                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0 });
                             }
 
                             List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
-                            foreach (DepositCurrency depositCurrency in ForwardDepositCurrencies)
+                            foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
                             {
                                 firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
                             }
@@ -411,19 +408,16 @@ namespace ktradesystem.Models
                         //формируем форвардный тест
                         if (IsForwardTesting)
                         {
-                            List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //средства в открытых позициях
-                            foreach (DepositCurrency depositCurrency in ForwardDepositCurrencies)
+                            List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //свободные средства в открытых позициях
+                            List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
+                            foreach (Currency currency in _modelData.Currencies)
                             {
-                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
-                            }
-                            List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //средства в открытых позициях
-                            foreach(DepositCurrency depositCurrency in ForwardDepositCurrencies)
-                            {
-                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
+                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0 });
+                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0 });
                             }
 
                             List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
-                            foreach (DepositCurrency depositCurrency in ForwardDepositCurrencies)
+                            foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
                             {
                                 firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
                             }
@@ -438,19 +432,16 @@ namespace ktradesystem.Models
                         //формируем форвардный тест с торговлей депозитом
                         if (IsForwardTesting && IsForwardDepositTrading)
                         {
-                            List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //средства в открытых позициях
+                            List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //свободные средства в открытых позициях
+                            List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
                             foreach (DepositCurrency depositCurrency in ForwardDepositCurrencies)
                             {
                                 freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = depositCurrency.Deposit });
-                            }
-                            List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //средства в открытых позициях
-                            foreach(DepositCurrency depositCurrency in ForwardDepositCurrencies)
-                            {
                                 takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
                             }
 
                             List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
-                            foreach (DepositCurrency depositCurrency in ForwardDepositCurrencies)
+                            foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
                             {
                                 firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = depositCurrency.Deposit });
                             }
@@ -845,7 +836,7 @@ namespace ktradesystem.Models
                     using ktradesystem.Models.Datatables;
                     public class CompiledEvaluationCriteria_" + i.ToString() +
                     @"{
-                        public EvaluationCriteriaValue Calculate(List<DataSourceCandles> dataSourcesCandles, TestRun testRun, System.Collections.ObjectModel.ObservableCollection<Setting> settings)
+                        public EvaluationCriteriaValue Calculate(DataSourceCandles[] dataSourcesCandles, TestRun testRun, System.Collections.ObjectModel.ObservableCollection<Setting> settings)
                         {
                             double ResultDoubleValue = 0;
                             string ResultStringValue = """";
@@ -1039,7 +1030,11 @@ namespace ktradesystem.Models
                             tasks[n] = task;
                             tasksExecutingTestRuns[n] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
                             testRunIndex++;
-                            testBatchIndex += testRunIndex < TestBatches[testBatchIndex].OptimizationTestRuns.Count ? 0 : 1; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
+                            if(testRunIndex >= TestBatches[testBatchIndex].OptimizationTestRuns.Count) //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
+                            {
+                                testRunIndex = 0;
+                                testBatchIndex++;
+                            }
                         }
                         else //иначе обрабатываем выполненную задачу
                         {
@@ -1074,6 +1069,7 @@ namespace ktradesystem.Models
                                     {
                                         isOptimizationTestsComplete = false;
                                     }
+                                    a++;
                                 }
                                 if (isOptimizationTestsComplete)
                                 {
@@ -2227,7 +2223,11 @@ namespace ktradesystem.Models
                                 task = Task.Run(() => TestRunExecute(testRun, indicators, cancellationToken));
                                 tasksExecutingTestRuns[completedTaskIndex] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
                                 testRunIndex++;
-                                testBatchIndex += TestBatches[testBatchIndex].OptimizationTestRuns.Count >= testRunIndex ? 1 : 0; //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
+                                if (testRunIndex >= TestBatches[testBatchIndex].OptimizationTestRuns.Count) //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
+                                {
+                                    testRunIndex = 0;
+                                    testBatchIndex++;
+                                }
                             }
                             else if (isStartForwardTestRun) //запускаем форвардный тест
                             {
@@ -2440,55 +2440,43 @@ namespace ktradesystem.Models
                 candleIndexes[i] = 0;
             }
 
-            //находим индексы файлов и свечек, дата и время которых позже или равняется дате и времени начала теста
+            //находим индексы файлов и свечек, дата и время которых позже или равняется дате и времени начала тестирования
             for (int i = 0; i < dataSourceCandles.Length; i++)
             {
-                //ищем индекс первого файла источника данных, дата начала которого позже текущей даты, если такой файл не найден, то индекс = -1
-                int fileIndex = -1;
-                for(int k = 0; k < dataSourceCandles[i].DataSource.DataSourceFiles.Count; k++)
+                //находим индекс файла в текущем dataSourceCandles, дата последней свечки которого позже даты начала тестирования
+                int fileIndex = 0;
+                bool isFindFile = false;
+                //пока не вышли за пределы массива файлов, и пока не нашли файл, дата последней свечки которого позже даты начала тестирования
+                while (fileIndex < dataSourceCandles[i].Candles.Length && isFindFile == false)
                 {
-                    if(DateTime.Compare(dataSourceCandles[i].DataSource.DataSourceFiles[k].DataSourceFileWorkingPeriods[0].StartPeriod, testRun.StartPeriod) > 0)
+                    if(DateTime.Compare(dataSourceCandles[i].Candles[fileIndex].Last().DateTime, testRun.StartPeriod) > 0)
                     {
-                        fileIndex = k; //запоминаем индекс файла, дата начала которого позже даты начала тестирования
+                        isFindFile = true;
+                    }
+                    else
+                    {
+                        fileIndex++;
                     }
                 }
-                if(fileIndex > 0)
+                fileIndexes[i] = fileIndex;
+                //если нашли файл, последняя свечка которого позже даты начала тестирования, находим индекс свечка, дата которой позже или равняется дате начала тестирования
+                int candleIndex = 0;
+                if (fileIndexes[i] < dataSourceCandles[i].Candles.Length)
                 {
-                    fileIndexes[i] = fileIndex - 1; //сохраняем индекс первого файла, дата начала которго <= дате начала теста
-                    //находим индекс свечки, дата и время которой >= дате начала теста
-                    DateTime candleDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
-                    while(DateTime.Compare(candleDateTime, testRun.StartPeriod) < 0 && fileIndexes[i] < dataSourceCandles[i].Candles.Length)
+                    bool isFindCandle = false;
+                    while (isFindCandle == false)
                     {
-                        candleIndexes[i]++;
-                        //если массив со свечками файла подошел к концу, переходим на следующий файл
-                        if (candleIndexes[i] >= dataSourceCandles[i].Candles[fileIndexes[i]].Length)
+                        if (DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndex].DateTime, testRun.StartPeriod) >= 0)
                         {
-                            fileIndexes[i]++;
-                            candleIndexes[i] = 0;
+                            isFindCandle = true;
                         }
-                        //если индекс файла не вышел за пределы массива, находим дату для текущей свечки
-                        if (fileIndexes[i] < dataSourceCandles[i].Candles.Length)
+                        else
                         {
-                            candleDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                            candleIndex++;
                         }
                     }
                 }
-                else
-                {
-                    //доступных данных нет, присваиваем индексу файла значение, выходящее за пределы массива
-                    fileIndexes[i] = dataSourceCandles[i].Candles.Length;
-                }
-            }
-
-
-            //определяем текущую дату и время, взяв самую раннюю дату и время свечки (среди источников данных)
-            DateTime currentDateTime = dataSourceCandles[0].Candles[fileIndexes[0]][candleIndexes[0]].DateTime; //текущие дата и время
-            for(int i = 1; i < dataSourceCandles.Length; i++)
-            {
-                if(DateTime.Compare(currentDateTime, dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime) > 0)
-                {
-                    currentDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime; //самая ранняя дата и время свечки (которая >= дате начала теста) (среди источников данных)
-                }
+                candleIndexes[i] = candleIndex;
             }
 
             bool isOverFileIndex = false; //вышел ли какой-либо из индексов файлов за границы массива файлов источника данных
@@ -2499,6 +2487,21 @@ namespace ktradesystem.Models
                     isOverFileIndex = true; //отмечаем что индекс файла вышел за границы массива
                 }
             }
+
+            //устанавливаем текущую дату, взяв самую позднюю дату текущей свечки среди источников данных
+            DateTime currentDateTime = new DateTime(); //текущие дата и время
+            if(isOverFileIndex == false) //если не было превышений индекса файла, ищем текущую дату
+            {
+                currentDateTime = dataSourceCandles[0].Candles[fileIndexes[0]][candleIndexes[0]].DateTime; //текущие дата и время
+                for (int i = 1; i < dataSourceCandles.Length; i++)
+                {
+                    if (DateTime.Compare(currentDateTime, dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime) < 0)
+                    {
+                        currentDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                    }
+                }
+            }
+
             //проходим по всем свечкам источников данных, пока не достигнем времени окончания теста, не выйдем за границы имеющихся файлов, или не получим запрос на отмену тестирования
             while (DateTime.Compare(currentDateTime, testRun.EndPeriod) < 0 && isOverFileIndex == false && cancellationToken.IsCancellationRequested == false)
             {
@@ -2618,6 +2621,8 @@ namespace ktradesystem.Models
                             //приводим заявки к виду который прислал пользователь в алгоритме
                             List<Order> newAccountOrders = new List<Order>(); //новый список с текущими заявками
                                                                               //проходим по заявкам пользователя, и для каждой ищем совпадение в текущих заявках. Если находим, то добавляем эту заявку в newAccountOrders, и удаляем из заявок пользователя и текущих заявок
+                            List<Order> algorithmCalculateResultOrdersToRemove = new List<Order>(); //заявки пользователя которые нужно удалить
+                            List<Order> testRunOrdersToRemove = new List<Order>(); //текущие заявки которые нужно удалить
                             for (int i = algorithmCalculateResult.Orders.Count - 1; i >= 0; i--)
                             {
                                 bool isFindInOrders = false;
@@ -2644,12 +2649,35 @@ namespace ktradesystem.Models
                                     if (testRun.Account.Orders[orderIndex].LinkedOrder != null)
                                     {
                                         newAccountOrders.Add(testRun.Account.Orders[orderIndex].LinkedOrder); //добавляем связанную заявку из текущих в новые текущие
-                                        testRun.Account.Orders.Remove(testRun.Account.Orders[orderIndex].LinkedOrder); //удаляем связанную заявку из текущих
-                                        algorithmCalculateResult.Orders.Remove(algorithmCalculateResult.Orders[i].LinkedOrder); //удаляем связанную заявку из заявок пользователя
+                                        if(algorithmCalculateResultOrdersToRemove.IndexOf(algorithmCalculateResult.Orders[i].LinkedOrder) == -1) //если такой заявки нет в заявках пользователя для удаления
+                                        {
+                                            algorithmCalculateResultOrdersToRemove.Add(algorithmCalculateResult.Orders[i].LinkedOrder); //отмечаем что нужно удалить эту заявку из заявок пользователя
+                                        }
+                                        if (testRunOrdersToRemove.IndexOf(testRun.Account.Orders[orderIndex].LinkedOrder) == -1) //если такой заявки нет в текущих заявках для удаления
+                                        {
+                                            testRunOrdersToRemove.Add(testRun.Account.Orders[orderIndex].LinkedOrder); //отмечаем что нужно удалить эту заявку из текущих заявок
+                                        }
                                     }
-                                    testRun.Account.Orders.RemoveAt(orderIndex); //удаляем заявку из текущих
-                                    algorithmCalculateResult.Orders.RemoveAt(i); //удаляем заявку из заявок пользователя
+                                    //отмечаем что нужно удалить эту заявку из заявок пользователя и из текущих заявок
+                                    if (algorithmCalculateResultOrdersToRemove.IndexOf(algorithmCalculateResult.Orders[i]) == -1) //если такой заявки нет в заявках пользователя для удаления
+                                    {
+                                        algorithmCalculateResultOrdersToRemove.Add(algorithmCalculateResult.Orders[i]); //отмечаем что нужно удалить эту заявку из заявок пользователя
+                                    }
+                                    if (testRunOrdersToRemove.IndexOf(testRun.Account.Orders[orderIndex].LinkedOrder) == -1) //если такой заявки нет в текущих заявках для удаления
+                                    {
+                                        testRunOrdersToRemove.Add(testRun.Account.Orders[orderIndex].LinkedOrder); //отмечаем что нужно удалить эту заявку из текущих заявок
+                                    }
                                 }
+                            }
+                            //удаляем заявки из заявок пользователя
+                            foreach(Order order1 in algorithmCalculateResultOrdersToRemove)
+                            {
+                                algorithmCalculateResult.Orders.Remove(order1);
+                            }
+                            //удаляем заявки из текущих заявок
+                            foreach (Order order1 in testRunOrdersToRemove)
+                            {
+                                testRun.Account.Orders.Remove(order1);
                             }
                             //устанавливаем дату снятия заявок для текущих которые не соответствуют заявкам пользователя
                             foreach (Order order in testRun.Account.Orders)

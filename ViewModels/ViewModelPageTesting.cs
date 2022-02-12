@@ -3609,6 +3609,315 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        public ICommand DurationOptimizationTestsYearsIncrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(DurationOptimizationYears, out int res))
+                    {
+                        DurationOptimizationYears = (res + 1).ToString();
+                    }
+                    else
+                    {
+                        DurationOptimizationYears = "1";
+                    }
+                }, (obj) => SelectedAlgorithm != null);
+            }
+        }
+        public ICommand DurationOptimizationTestsYearsDecrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(DurationOptimizationYears, out int res))
+                    {
+                        DurationOptimizationYears = (res - 1).ToString();
+                    }
+                    else
+                    {
+                        DurationOptimizationYears = "0";
+                    }
+                }, (obj) => SelectedAlgorithm != null);
+            }
+        }
+        public ICommand DurationOptimizationTestsMonthsIncrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(DurationOptimizationMonths, out int res))
+                    {
+                        DurationOptimizationMonths = (res + 1).ToString();
+                    }
+                    else
+                    {
+                        DurationOptimizationMonths = "1";
+                    }
+                }, (obj) => SelectedAlgorithm != null);
+            }
+        }
+        public ICommand DurationOptimizationTestsMonthsDecrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(DurationOptimizationMonths, out int res))
+                    {
+                        DurationOptimizationMonths = (res - 1).ToString();
+                    }
+                    else
+                    {
+                        DurationOptimizationMonths = "0";
+                    }
+                }, (obj) => SelectedAlgorithm != null);
+            }
+        }
+        public ICommand DurationOptimizationTestsDaysIncrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(DurationOptimizationDays, out int res))
+                    {
+                        DurationOptimizationDays = (res + 1).ToString();
+                    }
+                    else
+                    {
+                        DurationOptimizationDays = "1";
+                    }
+                }, (obj) => SelectedAlgorithm != null);
+            }
+        }
+        public ICommand DurationOptimizationTestsDaysDecrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(DurationOptimizationDays, out int res))
+                    {
+                        DurationOptimizationDays = (res - 1).ToString();
+                    }
+                    else
+                    {
+                        DurationOptimizationDays = "0";
+                    }
+                }, (obj) => SelectedAlgorithm != null);
+            }
+        }
+
+        public ICommand SpacingOptimizationTestsYearsIncrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(OptimizationSpacingYears, out int res))
+                    {
+                        OptimizationSpacingYears = (res + 1).ToString();
+                    }
+                    else
+                    {
+                        OptimizationSpacingYears = "1";
+                    }
+                }, (obj) => SelectedAlgorithm != null);
+            }
+        }
+        public ICommand SpacingOptimizationTestsYearsDecrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(OptimizationSpacingYears, out int res))
+                    {
+                        OptimizationSpacingYears = (res - 1).ToString();
+                    }
+                    else
+                    {
+                        OptimizationSpacingYears = "0";
+                    }
+                }, (obj) => SelectedAlgorithm != null);
+            }
+        }
+        public ICommand SpacingOptimizationTestsMonthsIncrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(OptimizationSpacingMonths, out int res))
+                    {
+                        OptimizationSpacingMonths = (res + 1).ToString();
+                    }
+                    else
+                    {
+                        OptimizationSpacingMonths = "1";
+                    }
+                }, (obj) => SelectedAlgorithm != null);
+            }
+        }
+        public ICommand SpacingOptimizationTestsMonthsDecrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(OptimizationSpacingMonths, out int res))
+                    {
+                        OptimizationSpacingMonths = (res - 1).ToString();
+                    }
+                    else
+                    {
+                        OptimizationSpacingMonths = "0";
+                    }
+                }, (obj) => SelectedAlgorithm != null);
+            }
+        }
+        public ICommand SpacingOptimizationTestsDaysIncrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(OptimizationSpacingDays, out int res))
+                    {
+                        OptimizationSpacingDays = (res + 1).ToString();
+                    }
+                    else
+                    {
+                        OptimizationSpacingDays = "1";
+                    }
+                }, (obj) => SelectedAlgorithm != null);
+            }
+        }
+        public ICommand SpacingOptimizationTestsDaysDecrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(OptimizationSpacingDays, out int res))
+                    {
+                        OptimizationSpacingDays = (res - 1).ToString();
+                    }
+                    else
+                    {
+                        OptimizationSpacingDays = "0";
+                    }
+                }, (obj) => SelectedAlgorithm != null);
+            }
+        }
+
+        public ICommand DurationForwardTestYearsIncrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(DurationForwardYears, out int res))
+                    {
+                        DurationForwardYears = (res + 1).ToString();
+                    }
+                    else
+                    {
+                        DurationForwardYears = "1";
+                    }
+                }, (obj) => SelectedAlgorithm != null && IsForwardTesting);
+            }
+        }
+        public ICommand DurationForwardTestYearsDecrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(DurationForwardYears, out int res))
+                    {
+                        DurationForwardYears = (res - 1).ToString();
+                    }
+                    else
+                    {
+                        DurationForwardYears = "0";
+                    }
+                }, (obj) => SelectedAlgorithm != null && IsForwardTesting);
+            }
+        }
+        public ICommand DurationForwardTestMonthsIncrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(DurationForwardMonths, out int res))
+                    {
+                        DurationForwardMonths = (res + 1).ToString();
+                    }
+                    else
+                    {
+                        DurationForwardMonths = "1";
+                    }
+                }, (obj) => SelectedAlgorithm != null && IsForwardTesting);
+            }
+        }
+        public ICommand DurationForwardTestMonthsDecrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(DurationForwardMonths, out int res))
+                    {
+                        DurationForwardMonths = (res - 1).ToString();
+                    }
+                    else
+                    {
+                        DurationForwardMonths = "0";
+                    }
+                }, (obj) => SelectedAlgorithm != null && IsForwardTesting);
+            }
+        }
+        public ICommand DurationForwardTestDaysIncrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(DurationForwardDays, out int res))
+                    {
+                        DurationForwardDays = (res + 1).ToString();
+                    }
+                    else
+                    {
+                        DurationForwardDays = "1";
+                    }
+                }, (obj) => SelectedAlgorithm != null && IsForwardTesting);
+            }
+        }
+        public ICommand DurationForwardTestDaysDecrement_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (int.TryParse(DurationForwardDays, out int res))
+                    {
+                        DurationForwardDays = (res - 1).ToString();
+                    }
+                    else
+                    {
+                        DurationForwardDays = "0";
+                    }
+                }, (obj) => SelectedAlgorithm != null && IsForwardTesting);
+            }
+        }
+
         private ObservableCollection<string> _tooltipLaunchTesting = new ObservableCollection<string>();
         public ObservableCollection<string> TooltipLaunchTesting
         {
@@ -3732,14 +4041,19 @@ namespace ktradesystem.ViewModels
             }
             if(isYearsNotEmpty || isMonthsNotEmpty || isDaysNotEmpty)
             {
+                int resSum = 0; //сумма длительностей (чтобы допускать когда в некоторых 0 а в некоторых больше нуля)
                 bool isCorrect = true;
                 if (isYearsNotEmpty)
                 {
                     if(int.TryParse(DurationOptimizationYears, out int res))
                     {
-                        if(res <= 0)
+                        if(res < 0)
                         {
                             isCorrect = false;
+                        }
+                        else
+                        {
+                            resSum += res;
                         }
                     }
                     else
@@ -3751,9 +4065,13 @@ namespace ktradesystem.ViewModels
                 {
                     if(int.TryParse(DurationOptimizationMonths, out int res))
                     {
-                        if (res <= 0)
+                        if (res < 0)
                         {
                             isCorrect = false;
+                        }
+                        else
+                        {
+                            resSum += res;
                         }
                     }
                     else
@@ -3765,9 +4083,13 @@ namespace ktradesystem.ViewModels
                 {
                     if(int.TryParse(DurationOptimizationDays, out int res))
                     {
-                        if (res <= 0)
+                        if (res < 0)
                         {
                             isCorrect = false;
+                        }
+                        else
+                        {
+                            resSum += res;
                         }
                     }
                     else
@@ -3775,7 +4097,7 @@ namespace ktradesystem.ViewModels
                         isCorrect = false;
                     }
                 }
-                if(isCorrect == false)
+                if(isCorrect == false || resSum == 0)
                 {
                     result = false;
                     TooltipLaunchTesting.Add("Длительность оптимизационных тестов должна быть целым положительным числом.");
@@ -3805,14 +4127,19 @@ namespace ktradesystem.ViewModels
             }
             if (isYearsNotEmpty || isMonthsNotEmpty || isDaysNotEmpty)
             {
+                int resSum = 0; //сумма длительностей (чтобы допускать когда в некоторых 0 а в некоторых больше нуля)
                 bool isCorrect = true;
                 if (isYearsNotEmpty)
                 {
                     if (int.TryParse(OptimizationSpacingYears, out int res))
                     {
-                        if (res <= 0)
+                        if (res < 0)
                         {
                             isCorrect = false;
+                        }
+                        else
+                        {
+                            resSum += res;
                         }
                     }
                     else
@@ -3824,9 +4151,13 @@ namespace ktradesystem.ViewModels
                 {
                     if (int.TryParse(OptimizationSpacingMonths, out int res))
                     {
-                        if (res <= 0)
+                        if (res < 0)
                         {
                             isCorrect = false;
+                        }
+                        else
+                        {
+                            resSum += res;
                         }
                     }
                     else
@@ -3838,9 +4169,13 @@ namespace ktradesystem.ViewModels
                 {
                     if (int.TryParse(OptimizationSpacingDays, out int res))
                     {
-                        if (res <= 0)
+                        if (res < 0)
                         {
                             isCorrect = false;
+                        }
+                        else
+                        {
+                            resSum += res;
                         }
                     }
                     else
@@ -3848,7 +4183,7 @@ namespace ktradesystem.ViewModels
                         isCorrect = false;
                     }
                 }
-                if (isCorrect == false)
+                if (isCorrect == false || resSum == 0)
                 {
                     result = false;
                     TooltipLaunchTesting.Add("Промежуток между оптимизационными тестами должен быть целым положитльным числом.");
@@ -3880,14 +4215,19 @@ namespace ktradesystem.ViewModels
                 }
                 if (isYearsNotEmpty || isMonthsNotEmpty || isDaysNotEmpty)
                 {
+                    int resSum = 0; //сумма длительностей (чтобы допускать когда в некоторых 0 а в некоторых больше нуля)
                     bool isCorrect = true;
                     if (isYearsNotEmpty)
                     {
                         if (int.TryParse(DurationForwardYears, out int res))
                         {
-                            if (res <= 0)
+                            if (res < 0)
                             {
                                 isCorrect = false;
+                            }
+                            else
+                            {
+                                resSum += res;
                             }
                         }
                         else
@@ -3899,9 +4239,13 @@ namespace ktradesystem.ViewModels
                     {
                         if (int.TryParse(DurationForwardMonths, out int res))
                         {
-                            if (res <= 0)
+                            if (res < 0)
                             {
                                 isCorrect = false;
+                            }
+                            else
+                            {
+                                resSum += res;
                             }
                         }
                         else
@@ -3913,9 +4257,13 @@ namespace ktradesystem.ViewModels
                     {
                         if (int.TryParse(DurationForwardDays, out int res))
                         {
-                            if (res <= 0)
+                            if (res < 0)
                             {
                                 isCorrect = false;
+                            }
+                            else
+                            {
+                                resSum += res;
                             }
                         }
                         else
@@ -3923,7 +4271,7 @@ namespace ktradesystem.ViewModels
                             isCorrect = false;
                         }
                     }
-                    if (isCorrect == false)
+                    if (isCorrect == false || resSum == 0)
                     {
                         result = false;
                         TooltipLaunchTesting.Add("Длительность форвардного теста должна быть целым положительным числом.");

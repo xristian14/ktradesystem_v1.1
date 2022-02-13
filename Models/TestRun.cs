@@ -20,6 +20,24 @@ namespace ktradesystem.Models
         public List<string> ProfitDeviation { get; set; }
         public List<string> LoseSeriesDeviation { get; set; }
         public List<string> ProfitSeriesDeviation { get; set; }
-        public bool IsComplete { get; set; }
+        private readonly object locker = new object();
+        private bool _isComplete { get; set; } //завершен ли тест
+        public bool IsComplete //реализация потокобезопасного получения и установки свойства
+        {
+            get
+            {
+                lock (locker)
+                {
+                    return _isComplete;
+                }
+            }
+            set
+            {
+                lock (locker)
+                {
+                    _isComplete = value;
+                }
+            }
+        }
     }
 }

@@ -890,7 +890,7 @@ namespace ktradesystem.Models
                 countTestRunWithForward += IsForwardTesting && IsForwardDepositTrading ? TestBatches.Count : 0;
                 _modelData.DispatcherInvoke((Action)(() => {
                     _mainCommunicationChannel.TestingProgress.Clear();
-                    _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { Header = "", TasksCount = countTestRunWithForward, CompletedTasksCount = 0, ElapsedTime = TimeSpan.FromSeconds(0), CancelPossibility = true, IsFinish = false });
+                    _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { Header = "", TasksCount = countTestRunWithForward, CompletedTasksCount = 0, ElapsedTime = TimeSpan.FromSeconds(0.1), CancelPossibility = true, IsFinish = false });
                 }));
 
                 if (countTestRuns > 0) //если количество тестов больше нуля, переходим на создание задач и выполнение тестов
@@ -1024,11 +1024,14 @@ namespace ktradesystem.Models
                     int testRunIndex = 0; //индекс testRun-а, который отправляется в задачи
                     int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест, в 1-м элементе будет -1, если это форвардный тест с торговлей депозитом в 1-м элементе будет -2)
                     int[][] testRunsStatus = new int[TestBatches.Count][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у выполненного 1
+                    int[][] testRunsStatus2 = new int[TestBatches.Count][]; //индексы потока в tasks в котором выполнялся testRun
                     //создаем для каждого testBatch массив равный количеству testRun
                     for (int k = 0; k < TestBatches.Count; k++)
                     {
                         testRunsStatus[k] = new int[TestBatches[k].OptimizationTestRuns.Count];
                         for (int y = 0; y < testRunsStatus[k].Length; y++) { testRunsStatus[k][y] = 0; } //заполняем статусы testRun нулями
+                        testRunsStatus2[k] = new int[TestBatches[k].OptimizationTestRuns.Count];
+                        for (int y = 0; y < testRunsStatus2[k].Length; y++) { testRunsStatus2[k][y] = -1; } //заполняем статусы testRun нулями
                     }
                     bool isAllTestRunsComplete = false; //выполнены ли все testRun-ы
                     int n = 0; //номер прохождения цикла
@@ -1041,6 +1044,7 @@ namespace ktradesystem.Models
                             Task task = Task.Run(() => TestRunExecute(testRun, indicators, cancellationToken));
                             tasks[n] = task;
                             tasksExecutingTestRuns[n] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
+                            testRunsStatus2[testBatchIndex][testRunIndex] = n;
                             testRunIndex++;
                             if(testRunIndex >= TestBatches[testBatchIndex].OptimizationTestRuns.Count) //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
                             {
@@ -1098,7 +1102,7 @@ namespace ktradesystem.Models
                             }
                             _modelData.DispatcherInvoke((Action)(() => {
                                 _mainCommunicationChannel.TestingProgress.Clear();
-                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { Header = "", TasksCount = countTestRunWithForward, CompletedTasksCount = n, ElapsedTime = stopwatch.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
+                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { Header = "", TasksCount = countTestRunWithForward, CompletedTasksCount = n - (tasksExecutingTestRuns.Length - 1), ElapsedTime = stopwatch.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
                             }));
 
                             //отмечаем testRun как выполненный (если это не форвардный тест)
@@ -2268,6 +2272,7 @@ namespace ktradesystem.Models
                                 TestRun testRun = TestBatches[testBatchIndex].OptimizationTestRuns[testRunIndex];
                                 task = Task.Run(() => TestRunExecute(testRun, indicators, cancellationToken));
                                 tasksExecutingTestRuns[completedTaskIndex] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
+                                testRunsStatus2[testBatchIndex][testRunIndex] = completedTaskIndex;
                                 testRunIndex++;
                                 if (testRunIndex >= TestBatches[testBatchIndex].OptimizationTestRuns.Count) //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
                                 {
@@ -2440,6 +2445,7 @@ namespace ktradesystem.Models
 
         private void TestRunExecute(TestRun testRun, List<Indicator> indicators, CancellationToken cancellationToken)
         {
+            Thread.CurrentThread.Priority = ThreadPriority.Highest;
             //формируем массивы с int и double значениями параметров для каждого индикатора
             int[][] indicatorParametersIntValues = new int[indicators.Count][];
             double[][] indicatorParametersDoubleValues = new double[indicators.Count][];

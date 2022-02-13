@@ -20,5 +20,6 @@ namespace ktradesystem.Models
         public List<string> ProfitDeviation { get; set; }
         public List<string> LoseSeriesDeviation { get; set; }
         public List<string> ProfitSeriesDeviation { get; set; }
+        public bool IsComplete { get; set; }
     }
 }

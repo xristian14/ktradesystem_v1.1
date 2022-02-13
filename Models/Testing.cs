@@ -400,7 +400,7 @@ namespace ktradesystem.Models
                                 algorithmParameterValues.Add(algorithmParameterValue);
                                 alg++;
                             }
-                            TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = optimizationStartDate, EndPeriod = optimizationEndDate, IndicatorParameterValues = indicatorParameterValues, AlgorithmParameterValues = algorithmParameterValues, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>() };
+                            TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = optimizationStartDate, EndPeriod = optimizationEndDate, IndicatorParameterValues = indicatorParameterValues, AlgorithmParameterValues = algorithmParameterValues, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
                             optimizationTestRuns.Add(testRun);
                         }
                         testBatch.OptimizationTestRuns = optimizationTestRuns;
@@ -425,7 +425,7 @@ namespace ktradesystem.Models
                             depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
 
                             Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = DefaultCurrency, IsForwardDepositTrading = false, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges };
-                            TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>() };
+                            TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
                             //добавляем форвардный тест в testBatch
                             testBatch.ForwardTestRun = testRun;
                         }
@@ -449,7 +449,7 @@ namespace ktradesystem.Models
                             depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
 
                             Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = DefaultCurrency, IsForwardDepositTrading = true, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges };
-                            TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>() };
+                            TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
                             //добавляем форвардный тест с торговлей депозитом в testBatch
                             testBatch.ForwardTestRunDepositTrading = testRun;
                         }
@@ -1054,7 +1054,41 @@ namespace ktradesystem.Models
                             bool isStartForwardTestRun = false; //на текущей итерации отправить в задачу форвардный тест
                             bool isStartForwardTestRunDepositTrading = false; //на текущей итерации отправить в задачу форвардный тест с торговлей депозитом
 
-                            int completedTaskIndex = Task.WaitAny(tasks);
+                            int completedTaskIndex = Task.WaitAny(tasks); //ждем чтобы не все время в цикле со sleep ждать
+                            bool isAnyComplete = false;
+                            //ждем пока один из выполняющихся testRun-ов не будет выполнен
+                            while(isAnyComplete == false)
+                            {
+                                Thread.Sleep(10);
+                                int taskIndex = 0;
+                                while(taskIndex < tasksExecutingTestRuns.Length && isAnyComplete == false) //проходим по всем задачам и смотрим на статусы выполненности testRun-ов
+                                {
+                                    if(tasksExecutingTestRuns[taskIndex][1] >= 0) //оптимизационный тест
+                                    {
+                                        if (TestBatches[tasksExecutingTestRuns[taskIndex][0]].OptimizationTestRuns[tasksExecutingTestRuns[taskIndex][1]].IsComplete)
+                                        {
+                                            isAnyComplete = true;
+                                            completedTaskIndex = taskIndex;
+                                        }
+                                    }
+                                    else if(tasksExecutingTestRuns[taskIndex][1] == -1) //форвардный тест
+                                    {
+                                        if (TestBatches[tasksExecutingTestRuns[taskIndex][0]].ForwardTestRun.IsComplete)
+                                        {
+                                            isAnyComplete = true;
+                                            completedTaskIndex = taskIndex;
+                                        }
+                                    }
+                                    else if(tasksExecutingTestRuns[taskIndex][1] == -2) //форвардный тест с торговлей депозитом
+                                    {
+                                        if (TestBatches[tasksExecutingTestRuns[taskIndex][0]].ForwardTestRunDepositTrading.IsComplete)
+                                        {
+                                            isAnyComplete = true;
+                                            completedTaskIndex = taskIndex;
+                                        }
+                                    }
+                                }
+                            }
 
                             if (cancellationToken.IsCancellationRequested) //если был запрос на отмену операции, прекращем функцию
                             {
@@ -2784,6 +2818,7 @@ namespace ktradesystem.Models
                 evaluationCriteriaValue.EvaluationCriteria = _modelData.EvaluationCriterias[i];
                 testRun.EvaluationCriteriaValues.Add(evaluationCriteriaValue);
             }
+            testRun.IsComplete = true;
         }
 
         public double RoundToIncrement(double x, double m) //функция округляет число до определенного множителя, например, RoundToIncrement(3.14, 0.2) вернет 3.2

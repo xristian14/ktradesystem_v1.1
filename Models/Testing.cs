@@ -1561,7 +1561,7 @@ namespace ktradesystem.Models
                                                     //перебираем все testRun-ы сверху-вниз, переходя на следующую колонку, и суммируем разности соседних тестов взятые по модулю
                                                     for (int y = 0; y < yParameterCountValues; y++)
                                                     {
-                                                        for (int x = 1; x < yParameterCountValues; x++)
+                                                        for (int x = 1; x < xParameterCountValues; x++)
                                                         {
                                                             //находим testRun-ы со значениями параметров x и y - 1, а так же x и y
                                                             int indexXParameter = indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]; //индекс 1-го параметра комбинации (в параметрах индикаторов или алгоритма)
@@ -1748,14 +1748,16 @@ namespace ktradesystem.Models
                                             //количество значений параметра X
                                             int xAxisCountParameterValue = 0;
                                             bool isXAxisIndicatorParameter = testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate != null ? true : false;
-                                            bool isXAxisIntValue = testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
+                                            bool isXAxisIntValue = false; //тип значения параметра
                                             if (isXAxisIndicatorParameter) //параметр индикатора
                                             {
+                                                isXAxisIntValue = testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
                                                 int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
                                                 xAxisCountParameterValue = isXAxisIntValue ? IndicatorsParametersAllIntValues[parameterIndex].Count : AlgorithmParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
                                             }
                                             else //параметр алгоритма
                                             {
+                                                isXAxisIntValue = testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
                                                 int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter).First()); //индекс параметра в списке параметров
                                                 xAxisCountParameterValue = isXAxisIntValue ? AlgorithmParametersAllIntValues[parameterIndex].Count : AlgorithmParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
                                             }
@@ -1763,14 +1765,16 @@ namespace ktradesystem.Models
                                             //количество значений параметра Y
                                             int yAxisCountParameterValue = 0;
                                             bool isYAxisIndicatorParameter = testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate != null ? true : false;
-                                            bool isYAxisIntValue = testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
+                                            bool isYAxisIntValue = false; //тип значения параметра
                                             if (isYAxisIndicatorParameter) //параметр индикатора
                                             {
+                                                isYAxisIntValue = testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
                                                 int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
                                                 yAxisCountParameterValue = isYAxisIntValue ? IndicatorsParametersAllIntValues[parameterIndex].Count : IndicatorsParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
                                             }
                                             else //параметр алгоритма
                                             {
+                                                isYAxisIntValue = testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
                                                 int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter).First()); //индекс параметра в списке параметров
                                                 yAxisCountParameterValue = isYAxisIntValue ? AlgorithmParametersAllIntValues[parameterIndex].Count : AlgorithmParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
                                             }
@@ -1894,7 +1898,7 @@ namespace ktradesystem.Models
                                                     }
                                                 }
                                                 //если текущий параметр и X параметр, параметры алгоритма
-                                                if(indicatorsAlgorithmParameters[i][0] == 2 && isXAxisIndicatorParameter == false)
+                                                if(indicatorsAlgorithmParameters[i][0] == 2 && isYAxisIndicatorParameter == false)
                                                 {
                                                     if(Algorithm.AlgorithmParameters[indicatorsAlgorithmParameters[i][1]] == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter)
                                                     {

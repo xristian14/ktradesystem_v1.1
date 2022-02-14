@@ -1028,7 +1028,7 @@ namespace ktradesystem.Models
                     Task[] tasks = new Task[processorCount]; //задачи
                     Stopwatch stopwatch = new Stopwatch();
                     stopwatch.Start();
-                    int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест, в 1-м элементе будет -1, если это форвардный тест с торговлей депозитом в 1-м элементе будет -2)
+                    int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест, в 1-м элементе будет OptimizationTestRuns.Count, если это форвардный тест с торговлей депозитом в 1-м элементе будет OptimizationTestRuns.Count + 1)
                     int[][] testRunsStatus = new int[TestBatches.Count][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у запущенного 1, а у выполненного 2. При форвардном тестировании, в список со статусами выполненности оптимизационных тестов в конец добавляется еще один элемент - статус форвардного теста, при форвардном тестировании с торговлей депозитом - 2 элемента, статус форвардного теста и статус форвардного теста с торговлей депозитом
                     int[][] testRunsStatus2 = new int[TestBatches.Count][]; //индексы потока в tasks в котором выполнялся testRun
                     //создаем для каждого testBatch массив равный количеству testRun
@@ -1042,7 +1042,8 @@ namespace ktradesystem.Models
                         for (int y = 0; y < testRunsStatus2[k].Length; y++) { testRunsStatus2[k][y] = -1; } //заполняем индексы задач в tasks -1
                     }
                     bool isAllTestRunsComplete = false; //выполнены ли все testRun-ы
-                    int n = 0; //номер прохождения цикла
+                    int completedCount = 0; //количество выполненных testRun-ов
+                    int n = 0; //номер задачи, нужен для начального заполнения массива tasks
                     while (isAllTestRunsComplete == false)
                     {
                         if (tasks[tasks.Length - 1] == null) //если пока еще не заполнен массив с задачами, заполняем его
@@ -1074,6 +1075,7 @@ namespace ktradesystem.Models
                             tasksExecutingTestRuns[n] = new int[2] { testBatchIndx, testRunIndx }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
                             testRunsStatus[testBatchIndx][testRunIndx] = 1; //отмечаем что testRun имеет статус запущен
                             testRunsStatus2[testBatchIndx][testRunIndx] = n;
+                            n++; //увеличиваем индекс задачи
                         }
                         else //иначе ждем и обрабатываем выполненные задачи
                         {
@@ -1089,21 +1091,21 @@ namespace ktradesystem.Models
                                     //если в задаче находится testRun со статусом Запущен (если нет, то он уже выполнен, и не был заменен новым testRun-ом т.к. они закончились)
                                     if(testRunsStatus[tasksExecutingTestRuns[taskIndex][0]][tasksExecutingTestRuns[taskIndex][1]] == 1)
                                     {
-                                        if (tasksExecutingTestRuns[taskIndex][1] >= 0) //оптимизационный тест, который имеет статус Запущен
+                                        if (tasksExecutingTestRuns[taskIndex][1] < TestBatches[0].OptimizationTestRuns.Count) //оптимизационный тест
                                         {
                                             if (TestBatches[tasksExecutingTestRuns[taskIndex][0]].OptimizationTestRuns[tasksExecutingTestRuns[taskIndex][1]].IsComplete)
                                             {
                                                 isAnyComplete = true;
                                             }
                                         }
-                                        else if (tasksExecutingTestRuns[taskIndex][1] == -1) //форвардный тест
+                                        else if (tasksExecutingTestRuns[taskIndex][1] == TestBatches[0].OptimizationTestRuns.Count) //форвардный тест
                                         {
                                             if (TestBatches[tasksExecutingTestRuns[taskIndex][0]].ForwardTestRun.IsComplete)
                                             {
                                                 isAnyComplete = true;
                                             }
                                         }
-                                        else if (tasksExecutingTestRuns[taskIndex][1] == -2) //форвардный тест с торговлей депозитом
+                                        else if (tasksExecutingTestRuns[taskIndex][1] == TestBatches[0].OptimizationTestRuns.Count + 1) //форвардный тест с торговлей депозитом
                                         {
                                             if (TestBatches[tasksExecutingTestRuns[taskIndex][0]].ForwardTestRunDepositTrading.IsComplete)
                                             {
@@ -1123,18 +1125,19 @@ namespace ktradesystem.Models
                             }
                             _modelData.DispatcherInvoke((Action)(() => {
                                 _mainCommunicationChannel.TestingProgress.Clear();
-                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { Header = "", TasksCount = countTestRunWithForward, CompletedTasksCount = n - (tasksExecutingTestRuns.Length - 1), ElapsedTime = stopwatch.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
+                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { Header = "", TasksCount = countTestRunWithForward, CompletedTasksCount = completedCount, ElapsedTime = stopwatch.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
                             }));
 
                             //обрабатываем выполненные testRun-ы
                             int taskIndex1 = 0;
                             while (taskIndex1 < tasksExecutingTestRuns.Length) //проходим по всем задачам и смотрим на статусы выполненности testRun-ов, у выполненных отмечаем в статусе как выполнена
                             {
-                                if (tasksExecutingTestRuns[taskIndex1][1] >= 0) //оптимизационный тест
+                                if (tasksExecutingTestRuns[taskIndex1][1] < TestBatches[0].OptimizationTestRuns.Count) //оптимизационный тест
                                 {
                                     if (TestBatches[tasksExecutingTestRuns[taskIndex1][0]].OptimizationTestRuns[tasksExecutingTestRuns[taskIndex1][1]].IsComplete)
                                     {
                                         testRunsStatus[tasksExecutingTestRuns[taskIndex1][0]][tasksExecutingTestRuns[taskIndex1][1]] = 2; //отмечаем в статусе testRun-а что он выполнен
+                                        completedCount++; //увеличиваем количество выполненных тестов на 1
                                         //определяем, выполнены ли все оптимизационные тесты данного testBatch
                                         bool isOptimizationTestsComplete = true;
                                         int a = 0;
@@ -1194,18 +1197,20 @@ namespace ktradesystem.Models
                                         }
                                     }
                                 }
-                                else if (tasksExecutingTestRuns[taskIndex1][1] == -1) //форвардный тест
+                                else if (tasksExecutingTestRuns[taskIndex1][1] == TestBatches[0].OptimizationTestRuns.Count) //форвардный тест
                                 {
                                     if (TestBatches[tasksExecutingTestRuns[taskIndex1][0]].ForwardTestRun.IsComplete)
                                     {
                                         testRunsStatus[tasksExecutingTestRuns[taskIndex1][0]][tasksExecutingTestRuns[taskIndex1][1]] = 2; //отмечаем в статусе testRun-а что он выполнен
+                                        completedCount++; //увеличиваем количество выполненных тестов на 1
                                     }
                                 }
-                                else if (tasksExecutingTestRuns[taskIndex1][1] == -2) //форвардный тест с торговлей депозитом
+                                else if (tasksExecutingTestRuns[taskIndex1][1] == TestBatches[0].OptimizationTestRuns.Count + 1) //форвардный тест с торговлей депозитом
                                 {
                                     if (TestBatches[tasksExecutingTestRuns[taskIndex1][0]].ForwardTestRunDepositTrading.IsComplete)
                                     {
                                         testRunsStatus[tasksExecutingTestRuns[taskIndex1][0]][tasksExecutingTestRuns[taskIndex1][1]] = 2; //отмечаем в статусе testRun-а что он выполнен
+                                        completedCount++; //увеличиваем количество выполненных тестов на 1
                                     }
                                 }
                                 taskIndex1++;
@@ -1246,7 +1251,7 @@ namespace ktradesystem.Models
                                                     //смотрим, имеет ли форвардный тест с торговлей депозитом статус Не выполнен
                                                     if (testRunsStatus[tBatchIndex][TestBatches[tBatchIndex].OptimizationTestRuns.Count + 1] == 0) //если у форвардного теста с торговлей депозитом статус Не выполнен, запускаем его в текущей задаче
                                                     {
-                                                        testRun = TestBatches[tBatchIndex].ForwardTestRun;
+                                                        testRun = TestBatches[tBatchIndex].ForwardTestRunDepositTrading;
                                                         isTestFind = true;
                                                         tRunIndex = TestBatches[tBatchIndex].OptimizationTestRuns.Count + 1; //запоминаем индекс, в который записать статус testRun
                                                     }
@@ -1308,9 +1313,7 @@ namespace ktradesystem.Models
                                 isAllTestRunsComplete = true; //если ни один из testRun-ов в задачах не имеет статус Запущен, отмечаем что тестирование окончено
                             }
                         }
-                        n++;
                     }
-                    Task.WaitAll(tasks);
                     TestingEnding(true);
                 }
                 else //если количество testRun-ов == 0, оповещаем пользователя и завершаем тестирование

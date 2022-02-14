@@ -155,53 +155,28 @@ namespace ktradesystem.Models
                     }
                 }
 
-                //определяем время работы биржи для файлов и интервалы, распараллеливая это на несколько потоков
+                //определяем время работы биржи для файлов и интервалы
                 Stopwatch stopwatch = new Stopwatch();
                 stopwatch.Start();
-                int processorCount = Environment.ProcessorCount; //количество создаваемых потоков
-                processorCount -= _modelData.Settings.Where(i => i.Id == 1).First().BoolValue ? 1 : 0; //если в настройках выбрано оставлять один поток, вычитаем из количества потоков
-                if (dataSourceFiles.Count < processorCount) //если файлов меньше чем число доступных потоков, устанавливаем количество потоков на количество файлов, т.к. WaitAll ругается если задача в tasks null
-                {
-                    processorCount = dataSourceFiles.Count;
-                }
-                if(processorCount < 1)
-                {
-                    processorCount = 1;
-                }
-                var tasks = new Task[processorCount]; //задачи
                 string progressHeader = id == -1 ? "Добавление источника данных" : "Редактирование источника данных";
                 int taskCount = id == -1 ? dataSourceFiles.Count * 2 : dataSourceFiles.Count * 2 + 3;//количество задач (для прогресса выполнения)
                 for(int i = 0; i < dataSourceFiles.Count; i++)
                 {
-                    if(i < processorCount)
-                    {
-                        DataSourceFile dataSourceFile = dataSourceFiles[i];
-                        Interval interval = intervalsInFiles[i];
-                        tasks[i] = Task.Run(() => DefiningFileWorkingPeriods(dataSourceFile, interval));
-                    }
-                    else
-                    {
-                        int indexCompleted = Task.WaitAny(tasks);
+                    DefiningFileWorkingPeriods(dataSourceFiles[i], intervalsInFiles[i]);
 
-                        if (cancellationToken.IsCancellationRequested) //если был запрос на отмену операции, прекращем функцию
-                        {
-                            Task.WaitAll(tasks);
-                            AddDataSourceEnding();
-                            return;
-                        }
-
-                        DispatcherInvoke((Action)(() => {
-                            _mainCommunicationChannel.DataSourceAddingProgress.Clear();
-                            _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { Header = progressHeader, TasksCount = taskCount, CompletedTasksCount = i + 1 - processorCount, ElapsedTime = stopwatch.Elapsed, CancelPossibility = true, IsFinish = false });
-                        }));
-                        
-                        DataSourceFile dataSourceFile = dataSourceFiles[i];
-                        Interval interval = intervalsInFiles[i];
-                        tasks[indexCompleted] = Task.Run(() => DefiningFileWorkingPeriods(dataSourceFile, interval));
+                    if (cancellationToken.IsCancellationRequested) //если был запрос на отмену операции, прекращем функцию
+                    {
+                        AddDataSourceEnding();
+                        return;
                     }
+
+                    DispatcherInvoke((Action)(() => {
+                        _mainCommunicationChannel.DataSourceAddingProgress.Clear();
+                        _mainCommunicationChannel.DataSourceAddingProgress.Add(new DataSourceAddingProgress { Header = progressHeader, TasksCount = taskCount, CompletedTasksCount = i + 1, ElapsedTime = stopwatch.Elapsed, CancelPossibility = true, IsFinish = false });
+                    }));
                 }
-                Task.WaitAll(tasks);
-                if (cancellationToken.IsCancellationRequested) //если был запрос на отмену операци, прекращем функцию
+
+                if (cancellationToken.IsCancellationRequested) //если был запрос на отмену операции, прекращем функцию
                 {
                     AddDataSourceEnding();
                     return;

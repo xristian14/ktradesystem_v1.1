@@ -336,6 +336,10 @@ namespace ktradesystem.Models
 
         public void TestingLaunch(Testing testing)
         {
+            if(CancellationTokenTesting != null)
+            {
+                CancellationTokenTesting.Dispose();
+            }
             CancellationTokenTesting = new CancellationTokenSource();
             DispatcherInvoke((Action)(() => { _mainCommunicationChannel.TestingProgress.Clear(); }));
             testing.LaunchTesting();

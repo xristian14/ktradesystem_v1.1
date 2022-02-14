@@ -1718,6 +1718,14 @@ namespace ktradesystem.Models
                             {
                                 order.DateTimeRemove = currentDateTime;
                             }
+                            //добавляем новые заявки во все заявки, а так же добавляем номер (оставшиеся заявки пользователя)
+                            int lastNumber = testRun.Account.AllOrders.Count == 0 ? 0 : testRun.Account.AllOrders.Last().Number; //номер последней заявки
+                            foreach(Order order2 in algorithmCalculateResult.Orders)
+                            {
+                                testRun.Account.AllOrders.Add(order2);
+                                lastNumber++;
+                                order2.Number = lastNumber;
+                            }
                             //добавляем оставшиеся заявки пользователя к новым текущим
                             newAccountOrders.AddRange(algorithmCalculateResult.Orders);
                             testRun.Account.Orders = newAccountOrders; //обновляем текущие заявки
@@ -1996,8 +2004,8 @@ namespace ktradesystem.Models
                     order.LinkedOrder.Count = order.Count;
                 }
                 //записываем сделку
-                account.AllDeals.Add(new Deal { Number = account.AllDeals.Count + 1, DataSource = order.DataSource, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime });
-                Deal currentDeal = new Deal { Number = account.AllDeals.Count + 1, DataSource = order.DataSource, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime };
+                account.AllDeals.Add(new Deal { Number = account.AllDeals.Count, DataSource = order.DataSource, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime });
+                Deal currentDeal = new Deal { Number = account.AllDeals.Count, DataSource = order.DataSource, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime };
                 account.CurrentPosition.Add(currentDeal);
                 isMakeADeal = true; //запоминаем что была совершена сделка
                 //вычитаем комиссию на сделку из свободных средств

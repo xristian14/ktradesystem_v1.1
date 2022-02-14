@@ -37,6 +37,10 @@ namespace ktradesystem.Models
         private dynamic[] CompiledEvaluationCriterias { get; set; } //объекты, содержащие метод, выполняющий расчет критерия оценки тестового прогона
         public List<DataSourceCandles> DataSourcesCandles { get; set; } //список с массивами свечек (для файлов) для источников данных (от сюда же будут браться данные для отображения графиков)
         private int TopModelEvaluationCriteriaIndex { get; set; } //индекс критерия оценки топ-модели
+        private List<int>[] IndicatorsParametersAllIntValues { get; set; }
+        private List<double>[] IndicatorsParametersAllDoubleValues { get; set; }
+        private List<int>[] AlgorithmParametersAllIntValues { get; set; }
+        private List<double>[] AlgorithmParametersAllDoubleValues { get; set; }
 
         private ModelData _modelData;
         private ModelTesting _modelTesting;
@@ -57,11 +61,11 @@ namespace ktradesystem.Models
             TopModelEvaluationCriteriaIndex = _modelData.EvaluationCriterias.IndexOf(TopModelCriteria.EvaluationCriteria);
 
             //определяем списки со значениями параметров
-            List<int>[] IndicatorsParametersAllIntValues = new List<int>[Algorithm.IndicatorParameterRanges.Count]; //массив со всеми возможными целочисленными значениями параметров индикаторов
-            List<double>[] IndicatorsParametersAllDoubleValues = new List<double>[Algorithm.IndicatorParameterRanges.Count]; //массив со всеми возможными дробными значениями параметров индикаторов
+            IndicatorsParametersAllIntValues = new List<int>[Algorithm.IndicatorParameterRanges.Count]; //массив со всеми возможными целочисленными значениями параметров индикаторов
+            IndicatorsParametersAllDoubleValues = new List<double>[Algorithm.IndicatorParameterRanges.Count]; //массив со всеми возможными дробными значениями параметров индикаторов
 
-            List<int>[] AlgorithmParametersAllIntValues = new List<int>[Algorithm.AlgorithmParameters.Count]; //массив со всеми возможными целочисленными значениями параметров алгоритма
-            List<double>[] AlgorithmParametersAllDoubleValues = new List<double>[Algorithm.AlgorithmParameters.Count]; //массив со всеми возможными дробными значениями параметров алгоритма
+            AlgorithmParametersAllIntValues = new List<int>[Algorithm.AlgorithmParameters.Count]; //массив со всеми возможными целочисленными значениями параметров алгоритма
+            AlgorithmParametersAllDoubleValues = new List<double>[Algorithm.AlgorithmParameters.Count]; //массив со всеми возможными дробными значениями параметров алгоритма
 
             //параметры будут передаваться в индикаторы и алгоритм в качестве параметров методов, при описании методов индикатора или алгоритма я укажу тип принимаемого параметра int или double в зависимости от типа в шаблоне параметра, и после проверки типа параметра, решу из какого списка передавать, со значениями double, или со значениями int
             
@@ -347,7 +351,7 @@ namespace ktradesystem.Models
                         }
 
                         //создаем testBatch
-                        TestBatch testBatch = new TestBatch { DataSourceGroup = dataSourceGroup, StatisticalSignificance = new List<string[]>() };
+                        TestBatch testBatch = new TestBatch { DataSourceGroup = dataSourceGroup, StatisticalSignificance = new List<string[]>(), IsTopModelDetermining = false };
 
                         //формируем оптимизационные тесты
                         List<TestRun> optimizationTestRuns = new List<TestRun>();
@@ -1024,8 +1028,6 @@ namespace ktradesystem.Models
                     Task[] tasks = new Task[processorCount]; //задачи
                     Stopwatch stopwatch = new Stopwatch();
                     stopwatch.Start();
-                    int testBatchIndex = 0; //индекс тестовой связки, testRun-ы которой отправляются в задачи
-                    int testRunIndex = 0; //индекс testRun-а, который отправляется в задачи
                     int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест, в 1-м элементе будет -1, если это форвардный тест с торговлей депозитом в 1-м элементе будет -2)
                     int[][] testRunsStatus = new int[TestBatches.Count][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у запущенного 1, а у выполненного 2. При форвардном тестировании, в список со статусами выполненности оптимизационных тестов в конец добавляется еще один элемент - статус форвардного теста, при форвардном тестировании с торговлей депозитом - 2 элемента, статус форвардного теста и статус форвардного теста с торговлей депозитом
                     int[][] testRunsStatus2 = new int[TestBatches.Count][]; //индексы потока в tasks в котором выполнялся testRun
@@ -1037,35 +1039,45 @@ namespace ktradesystem.Models
                         testRunsStatus[k] = new int[TestBatches[k].OptimizationTestRuns.Count + forwardTestRunsCount];
                         for (int y = 0; y < testRunsStatus[k].Length; y++) { testRunsStatus[k][y] = 0; } //заполняем статусы testRun нулями
                         testRunsStatus2[k] = new int[TestBatches[k].OptimizationTestRuns.Count + forwardTestRunsCount];
-                        for (int y = 0; y < testRunsStatus2[k].Length; y++) { testRunsStatus2[k][y] = -1; } //заполняем статусы testRun нулями
+                        for (int y = 0; y < testRunsStatus2[k].Length; y++) { testRunsStatus2[k][y] = -1; } //заполняем индексы задач в tasks -1
                     }
                     bool isAllTestRunsComplete = false; //выполнены ли все testRun-ы
                     int n = 0; //номер прохождения цикла
                     while (isAllTestRunsComplete == false)
                     {
-                        //если пока еще не заполнен массив с задачами, заполняем его
-                        if (tasks[tasks.Length - 1] == null)
+                        if (tasks[tasks.Length - 1] == null) //если пока еще не заполнен массив с задачами, заполняем его
                         {
-                            TestRun testRun = TestBatches[testBatchIndex].OptimizationTestRuns[testRunIndex];
+                            //находим первый testRun, который еще не запущен (имеет статус 0)
+                            int testBatchIndx = 0;
+                            int testRunIndx = 0;
+                            bool isFindTestRun = false;
+                            while(isFindTestRun == false)
+                            {
+                                if(testRunsStatus[testBatchIndx][testRunIndx] == 0)
+                                {
+                                    isFindTestRun = true;
+                                }
+                                else
+                                {
+                                    testRunIndx++;
+                                    if (testRunIndx >= TestBatches[testBatchIndx].OptimizationTestRuns.Count) //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
+                                    {
+                                        testRunIndx = 0;
+                                        testBatchIndx++;
+                                    }
+                                }
+                            }
+
+                            TestRun testRun = TestBatches[testBatchIndx].OptimizationTestRuns[testRunIndx];
                             Task task = Task.Run(() => TestRunExecute(testRun, indicators, cancellationToken));
                             tasks[n] = task;
-                            tasksExecutingTestRuns[n] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
-                            testRunsStatus[testBatchIndex][testRunIndex] = 1; //отмечаем что testRun имеет статус запущен
-                            testRunsStatus2[testBatchIndex][testRunIndex] = n;
-                            testRunIndex++;
-                            if(testRunIndex >= TestBatches[testBatchIndex].OptimizationTestRuns.Count) //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
-                            {
-                                testRunIndex = 0;
-                                testBatchIndex++;
-                            }
+                            tasksExecutingTestRuns[n] = new int[2] { testBatchIndx, testRunIndx }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
+                            testRunsStatus[testBatchIndx][testRunIndx] = 1; //отмечаем что testRun имеет статус запущен
+                            testRunsStatus2[testBatchIndx][testRunIndx] = n;
                         }
-                        else //иначе обрабатываем выполненную задачу
+                        else //иначе ждем и обрабатываем выполненные задачи
                         {
-                            bool isStartOptimizationTestRun = false; //на текущей итерации отправить в задачу следующий оптимизационный тест
-                            bool isStartForwardTestRun = false; //на текущей итерации отправить в задачу форвардный тест
-                            bool isStartForwardTestRunDepositTrading = false; //на текущей итерации отправить в задачу форвардный тест с торговлей депозитом
-
-                            int completedTaskIndex = Task.WaitAny(tasks); //ждем чтобы не все время в цикле со sleep ждать
+                            //int completedTaskIndex = Task.WaitAny(tasks); //ждем чтобы не все время в цикле со sleep ждать
                             bool isAnyComplete = false;
                             //ждем пока один из выполняющихся testRun-ов не будет выполнен
                             while(isAnyComplete == false)
@@ -1079,7 +1091,7 @@ namespace ktradesystem.Models
                                         if (TestBatches[tasksExecutingTestRuns[taskIndex][0]].OptimizationTestRuns[tasksExecutingTestRuns[taskIndex][1]].IsComplete)
                                         {
                                             isAnyComplete = true;
-                                            completedTaskIndex = taskIndex;
+                                            //completedTaskIndex = taskIndex;
                                         }
                                     }
                                     else if(tasksExecutingTestRuns[taskIndex][1] == -1) //форвардный тест
@@ -1087,7 +1099,7 @@ namespace ktradesystem.Models
                                         if (TestBatches[tasksExecutingTestRuns[taskIndex][0]].ForwardTestRun.IsComplete)
                                         {
                                             isAnyComplete = true;
-                                            completedTaskIndex = taskIndex;
+                                            //completedTaskIndex = taskIndex;
                                         }
                                     }
                                     else if(tasksExecutingTestRuns[taskIndex][1] == -2) //форвардный тест с торговлей депозитом
@@ -1095,7 +1107,7 @@ namespace ktradesystem.Models
                                         if (TestBatches[tasksExecutingTestRuns[taskIndex][0]].ForwardTestRunDepositTrading.IsComplete)
                                         {
                                             isAnyComplete = true;
-                                            completedTaskIndex = taskIndex;
+                                            //completedTaskIndex = taskIndex;
                                         }
                                     }
                                 }
@@ -1111,6 +1123,92 @@ namespace ktradesystem.Models
                                 _mainCommunicationChannel.TestingProgress.Clear();
                                 _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { Header = "", TasksCount = countTestRunWithForward, CompletedTasksCount = n - (tasksExecutingTestRuns.Length - 1), ElapsedTime = stopwatch.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
                             }));
+
+                            //обрабатываем выполненные testRun-ы
+                            int taskIndex1 = 0;
+                            while (taskIndex1 < tasksExecutingTestRuns.Length) //проходим по всем задачам и смотрим на статусы выполненности testRun-ов, у выполненных отмечаем в статусе как выполнена
+                            {
+                                if (tasksExecutingTestRuns[taskIndex1][1] >= 0) //оптимизационный тест
+                                {
+                                    if (TestBatches[tasksExecutingTestRuns[taskIndex1][0]].OptimizationTestRuns[tasksExecutingTestRuns[taskIndex1][1]].IsComplete)
+                                    {
+                                        //определяем, выполнены ли все оптимизационные тесты данного testBatch
+                                        bool isOptimizationTestsComplete = true;
+                                        int a = 0;
+                                        while (isOptimizationTestsComplete && a < TestBatches[tasksExecutingTestRuns[taskIndex1][0]].OptimizationTestRuns.Count)
+                                        {
+                                            if (testRunsStatus[tasksExecutingTestRuns[taskIndex1][0]][a] != 2)
+                                            {
+                                                isOptimizationTestsComplete = false;
+                                            }
+                                            a++;
+                                        }
+                                        if (isOptimizationTestsComplete) //если все оптимизационные тесты данного testBatch выполнены, запускаем определение топ-модели и статистической значимости
+                                        {
+                                            //определяем топ-модель и статистичекую значимость
+                                            TestBatch testBatch = TestBatches[tasksExecutingTestRuns[taskIndex1][0]]; //tasksExecutingTestRuns[taskIndex1][0] - testBatchIndex
+                                            TestBatchTopModelDetermining(testBatch);
+
+                                            //определяем статистическую значимость
+                                            int lossCount = 0;
+                                            double lossMoney = 0;
+                                            int profitCount = 0;
+                                            double profitMoney = 0;
+                                            //проходим по всем testRun-ам
+                                            for (int i = 0; i < testBatch.OptimizationTestRuns.Count; i++)
+                                            {
+                                                double testRunProfit = testBatch.OptimizationTestRuns[i].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == 1).First().DoubleValue; //EvaluationCriteria.Id == 1 - Чистая доходность
+                                                if (testRunProfit < 0)
+                                                {
+                                                    lossCount++;
+                                                    lossMoney += testRunProfit;
+                                                }
+                                                else
+                                                {
+                                                    profitCount++;
+                                                    profitMoney += testRunProfit;
+                                                }
+                                            }
+                                            //записываем статистическую значимость
+                                            string[] totalTests = new string[3] { (lossCount + profitCount).ToString(), "100.0%", (lossMoney + profitMoney).ToString() + DefaultCurrency.Name };
+                                            string[] lossTests = new string[3] { lossCount.ToString(), Math.Round((double)lossCount / (lossCount + profitCount) * 100, 1).ToString() + "%", lossMoney.ToString() + DefaultCurrency.Name };
+                                            string[] profitTests = new string[3] { profitCount.ToString(), Math.Round((double)profitCount / (lossCount + profitCount) * 100, 1).ToString() + "%", profitMoney.ToString() + DefaultCurrency.Name };
+                                            testBatch.StatisticalSignificance.Add(totalTests);
+                                            testBatch.StatisticalSignificance.Add(lossTests);
+                                            testBatch.StatisticalSignificance.Add(profitTests);
+
+                                            if (IsForwardTesting) //если это форвардное тестирование, записываем параметры для форвардного теста
+                                            {
+                                                testBatch.ForwardTestRun.IndicatorParameterValues = testBatch.TopModelTestRun.IndicatorParameterValues;
+                                                testBatch.ForwardTestRun.AlgorithmParameterValues = testBatch.TopModelTestRun.AlgorithmParameterValues;
+                                                if (IsForwardDepositTrading) //если это форвардное тестирование с торговлей депозитом, записываем параметры для форвардного теста с торговлей депозитом
+                                                {
+                                                    testBatch.ForwardTestRunDepositTrading.IndicatorParameterValues = testBatch.TopModelTestRun.IndicatorParameterValues;
+                                                    testBatch.ForwardTestRunDepositTrading.AlgorithmParameterValues = testBatch.TopModelTestRun.AlgorithmParameterValues;
+                                                }
+                                            }
+
+                                            TestBatches[tasksExecutingTestRuns[taskIndex1][0]].IsTopModelDetermining = true; //отмечаем что определили топ-модель для данного testBatch
+                                        }
+                                    }
+                                }
+                                else if (tasksExecutingTestRuns[taskIndex1][1] == -1) //форвардный тест
+                                {
+                                    if (TestBatches[tasksExecutingTestRuns[taskIndex1][0]].ForwardTestRun.IsComplete)
+                                    {
+                                        isAnyComplete = true;
+                                    }
+                                }
+                                else if (tasksExecutingTestRuns[taskIndex1][1] == -2) //форвардный тест с торговлей депозитом
+                                {
+                                    if (TestBatches[tasksExecutingTestRuns[taskIndex1][0]].ForwardTestRunDepositTrading.IsComplete)
+                                    {
+                                        isAnyComplete = true;
+                                    }
+                                }
+                            }
+
+
 
                             //отмечаем testRun как выполненный (если это не форвардный тест)
                             if (tasksExecutingTestRuns[completedTaskIndex][1] >= 0) //если индекс testRun-а больше или равен 0, зачит это оптимизационный тест, и его нужно записать
@@ -1132,1029 +1230,7 @@ namespace ktradesystem.Models
                                 {
                                     //определяем топ-модель и статистичекую значимость
                                     TestBatch testBatch = TestBatches[tasksExecutingTestRuns[completedTaskIndex][0]]; //tasksExecutingTestRuns[completedTaskIndex][0] - testBatchIndex
-                                    
-                                    if(IndicatorsParametersAllIntValues.Length + AlgorithmParametersAllIntValues.Length == 0) //если параметров нет - оптимизационный тест всего один, топ модель - testBatch.OptimizationTestRuns[0]
-                                    {
-                                        testBatch.TopModelTestRun = testBatch.OptimizationTestRuns[0];
-                                    }
-                                    else if (IsConsiderNeighbours) //если поиск топ-модели учитывает соседей, то для двух и более параметров - определяем оси двумерной плоскости поиска топ-модели с соседями и размер осей группы и определяем список с лучшими группами в порядке убывания и ищем топ-модель в группе, а для одного параметра - определяем размер группы и определяем список с лучшими группами в порядке убывания и ищем топ-модель (если из-за фильтров не найдена модель, ищем топ-модель в следующей лучшей группе, пока не кончатся группы)
-                                    {
-                                        if (IndicatorsParametersAllIntValues.Length + AlgorithmParametersAllIntValues.Length == 1) //если параметр всего один
-                                        {
-                                            int xAxisCountParameterValue = 0; //количество значений параметра
-                                            if (testBatch.OptimizationTestRuns[0].IndicatorParameterValues.Count > 0) //параметр - параметр индикатора
-                                            {
-                                                xAxisCountParameterValue = IndicatorsParametersAllIntValues.Length > 0 ? IndicatorsParametersAllIntValues.Length : IndicatorsParametersAllDoubleValues.Length;
-                                            }
-                                            else //параметр - параметр алгоритма
-                                            {
-                                                xAxisCountParameterValue = AlgorithmParametersAllIntValues.Length > 0 ? AlgorithmParametersAllIntValues.Length : AlgorithmParametersAllDoubleValues.Length;
-                                            }
-                                            int xAxisGroupSize = (int)Math.Round(xAxisCountParameterValue * (SizeNeighboursGroupPercent / 100));
-                                            xAxisGroupSize = xAxisGroupSize < 2 ? 2 : xAxisGroupSize; //если меньше 2-х, устанавливаем как 2
-                                            xAxisGroupSize = xAxisCountParameterValue < 2 ? 1 : xAxisGroupSize; //если количество значений параметра меньше 2-х, устанавливаем как 1
-
-                                            List<TestRun[]> testRunGroups = new List<TestRun[]>(); //список с группами
-                                            List<double> amountGroupsValue = new List<double>(); //суммарное значение критерия оценки для групп
-                                            //формируем группы
-                                            int startIndex = 0; //индекс первого элемента для группы
-                                            int endIndex = startIndex + (xAxisGroupSize - 1); //индекс последнего элемента для группы
-                                            while (endIndex < testBatch.OptimizationTestRuns.Count)
-                                            {
-                                                TestRun[] testRuns = new TestRun[xAxisGroupSize];
-                                                for(int i = 0; i < xAxisGroupSize; i++)
-                                                {
-                                                    testRuns[i] = testBatch.OptimizationTestRuns[startIndex + i];
-                                                }
-                                                startIndex++;
-                                                endIndex = startIndex + (xAxisGroupSize - 1);
-                                            }
-                                            //вычисляем суммарные значения критерия оценки для групп
-                                            for(int i = 0; i < testRunGroups.Count; i++)
-                                            {
-                                                double amountValue = 0;
-                                                for(int k = 0; k < testRunGroups[i].Length; k++)
-                                                {
-                                                    amountValue += testRunGroups[i][k].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue;
-                                                }
-                                                amountGroupsValue.Add(amountValue);
-                                            }
-                                            //сортируем список групп по убыванию суммарного значения критерия оценки
-                                            TestRun[] saveGroup; //элемент списка для сохранения после удаления из списка
-                                            double saveValue; //элемент списка для сохранения после удаления из списка
-                                            for (int i = 0; i < amountGroupsValue.Count; i++)
-                                            {
-                                                for (int k = 0; k < amountGroupsValue.Count - 1; k++)
-                                                {
-                                                    if(amountGroupsValue[k] < amountGroupsValue[k + 1])
-                                                    {
-                                                        saveGroup = testRunGroups[k];
-                                                        testRunGroups[k] = testRunGroups[k + 1];
-                                                        testRunGroups[k + 1] = saveGroup;
-
-                                                        saveValue = amountGroupsValue[k];
-                                                        amountGroupsValue[k] = amountGroupsValue[k + 1];
-                                                        amountGroupsValue[k + 1] = saveValue;
-                                                    }
-                                                }
-                                            }
-                                            //сортируем testRun-ы в группах в порядке убытвания критерия оценки
-                                            TestRun saveTestRun; //элемент списка для сохранения после удаления из списка
-                                            for (int u = 0; u < testRunGroups.Count; u++)
-                                            {
-                                                for (int i = 0; i < testRunGroups[u].Length; i++)
-                                                {
-                                                    for (int k = 0; k < testRunGroups[u].Length - 1; k++)
-                                                    {
-                                                        if (testRunGroups[u][k].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue < testRunGroups[u][k + 1].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue)
-                                                        {
-                                                            saveTestRun = testRunGroups[u][k];
-                                                            testRunGroups[u][k] = testRunGroups[u][k + 1];
-                                                            testRunGroups[u][k + 1] = saveTestRun;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            //проходим по всем группам, и в каждой группе проходим по всем testRun-ам, и ищем первый который соответствует фильтрам
-                                            bool isFindTopModel = false;
-                                            int groupIndex = 0;
-                                            while(isFindTopModel == false && groupIndex < testRunGroups.Count)
-                                            {
-                                                int testRunIndex1 = 0;
-                                                while(isFindTopModel == false && testRunIndex1 < testRunGroups[groupIndex].Length)
-                                                {
-                                                    //проходим по всем фильтрам
-                                                    bool isFilterFail = false;
-                                                    foreach(TopModelFilter topModelFilter in TopModelCriteria.TopModelFilters)
-                                                    {
-                                                        if (topModelFilter.CompareSign == CompareSign.GetMore()) //знак сравнения фильтра Больше
-                                                        {
-                                                            if(testRunGroups[groupIndex][testRunIndex1].EvaluationCriteriaValues.Where(j=>j.EvaluationCriteria== topModelFilter.EvaluationCriteria).First().DoubleValue <= topModelFilter.Value)
-                                                            {
-                                                                isFilterFail = true;
-                                                            }
-                                                        }
-                                                        else //знак сравнения фильтра Меньше
-                                                        {
-                                                            if (testRunGroups[groupIndex][testRunIndex1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue >= topModelFilter.Value)
-                                                            {
-                                                                isFilterFail = true;
-                                                            }
-                                                        }
-                                                    }
-                                                    //если testRun удовлетворяет всем фильтрам, записываем его как топ-модель
-                                                    if(isFilterFail == false)
-                                                    {
-                                                        testBatch.TopModelTestRun = testRunGroups[groupIndex][testRunIndex1];
-                                                        isFindTopModel = true;
-                                                    }
-                                                }
-                                                groupIndex++;
-                                            }
-                                        }
-                                        else //если параметров 2 и более
-                                        {
-                                            //определяем оси двумерной плоскости поиска топ-модели с соседями
-                                            if (IsAxesSpecified) //если оси указаны, присваиваем указанные оси
-                                            {
-                                                testBatch.AxesTopModelSearchPlane = AxesTopModelSearchPlane;
-                                            }
-                                            else //если оси не указаны, находим оси двумерной плоскости поиска топ-модели с соседями, для которых волатильность критерия оценки максимальная
-                                            {
-                                                //формируем список со всеми параметрами
-                                                List<int[]> indicatorsAndAlgorithmParameters = new List<int[]>(); //список с параметрами (0-й элемент массива - тип параметра: 1-индикатор, 2-алгоритм, 1-й элемент массива - индекс параметра)
-                                                for (int i = 0; i < IndicatorsParametersAllIntValues.Length; i++)
-                                                {
-                                                    indicatorsAndAlgorithmParameters.Add(new int[2] { 1, i }); //запоминаем что параметр индикатор с индексом i
-                                                }
-                                                for (int i = 0; i < AlgorithmParametersAllIntValues.Length; i++)
-                                                {
-                                                    indicatorsAndAlgorithmParameters.Add(new int[2] { 2, i }); //запоминаем что параметр индикатор с индексом i
-                                                }
-                                                //находим максимальную площадь плоскости
-                                                int maxArea = 0;
-                                                int axisX = 0; //одна ось плоскости
-                                                int axisY = 0; //вторая ось плоскости
-                                                for (int i = 0; i < indicatorsAndAlgorithmParameters.Count; i++)
-                                                {
-                                                    for (int k = 0; k < indicatorsAndAlgorithmParameters.Count; k++)
-                                                    {
-                                                        if (i != k)
-                                                        {
-                                                            int iCount = 0; //количество элементов в параметре с индексом i
-                                                            if (indicatorsAndAlgorithmParameters[i][0] == 1) //если параметр индикатор
-                                                            {
-                                                                iCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
-                                                            }
-                                                            else //если параметр алгоритм
-                                                            {
-                                                                iCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
-                                                            }
-                                                            int kCount = 0; //количество элементов в параметре с индексом k
-                                                            if (indicatorsAndAlgorithmParameters[k][0] == 1) //если параметр индикатор
-                                                            {
-                                                                kCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
-                                                            }
-                                                            else //если параметр алгоритм
-                                                            {
-                                                                kCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
-                                                            }
-                                                            if (iCount * kCount > maxArea) //если площадь данной комбинации больше максимальной, запоминаем площадь плоскости и её оси
-                                                            {
-                                                                maxArea = iCount * kCount;
-                                                                axisX = i;
-                                                                axisY = k;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                //формируем список с комбинациями параметров, которые имеют минимально допустимую площадь плоскости
-                                                double minMaxArea = 0.6; //минимально допустимая площадь плоскости от максимального. Чтобы исключить выбор осей с небольшой площадью но большой средней волатильностью
-                                                List<int[]> parametersCombination = new List<int[]>(); //комбинации из 2-х параметров, площадь которых в пределах допустимой
-                                                for (int i = 0; i < indicatorsAndAlgorithmParameters.Count; i++)
-                                                {
-                                                    for (int k = 0; k < indicatorsAndAlgorithmParameters.Count; k++)
-                                                    {
-                                                        if (i != k)
-                                                        {
-                                                            int iCount = 0; //количество элементов в параметре с индексом i
-                                                            if (indicatorsAndAlgorithmParameters[i][0] == 1) //если параметр индикатор
-                                                            {
-                                                                iCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                                            }
-                                                            else //если параметр алгоритм
-                                                            {
-                                                                iCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                                            }
-                                                            int kCount = 0; //количество элементов в параметре с индексом k
-                                                            if (indicatorsAndAlgorithmParameters[k][0] == 1) //если параметр индикатор
-                                                            {
-                                                                kCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                                            }
-                                                            else //если параметр алгоритм
-                                                            {
-                                                                kCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                                            }
-                                                            if (iCount * kCount >= maxArea * minMaxArea) //если площадь данной комбинации в пределах минимальной, сохраняем комбинацию
-                                                            {
-                                                                //проверяем есть ли уже такая комбинация, чтобы не записать одну и ту же несколько раз
-                                                                bool isFind = parametersCombination.Where(j => (j[0] == i && j[1] == k) || (j[0] == k && j[1] == i)).Any();
-                                                                if (isFind == false)
-                                                                {
-                                                                    parametersCombination.Add(new int[2] { i, k }); //запоминаем комбинацию
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-
-                                                //определяем волатильность критерия оценки для каждой комбинации параметров
-                                                List<double> averageVolatilityParametersCombination = new List<double>(); //средняя волатильность на еденицу параметра (суммарная волатильность/количество элементов) для комбинаций параметров
-                                                for (int i = 0; i < parametersCombination.Count; i++)
-                                                {
-                                                    //parametersCombination[i][0] - индекс первого параметра (в indicatorsAndAlgorithmParameters) комбинации
-                                                    //parametersCombination[i][1] - индекс второго параметра (в indicatorsAndAlgorithmParameters) комбинации
-                                                    bool xParameterIsInt = false; //параметр типа int, true - int, false - double
-                                                    bool yParameterIsInt = false; //параметр типа int, true - int, false - double
-                                                    bool xParameterIsIndicator = false; //true - параметр индикатора, false - алгоритма
-                                                    bool yParameterIsIndicator = false; //true - параметр индикатора, false - алгоритма
-                                                    int xParameterCountValues = 0; //количество элементов в параметре X
-                                                    if (indicatorsAndAlgorithmParameters[parametersCombination[i][0]][0] == 1) //если параметр индикатор
-                                                    {
-                                                        //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                                        if (IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count > 0)
-                                                        {
-                                                            xParameterCountValues = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
-                                                            xParameterIsInt = true;
-                                                        }
-                                                        else
-                                                        {
-                                                            xParameterCountValues = IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
-                                                        }
-                                                        xParameterIsIndicator = true;
-                                                    }
-                                                    else //если параметр алгоритм
-                                                    {
-                                                        //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                                        if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count > 0)
-                                                        {
-                                                            xParameterCountValues = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
-                                                            xParameterIsInt = true;
-                                                        }
-                                                        else
-                                                        {
-                                                            xParameterCountValues = AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
-                                                        }
-                                                    }
-
-                                                    int yParameterCountValues = 0; //количество элементов в параметре Y
-                                                    if (indicatorsAndAlgorithmParameters[parametersCombination[i][1]][0] == 1) //если параметр индикатор
-                                                    {
-                                                        //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                                        if (IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count > 0)
-                                                        {
-                                                            yParameterCountValues = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
-                                                            yParameterIsInt = true;
-                                                        }
-                                                        else
-                                                        {
-                                                            yParameterCountValues = IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
-                                                        }
-                                                        yParameterIsIndicator = true;
-                                                    }
-                                                    else //если параметр алгоритм
-                                                    {
-                                                        //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                                        if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count > 0)
-                                                        {
-                                                            yParameterCountValues = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
-                                                            yParameterIsInt = true;
-                                                        }
-                                                        else
-                                                        {
-                                                            yParameterCountValues = AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
-                                                        }
-                                                    }
-
-                                                    double amountVolatility = 0; //суммарная волатильность
-                                                    int countIncreaseVolatility = 0; //количество прибавлений суммарной волатильности. На это значение будет делиться суммарная волатильность для получения средней
-                                                                                     //перебираем все testRun-ы слева направо, переходя на следующую строку, и суммируем разности соседних тестов взятые по модулю
-                                                    for (int x = 0; x < xParameterCountValues; x++)
-                                                    {
-                                                        for (int y = 1; y < yParameterCountValues; y++)
-                                                        {
-                                                            //находим testRun-ы со значениями параметров x и y - 1, а так же x и y
-                                                            int indexXParameter = indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]; //индекс 1-го параметра комбинации (в параметрах индикаторов или алгоритма)
-                                                            int indexYParameter = indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]; //индекс 2-го параметра комбинации (в параметрах индикаторов или алгоритма)
-                                                            //значение параметра X текущей комбинации параметров
-                                                            int xParameterValueInt = 0;
-                                                            double xParameterValueDouble = 0;
-                                                            if (xParameterIsIndicator)
-                                                            {
-                                                                xParameterValueInt = xParameterIsInt ? IndicatorsParametersAllIntValues[indexXParameter][x] : 0;
-                                                                xParameterValueDouble = xParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexXParameter][x];
-                                                            }
-                                                            else
-                                                            {
-                                                                xParameterValueInt = xParameterIsInt ? AlgorithmParametersAllIntValues[indexXParameter][x] : 0;
-                                                                xParameterValueDouble = xParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexXParameter][x];
-                                                            }
-                                                            //значение параметра Y текущей комбинации параметров
-                                                            int yParameterValueInt = 0;
-                                                            double yParameterValueDouble = 0;
-                                                            if (yParameterIsIndicator)
-                                                            {
-                                                                yParameterValueInt = yParameterIsInt ? IndicatorsParametersAllIntValues[indexYParameter][y] : 0;
-                                                                yParameterValueDouble = yParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexYParameter][y];
-                                                            }
-                                                            else
-                                                            {
-                                                                yParameterValueInt = yParameterIsInt ? AlgorithmParametersAllIntValues[indexYParameter][y] : 0;
-                                                                yParameterValueDouble = yParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexYParameter][y];
-                                                            }
-                                                            //значение параметра Y - 1 текущей комбинации параметров
-                                                            int yDecrementParameterValueInt = 0;
-                                                            double yDecrementParameterValueDouble = 0;
-                                                            if (yParameterIsIndicator)
-                                                            {
-                                                                yDecrementParameterValueInt = yParameterIsInt ? IndicatorsParametersAllIntValues[indexYParameter][y - 1] : 0;
-                                                                yDecrementParameterValueDouble = yParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexYParameter][y - 1];
-                                                            }
-                                                            else
-                                                            {
-                                                                yDecrementParameterValueInt = yParameterIsInt ? AlgorithmParametersAllIntValues[indexYParameter][y - 1] : 0;
-                                                                yDecrementParameterValueDouble = yParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexYParameter][y - 1];
-                                                            }
-
-                                                            List<TestRun> previousTestRuns = new List<TestRun>(); //список с testRun-ми, у которых имеются значения параметров x и y - 1
-                                                            List<TestRun> nextTestRuns = new List<TestRun>(); //список с testRun-ми, у которых имеются значения параметров x и y
-                                                            //далее поиск с помощью where() testRun-ов с комбинациями значений параметров x и y - 1, x и y, исходя из того в каком списке находится каждый из параметров комбинации и какого типа
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if(xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-
-                                                            if(xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if(xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-
-                                                            //получаем значение волатильности для всех testRun с текущей комбинацией параметров TopModelEvaluationCriteriaIndex
-                                                            for (int u = 0; u < previousTestRuns.Count; u++)
-                                                            {
-                                                                //прибавляем волатильность между соседними testRun-ми к суммарной волатильности
-                                                                amountVolatility += Math.Abs(nextTestRuns[u].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue - previousTestRuns[u].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue);
-                                                                countIncreaseVolatility++;
-                                                            }
-                                                        }
-                                                    }
-
-                                                    //перебираем все testRun-ы сверху-вниз, переходя на следующую колонку, и суммируем разности соседних тестов взятые по модулю
-                                                    for (int y = 0; y < yParameterCountValues; y++)
-                                                    {
-                                                        for (int x = 1; x < xParameterCountValues; x++)
-                                                        {
-                                                            //находим testRun-ы со значениями параметров x и y - 1, а так же x и y
-                                                            int indexXParameter = indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]; //индекс 1-го параметра комбинации (в параметрах индикаторов или алгоритма)
-                                                            int indexYParameter = indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]; //индекс 2-го параметра комбинации (в параметрах индикаторов или алгоритма)
-                                                            //значение параметра X текущей комбинации параметров
-                                                            int xParameterValueInt = 0;
-                                                            double xParameterValueDouble = 0;
-                                                            if (xParameterIsIndicator)
-                                                            {
-                                                                xParameterValueInt = xParameterIsInt ? IndicatorsParametersAllIntValues[indexXParameter][x] : 0;
-                                                                xParameterValueDouble = xParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexXParameter][x];
-                                                            }
-                                                            else
-                                                            {
-                                                                xParameterValueInt = xParameterIsInt ? AlgorithmParametersAllIntValues[indexXParameter][x] : 0;
-                                                                xParameterValueDouble = xParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexXParameter][x];
-                                                            }
-                                                            //значение параметра Y текущей комбинации параметров
-                                                            int yParameterValueInt = 0;
-                                                            double yParameterValueDouble = 0;
-                                                            if (yParameterIsIndicator)
-                                                            {
-                                                                yParameterValueInt = yParameterIsInt ? IndicatorsParametersAllIntValues[indexYParameter][y] : 0;
-                                                                yParameterValueDouble = yParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexYParameter][y];
-                                                            }
-                                                            else
-                                                            {
-                                                                yParameterValueInt = yParameterIsInt ? AlgorithmParametersAllIntValues[indexYParameter][y] : 0;
-                                                                yParameterValueDouble = yParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexYParameter][y];
-                                                            }
-                                                            //значение параметра X - 1 текущей комбинации параметров
-                                                            int xDecrementParameterValueInt = 0;
-                                                            double xDecrementParameterValueDouble = 0;
-                                                            if (xParameterIsIndicator)
-                                                            {
-                                                                xDecrementParameterValueInt = xParameterIsInt ? IndicatorsParametersAllIntValues[indexXParameter][x - 1] : 0;
-                                                                xDecrementParameterValueDouble = xParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexXParameter][x - 1];
-                                                            }
-                                                            else
-                                                            {
-                                                                xDecrementParameterValueInt = xParameterIsInt ? AlgorithmParametersAllIntValues[indexXParameter][x - 1] : 0;
-                                                                xDecrementParameterValueDouble = xParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexXParameter][x - 1];
-                                                            }
-
-                                                            List<TestRun> previousTestRuns = new List<TestRun>(); //список с testRun-ми, у которых имеются значения параметров x и y - 1
-                                                            List<TestRun> nextTestRuns = new List<TestRun>(); //список с testRun-ми, у которых имеются значения параметров x и y
-                                                            //далее поиск с помощью where() testRun-ов с комбинациями значений параметров x и y - 1, x и y, исходя из того в каком списке находится каждый из параметров комбинации и какого типа
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-
-                                                            if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == true)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                                            }
-                                                            if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == false)
-                                                            {
-                                                                previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                                nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                                            }
-
-                                                            //получаем значение волатильности для всех testRun с текущей комбинацией параметров TopModelEvaluationCriteriaIndex
-                                                            for (int u = 0; u < previousTestRuns.Count; u++)
-                                                            {
-                                                                //прибавляем волатильность между соседними testRun-ми к суммарной волатильности
-                                                                amountVolatility += Math.Abs(nextTestRuns[u].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue - previousTestRuns[u].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue);
-                                                                countIncreaseVolatility++;
-                                                            }
-                                                        }
-                                                    }
-
-                                                    averageVolatilityParametersCombination.Add(amountVolatility / (countIncreaseVolatility / 2)); //записываем среднюю волатильность для данной комбинации (делим на 2, т.к. мы дважды проходились по плоскости и суммировали общую волатильность: слева-направо и вниз, а так же сверху-вниз и направо)
-                                                }
-
-                                                //выбираем комбинацию параметров с самой высокой средней волатильностью
-                                                int indexMaxAverageVolatility = 0;
-                                                double maxAverageVolatility = averageVolatilityParametersCombination[0];
-                                                for (int i = 1; i < averageVolatilityParametersCombination.Count; i++)
-                                                {
-                                                    if (averageVolatilityParametersCombination[i] > maxAverageVolatility)
-                                                    {
-                                                        indexMaxAverageVolatility = i;
-                                                        maxAverageVolatility = averageVolatilityParametersCombination[i];
-                                                    }
-                                                }
-
-                                                //формируем первый параметр оси
-                                                AxesParameter axesParameterX = new AxesParameter();
-                                                if (indicatorsAndAlgorithmParameters[parametersCombination[indexMaxAverageVolatility][0]][0] == 1) //если параметр индикатор
-                                                {
-                                                    axesParameterX.IndicatorParameterTemplate = Algorithm.IndicatorParameterRanges[indicatorsAndAlgorithmParameters[parametersCombination[indexMaxAverageVolatility][0]][1]].IndicatorParameterTemplate;
-                                                }
-                                                else //если параметр алгоритм
-                                                {
-                                                    axesParameterX.AlgorithmParameter = Algorithm.AlgorithmParameters[indicatorsAndAlgorithmParameters[parametersCombination[indexMaxAverageVolatility][0]][1]];
-                                                }
-                                                //формируем второй параметр оси
-                                                AxesParameter axesParameterY = new AxesParameter();
-                                                if (indicatorsAndAlgorithmParameters[parametersCombination[indexMaxAverageVolatility][1]][0] == 1) //если параметр индикатор
-                                                {
-                                                    axesParameterY.IndicatorParameterTemplate = Algorithm.IndicatorParameterRanges[indicatorsAndAlgorithmParameters[parametersCombination[indexMaxAverageVolatility][1]][1]].IndicatorParameterTemplate;
-                                                }
-                                                else //если параметр алгоритм
-                                                {
-                                                    axesParameterY.AlgorithmParameter = Algorithm.AlgorithmParameters[indicatorsAndAlgorithmParameters[parametersCombination[indexMaxAverageVolatility][1]][1]];
-                                                }
-
-                                                List<AxesParameter> axesTopModelSearchPlane = new List<AxesParameter>();
-                                                axesTopModelSearchPlane.Add(axesParameterX);
-                                                axesTopModelSearchPlane.Add(axesParameterY);
-                                                testBatch.AxesTopModelSearchPlane = axesTopModelSearchPlane;
-                                            }
-
-                                            //оси определили, далее определяем размер группы соседних тестов
-                                            //определяем размер двумерной плоскости с выбранными осями
-                                            //количество значений параметра X
-                                            int xAxisCountParameterValue = 0;
-                                            bool isXAxisIndicatorParameter = testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate != null ? true : false;
-                                            bool isXAxisIntValue = false; //тип значения параметра
-                                            if (isXAxisIndicatorParameter) //параметр индикатора
-                                            {
-                                                isXAxisIntValue = testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
-                                                int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
-                                                xAxisCountParameterValue = isXAxisIntValue ? IndicatorsParametersAllIntValues[parameterIndex].Count : AlgorithmParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
-                                            }
-                                            else //параметр алгоритма
-                                            {
-                                                isXAxisIntValue = testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
-                                                int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter).First()); //индекс параметра в списке параметров
-                                                xAxisCountParameterValue = isXAxisIntValue ? AlgorithmParametersAllIntValues[parameterIndex].Count : AlgorithmParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
-                                            }
-
-                                            //количество значений параметра Y
-                                            int yAxisCountParameterValue = 0;
-                                            bool isYAxisIndicatorParameter = testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate != null ? true : false;
-                                            bool isYAxisIntValue = false; //тип значения параметра
-                                            if (isYAxisIndicatorParameter) //параметр индикатора
-                                            {
-                                                isYAxisIntValue = testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
-                                                int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
-                                                yAxisCountParameterValue = isYAxisIntValue ? IndicatorsParametersAllIntValues[parameterIndex].Count : IndicatorsParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
-                                            }
-                                            else //параметр алгоритма
-                                            {
-                                                isYAxisIntValue = testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
-                                                int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter).First()); //индекс параметра в списке параметров
-                                                yAxisCountParameterValue = isYAxisIntValue ? AlgorithmParametersAllIntValues[parameterIndex].Count : AlgorithmParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
-                                            }
-
-                                            //определяем размер группы соседних тестов
-                                            double groupArea = xAxisCountParameterValue * yAxisCountParameterValue * (SizeNeighboursGroupPercent / 100); //площадь группы соседних тестов
-                                            int xAxisSize = (int)Math.Round(Math.Sqrt(groupArea)); //размер группы по оси X
-                                            int yAxisSize = xAxisSize; //размер группы по оси Y
-                                            //если размер сторон группы меньше 2, устанавливаем в 2, если размер оси позволяет
-                                            xAxisSize = xAxisSize < 2 && xAxisCountParameterValue >= 2 ? 2 : xAxisSize;
-                                            yAxisSize = yAxisSize < 2 && yAxisCountParameterValue >= 2 ? 2 : yAxisSize;
-                                            //если размер сторон группы меньше 1, устанавливаем в 1
-                                            xAxisSize = xAxisSize < 1 ? 1 : xAxisSize;
-                                            yAxisSize = yAxisSize < 1 ? 1 : yAxisSize;
-                                            //если одна из сторон группы больше размера оси
-                                            if (xAxisSize > xAxisCountParameterValue || yAxisSize > yAxisCountParameterValue)
-                                            {
-                                                if(xAxisSize > xAxisCountParameterValue)
-                                                {
-                                                    xAxisSize = xAxisCountParameterValue; //устанавливаем размер стороны группы в размер оси
-                                                    yAxisSize = (int)Math.Round(groupArea / xAxisSize); //размер второй стороны высчитываем как площадь группы / размер первой оси
-                                                }
-                                                if (yAxisSize > yAxisCountParameterValue)
-                                                {
-                                                    yAxisSize = yAxisCountParameterValue; //устанавливаем размер стороны группы в размер оси
-                                                    xAxisSize = (int)Math.Round(groupArea / yAxisSize); //размер второй стороны высчитываем как площадь группы / размер первой оси
-                                                }
-                                            }
-
-                                            //формируем список с комбинациями параметров тестов групп
-                                            List<List<int[][]>> groupsParametersCombinations = new List<List<int[][]>>(); //список групп, група содержит список тестов, тест содержит: 0-й элемент с массивом индексов значений из IndicatorsParametersAllIntValues или AlgorithmParametersAllDoubleValues для параметров индикаторов, 1-й элемент с массивом индексов значений из AlgorithmParametersAllIntValues или AlgorithmParametersAllDoubleValues для параметров алгоритма
-                                            /*
-                                            groupsParameterCombinations{
-                                                [0](1-я группа) => {
-                                                    [0](1-й тест группы) => {
-                                                        [0] => индексы_значений_индикаторов{ 1, 5 },
-                                                        [1] => индексы_значений_алгоритма{ 4, 2 }
-                                                    }
-                                                }
-                                            }
-                                            */
-                                            //формируем группы с комбинациями параметров плоскости поиска топ-модели
-                                            //проходим по оси X столько раз, сколько помещается размер стороны группы по оси X
-                                            for (int x = 0; x < xAxisCountParameterValue - (xAxisSize - 1); x++)
-                                            {
-                                                //проходим по оси Y столько раз, сколько помещается размер стороны группы по оси Y
-                                                for (int y = 0; y < yAxisCountParameterValue - (yAxisSize - 1); y++)
-                                                {
-                                                    List<int[][]> currentGroup = new List<int[][]>();
-                                                    //проходим по всем элементам группы
-                                                    for(int par1 = x; par1 < x + xAxisSize; par1++)
-                                                    {
-                                                        for (int par2 = y; par2 < y + yAxisSize; par2++)
-                                                        {
-                                                            int[][] testRunParametersCombination = new int[2][]; //определили 2 массива 0-й элемент - индексы значений индикаторов, 1-й - индексы значений алгоритма
-                                                            testRunParametersCombination[0] = new int[Algorithm.IndicatorParameterRanges.Count];
-                                                            testRunParametersCombination[1] = new int[Algorithm.AlgorithmParameters.Count];
-
-                                                            //записываем параметр оси X
-                                                            if (isXAxisIndicatorParameter) //параметр индикатора
-                                                            {
-                                                                int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
-                                                                testRunParametersCombination[0][parameterIndex] = par1; //записываем индекс значения параметра в значениях параметра индикатора
-                                                            }
-                                                            else //параметр алгоритма
-                                                            {
-                                                                int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter).First()); //индекс параметра в списке параметров
-                                                                testRunParametersCombination[1][parameterIndex] = par1; //записываем индекс значения параметра в значениях параметра алгоритма
-                                                            }
-
-                                                            //записываем параметр оси Y
-                                                            if (isYAxisIndicatorParameter) //параметр индикатора
-                                                            {
-                                                                int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
-                                                                testRunParametersCombination[0][parameterIndex] = par2; //записываем индекс значения параметра в значениях параметра индикатора
-                                                            }
-                                                            else //параметр алгоритма
-                                                            {
-                                                                int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter).First()); //индекс параметра в списке параметров
-                                                                testRunParametersCombination[1][parameterIndex] = par2; //записываем индекс значения параметра в значениях параметра алгоритма
-                                                            }
-                                                            currentGroup.Add(testRunParametersCombination);
-                                                        }
-                                                    }
-                                                    groupsParametersCombinations.Add(currentGroup);
-                                                }
-                                            }
-                                            //формируем группы с оставшимися параметрами
-                                            //формируем список со всеми параметрами
-                                            List<int[]> indicatorsAlgorithmParameters = new List<int[]>(); //список с параметрами (0-й элемент массива - тип параметра: 1-индикатор, 2-алгоритм, 1-й элемент массива - индекс параметра)
-                                            for (int i = 0; i < IndicatorsParametersAllIntValues.Length; i++)
-                                            {
-                                                indicatorsAlgorithmParameters.Add(new int[2] { 1, i }); //запоминаем что параметр индикатор с индексом i
-                                            }
-                                            for (int i = 0; i < AlgorithmParametersAllIntValues.Length; i++)
-                                            {
-                                                indicatorsAlgorithmParameters.Add(new int[2] { 2, i }); //запоминаем что параметр индикатор с индексом i
-                                            }
-
-                                            //проходим по всем параметрами
-                                            for(int i = 0; i < indicatorsAlgorithmParameters.Count; i++)
-                                            {
-                                                bool isXParameter = false;
-                                                //если текущий параметр и X параметр, параметры индикатора
-                                                if(indicatorsAlgorithmParameters[i][0] == 1 && isXAxisIndicatorParameter)
-                                                {
-                                                    if(Algorithm.IndicatorParameterRanges[indicatorsAlgorithmParameters[i][1]].IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate)
-                                                    {
-                                                        isXParameter = true;
-                                                    }
-                                                }
-                                                //если текущий параметр и X параметр, параметры алгоритма
-                                                if(indicatorsAlgorithmParameters[i][0] == 2 && isXAxisIndicatorParameter == false)
-                                                {
-                                                    if(Algorithm.AlgorithmParameters[indicatorsAlgorithmParameters[i][1]] == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter)
-                                                    {
-                                                        isXParameter = true;
-                                                    }
-                                                }
-
-                                                bool isYParameter = false;
-                                                //если текущий параметр и Y параметр, параметры индикатора
-                                                if(indicatorsAlgorithmParameters[i][0] == 1 && isYAxisIndicatorParameter)
-                                                {
-                                                    if(Algorithm.IndicatorParameterRanges[indicatorsAlgorithmParameters[i][1]].IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate)
-                                                    {
-                                                        isYParameter = true;
-                                                    }
-                                                }
-                                                //если текущий параметр и X параметр, параметры алгоритма
-                                                if(indicatorsAlgorithmParameters[i][0] == 2 && isYAxisIndicatorParameter == false)
-                                                {
-                                                    if(Algorithm.AlgorithmParameters[indicatorsAlgorithmParameters[i][1]] == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter)
-                                                    {
-                                                        isYParameter = true;
-                                                    }
-                                                }
-
-                                                //если параметр не X и не Y
-                                                if (isXParameter == false && isYParameter == false)
-                                                {
-                                                    //формируем новые группы с комбинациями значений текущего параметра
-                                                    List<List<int[][]>> newGroupsParametersCombinations = new List<List<int[][]>>();
-                                                    int countValues = indicatorsAlgorithmParameters[i][0] == 1 ? IndicatorsParametersAllIntValues[indicatorsAlgorithmParameters[i][1]].Count : AlgorithmParametersAllIntValues[indicatorsAlgorithmParameters[i][1]].Count; //количество значений параметра
-                                                    //проходим по всем значениям параметра
-                                                    for(int k = 0; k < countValues; k++)
-                                                    {
-                                                        //копируем старую группу, и в каждую комбинацию параметров вставляем значение текущего параметра
-                                                        List<List<int[][]>> currentNewGroupsParametersCombinations = new List<List<int[][]>>();
-                                                        //проходим по всем старым группам
-                                                        for(int u = 0; u < groupsParametersCombinations.Capacity; u++)
-                                                        {
-                                                            List<int[][]> newParameterCombinations = new List<int[][]>();
-                                                            //проходим по всем комбинациям группы
-                                                            for (int r = 0; r < groupsParametersCombinations[u].Count; r++)
-                                                            {
-                                                                int[][] newParameterCombination = new int[2][];
-                                                                //копируем параметры индикаторов
-                                                                for(int indicatorParameterIndex = 0; indicatorParameterIndex < groupsParametersCombinations[u][r][0].Length; indicatorParameterIndex++)
-                                                                {
-                                                                    newParameterCombination[0][indicatorParameterIndex] = groupsParametersCombinations[u][r][0][indicatorParameterIndex];
-                                                                }
-                                                                //копируем прааметры алгоритма
-                                                                for (int algorithmParameterIndex = 0; algorithmParameterIndex < groupsParametersCombinations[u][r][1].Length; algorithmParameterIndex++)
-                                                                {
-                                                                    newParameterCombination[1][algorithmParameterIndex] = groupsParametersCombinations[u][r][1][algorithmParameterIndex];
-                                                                }
-
-                                                                //вставляем индекс значения текущего параметра
-                                                                if(indicatorsAlgorithmParameters[i][0] == 1) //если текущий параметр - параметр индикатора
-                                                                {
-                                                                    newParameterCombination[0][indicatorsAlgorithmParameters[i][1]] = k; //вставляем индекс значения текущего параметра
-                                                                }
-                                                                else //текущий параметр - параметр алгоритма
-                                                                {
-                                                                    newParameterCombination[1][indicatorsAlgorithmParameters[i][1]] = k; //вставляем индекс значения текущего параметра
-                                                                }
-                                                                newParameterCombinations.Add(newParameterCombination);
-                                                            }
-                                                            currentNewGroupsParametersCombinations.Add(newParameterCombinations); //формируем группы с текущим значением текущего параметра
-                                                        }
-                                                        newGroupsParametersCombinations.AddRange(currentNewGroupsParametersCombinations); //добавляем в новые группы, группы с текущим значением текущего парамета
-                                                    }
-                                                    groupsParametersCombinations = newGroupsParametersCombinations; //обновляем все группы. Теперь для нового параметра будут использоваться группы с новым количеством комбинаций параметров
-                                                }
-                                            }
-
-                                            //формируем список групп с тестами на основе групп с комбинациями параметров теста
-                                            List<TestRun[]> testRunsGroups = new List<TestRun[]>();
-                                            for(int i = 0; i < groupsParametersCombinations.Count; i++)
-                                            {
-                                                TestRun[] testRunsGroup = new TestRun[groupsParametersCombinations[i].Count]; //группа с testRun-ами
-                                                for(int k = 0; k < groupsParametersCombinations[i].Count; k++)
-                                                {
-                                                    //находим testRun с текущей комбинацией параметров
-                                                    int tRunIndex = 0;
-                                                    bool isTestRunFind = false;
-                                                    while(tRunIndex < testBatch.OptimizationTestRuns.Count && isTestRunFind == false)
-                                                    {
-                                                        bool isAllEqual = true; //все ли значения параметров testRun-а равны текущей комбинации
-                                                        //проходим по всем параметрам индикаторов, и сравниваем значения параметров индикаторов текущей комбинации со значениями параметров индикаторов текущего testRun-а
-                                                        for (int indParIndex = 0; indParIndex < groupsParametersCombinations[i][k][0].Length; indParIndex++)
-                                                        {
-                                                            if(testBatch.OptimizationTestRuns[tRunIndex].IndicatorParameterValues[indParIndex].IndicatorParameterTemplate.ParameterValueType.Id == 1) //если параметр тип int
-                                                            {
-                                                                isAllEqual = testBatch.OptimizationTestRuns[tRunIndex].IndicatorParameterValues[indParIndex].IntValue != IndicatorsParametersAllIntValues[indParIndex][groupsParametersCombinations[i][k][0][indParIndex]] ? false : isAllEqual; //если значение параметра testRun != значению параметра текущей комбинации, отмечаем что isAllEqual == false;
-                                                            }
-                                                            else //параметр типа double
-                                                            {
-                                                                isAllEqual = testBatch.OptimizationTestRuns[tRunIndex].IndicatorParameterValues[indParIndex].DoubleValue != IndicatorsParametersAllDoubleValues[indParIndex][groupsParametersCombinations[i][k][0][indParIndex]] ? false : isAllEqual; //если значение параметра testRun != значению параметра текущей комбинации, отмечаем что isAllEqual == false;
-                                                            }
-                                                        }
-
-                                                        //проходим по всем параметрам алгоритма, и сравниваем значения параметров алгоритма текущей комбинации со значениями параметров алгоритма текущего testRun-а
-                                                        for (int algParIndex = 0; algParIndex < groupsParametersCombinations[i][k][1].Length; algParIndex++)
-                                                        {
-                                                            if (testBatch.OptimizationTestRuns[tRunIndex].AlgorithmParameterValues[algParIndex].AlgorithmParameter.ParameterValueType.Id == 1) //если параметр тип int
-                                                            {
-                                                                isAllEqual = testBatch.OptimizationTestRuns[tRunIndex].AlgorithmParameterValues[algParIndex].IntValue != AlgorithmParametersAllIntValues[algParIndex][groupsParametersCombinations[i][k][1][algParIndex]] ? false : isAllEqual; //если значение параметра testRun != значению параметра текущей комбинации, отмечаем что isAllEqual == false;
-                                                            }
-                                                            else //параметр типа double
-                                                            {
-                                                                isAllEqual = testBatch.OptimizationTestRuns[tRunIndex].AlgorithmParameterValues[algParIndex].DoubleValue != AlgorithmParametersAllDoubleValues[algParIndex][groupsParametersCombinations[i][k][1][algParIndex]] ? false : isAllEqual; //если значение параметра testRun != значению параметра текущей комбинации, отмечаем что isAllEqual == false;
-                                                            }
-                                                        }
-                                                        if (isAllEqual) //если все параметры текущей комбинации равны параметрам текущего testRun-а, отмечаем что testRun найден
-                                                        {
-                                                            isTestRunFind = true;
-                                                        }
-                                                        else
-                                                        {
-                                                            tRunIndex++;
-                                                        }
-                                                    }
-                                                    testRunsGroup[k] = testBatch.OptimizationTestRuns[tRunIndex]; //добавляем testRun в группу соседних тестов
-                                                }
-                                                testRunsGroups.Add(testRunsGroup); //добавляем в группы, группу соседних тестов
-                                            }
-
-                                            //формируем список со средними значениями критерия оценки групп
-                                            List<double> averageGroupsValues = new List<double>();
-                                            //проходим по всем группам
-                                            for(int i = 0; i < testRunsGroups.Count; i++)
-                                            {
-                                                double totalGroupValue = 0;
-                                                for(int k = 0; k < testRunsGroups[i].Length; k++)
-                                                {
-                                                    totalGroupValue += testRunsGroups[i][k].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue;
-                                                }
-                                                averageGroupsValues.Add(totalGroupValue / testRunsGroups[i].Length);
-                                            }
-
-                                            //сортируем группы по среднему значению критерия оценки в порядке убывания
-                                            TestRun[] saveGroup; //элемент списка для сохранения после удаления из списка
-                                            double saveValue; //элемент списка для сохранения после удаления из списка
-                                            for (int i = 0; i < averageGroupsValues.Count; i++)
-                                            {
-                                                for (int k = 0; k < averageGroupsValues.Count - 1; k++)
-                                                {
-                                                    if (averageGroupsValues[k] < averageGroupsValues[k + 1])
-                                                    {
-                                                        saveGroup = testRunsGroups[k];
-                                                        testRunsGroups[k] = testRunsGroups[k + 1];
-                                                        testRunsGroups[k + 1] = saveGroup;
-
-                                                        saveValue = averageGroupsValues[k];
-                                                        averageGroupsValues[k] = averageGroupsValues[k + 1];
-                                                        averageGroupsValues[k + 1] = saveValue;
-                                                    }
-                                                }
-                                            }
-
-                                            bool isTopModelFind = false;
-                                            int groupIndex = 0;
-                                            //проходим по всем группам, сортируем тесты в группе в порядке убывания критерия оценки, и ищем тест в группе который соответствует фильтрам
-                                            while (isTopModelFind == false && groupIndex < testRunsGroups.Count)
-                                            {
-                                                //сортируем тесты в группе в порядке убывания критерия оценки
-                                                for (int i = 0; i < testRunsGroups[groupIndex].Length; i++)
-                                                {
-                                                    for (int k = 0; k < testRunsGroups[groupIndex].Length - 1; k++)
-                                                    {
-                                                        if (testRunsGroups[groupIndex][k].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue < testRunsGroups[groupIndex][k + 1].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue)
-                                                        {
-                                                            TestRun saveTestRun = testRunsGroups[groupIndex][k];
-                                                            testRunsGroups[groupIndex][k] = testRunsGroups[groupIndex][k + 1];
-                                                            testRunsGroups[groupIndex][k + 1] = saveTestRun;
-                                                        }
-                                                    }
-                                                }
-                                                //проходим по тестам группы, и ищем первый, который соответствует фильтрам
-                                                int tRunIndex = 0;
-                                                while (isTopModelFind == false && tRunIndex < testRunsGroups[groupIndex].Length)
-                                                {
-                                                    //проходим по всем фильтрам
-                                                    bool isFilterFail = false;
-                                                    foreach (TopModelFilter topModelFilter in TopModelCriteria.TopModelFilters)
-                                                    {
-                                                        if (topModelFilter.CompareSign == CompareSign.GetMore()) //знак сравнения фильтра Больше
-                                                        {
-                                                            if (testRunsGroups[groupIndex][tRunIndex].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue <= topModelFilter.Value)
-                                                            {
-                                                                isFilterFail = true;
-                                                            }
-                                                        }
-                                                        else //знак сравнения фильтра Меньше
-                                                        {
-                                                            if (testRunsGroups[groupIndex][tRunIndex].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue >= topModelFilter.Value)
-                                                            {
-                                                                isFilterFail = true;
-                                                            }
-                                                        }
-                                                    }
-                                                    //если testRun удовлетворяет всем фильтрам, записываем его как топ-модель
-                                                    if (isFilterFail == false)
-                                                    {
-                                                        testBatch.TopModelTestRun = testRunsGroups[groupIndex][tRunIndex];
-                                                        isTopModelFind = true;
-                                                    }
-                                                    tRunIndex++;
-                                                }
-                                                groupIndex++;
-                                            }
-                                        }
-                                    }
-                                    else //если поиск топ-модели не учитывает соседей, ищем топ-модель среди оптимизационных тестов
-                                    {
-                                        //проходим по всем оптимизационным тестами, и ищем топ-модель, которая соответствует фильтрам
-                                        bool isFirstTopModelFind = false; //найден ли первый тест, удовлетворяющий условиям фильтров, чтобы понять есть с чем сравнивать или нет
-                                        double topModelValue = 0;
-                                        TestRun topModelTestRun = new TestRun();
-                                        foreach(TestRun testRun in testBatch.OptimizationTestRuns)
-                                        {
-                                            //проверяем, соответствует ли текущий testRun условиям фильтров
-                                            bool isFilterFail = false;
-                                            //проходим по всем фильтрам
-                                            foreach (TopModelFilter topModelFilter in TopModelCriteria.TopModelFilters)
-                                            {
-                                                if (topModelFilter.CompareSign == CompareSign.GetMore()) //знак сравнения фильтра Больше
-                                                {
-                                                    if (testRun.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue <= topModelFilter.Value)
-                                                    {
-                                                        isFilterFail = true;
-                                                    }
-                                                }
-                                                else //знак сравнения фильтра Меньше
-                                                {
-                                                    if (testRun.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue >= topModelFilter.Value)
-                                                    {
-                                                        isFilterFail = true;
-                                                    }
-                                                }
-                                            }
-                                            
-                                            if (isFilterFail == false) //если testRun удовлетворяет всем фильтрам
-                                            {
-                                                if(isFirstTopModelFind == false) //если первая топ-модель еще не найдена, записываем текущий testRun как топ-модель
-                                                {
-                                                    topModelTestRun = testRun;
-                                                    topModelValue = testRun.EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue;
-                                                    isFirstTopModelFind = true;
-                                                }
-                                                else //если уже есть топ-модель с которой можно сравнивать, сравниваем текущий testRun с топ-моделью
-                                                {
-                                                    if(testRun.EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue >  topModelValue)
-                                                    {
-                                                        topModelTestRun = testRun;
-                                                        topModelValue = testRun.EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        if (isFirstTopModelFind)
-                                        {
-                                            testBatch.TopModelTestRun = topModelTestRun;
-                                        }
-                                    }
+                                    TestBatchTopModelDetermining(testBatch);
 
                                     //определяем статистическую значимость
                                     int lossCount = 0;
@@ -3124,9 +2200,1030 @@ namespace ktradesystem.Models
             return slippage;
         }
 
-        private TestRun DeterminingTopModel(List<TestRun> testRuns) //определение топ-модели среди оптимизационных тестов
+        private void TestBatchTopModelDetermining(TestBatch testBatch) //определение топ-модели среди оптимизационных тестов тестовой связки
         {
-            return new TestRun();
+            if (IndicatorsParametersAllIntValues.Length + AlgorithmParametersAllIntValues.Length == 0) //если параметров нет - оптимизационный тест всего один, топ модель - testBatch.OptimizationTestRuns[0]
+            {
+                testBatch.TopModelTestRun = testBatch.OptimizationTestRuns[0];
+            }
+            else if (IsConsiderNeighbours) //если поиск топ-модели учитывает соседей, то для двух и более параметров - определяем оси двумерной плоскости поиска топ-модели с соседями и размер осей группы и определяем список с лучшими группами в порядке убывания и ищем топ-модель в группе, а для одного параметра - определяем размер группы и определяем список с лучшими группами в порядке убывания и ищем топ-модель (если из-за фильтров не найдена модель, ищем топ-модель в следующей лучшей группе, пока не кончатся группы)
+            {
+                if (IndicatorsParametersAllIntValues.Length + AlgorithmParametersAllIntValues.Length == 1) //если параметр всего один
+                {
+                    int xAxisCountParameterValue = 0; //количество значений параметра
+                    if (testBatch.OptimizationTestRuns[0].IndicatorParameterValues.Count > 0) //параметр - параметр индикатора
+                    {
+                        xAxisCountParameterValue = IndicatorsParametersAllIntValues.Length > 0 ? IndicatorsParametersAllIntValues.Length : IndicatorsParametersAllDoubleValues.Length;
+                    }
+                    else //параметр - параметр алгоритма
+                    {
+                        xAxisCountParameterValue = AlgorithmParametersAllIntValues.Length > 0 ? AlgorithmParametersAllIntValues.Length : AlgorithmParametersAllDoubleValues.Length;
+                    }
+                    int xAxisGroupSize = (int)Math.Round(xAxisCountParameterValue * (SizeNeighboursGroupPercent / 100));
+                    xAxisGroupSize = xAxisGroupSize < 2 ? 2 : xAxisGroupSize; //если меньше 2-х, устанавливаем как 2
+                    xAxisGroupSize = xAxisCountParameterValue < 2 ? 1 : xAxisGroupSize; //если количество значений параметра меньше 2-х, устанавливаем как 1
+
+                    List<TestRun[]> testRunGroups = new List<TestRun[]>(); //список с группами
+                    List<double> amountGroupsValue = new List<double>(); //суммарное значение критерия оценки для групп
+                                                                         //формируем группы
+                    int startIndex = 0; //индекс первого элемента для группы
+                    int endIndex = startIndex + (xAxisGroupSize - 1); //индекс последнего элемента для группы
+                    while (endIndex < testBatch.OptimizationTestRuns.Count)
+                    {
+                        TestRun[] testRuns = new TestRun[xAxisGroupSize];
+                        for (int i = 0; i < xAxisGroupSize; i++)
+                        {
+                            testRuns[i] = testBatch.OptimizationTestRuns[startIndex + i];
+                        }
+                        startIndex++;
+                        endIndex = startIndex + (xAxisGroupSize - 1);
+                    }
+                    //вычисляем суммарные значения критерия оценки для групп
+                    for (int i = 0; i < testRunGroups.Count; i++)
+                    {
+                        double amountValue = 0;
+                        for (int k = 0; k < testRunGroups[i].Length; k++)
+                        {
+                            amountValue += testRunGroups[i][k].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue;
+                        }
+                        amountGroupsValue.Add(amountValue);
+                    }
+                    //сортируем список групп по убыванию суммарного значения критерия оценки
+                    TestRun[] saveGroup; //элемент списка для сохранения после удаления из списка
+                    double saveValue; //элемент списка для сохранения после удаления из списка
+                    for (int i = 0; i < amountGroupsValue.Count; i++)
+                    {
+                        for (int k = 0; k < amountGroupsValue.Count - 1; k++)
+                        {
+                            if (amountGroupsValue[k] < amountGroupsValue[k + 1])
+                            {
+                                saveGroup = testRunGroups[k];
+                                testRunGroups[k] = testRunGroups[k + 1];
+                                testRunGroups[k + 1] = saveGroup;
+
+                                saveValue = amountGroupsValue[k];
+                                amountGroupsValue[k] = amountGroupsValue[k + 1];
+                                amountGroupsValue[k + 1] = saveValue;
+                            }
+                        }
+                    }
+                    //сортируем testRun-ы в группах в порядке убытвания критерия оценки
+                    TestRun saveTestRun; //элемент списка для сохранения после удаления из списка
+                    for (int u = 0; u < testRunGroups.Count; u++)
+                    {
+                        for (int i = 0; i < testRunGroups[u].Length; i++)
+                        {
+                            for (int k = 0; k < testRunGroups[u].Length - 1; k++)
+                            {
+                                if (testRunGroups[u][k].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue < testRunGroups[u][k + 1].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue)
+                                {
+                                    saveTestRun = testRunGroups[u][k];
+                                    testRunGroups[u][k] = testRunGroups[u][k + 1];
+                                    testRunGroups[u][k + 1] = saveTestRun;
+                                }
+                            }
+                        }
+                    }
+                    //проходим по всем группам, и в каждой группе проходим по всем testRun-ам, и ищем первый который соответствует фильтрам
+                    bool isFindTopModel = false;
+                    int groupIndex = 0;
+                    while (isFindTopModel == false && groupIndex < testRunGroups.Count)
+                    {
+                        int testRunIndex1 = 0;
+                        while (isFindTopModel == false && testRunIndex1 < testRunGroups[groupIndex].Length)
+                        {
+                            //проходим по всем фильтрам
+                            bool isFilterFail = false;
+                            foreach (TopModelFilter topModelFilter in TopModelCriteria.TopModelFilters)
+                            {
+                                if (topModelFilter.CompareSign == CompareSign.GetMore()) //знак сравнения фильтра Больше
+                                {
+                                    if (testRunGroups[groupIndex][testRunIndex1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue <= topModelFilter.Value)
+                                    {
+                                        isFilterFail = true;
+                                    }
+                                }
+                                else //знак сравнения фильтра Меньше
+                                {
+                                    if (testRunGroups[groupIndex][testRunIndex1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue >= topModelFilter.Value)
+                                    {
+                                        isFilterFail = true;
+                                    }
+                                }
+                            }
+                            //если testRun удовлетворяет всем фильтрам, записываем его как топ-модель
+                            if (isFilterFail == false)
+                            {
+                                testBatch.TopModelTestRun = testRunGroups[groupIndex][testRunIndex1];
+                                isFindTopModel = true;
+                            }
+                        }
+                        groupIndex++;
+                    }
+                }
+                else //если параметров 2 и более
+                {
+                    //определяем оси двумерной плоскости поиска топ-модели с соседями
+                    if (IsAxesSpecified) //если оси указаны, присваиваем указанные оси
+                    {
+                        testBatch.AxesTopModelSearchPlane = AxesTopModelSearchPlane;
+                    }
+                    else //если оси не указаны, находим оси двумерной плоскости поиска топ-модели с соседями, для которых волатильность критерия оценки максимальная
+                    {
+                        //формируем список со всеми параметрами
+                        List<int[]> indicatorsAndAlgorithmParameters = new List<int[]>(); //список с параметрами (0-й элемент массива - тип параметра: 1-индикатор, 2-алгоритм, 1-й элемент массива - индекс параметра)
+                        for (int i = 0; i < IndicatorsParametersAllIntValues.Length; i++)
+                        {
+                            indicatorsAndAlgorithmParameters.Add(new int[2] { 1, i }); //запоминаем что параметр индикатор с индексом i
+                        }
+                        for (int i = 0; i < AlgorithmParametersAllIntValues.Length; i++)
+                        {
+                            indicatorsAndAlgorithmParameters.Add(new int[2] { 2, i }); //запоминаем что параметр индикатор с индексом i
+                        }
+                        //находим максимальную площадь плоскости
+                        int maxArea = 0;
+                        int axisX = 0; //одна ось плоскости
+                        int axisY = 0; //вторая ось плоскости
+                        for (int i = 0; i < indicatorsAndAlgorithmParameters.Count; i++)
+                        {
+                            for (int k = 0; k < indicatorsAndAlgorithmParameters.Count; k++)
+                            {
+                                if (i != k)
+                                {
+                                    int iCount = 0; //количество элементов в параметре с индексом i
+                                    if (indicatorsAndAlgorithmParameters[i][0] == 1) //если параметр индикатор
+                                    {
+                                        iCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
+                                    }
+                                    else //если параметр алгоритм
+                                    {
+                                        iCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
+                                    }
+                                    int kCount = 0; //количество элементов в параметре с индексом k
+                                    if (indicatorsAndAlgorithmParameters[k][0] == 1) //если параметр индикатор
+                                    {
+                                        kCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
+                                    }
+                                    else //если параметр алгоритм
+                                    {
+                                        kCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
+                                    }
+                                    if (iCount * kCount > maxArea) //если площадь данной комбинации больше максимальной, запоминаем площадь плоскости и её оси
+                                    {
+                                        maxArea = iCount * kCount;
+                                        axisX = i;
+                                        axisY = k;
+                                    }
+                                }
+                            }
+                        }
+                        //формируем список с комбинациями параметров, которые имеют минимально допустимую площадь плоскости
+                        double minMaxArea = 0.6; //минимально допустимая площадь плоскости от максимального. Чтобы исключить выбор осей с небольшой площадью но большой средней волатильностью
+                        List<int[]> parametersCombination = new List<int[]>(); //комбинации из 2-х параметров, площадь которых в пределах допустимой
+                        for (int i = 0; i < indicatorsAndAlgorithmParameters.Count; i++)
+                        {
+                            for (int k = 0; k < indicatorsAndAlgorithmParameters.Count; k++)
+                            {
+                                if (i != k)
+                                {
+                                    int iCount = 0; //количество элементов в параметре с индексом i
+                                    if (indicatorsAndAlgorithmParameters[i][0] == 1) //если параметр индикатор
+                                    {
+                                        iCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                    }
+                                    else //если параметр алгоритм
+                                    {
+                                        iCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                    }
+                                    int kCount = 0; //количество элементов в параметре с индексом k
+                                    if (indicatorsAndAlgorithmParameters[k][0] == 1) //если параметр индикатор
+                                    {
+                                        kCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                    }
+                                    else //если параметр алгоритм
+                                    {
+                                        kCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                    }
+                                    if (iCount * kCount >= maxArea * minMaxArea) //если площадь данной комбинации в пределах минимальной, сохраняем комбинацию
+                                    {
+                                        //проверяем есть ли уже такая комбинация, чтобы не записать одну и ту же несколько раз
+                                        bool isFind = parametersCombination.Where(j => (j[0] == i && j[1] == k) || (j[0] == k && j[1] == i)).Any();
+                                        if (isFind == false)
+                                        {
+                                            parametersCombination.Add(new int[2] { i, k }); //запоминаем комбинацию
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        //определяем волатильность критерия оценки для каждой комбинации параметров
+                        List<double> averageVolatilityParametersCombination = new List<double>(); //средняя волатильность на еденицу параметра (суммарная волатильность/количество элементов) для комбинаций параметров
+                        for (int i = 0; i < parametersCombination.Count; i++)
+                        {
+                            //parametersCombination[i][0] - индекс первого параметра (в indicatorsAndAlgorithmParameters) комбинации
+                            //parametersCombination[i][1] - индекс второго параметра (в indicatorsAndAlgorithmParameters) комбинации
+                            bool xParameterIsInt = false; //параметр типа int, true - int, false - double
+                            bool yParameterIsInt = false; //параметр типа int, true - int, false - double
+                            bool xParameterIsIndicator = false; //true - параметр индикатора, false - алгоритма
+                            bool yParameterIsIndicator = false; //true - параметр индикатора, false - алгоритма
+                            int xParameterCountValues = 0; //количество элементов в параметре X
+                            if (indicatorsAndAlgorithmParameters[parametersCombination[i][0]][0] == 1) //если параметр индикатор
+                            {
+                                //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                if (IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count > 0)
+                                {
+                                    xParameterCountValues = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
+                                    xParameterIsInt = true;
+                                }
+                                else
+                                {
+                                    xParameterCountValues = IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
+                                }
+                                xParameterIsIndicator = true;
+                            }
+                            else //если параметр алгоритм
+                            {
+                                //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count > 0)
+                                {
+                                    xParameterCountValues = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
+                                    xParameterIsInt = true;
+                                }
+                                else
+                                {
+                                    xParameterCountValues = AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
+                                }
+                            }
+
+                            int yParameterCountValues = 0; //количество элементов в параметре Y
+                            if (indicatorsAndAlgorithmParameters[parametersCombination[i][1]][0] == 1) //если параметр индикатор
+                            {
+                                //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                if (IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count > 0)
+                                {
+                                    yParameterCountValues = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
+                                    yParameterIsInt = true;
+                                }
+                                else
+                                {
+                                    yParameterCountValues = IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
+                                }
+                                yParameterIsIndicator = true;
+                            }
+                            else //если параметр алгоритм
+                            {
+                                //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                                if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count > 0)
+                                {
+                                    yParameterCountValues = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
+                                    yParameterIsInt = true;
+                                }
+                                else
+                                {
+                                    yParameterCountValues = AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
+                                }
+                            }
+
+                            double amountVolatility = 0; //суммарная волатильность
+                            int countIncreaseVolatility = 0; //количество прибавлений суммарной волатильности. На это значение будет делиться суммарная волатильность для получения средней
+                                                             //перебираем все testRun-ы слева направо, переходя на следующую строку, и суммируем разности соседних тестов взятые по модулю
+                            for (int x = 0; x < xParameterCountValues; x++)
+                            {
+                                for (int y = 1; y < yParameterCountValues; y++)
+                                {
+                                    //находим testRun-ы со значениями параметров x и y - 1, а так же x и y
+                                    int indexXParameter = indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]; //индекс 1-го параметра комбинации (в параметрах индикаторов или алгоритма)
+                                    int indexYParameter = indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]; //индекс 2-го параметра комбинации (в параметрах индикаторов или алгоритма)
+                                                                                                                            //значение параметра X текущей комбинации параметров
+                                    int xParameterValueInt = 0;
+                                    double xParameterValueDouble = 0;
+                                    if (xParameterIsIndicator)
+                                    {
+                                        xParameterValueInt = xParameterIsInt ? IndicatorsParametersAllIntValues[indexXParameter][x] : 0;
+                                        xParameterValueDouble = xParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexXParameter][x];
+                                    }
+                                    else
+                                    {
+                                        xParameterValueInt = xParameterIsInt ? AlgorithmParametersAllIntValues[indexXParameter][x] : 0;
+                                        xParameterValueDouble = xParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexXParameter][x];
+                                    }
+                                    //значение параметра Y текущей комбинации параметров
+                                    int yParameterValueInt = 0;
+                                    double yParameterValueDouble = 0;
+                                    if (yParameterIsIndicator)
+                                    {
+                                        yParameterValueInt = yParameterIsInt ? IndicatorsParametersAllIntValues[indexYParameter][y] : 0;
+                                        yParameterValueDouble = yParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexYParameter][y];
+                                    }
+                                    else
+                                    {
+                                        yParameterValueInt = yParameterIsInt ? AlgorithmParametersAllIntValues[indexYParameter][y] : 0;
+                                        yParameterValueDouble = yParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexYParameter][y];
+                                    }
+                                    //значение параметра Y - 1 текущей комбинации параметров
+                                    int yDecrementParameterValueInt = 0;
+                                    double yDecrementParameterValueDouble = 0;
+                                    if (yParameterIsIndicator)
+                                    {
+                                        yDecrementParameterValueInt = yParameterIsInt ? IndicatorsParametersAllIntValues[indexYParameter][y - 1] : 0;
+                                        yDecrementParameterValueDouble = yParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexYParameter][y - 1];
+                                    }
+                                    else
+                                    {
+                                        yDecrementParameterValueInt = yParameterIsInt ? AlgorithmParametersAllIntValues[indexYParameter][y - 1] : 0;
+                                        yDecrementParameterValueDouble = yParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexYParameter][y - 1];
+                                    }
+
+                                    List<TestRun> previousTestRuns = new List<TestRun>(); //список с testRun-ми, у которых имеются значения параметров x и y - 1
+                                    List<TestRun> nextTestRuns = new List<TestRun>(); //список с testRun-ми, у которых имеются значения параметров x и y
+                                                                                      //далее поиск с помощью where() testRun-ов с комбинациями значений параметров x и y - 1, x и y, исходя из того в каком списке находится каждый из параметров комбинации и какого типа
+                                    if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+                                    if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+                                    if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+                                    if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+
+                                    if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+                                    if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+                                    if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+                                    if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+
+                                    //получаем значение волатильности для всех testRun с текущей комбинацией параметров TopModelEvaluationCriteriaIndex
+                                    for (int u = 0; u < previousTestRuns.Count; u++)
+                                    {
+                                        //прибавляем волатильность между соседними testRun-ми к суммарной волатильности
+                                        amountVolatility += Math.Abs(nextTestRuns[u].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue - previousTestRuns[u].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue);
+                                        countIncreaseVolatility++;
+                                    }
+                                }
+                            }
+
+                            //перебираем все testRun-ы сверху-вниз, переходя на следующую колонку, и суммируем разности соседних тестов взятые по модулю
+                            for (int y = 0; y < yParameterCountValues; y++)
+                            {
+                                for (int x = 1; x < xParameterCountValues; x++)
+                                {
+                                    //находим testRun-ы со значениями параметров x и y - 1, а так же x и y
+                                    int indexXParameter = indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]; //индекс 1-го параметра комбинации (в параметрах индикаторов или алгоритма)
+                                    int indexYParameter = indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]; //индекс 2-го параметра комбинации (в параметрах индикаторов или алгоритма)
+                                                                                                                            //значение параметра X текущей комбинации параметров
+                                    int xParameterValueInt = 0;
+                                    double xParameterValueDouble = 0;
+                                    if (xParameterIsIndicator)
+                                    {
+                                        xParameterValueInt = xParameterIsInt ? IndicatorsParametersAllIntValues[indexXParameter][x] : 0;
+                                        xParameterValueDouble = xParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexXParameter][x];
+                                    }
+                                    else
+                                    {
+                                        xParameterValueInt = xParameterIsInt ? AlgorithmParametersAllIntValues[indexXParameter][x] : 0;
+                                        xParameterValueDouble = xParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexXParameter][x];
+                                    }
+                                    //значение параметра Y текущей комбинации параметров
+                                    int yParameterValueInt = 0;
+                                    double yParameterValueDouble = 0;
+                                    if (yParameterIsIndicator)
+                                    {
+                                        yParameterValueInt = yParameterIsInt ? IndicatorsParametersAllIntValues[indexYParameter][y] : 0;
+                                        yParameterValueDouble = yParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexYParameter][y];
+                                    }
+                                    else
+                                    {
+                                        yParameterValueInt = yParameterIsInt ? AlgorithmParametersAllIntValues[indexYParameter][y] : 0;
+                                        yParameterValueDouble = yParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexYParameter][y];
+                                    }
+                                    //значение параметра X - 1 текущей комбинации параметров
+                                    int xDecrementParameterValueInt = 0;
+                                    double xDecrementParameterValueDouble = 0;
+                                    if (xParameterIsIndicator)
+                                    {
+                                        xDecrementParameterValueInt = xParameterIsInt ? IndicatorsParametersAllIntValues[indexXParameter][x - 1] : 0;
+                                        xDecrementParameterValueDouble = xParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexXParameter][x - 1];
+                                    }
+                                    else
+                                    {
+                                        xDecrementParameterValueInt = xParameterIsInt ? AlgorithmParametersAllIntValues[indexXParameter][x - 1] : 0;
+                                        xDecrementParameterValueDouble = xParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexXParameter][x - 1];
+                                    }
+
+                                    List<TestRun> previousTestRuns = new List<TestRun>(); //список с testRun-ми, у которых имеются значения параметров x и y - 1
+                                    List<TestRun> nextTestRuns = new List<TestRun>(); //список с testRun-ми, у которых имеются значения параметров x и y
+                                                                                      //далее поиск с помощью where() testRun-ов с комбинациями значений параметров x и y - 1, x и y, исходя из того в каком списке находится каждый из параметров комбинации и какого типа
+                                    if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+                                    if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+                                    if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+                                    if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+
+                                    if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+                                    if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+                                    if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+                                    if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == true)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
+                                    }
+                                    if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == false)
+                                    {
+                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
+                                    }
+
+                                    //получаем значение волатильности для всех testRun с текущей комбинацией параметров TopModelEvaluationCriteriaIndex
+                                    for (int u = 0; u < previousTestRuns.Count; u++)
+                                    {
+                                        //прибавляем волатильность между соседними testRun-ми к суммарной волатильности
+                                        amountVolatility += Math.Abs(nextTestRuns[u].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue - previousTestRuns[u].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue);
+                                        countIncreaseVolatility++;
+                                    }
+                                }
+                            }
+
+                            averageVolatilityParametersCombination.Add(amountVolatility / (countIncreaseVolatility / 2)); //записываем среднюю волатильность для данной комбинации (делим на 2, т.к. мы дважды проходились по плоскости и суммировали общую волатильность: слева-направо и вниз, а так же сверху-вниз и направо)
+                        }
+
+                        //выбираем комбинацию параметров с самой высокой средней волатильностью
+                        int indexMaxAverageVolatility = 0;
+                        double maxAverageVolatility = averageVolatilityParametersCombination[0];
+                        for (int i = 1; i < averageVolatilityParametersCombination.Count; i++)
+                        {
+                            if (averageVolatilityParametersCombination[i] > maxAverageVolatility)
+                            {
+                                indexMaxAverageVolatility = i;
+                                maxAverageVolatility = averageVolatilityParametersCombination[i];
+                            }
+                        }
+
+                        //формируем первый параметр оси
+                        AxesParameter axesParameterX = new AxesParameter();
+                        if (indicatorsAndAlgorithmParameters[parametersCombination[indexMaxAverageVolatility][0]][0] == 1) //если параметр индикатор
+                        {
+                            axesParameterX.IndicatorParameterTemplate = Algorithm.IndicatorParameterRanges[indicatorsAndAlgorithmParameters[parametersCombination[indexMaxAverageVolatility][0]][1]].IndicatorParameterTemplate;
+                        }
+                        else //если параметр алгоритм
+                        {
+                            axesParameterX.AlgorithmParameter = Algorithm.AlgorithmParameters[indicatorsAndAlgorithmParameters[parametersCombination[indexMaxAverageVolatility][0]][1]];
+                        }
+                        //формируем второй параметр оси
+                        AxesParameter axesParameterY = new AxesParameter();
+                        if (indicatorsAndAlgorithmParameters[parametersCombination[indexMaxAverageVolatility][1]][0] == 1) //если параметр индикатор
+                        {
+                            axesParameterY.IndicatorParameterTemplate = Algorithm.IndicatorParameterRanges[indicatorsAndAlgorithmParameters[parametersCombination[indexMaxAverageVolatility][1]][1]].IndicatorParameterTemplate;
+                        }
+                        else //если параметр алгоритм
+                        {
+                            axesParameterY.AlgorithmParameter = Algorithm.AlgorithmParameters[indicatorsAndAlgorithmParameters[parametersCombination[indexMaxAverageVolatility][1]][1]];
+                        }
+
+                        List<AxesParameter> axesTopModelSearchPlane = new List<AxesParameter>();
+                        axesTopModelSearchPlane.Add(axesParameterX);
+                        axesTopModelSearchPlane.Add(axesParameterY);
+                        testBatch.AxesTopModelSearchPlane = axesTopModelSearchPlane;
+                    }
+
+                    //оси определили, далее определяем размер группы соседних тестов
+                    //определяем размер двумерной плоскости с выбранными осями
+                    //количество значений параметра X
+                    int xAxisCountParameterValue = 0;
+                    bool isXAxisIndicatorParameter = testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate != null ? true : false;
+                    bool isXAxisIntValue = false; //тип значения параметра
+                    if (isXAxisIndicatorParameter) //параметр индикатора
+                    {
+                        isXAxisIntValue = testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
+                        int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
+                        xAxisCountParameterValue = isXAxisIntValue ? IndicatorsParametersAllIntValues[parameterIndex].Count : AlgorithmParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
+                    }
+                    else //параметр алгоритма
+                    {
+                        isXAxisIntValue = testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
+                        int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter).First()); //индекс параметра в списке параметров
+                        xAxisCountParameterValue = isXAxisIntValue ? AlgorithmParametersAllIntValues[parameterIndex].Count : AlgorithmParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
+                    }
+
+                    //количество значений параметра Y
+                    int yAxisCountParameterValue = 0;
+                    bool isYAxisIndicatorParameter = testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate != null ? true : false;
+                    bool isYAxisIntValue = false; //тип значения параметра
+                    if (isYAxisIndicatorParameter) //параметр индикатора
+                    {
+                        isYAxisIntValue = testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
+                        int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
+                        yAxisCountParameterValue = isYAxisIntValue ? IndicatorsParametersAllIntValues[parameterIndex].Count : IndicatorsParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
+                    }
+                    else //параметр алгоритма
+                    {
+                        isYAxisIntValue = testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
+                        int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter).First()); //индекс параметра в списке параметров
+                        yAxisCountParameterValue = isYAxisIntValue ? AlgorithmParametersAllIntValues[parameterIndex].Count : AlgorithmParametersAllDoubleValues[parameterIndex].Count; //запоминаем количество значений параметра
+                    }
+
+                    //определяем размер группы соседних тестов
+                    double groupArea = xAxisCountParameterValue * yAxisCountParameterValue * (SizeNeighboursGroupPercent / 100); //площадь группы соседних тестов
+                    int xAxisSize = (int)Math.Round(Math.Sqrt(groupArea)); //размер группы по оси X
+                    int yAxisSize = xAxisSize; //размер группы по оси Y
+                                               //если размер сторон группы меньше 2, устанавливаем в 2, если размер оси позволяет
+                    xAxisSize = xAxisSize < 2 && xAxisCountParameterValue >= 2 ? 2 : xAxisSize;
+                    yAxisSize = yAxisSize < 2 && yAxisCountParameterValue >= 2 ? 2 : yAxisSize;
+                    //если размер сторон группы меньше 1, устанавливаем в 1
+                    xAxisSize = xAxisSize < 1 ? 1 : xAxisSize;
+                    yAxisSize = yAxisSize < 1 ? 1 : yAxisSize;
+                    //если одна из сторон группы больше размера оси
+                    if (xAxisSize > xAxisCountParameterValue || yAxisSize > yAxisCountParameterValue)
+                    {
+                        if (xAxisSize > xAxisCountParameterValue)
+                        {
+                            xAxisSize = xAxisCountParameterValue; //устанавливаем размер стороны группы в размер оси
+                            yAxisSize = (int)Math.Round(groupArea / xAxisSize); //размер второй стороны высчитываем как площадь группы / размер первой оси
+                        }
+                        if (yAxisSize > yAxisCountParameterValue)
+                        {
+                            yAxisSize = yAxisCountParameterValue; //устанавливаем размер стороны группы в размер оси
+                            xAxisSize = (int)Math.Round(groupArea / yAxisSize); //размер второй стороны высчитываем как площадь группы / размер первой оси
+                        }
+                    }
+
+                    //формируем список с комбинациями параметров тестов групп
+                    List<List<int[][]>> groupsParametersCombinations = new List<List<int[][]>>(); //список групп, група содержит список тестов, тест содержит: 0-й элемент с массивом индексов значений из IndicatorsParametersAllIntValues или AlgorithmParametersAllDoubleValues для параметров индикаторов, 1-й элемент с массивом индексов значений из AlgorithmParametersAllIntValues или AlgorithmParametersAllDoubleValues для параметров алгоритма
+                    /*
+                    groupsParameterCombinations{
+                        [0](1-я группа) => {
+                            [0](1-й тест группы) => {
+                                [0] => индексы_значений_индикаторов{ 1, 5 },
+                                [1] => индексы_значений_алгоритма{ 4, 2 }
+                            }
+                        }
+                    }
+                    */
+                    //формируем группы с комбинациями параметров плоскости поиска топ-модели
+                    //проходим по оси X столько раз, сколько помещается размер стороны группы по оси X
+                    for (int x = 0; x < xAxisCountParameterValue - (xAxisSize - 1); x++)
+                    {
+                        //проходим по оси Y столько раз, сколько помещается размер стороны группы по оси Y
+                        for (int y = 0; y < yAxisCountParameterValue - (yAxisSize - 1); y++)
+                        {
+                            List<int[][]> currentGroup = new List<int[][]>();
+                            //проходим по всем элементам группы
+                            for (int par1 = x; par1 < x + xAxisSize; par1++)
+                            {
+                                for (int par2 = y; par2 < y + yAxisSize; par2++)
+                                {
+                                    int[][] testRunParametersCombination = new int[2][]; //определили 2 массива 0-й элемент - индексы значений индикаторов, 1-й - индексы значений алгоритма
+                                    testRunParametersCombination[0] = new int[Algorithm.IndicatorParameterRanges.Count];
+                                    testRunParametersCombination[1] = new int[Algorithm.AlgorithmParameters.Count];
+
+                                    //записываем параметр оси X
+                                    if (isXAxisIndicatorParameter) //параметр индикатора
+                                    {
+                                        int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
+                                        testRunParametersCombination[0][parameterIndex] = par1; //записываем индекс значения параметра в значениях параметра индикатора
+                                    }
+                                    else //параметр алгоритма
+                                    {
+                                        int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter).First()); //индекс параметра в списке параметров
+                                        testRunParametersCombination[1][parameterIndex] = par1; //записываем индекс значения параметра в значениях параметра алгоритма
+                                    }
+
+                                    //записываем параметр оси Y
+                                    if (isYAxisIndicatorParameter) //параметр индикатора
+                                    {
+                                        int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
+                                        testRunParametersCombination[0][parameterIndex] = par2; //записываем индекс значения параметра в значениях параметра индикатора
+                                    }
+                                    else //параметр алгоритма
+                                    {
+                                        int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter).First()); //индекс параметра в списке параметров
+                                        testRunParametersCombination[1][parameterIndex] = par2; //записываем индекс значения параметра в значениях параметра алгоритма
+                                    }
+                                    currentGroup.Add(testRunParametersCombination);
+                                }
+                            }
+                            groupsParametersCombinations.Add(currentGroup);
+                        }
+                    }
+                    //формируем группы с оставшимися параметрами
+                    //формируем список со всеми параметрами
+                    List<int[]> indicatorsAlgorithmParameters = new List<int[]>(); //список с параметрами (0-й элемент массива - тип параметра: 1-индикатор, 2-алгоритм, 1-й элемент массива - индекс параметра)
+                    for (int i = 0; i < IndicatorsParametersAllIntValues.Length; i++)
+                    {
+                        indicatorsAlgorithmParameters.Add(new int[2] { 1, i }); //запоминаем что параметр индикатор с индексом i
+                    }
+                    for (int i = 0; i < AlgorithmParametersAllIntValues.Length; i++)
+                    {
+                        indicatorsAlgorithmParameters.Add(new int[2] { 2, i }); //запоминаем что параметр индикатор с индексом i
+                    }
+
+                    //проходим по всем параметрами
+                    for (int i = 0; i < indicatorsAlgorithmParameters.Count; i++)
+                    {
+                        bool isXParameter = false;
+                        //если текущий параметр и X параметр, параметры индикатора
+                        if (indicatorsAlgorithmParameters[i][0] == 1 && isXAxisIndicatorParameter)
+                        {
+                            if (Algorithm.IndicatorParameterRanges[indicatorsAlgorithmParameters[i][1]].IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate)
+                            {
+                                isXParameter = true;
+                            }
+                        }
+                        //если текущий параметр и X параметр, параметры алгоритма
+                        if (indicatorsAlgorithmParameters[i][0] == 2 && isXAxisIndicatorParameter == false)
+                        {
+                            if (Algorithm.AlgorithmParameters[indicatorsAlgorithmParameters[i][1]] == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter)
+                            {
+                                isXParameter = true;
+                            }
+                        }
+
+                        bool isYParameter = false;
+                        //если текущий параметр и Y параметр, параметры индикатора
+                        if (indicatorsAlgorithmParameters[i][0] == 1 && isYAxisIndicatorParameter)
+                        {
+                            if (Algorithm.IndicatorParameterRanges[indicatorsAlgorithmParameters[i][1]].IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate)
+                            {
+                                isYParameter = true;
+                            }
+                        }
+                        //если текущий параметр и X параметр, параметры алгоритма
+                        if (indicatorsAlgorithmParameters[i][0] == 2 && isYAxisIndicatorParameter == false)
+                        {
+                            if (Algorithm.AlgorithmParameters[indicatorsAlgorithmParameters[i][1]] == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter)
+                            {
+                                isYParameter = true;
+                            }
+                        }
+
+                        //если параметр не X и не Y
+                        if (isXParameter == false && isYParameter == false)
+                        {
+                            //формируем новые группы с комбинациями значений текущего параметра
+                            List<List<int[][]>> newGroupsParametersCombinations = new List<List<int[][]>>();
+                            int countValues = indicatorsAlgorithmParameters[i][0] == 1 ? IndicatorsParametersAllIntValues[indicatorsAlgorithmParameters[i][1]].Count : AlgorithmParametersAllIntValues[indicatorsAlgorithmParameters[i][1]].Count; //количество значений параметра
+                                                                                                                                                                                                                                                   //проходим по всем значениям параметра
+                            for (int k = 0; k < countValues; k++)
+                            {
+                                //копируем старую группу, и в каждую комбинацию параметров вставляем значение текущего параметра
+                                List<List<int[][]>> currentNewGroupsParametersCombinations = new List<List<int[][]>>();
+                                //проходим по всем старым группам
+                                for (int u = 0; u < groupsParametersCombinations.Capacity; u++)
+                                {
+                                    List<int[][]> newParameterCombinations = new List<int[][]>();
+                                    //проходим по всем комбинациям группы
+                                    for (int r = 0; r < groupsParametersCombinations[u].Count; r++)
+                                    {
+                                        int[][] newParameterCombination = new int[2][];
+                                        //копируем параметры индикаторов
+                                        for (int indicatorParameterIndex = 0; indicatorParameterIndex < groupsParametersCombinations[u][r][0].Length; indicatorParameterIndex++)
+                                        {
+                                            newParameterCombination[0][indicatorParameterIndex] = groupsParametersCombinations[u][r][0][indicatorParameterIndex];
+                                        }
+                                        //копируем прааметры алгоритма
+                                        for (int algorithmParameterIndex = 0; algorithmParameterIndex < groupsParametersCombinations[u][r][1].Length; algorithmParameterIndex++)
+                                        {
+                                            newParameterCombination[1][algorithmParameterIndex] = groupsParametersCombinations[u][r][1][algorithmParameterIndex];
+                                        }
+
+                                        //вставляем индекс значения текущего параметра
+                                        if (indicatorsAlgorithmParameters[i][0] == 1) //если текущий параметр - параметр индикатора
+                                        {
+                                            newParameterCombination[0][indicatorsAlgorithmParameters[i][1]] = k; //вставляем индекс значения текущего параметра
+                                        }
+                                        else //текущий параметр - параметр алгоритма
+                                        {
+                                            newParameterCombination[1][indicatorsAlgorithmParameters[i][1]] = k; //вставляем индекс значения текущего параметра
+                                        }
+                                        newParameterCombinations.Add(newParameterCombination);
+                                    }
+                                    currentNewGroupsParametersCombinations.Add(newParameterCombinations); //формируем группы с текущим значением текущего параметра
+                                }
+                                newGroupsParametersCombinations.AddRange(currentNewGroupsParametersCombinations); //добавляем в новые группы, группы с текущим значением текущего парамета
+                            }
+                            groupsParametersCombinations = newGroupsParametersCombinations; //обновляем все группы. Теперь для нового параметра будут использоваться группы с новым количеством комбинаций параметров
+                        }
+                    }
+
+                    //формируем список групп с тестами на основе групп с комбинациями параметров теста
+                    List<TestRun[]> testRunsGroups = new List<TestRun[]>();
+                    for (int i = 0; i < groupsParametersCombinations.Count; i++)
+                    {
+                        TestRun[] testRunsGroup = new TestRun[groupsParametersCombinations[i].Count]; //группа с testRun-ами
+                        for (int k = 0; k < groupsParametersCombinations[i].Count; k++)
+                        {
+                            //находим testRun с текущей комбинацией параметров
+                            int tRunIndex = 0;
+                            bool isTestRunFind = false;
+                            while (tRunIndex < testBatch.OptimizationTestRuns.Count && isTestRunFind == false)
+                            {
+                                bool isAllEqual = true; //все ли значения параметров testRun-а равны текущей комбинации
+                                                        //проходим по всем параметрам индикаторов, и сравниваем значения параметров индикаторов текущей комбинации со значениями параметров индикаторов текущего testRun-а
+                                for (int indParIndex = 0; indParIndex < groupsParametersCombinations[i][k][0].Length; indParIndex++)
+                                {
+                                    if (testBatch.OptimizationTestRuns[tRunIndex].IndicatorParameterValues[indParIndex].IndicatorParameterTemplate.ParameterValueType.Id == 1) //если параметр тип int
+                                    {
+                                        isAllEqual = testBatch.OptimizationTestRuns[tRunIndex].IndicatorParameterValues[indParIndex].IntValue != IndicatorsParametersAllIntValues[indParIndex][groupsParametersCombinations[i][k][0][indParIndex]] ? false : isAllEqual; //если значение параметра testRun != значению параметра текущей комбинации, отмечаем что isAllEqual == false;
+                                    }
+                                    else //параметр типа double
+                                    {
+                                        isAllEqual = testBatch.OptimizationTestRuns[tRunIndex].IndicatorParameterValues[indParIndex].DoubleValue != IndicatorsParametersAllDoubleValues[indParIndex][groupsParametersCombinations[i][k][0][indParIndex]] ? false : isAllEqual; //если значение параметра testRun != значению параметра текущей комбинации, отмечаем что isAllEqual == false;
+                                    }
+                                }
+
+                                //проходим по всем параметрам алгоритма, и сравниваем значения параметров алгоритма текущей комбинации со значениями параметров алгоритма текущего testRun-а
+                                for (int algParIndex = 0; algParIndex < groupsParametersCombinations[i][k][1].Length; algParIndex++)
+                                {
+                                    if (testBatch.OptimizationTestRuns[tRunIndex].AlgorithmParameterValues[algParIndex].AlgorithmParameter.ParameterValueType.Id == 1) //если параметр тип int
+                                    {
+                                        isAllEqual = testBatch.OptimizationTestRuns[tRunIndex].AlgorithmParameterValues[algParIndex].IntValue != AlgorithmParametersAllIntValues[algParIndex][groupsParametersCombinations[i][k][1][algParIndex]] ? false : isAllEqual; //если значение параметра testRun != значению параметра текущей комбинации, отмечаем что isAllEqual == false;
+                                    }
+                                    else //параметр типа double
+                                    {
+                                        isAllEqual = testBatch.OptimizationTestRuns[tRunIndex].AlgorithmParameterValues[algParIndex].DoubleValue != AlgorithmParametersAllDoubleValues[algParIndex][groupsParametersCombinations[i][k][1][algParIndex]] ? false : isAllEqual; //если значение параметра testRun != значению параметра текущей комбинации, отмечаем что isAllEqual == false;
+                                    }
+                                }
+                                if (isAllEqual) //если все параметры текущей комбинации равны параметрам текущего testRun-а, отмечаем что testRun найден
+                                {
+                                    isTestRunFind = true;
+                                }
+                                else
+                                {
+                                    tRunIndex++;
+                                }
+                            }
+                            testRunsGroup[k] = testBatch.OptimizationTestRuns[tRunIndex]; //добавляем testRun в группу соседних тестов
+                        }
+                        testRunsGroups.Add(testRunsGroup); //добавляем в группы, группу соседних тестов
+                    }
+
+                    //формируем список со средними значениями критерия оценки групп
+                    List<double> averageGroupsValues = new List<double>();
+                    //проходим по всем группам
+                    for (int i = 0; i < testRunsGroups.Count; i++)
+                    {
+                        double totalGroupValue = 0;
+                        for (int k = 0; k < testRunsGroups[i].Length; k++)
+                        {
+                            totalGroupValue += testRunsGroups[i][k].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue;
+                        }
+                        averageGroupsValues.Add(totalGroupValue / testRunsGroups[i].Length);
+                    }
+
+                    //сортируем группы по среднему значению критерия оценки в порядке убывания
+                    TestRun[] saveGroup; //элемент списка для сохранения после удаления из списка
+                    double saveValue; //элемент списка для сохранения после удаления из списка
+                    for (int i = 0; i < averageGroupsValues.Count; i++)
+                    {
+                        for (int k = 0; k < averageGroupsValues.Count - 1; k++)
+                        {
+                            if (averageGroupsValues[k] < averageGroupsValues[k + 1])
+                            {
+                                saveGroup = testRunsGroups[k];
+                                testRunsGroups[k] = testRunsGroups[k + 1];
+                                testRunsGroups[k + 1] = saveGroup;
+
+                                saveValue = averageGroupsValues[k];
+                                averageGroupsValues[k] = averageGroupsValues[k + 1];
+                                averageGroupsValues[k + 1] = saveValue;
+                            }
+                        }
+                    }
+
+                    bool isTopModelFind = false;
+                    int groupIndex = 0;
+                    //проходим по всем группам, сортируем тесты в группе в порядке убывания критерия оценки, и ищем тест в группе который соответствует фильтрам
+                    while (isTopModelFind == false && groupIndex < testRunsGroups.Count)
+                    {
+                        //сортируем тесты в группе в порядке убывания критерия оценки
+                        for (int i = 0; i < testRunsGroups[groupIndex].Length; i++)
+                        {
+                            for (int k = 0; k < testRunsGroups[groupIndex].Length - 1; k++)
+                            {
+                                if (testRunsGroups[groupIndex][k].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue < testRunsGroups[groupIndex][k + 1].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue)
+                                {
+                                    TestRun saveTestRun = testRunsGroups[groupIndex][k];
+                                    testRunsGroups[groupIndex][k] = testRunsGroups[groupIndex][k + 1];
+                                    testRunsGroups[groupIndex][k + 1] = saveTestRun;
+                                }
+                            }
+                        }
+                        //проходим по тестам группы, и ищем первый, который соответствует фильтрам
+                        int tRunIndex = 0;
+                        while (isTopModelFind == false && tRunIndex < testRunsGroups[groupIndex].Length)
+                        {
+                            //проходим по всем фильтрам
+                            bool isFilterFail = false;
+                            foreach (TopModelFilter topModelFilter in TopModelCriteria.TopModelFilters)
+                            {
+                                if (topModelFilter.CompareSign == CompareSign.GetMore()) //знак сравнения фильтра Больше
+                                {
+                                    if (testRunsGroups[groupIndex][tRunIndex].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue <= topModelFilter.Value)
+                                    {
+                                        isFilterFail = true;
+                                    }
+                                }
+                                else //знак сравнения фильтра Меньше
+                                {
+                                    if (testRunsGroups[groupIndex][tRunIndex].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue >= topModelFilter.Value)
+                                    {
+                                        isFilterFail = true;
+                                    }
+                                }
+                            }
+                            //если testRun удовлетворяет всем фильтрам, записываем его как топ-модель
+                            if (isFilterFail == false)
+                            {
+                                testBatch.TopModelTestRun = testRunsGroups[groupIndex][tRunIndex];
+                                isTopModelFind = true;
+                            }
+                            tRunIndex++;
+                        }
+                        groupIndex++;
+                    }
+                }
+            }
+            else //если поиск топ-модели не учитывает соседей, ищем топ-модель среди оптимизационных тестов
+            {
+                //проходим по всем оптимизационным тестами, и ищем топ-модель, которая соответствует фильтрам
+                bool isFirstTopModelFind = false; //найден ли первый тест, удовлетворяющий условиям фильтров, чтобы понять есть с чем сравнивать или нет
+                double topModelValue = 0;
+                TestRun topModelTestRun = new TestRun();
+                foreach (TestRun testRun in testBatch.OptimizationTestRuns)
+                {
+                    //проверяем, соответствует ли текущий testRun условиям фильтров
+                    bool isFilterFail = false;
+                    //проходим по всем фильтрам
+                    foreach (TopModelFilter topModelFilter in TopModelCriteria.TopModelFilters)
+                    {
+                        if (topModelFilter.CompareSign == CompareSign.GetMore()) //знак сравнения фильтра Больше
+                        {
+                            if (testRun.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue <= topModelFilter.Value)
+                            {
+                                isFilterFail = true;
+                            }
+                        }
+                        else //знак сравнения фильтра Меньше
+                        {
+                            if (testRun.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue >= topModelFilter.Value)
+                            {
+                                isFilterFail = true;
+                            }
+                        }
+                    }
+
+                    if (isFilterFail == false) //если testRun удовлетворяет всем фильтрам
+                    {
+                        if (isFirstTopModelFind == false) //если первая топ-модель еще не найдена, записываем текущий testRun как топ-модель
+                        {
+                            topModelTestRun = testRun;
+                            topModelValue = testRun.EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue;
+                            isFirstTopModelFind = true;
+                        }
+                        else //если уже есть топ-модель с которой можно сравнивать, сравниваем текущий testRun с топ-моделью
+                        {
+                            if (testRun.EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue > topModelValue)
+                            {
+                                topModelTestRun = testRun;
+                                topModelValue = testRun.EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue;
+                            }
+                        }
+                    }
+                }
+                if (isFirstTopModelFind)
+                {
+                    testBatch.TopModelTestRun = topModelTestRun;
+                }
+            }
         }
     }
 }

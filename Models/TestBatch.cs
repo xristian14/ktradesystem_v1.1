@@ -15,5 +15,6 @@ namespace ktradesystem.Models
         public TestRun ForwardTestRun { get; set; }
         public TestRun ForwardTestRunDepositTrading { get; set; }
         public List<string[]> StatisticalSignificance { get; set; }
+        public bool IsTopModelDetermining { get; set; } //определена ли топ-модель для данной тестовой связки
     }
 }

@@ -1027,14 +1027,16 @@ namespace ktradesystem.Models
                     int testBatchIndex = 0; //индекс тестовой связки, testRun-ы которой отправляются в задачи
                     int testRunIndex = 0; //индекс testRun-а, который отправляется в задачи
                     int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест, в 1-м элементе будет -1, если это форвардный тест с торговлей депозитом в 1-м элементе будет -2)
-                    int[][] testRunsStatus = new int[TestBatches.Count][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у выполненного 1
+                    int[][] testRunsStatus = new int[TestBatches.Count][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у запущенного 1, а у выполненного 2. При форвардном тестировании, в список со статусами выполненности оптимизационных тестов в конец добавляется еще один элемент - статус форвардного теста, при форвардном тестировании с торговлей депозитом - 2 элемента, статус форвардного теста и статус форвардного теста с торговлей депозитом
                     int[][] testRunsStatus2 = new int[TestBatches.Count][]; //индексы потока в tasks в котором выполнялся testRun
                     //создаем для каждого testBatch массив равный количеству testRun
                     for (int k = 0; k < TestBatches.Count; k++)
                     {
-                        testRunsStatus[k] = new int[TestBatches[k].OptimizationTestRuns.Count];
+                        int forwardTestRunsCount = IsForwardTesting ? 1 : 0; //количество форвардных тестов в данном TestBatch (при форвардном - 1, при форвардном и форвардном с торговлей депозитом - 2)
+                        forwardTestRunsCount += IsForwardTesting && IsForwardDepositTrading ? 1 : 0;
+                        testRunsStatus[k] = new int[TestBatches[k].OptimizationTestRuns.Count + forwardTestRunsCount];
                         for (int y = 0; y < testRunsStatus[k].Length; y++) { testRunsStatus[k][y] = 0; } //заполняем статусы testRun нулями
-                        testRunsStatus2[k] = new int[TestBatches[k].OptimizationTestRuns.Count];
+                        testRunsStatus2[k] = new int[TestBatches[k].OptimizationTestRuns.Count + forwardTestRunsCount];
                         for (int y = 0; y < testRunsStatus2[k].Length; y++) { testRunsStatus2[k][y] = -1; } //заполняем статусы testRun нулями
                     }
                     bool isAllTestRunsComplete = false; //выполнены ли все testRun-ы
@@ -1048,6 +1050,7 @@ namespace ktradesystem.Models
                             Task task = Task.Run(() => TestRunExecute(testRun, indicators, cancellationToken));
                             tasks[n] = task;
                             tasksExecutingTestRuns[n] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
+                            testRunsStatus[testBatchIndex][testRunIndex] = 1; //отмечаем что testRun имеет статус запущен
                             testRunsStatus2[testBatchIndex][testRunIndex] = n;
                             testRunIndex++;
                             if(testRunIndex >= TestBatches[testBatchIndex].OptimizationTestRuns.Count) //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
@@ -1112,14 +1115,14 @@ namespace ktradesystem.Models
                             //отмечаем testRun как выполненный (если это не форвардный тест)
                             if (tasksExecutingTestRuns[completedTaskIndex][1] >= 0) //если индекс testRun-а больше или равен 0, зачит это оптимизационный тест, и его нужно записать
                             {
-                                testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]][tasksExecutingTestRuns[completedTaskIndex][1]] = 1; //присваиваем статусу с сохраненным для этой задачи индексами testBatch и testRun, значение 1 (то есть выполнено)
+                                testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]][tasksExecutingTestRuns[completedTaskIndex][1]] = 2; //присваиваем статусу с сохраненным для этой задачи индексами testBatch и testRun, значение 2 (то есть выполнено)
 
                                 //проверяем, если все testRun для данного testBatch (к которому принадлежит выполненный) выполненны, определяем топ-модель и статистическую значимость, и если это форвардное тестирование, запускаем форвардный тест
                                 bool isOptimizationTestsComplete = true;
                                 int a = 0;
-                                while(isOptimizationTestsComplete && a < testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]].Length)
+                                while(isOptimizationTestsComplete && a < TestBatches[tasksExecutingTestRuns[completedTaskIndex][0]].OptimizationTestRuns.Count)
                                 {
-                                    if(testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]][a] == 0)
+                                    if(testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]][a] != 2)
                                     {
                                         isOptimizationTestsComplete = false;
                                     }
@@ -1172,7 +1175,7 @@ namespace ktradesystem.Models
                                                 double amountValue = 0;
                                                 for(int k = 0; k < testRunGroups[i].Length; k++)
                                                 {
-                                                    amountValue += testRunGroups[i][k].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue;
+                                                    amountValue += testRunGroups[i][k].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue;
                                                 }
                                                 amountGroupsValue.Add(amountValue);
                                             }
@@ -1203,7 +1206,7 @@ namespace ktradesystem.Models
                                                 {
                                                     for (int k = 0; k < testRunGroups[u].Length - 1; k++)
                                                     {
-                                                        if (testRunGroups[u][k].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue < testRunGroups[u][k + 1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue)
+                                                        if (testRunGroups[u][k].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue < testRunGroups[u][k + 1].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue)
                                                         {
                                                             saveTestRun = testRunGroups[u][k];
                                                             testRunGroups[u][k] = testRunGroups[u][k + 1];
@@ -1820,40 +1823,47 @@ namespace ktradesystem.Models
                                             //проходим по оси X столько раз, сколько помещается размер стороны группы по оси X
                                             for (int x = 0; x < xAxisCountParameterValue - (xAxisSize - 1); x++)
                                             {
-                                                List<int[][]> currentGroup = new List<int[][]>();
                                                 //проходим по оси Y столько раз, сколько помещается размер стороны группы по оси Y
                                                 for (int y = 0; y < yAxisCountParameterValue - (yAxisSize - 1); y++)
                                                 {
-                                                    int[][] testRunParametersCombination = new int[2][]; //определили 2 массива 0-й элемент - индексы значений индикаторов, 1-й - индексы значений алгоритма
-                                                    testRunParametersCombination[0] = new int[Algorithm.IndicatorParameterRanges.Count];
-                                                    testRunParametersCombination[1] = new int[Algorithm.AlgorithmParameters.Count];
+                                                    List<int[][]> currentGroup = new List<int[][]>();
+                                                    //проходим по всем элементам группы
+                                                    for(int par1 = x; par1 < x + xAxisSize; par1++)
+                                                    {
+                                                        for (int par2 = y; par2 < y + yAxisSize; par2++)
+                                                        {
+                                                            int[][] testRunParametersCombination = new int[2][]; //определили 2 массива 0-й элемент - индексы значений индикаторов, 1-й - индексы значений алгоритма
+                                                            testRunParametersCombination[0] = new int[Algorithm.IndicatorParameterRanges.Count];
+                                                            testRunParametersCombination[1] = new int[Algorithm.AlgorithmParameters.Count];
 
-                                                    //записываем параметр оси X
-                                                    if (isXAxisIndicatorParameter) //параметр индикатора
-                                                    {
-                                                        int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
-                                                        testRunParametersCombination[0][parameterIndex] = x; //записываем индекс значения параметра в значениях параметра индикатора
-                                                    }
-                                                    else //параметр алгоритма
-                                                    {
-                                                        int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter).First()); //индекс параметра в списке параметров
-                                                        testRunParametersCombination[1][parameterIndex] = x; //записываем индекс значения параметра в значениях параметра алгоритма
-                                                    }
+                                                            //записываем параметр оси X
+                                                            if (isXAxisIndicatorParameter) //параметр индикатора
+                                                            {
+                                                                int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[0].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
+                                                                testRunParametersCombination[0][parameterIndex] = par1; //записываем индекс значения параметра в значениях параметра индикатора
+                                                            }
+                                                            else //параметр алгоритма
+                                                            {
+                                                                int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter).First()); //индекс параметра в списке параметров
+                                                                testRunParametersCombination[1][parameterIndex] = par1; //записываем индекс значения параметра в значениях параметра алгоритма
+                                                            }
 
-                                                    //записываем параметр оси Y
-                                                    if (isYAxisIndicatorParameter) //параметр индикатора
-                                                    {
-                                                        int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
-                                                        testRunParametersCombination[0][parameterIndex] = y; //записываем индекс значения параметра в значениях параметра индикатора
+                                                            //записываем параметр оси Y
+                                                            if (isYAxisIndicatorParameter) //параметр индикатора
+                                                            {
+                                                                int parameterIndex = Algorithm.IndicatorParameterRanges.IndexOf(Algorithm.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate == testBatch.AxesTopModelSearchPlane[1].IndicatorParameterTemplate).First()); //индекс параметра в списке параметров
+                                                                testRunParametersCombination[0][parameterIndex] = par2; //записываем индекс значения параметра в значениях параметра индикатора
+                                                            }
+                                                            else //параметр алгоритма
+                                                            {
+                                                                int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter).First()); //индекс параметра в списке параметров
+                                                                testRunParametersCombination[1][parameterIndex] = par2; //записываем индекс значения параметра в значениях параметра алгоритма
+                                                            }
+                                                            currentGroup.Add(testRunParametersCombination);
+                                                        }
                                                     }
-                                                    else //параметр алгоритма
-                                                    {
-                                                        int parameterIndex = Algorithm.AlgorithmParameters.IndexOf(Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter).First()); //индекс параметра в списке параметров
-                                                        testRunParametersCombination[1][parameterIndex] = y; //записываем индекс значения параметра в значениях параметра алгоритма
-                                                    }
-                                                    currentGroup.Add(testRunParametersCombination);
+                                                    groupsParametersCombinations.Add(currentGroup);
                                                 }
-                                                groupsParametersCombinations.Add(currentGroup);
                                             }
                                             //формируем группы с оставшимися параметрами
                                             //формируем список со всеми параметрами
@@ -2015,7 +2025,7 @@ namespace ktradesystem.Models
                                                 double totalGroupValue = 0;
                                                 for(int k = 0; k < testRunsGroups[i].Length; k++)
                                                 {
-                                                    totalGroupValue += testRunsGroups[i][k].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue;
+                                                    totalGroupValue += testRunsGroups[i][k].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue;
                                                 }
                                                 averageGroupsValues.Add(totalGroupValue / testRunsGroups[i].Length);
                                             }
@@ -2050,7 +2060,7 @@ namespace ktradesystem.Models
                                                 {
                                                     for (int k = 0; k < testRunsGroups[groupIndex].Length - 1; k++)
                                                     {
-                                                        if (testRunsGroups[groupIndex][k].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue < testRunsGroups[groupIndex][k + 1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue)
+                                                        if (testRunsGroups[groupIndex][k].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue < testRunsGroups[groupIndex][k + 1].EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue)
                                                         {
                                                             TestRun saveTestRun = testRunsGroups[groupIndex][k];
                                                             testRunsGroups[groupIndex][k] = testRunsGroups[groupIndex][k + 1];
@@ -2127,15 +2137,15 @@ namespace ktradesystem.Models
                                                 if(isFirstTopModelFind == false) //если первая топ-модель еще не найдена, записываем текущий testRun как топ-модель
                                                 {
                                                     topModelTestRun = testRun;
-                                                    topModelValue = testRun.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue;
+                                                    topModelValue = testRun.EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue;
                                                     isFirstTopModelFind = true;
                                                 }
                                                 else //если уже есть топ-модель с которой можно сравнивать, сравниваем текущий testRun с топ-моделью
                                                 {
-                                                    if(testRun.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue >  topModelValue)
+                                                    if(testRun.EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue >  topModelValue)
                                                     {
                                                         topModelTestRun = testRun;
-                                                        topModelValue = testRun.EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == TopModelCriteria.EvaluationCriteria).First().DoubleValue;
+                                                        topModelValue = testRun.EvaluationCriteriaValues[TopModelEvaluationCriteriaIndex].DoubleValue;
                                                     }
                                                 }
                                             }
@@ -2167,9 +2177,9 @@ namespace ktradesystem.Models
                                         }
                                     }
                                     //записываем статистическую значимость
-                                    string[] totalTests = new string[3] { (lossCount + profitCount).ToString(), "100.0%", (lossMoney + profitMoney).ToString() };
-                                    string[] lossTests = new string[3] { lossCount.ToString(), Math.Round((double)lossCount / (lossCount + profitCount) * 100, 1).ToString() + "%", lossMoney.ToString() };
-                                    string[] profitTests = new string[3] { profitCount.ToString(), Math.Round((double)profitCount / (lossCount + profitCount) * 100, 1).ToString() + "%", profitMoney.ToString() };
+                                    string[] totalTests = new string[3] { (lossCount + profitCount).ToString(), "100.0%", (lossMoney + profitMoney).ToString() + DefaultCurrency.Name };
+                                    string[] lossTests = new string[3] { lossCount.ToString(), Math.Round((double)lossCount / (lossCount + profitCount) * 100, 1).ToString() + "%", lossMoney.ToString() + DefaultCurrency.Name };
+                                    string[] profitTests = new string[3] { profitCount.ToString(), Math.Round((double)profitCount / (lossCount + profitCount) * 100, 1).ToString() + "%", profitMoney.ToString() + DefaultCurrency.Name };
                                     testBatch.StatisticalSignificance.Add(totalTests);
                                     testBatch.StatisticalSignificance.Add(lossTests);
                                     testBatch.StatisticalSignificance.Add(profitTests);
@@ -2193,13 +2203,52 @@ namespace ktradesystem.Models
                                         {
                                             isStartOptimizationTestRun = true;
                                         }
-                                        else //если вышли за границы массива TestBatch, и форвардное тестирование проводить не нужно, отмечаем что все тесты выполнены
+                                        else //если вышли за границы массива TestBatch, и форвардное тестирование проводить не нужно, если все оптимизационные тесты выполнены, отмечаем что все тесты выполнены
                                         {
-                                            isAllTestRunsComplete = true;
+                                            //проверяем статусы выполненности всех оптимизационных тестов
+                                            bool isAllOptimizationTestsComplete = true;
+                                            int b = 0;
+                                            while(isAllOptimizationTestsComplete && b < testRunsStatus.Length) //проходим по всем testBatch
+                                            {
+                                                int c = 0;
+                                                while (isAllOptimizationTestsComplete && c < testBatch.OptimizationTestRuns.Count) //проходим по всем testRun
+                                                {
+                                                    if (testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]][c] != 2)
+                                                    {
+                                                        isAllOptimizationTestsComplete = false;
+                                                    }
+                                                    c++;
+                                                }
+                                                b++;
+                                            }
+                                            if (isAllOptimizationTestsComplete)
+                                            {
+                                                isAllTestRunsComplete = true;
+                                            }
+                                            /*//если все оптимизационные тесты выполненны, если есть форвардные тесты проверяем их выполненность
+                                            bool isAllForwardTestsComplete = true;
+                                            for(int k = 0; k < TestBatches.Count; k++)
+                                            {
+                                                if (IsForwardTesting)
+                                                {
+                                                    if(TestBatches[k].ForwardTestRun.IsComplete == false)
+                                                    {
+                                                        isAllForwardTestsComplete = false;
+                                                    }
+                                                    if (IsForwardDepositTrading)
+                                                    {
+                                                        if (TestBatches[k].ForwardTestRunDepositTrading.IsComplete == false)
+                                                        {
+                                                            isAllForwardTestsComplete = false;
+                                                        }
+                                                    }
+                                                }
+                                            }*/
+                                            
                                         }
                                     }
                                 }
-                                else //если все оптимизационные тесты текущего testRun не выполнены, отмечаем что нужно запустить следующий оптимизационный тест
+                                else //если оптимизационные тесты текущего testRun не выполнены, отмечаем что нужно запустить следующий оптимизационный тест
                                 {
                                     isStartOptimizationTestRun = true;
                                 }
@@ -2237,6 +2286,7 @@ namespace ktradesystem.Models
                                 TestRun testRun = TestBatches[testBatchIndex].OptimizationTestRuns[testRunIndex];
                                 task = Task.Run(() => TestRunExecute(testRun, indicators, cancellationToken));
                                 tasksExecutingTestRuns[completedTaskIndex] = new int[2] { testBatchIndex, testRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
+                                testRunsStatus[testBatchIndex][testRunIndex] = 1; //отмечаем что testRun имеет статус запущен
                                 testRunsStatus2[testBatchIndex][testRunIndex] = completedTaskIndex;
                                 testRunIndex++;
                                 if (testRunIndex >= TestBatches[testBatchIndex].OptimizationTestRuns.Count) //если индекс testRun >= количеству OptimizationTestRuns, переходим на следующий testBatch
@@ -2251,6 +2301,8 @@ namespace ktradesystem.Models
                                 TestRun testRun = TestBatches[tasksExecutingTestRuns[completedTaskIndex][0]].ForwardTestRun;
                                 task = Task.Run(() => TestRunExecute(testRun, indicators, cancellationToken));
                                 tasksExecutingTestRuns[completedTaskIndex] = new int[2] { tasksExecutingTestRuns[completedTaskIndex][0], -1 }; //запоминаем индексы testBatch и -1 (как флаг того что это форвардный тест), который выполняется в текущей задачи (в элементе массива tasks с индексом completedTaskIndex)
+                                testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]][TestBatches[tasksExecutingTestRuns[completedTaskIndex][0]].OptimizationTestRuns.Count] = 1; //отмечаем что testRun имеет статус запущен
+                                testRunsStatus2[tasksExecutingTestRuns[completedTaskIndex][0]][TestBatches[tasksExecutingTestRuns[completedTaskIndex][0]].OptimizationTestRuns.Count] = completedTaskIndex;
                             }
                             else if (isStartForwardTestRunDepositTrading) //запускаем форвардный тест с торговлей депозитом
                             {
@@ -2258,6 +2310,8 @@ namespace ktradesystem.Models
                                 TestRun testRun = TestBatches[tasksExecutingTestRuns[completedTaskIndex][0]].ForwardTestRunDepositTrading;
                                 task = Task.Run(() => TestRunExecute(testRun, indicators, cancellationToken));
                                 tasksExecutingTestRuns[completedTaskIndex] = new int[2] { tasksExecutingTestRuns[completedTaskIndex][0], -2 }; //запоминаем индексы testBatch и -2 (как флаг того что это форвардный тест с торговлей депозитом), который выполняется в текущей задачи (в элементе массива tasks с индексом completedTaskIndex)
+                                testRunsStatus[tasksExecutingTestRuns[completedTaskIndex][0]][TestBatches[tasksExecutingTestRuns[completedTaskIndex][0]].OptimizationTestRuns.Count + 1] = 1; //отмечаем что testRun имеет статус запущен
+                                testRunsStatus2[tasksExecutingTestRuns[completedTaskIndex][0]][TestBatches[tasksExecutingTestRuns[completedTaskIndex][0]].OptimizationTestRuns.Count + 1] = completedTaskIndex;
                             }
                         }
                         n++;

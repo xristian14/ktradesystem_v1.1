@@ -669,20 +669,20 @@
                     <StackPanel Orientation="Horizontal" Margin="0 2 0 0">
                         <TextBox Text="{Binding DurationOptimizationYears, Mode=TwoWay}" Margin="133 0 0 0" Width="25" Height="18"/>
                         <StackPanel Orientation="Vertical" Height="28">
-                            <Button Content="⯅" Command="{Binding DurationOptimizationTestsYearsIncrement_Click}" Height="14" Padding="0 -2"/>
-                            <Button Content="⯆" Command="{Binding DurationOptimizationTestsYearsDecrement_Click}" Height="14" Padding="0 -2"/>
+                            <Button Content="⯅" Command="{Binding DurationOptimizationTestsYearsIncrement_Click}" Height="14" Width="15" Padding="0 -2"/>
+                            <Button Content="⯆" Command="{Binding DurationOptimizationTestsYearsDecrement_Click}" Height="14" Width="15" Padding="0 -2"/>
                         </StackPanel>
                         <TextBlock Text="лет" Margin="1 0 0 0" VerticalAlignment="Center"/>
                         <TextBox Text="{Binding DurationOptimizationMonths, Mode=TwoWay}" Margin="5 0 0 0" Width="25" Height="18"/>
                         <StackPanel Orientation="Vertical" Height="28">
-                            <Button Content="⯅" Command="{Binding DurationOptimizationTestsMonthsIncrement_Click}" Height="14" Padding="0 -2"/>
-                            <Button Content="⯆" Command="{Binding DurationOptimizationTestsMonthsDecrement_Click}" Height="14" Padding="0 -2"/>
+                            <Button Content="⯅" Command="{Binding DurationOptimizationTestsMonthsIncrement_Click}" Height="14" Width="15" Padding="0 -2"/>
+                            <Button Content="⯆" Command="{Binding DurationOptimizationTestsMonthsDecrement_Click}" Height="14" Width="15" Padding="0 -2"/>
                         </StackPanel>
                         <TextBlock Text="месяцев" Margin="1 0 0 0" VerticalAlignment="Center"/>
                         <TextBox Text="{Binding DurationOptimizationDays, Mode=TwoWay}" Margin="5 0 0 0" Width="30" Height="18"/>
                         <StackPanel Orientation="Vertical" Height="28">
-                            <Button Content="⯅" Command="{Binding DurationOptimizationTestsDaysIncrement_Click}" Height="14" Padding="0 -2"/>
-                            <Button Content="⯆" Command="{Binding DurationOptimizationTestsDaysDecrement_Click}" Height="14" Padding="0 -2"/>
+                            <Button Content="⯅" Command="{Binding DurationOptimizationTestsDaysIncrement_Click}" Height="14" Width="15" Padding="0 -2"/>
+                            <Button Content="⯆" Command="{Binding DurationOptimizationTestsDaysDecrement_Click}" Height="14" Width="15" Padding="0 -2"/>
                         </StackPanel>
                         <TextBlock Text="дней" Margin="1 0 0 0" VerticalAlignment="Center"/>
                     </StackPanel>
@@ -690,20 +690,20 @@
                     <StackPanel Orientation="Horizontal" Margin="0 2 0 0">
                         <TextBox Text="{Binding OptimizationSpacingYears, Mode=TwoWay}" Margin="133 0 0 0" Width="25" Height="18"/>
                         <StackPanel Orientation="Vertical" Height="28">
-                            <Button Content="⯅" Command="{Binding SpacingOptimizationTestsYearsIncrement_Click}" Height="14" Padding="0 -2"/>
-                            <Button Content="⯆" Command="{Binding SpacingOptimizationTestsYearsDecrement_Click}" Height="14" Padding="0 -2"/>
+                            <Button Content="⯅" Command="{Binding SpacingOptimizationTestsYearsIncrement_Click}" Height="14" Width="15" Padding="0 -2"/>
+                            <Button Content="⯆" Command="{Binding SpacingOptimizationTestsYearsDecrement_Click}" Height="14" Width="15" Padding="0 -2"/>
                         </StackPanel>
                         <TextBlock Text="лет" Margin="1 0 0 0" VerticalAlignment="Center"/>
                         <TextBox Text="{Binding OptimizationSpacingMonths, Mode=TwoWay}" Margin="5 0 0 0" Width="25" Height="18"/>
                         <StackPanel Orientation="Vertical" Height="28">
-                            <Button Content="⯅" Command="{Binding SpacingOptimizationTestsMonthsIncrement_Click}" Height="14" Padding="0 -2"/>
-                            <Button Content="⯆" Command="{Binding SpacingOptimizationTestsMonthsDecrement_Click}" Height="14" Padding="0 -2"/>
+                            <Button Content="⯅" Command="{Binding SpacingOptimizationTestsMonthsIncrement_Click}" Height="14" Width="15" Padding="0 -2"/>
+                            <Button Content="⯆" Command="{Binding SpacingOptimizationTestsMonthsDecrement_Click}" Height="14" Width="15" Padding="0 -2"/>
                         </StackPanel>
                         <TextBlock Text="месяцев" Margin="1 0 0 0" VerticalAlignment="Center"/>
                         <TextBox Text="{Binding OptimizationSpacingDays, Mode=TwoWay}" Margin="5 0 0 0" Width="30" Height="18"/>
                         <StackPanel Orientation="Vertical" Height="28">
-                            <Button Content="⯅" Command="{Binding SpacingOptimizationTestsDaysIncrement_Click}" Height="14" Padding="0 -2"/>
-                            <Button Content="⯆" Command="{Binding SpacingOptimizationTestsDaysDecrement_Click}" Height="14" Padding="0 -2"/>
+                            <Button Content="⯅" Command="{Binding SpacingOptimizationTestsDaysIncrement_Click}" Height="14" Width="15" Padding="0 -2"/>
+                            <Button Content="⯆" Command="{Binding SpacingOptimizationTestsDaysDecrement_Click}" Height="14" Width="15" Padding="0 -2"/>
                         </StackPanel>
                         <TextBlock Text="дней" Margin="1 0 0 0" VerticalAlignment="Center"/>
                     </StackPanel>
@@ -711,20 +711,20 @@
                     <StackPanel Orientation="Horizontal" Margin="0 2 0 0" IsEnabled="{Binding IsForwardTesting}">
                         <TextBox Text="{Binding DurationForwardYears, Mode=TwoWay}" Margin="133 0 0 0" Width="25" Height="18"/>
                         <StackPanel Orientation="Vertical" Height="28">
-                            <Button Content="⯅" Command="{Binding DurationForwardTestYearsIncrement_Click}" Height="14" Padding="0 -2"/>
-                            <Button Content="⯆" Command="{Binding DurationForwardTestYearsDecrement_Click}" Height="14" Padding="0 -2"/>
+                            <Button Content="⯅" Command="{Binding DurationForwardTestYearsIncrement_Click}" Height="14" Width="15" Padding="0 -2"/>
+                            <Button Content="⯆" Command="{Binding DurationForwardTestYearsDecrement_Click}" Height="14" Width="15" Padding="0 -2"/>
                         </StackPanel>
                         <TextBlock Text="лет" Margin="1 0 0 0" VerticalAlignment="Center"/>
                         <TextBox Text="{Binding DurationForwardMonths, Mode=TwoWay}" Margin="5 0 0 0" Width="25" Height="18"/>
                         <StackPanel Orientation="Vertical" Height="28">
-                            <Button Content="⯅" Command="{Binding DurationForwardTestMonthsIncrement_Click}" Height="14" Padding="0 -2"/>
-                            <Button Content="⯆" Command="{Binding DurationForwardTestMonthsDecrement_Click}" Height="14" Padding="0 -2"/>
+                            <Button Content="⯅" Command="{Binding DurationForwardTestMonthsIncrement_Click}" Height="14" Width="15" Padding="0 -2"/>
+                            <Button Content="⯆" Command="{Binding DurationForwardTestMonthsDecrement_Click}" Height="14" Width="15" Padding="0 -2"/>
                         </StackPanel>
                         <TextBlock Text="месяцев" Margin="1 0 0 0" VerticalAlignment="Center"/>
                         <TextBox Text="{Binding DurationForwardDays, Mode=TwoWay}" Margin="5 0 0 0" Width="30" Height="18"/>
                         <StackPanel Orientation="Vertical" Height="28">
-                            <Button Content="⯅" Command="{Binding DurationForwardTestDaysIncrement_Click}" Height="14" Padding="0 -2"/>
-                            <Button Content="⯆" Command="{Binding DurationForwardTestDaysDecrement_Click}" Height="14" Padding="0 -2"/>
+                            <Button Content="⯅" Command="{Binding DurationForwardTestDaysIncrement_Click}" Height="14" Width="15" Padding="0 -2"/>
+                            <Button Content="⯆" Command="{Binding DurationForwardTestDaysDecrement_Click}" Height="14" Width="15" Padding="0 -2"/>
                         </StackPanel>
                         <TextBlock Text="дней" Margin="1 0 0 0" VerticalAlignment="Center"/>
                     </StackPanel>

@@ -1025,7 +1025,7 @@ namespace ktradesystem.Models
                     {
                         processorCount = 1;
                     }
-                    processorCount = 1;
+                    //processorCount = 1;
                     Task[] tasks = new Task[processorCount]; //задачи
                     Stopwatch stopwatch = new Stopwatch();
                     stopwatch.Start();
@@ -1150,51 +1150,12 @@ namespace ktradesystem.Models
                                             }
                                             a++;
                                         }
-                                        if (isOptimizationTestsComplete) //если все оптимизационные тесты данного testBatch выполнены, запускаем определение топ-модели и статистической значимости
+                                        if (isOptimizationTestsComplete && TestBatches[tasksExecutingTestRuns[taskIndex1][0]].IsTopModelDetermining == false) //если все оптимизационные тесты данного testBatch выполнены и топ-модель еще не была определена, запускаем определение топ-модели и статистической значимости
                                         {
                                             //определяем топ-модель и статистичекую значимость
                                             TestBatch testBatch = TestBatches[tasksExecutingTestRuns[taskIndex1][0]]; //tasksExecutingTestRuns[taskIndex1][0] - testBatchIndex
                                             TestBatchTopModelDetermining(testBatch); //определяем топ-модель
                                             testBatch.IsTopModelDetermining = true; //отмечаем что определили топ-модель для данного testBatch
-
-                                            //определяем статистическую значимость
-                                            int lossCount = 0;
-                                            double lossMoney = 0;
-                                            int profitCount = 0;
-                                            double profitMoney = 0;
-                                            //проходим по всем testRun-ам
-                                            for (int i = 0; i < testBatch.OptimizationTestRuns.Count; i++)
-                                            {
-                                                double testRunProfit = testBatch.OptimizationTestRuns[i].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == 1).First().DoubleValue; //EvaluationCriteria.Id == 1 - Чистая доходность
-                                                if (testRunProfit < 0)
-                                                {
-                                                    lossCount++;
-                                                    lossMoney += testRunProfit;
-                                                }
-                                                else
-                                                {
-                                                    profitCount++;
-                                                    profitMoney += testRunProfit;
-                                                }
-                                            }
-                                            //записываем статистическую значимость
-                                            string[] totalTests = new string[3] { (lossCount + profitCount).ToString(), "100.0%", (lossMoney + profitMoney).ToString() + DefaultCurrency.Name };
-                                            string[] lossTests = new string[3] { lossCount.ToString(), Math.Round((double)lossCount / (lossCount + profitCount) * 100, 1).ToString() + "%", lossMoney.ToString() + DefaultCurrency.Name };
-                                            string[] profitTests = new string[3] { profitCount.ToString(), Math.Round((double)profitCount / (lossCount + profitCount) * 100, 1).ToString() + "%", profitMoney.ToString() + DefaultCurrency.Name };
-                                            testBatch.StatisticalSignificance.Add(totalTests);
-                                            testBatch.StatisticalSignificance.Add(lossTests);
-                                            testBatch.StatisticalSignificance.Add(profitTests);
-
-                                            if (IsForwardTesting) //если это форвардное тестирование, записываем параметры для форвардного теста
-                                            {
-                                                testBatch.ForwardTestRun.IndicatorParameterValues = testBatch.TopModelTestRun.IndicatorParameterValues;
-                                                testBatch.ForwardTestRun.AlgorithmParameterValues = testBatch.TopModelTestRun.AlgorithmParameterValues;
-                                                if (IsForwardDepositTrading) //если это форвардное тестирование с торговлей депозитом, записываем параметры для форвардного теста с торговлей депозитом
-                                                {
-                                                    testBatch.ForwardTestRunDepositTrading.IndicatorParameterValues = testBatch.TopModelTestRun.IndicatorParameterValues;
-                                                    testBatch.ForwardTestRunDepositTrading.AlgorithmParameterValues = testBatch.TopModelTestRun.AlgorithmParameterValues;
-                                                }
-                                            }
                                         }
                                     }
                                 }
@@ -1873,7 +1834,7 @@ namespace ktradesystem.Models
                         int slippage = _modelData.Settings.Where(i => i.Id == 3).First().IntValue; //количество пунктов на которое цена исполнения рыночной заявки будет хуже
                         slippage += Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //добавляем проскальзывание
                         slippage = order.Direction == true ? slippage : -slippage; //для покупки проскальзывание идет вверх, для продажи вниз
-                        isMakeADeals = MakeADeal(account, order, order.Count, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].C + slippage, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime) ? true : isMakeADeals;
+                        isMakeADeals = MakeADeal(account, order, order.Count, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].C + slippage * dataSourcesCandles[dataSourcesCandlesIndex].DataSource.PriceStep, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime) ? true : isMakeADeals;
                         if (order.Count == 0)
                         {
                             ordersToRemove.Add(order);
@@ -1919,7 +1880,7 @@ namespace ktradesystem.Models
                             int slippage = _modelData.Settings.Where(i => i.Id == 3).First().IntValue; //количество пунктов на которое цена исполнения рыночной заявки будет хуже
                             slippage += Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //добавляем проскальзывание
                             slippage = order.Direction == true ? slippage : -slippage; //для покупки проскальзывание идет вверх, для продажи вниз
-                            isMakeADeals = MakeADeal(account, order, order.Count, order.Price + slippage, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime) ? true : isMakeADeals;
+                            isMakeADeals = MakeADeal(account, order, order.Count, order.Price + slippage * dataSourcesCandles[dataSourcesCandlesIndex].DataSource.PriceStep, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime) ? true : isMakeADeals;
                             if (order.Count == 0)
                             {
                                 ordersToRemove.Add(order);
@@ -1974,7 +1935,7 @@ namespace ktradesystem.Models
                             }
                             if(overLots > 0) //если есть лоты которые могли быть исполнены на текущей свечке, совершаем сделку
                             {
-                                decimal dealCount = order.Count >= overLots ? order.Count : overLots;
+                                decimal dealCount = order.Count <= overLots ? order.Count : overLots;
                                 isMakeADeals = MakeADeal(account, order, dealCount, order.Price, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime) ? true : isMakeADeals;
                                 if (order.Count == 0)
                                 {
@@ -2080,8 +2041,8 @@ namespace ktradesystem.Models
                 //обновляем средства во всех валютах
                 account.FreeForwardDepositCurrencies = CalculateDepositCurrrencies(freeDeposit, order.DataSource.Currency);
                 account.TakenForwardDepositCurrencies = CalculateDepositCurrrencies(takenDeposit, order.DataSource.Currency);
-                //если открытые позиции пусты, записываем состояние депозита
-                if(account.CurrentPosition.Count == 0)
+                //если открытые позиции пусты и была совершена сделка, записываем состояние депозита
+                if(account.CurrentPosition.Count == 0 && isMakeADeal)
                 {
                     account.DepositCurrenciesChanges.Add(account.FreeForwardDepositCurrencies);
                 }
@@ -2104,7 +2065,7 @@ namespace ktradesystem.Models
             return depositCurrencies;
         }
 
-        private int Slippage(DataSourceCandles dataSourceCandles, int fileIndex, int candleIndex, decimal lotsCountInOrder) //возвращает размер проскальзывания
+        private int Slippage(DataSourceCandles dataSourceCandles, int fileIndex, int candleIndex, decimal lotsCountInOrder) //возвращает размер проскальзывания в пунктах
         {
             int candleCount = 20; //количество свечек для определения среднего количества лотов на 1 пункт цены
             candleCount = candleIndex < candleCount ? candleIndex + 1 : candleCount; //чтобы избежать обращения к несуществующему индексу
@@ -3144,6 +3105,52 @@ namespace ktradesystem.Models
                 if (isFirstTopModelFind)
                 {
                     testBatch.TopModelTestRun = topModelTestRun;
+                }
+            }
+
+
+            //определяем статистическую значимость
+            int lossCount = 0;
+            double lossMoney = 0;
+            int profitCount = 0;
+            double profitMoney = 0;
+            //проходим по всем testRun-ам
+            for (int i = 0; i < testBatch.OptimizationTestRuns.Count; i++)
+            {
+                double testRunProfit = testBatch.OptimizationTestRuns[i].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == 1).First().DoubleValue; //EvaluationCriteria.Id == 1 - Чистая доходность
+                if (testRunProfit < 0)
+                {
+                    lossCount++;
+                    lossMoney += testRunProfit;
+                }
+                else
+                {
+                    profitCount++;
+                    profitMoney += testRunProfit;
+                }
+            }
+            //записываем статистическую значимость
+            string[] totalTests = new string[3] { (lossCount + profitCount).ToString(), "100.0%", (lossMoney + profitMoney).ToString() + DefaultCurrency.Name };
+            string[] lossTests = new string[3] { lossCount.ToString(), Math.Round((double)lossCount / (lossCount + profitCount) * 100, 1).ToString() + "%", lossMoney.ToString() + DefaultCurrency.Name };
+            string[] profitTests = new string[3] { profitCount.ToString(), Math.Round((double)profitCount / (lossCount + profitCount) * 100, 1).ToString() + "%", profitMoney.ToString() + DefaultCurrency.Name };
+
+            if (testBatch.StatisticalSignificance.Count > 0)
+            {
+                int y = 0;
+            }
+
+            testBatch.StatisticalSignificance.Add(totalTests);
+            testBatch.StatisticalSignificance.Add(lossTests);
+            testBatch.StatisticalSignificance.Add(profitTests);
+
+            if (IsForwardTesting) //если это форвардное тестирование, записываем параметры для форвардного теста
+            {
+                testBatch.ForwardTestRun.IndicatorParameterValues = testBatch.TopModelTestRun.IndicatorParameterValues;
+                testBatch.ForwardTestRun.AlgorithmParameterValues = testBatch.TopModelTestRun.AlgorithmParameterValues;
+                if (IsForwardDepositTrading) //если это форвардное тестирование с торговлей депозитом, записываем параметры для форвардного теста с торговлей депозитом
+                {
+                    testBatch.ForwardTestRunDepositTrading.IndicatorParameterValues = testBatch.TopModelTestRun.IndicatorParameterValues;
+                    testBatch.ForwardTestRunDepositTrading.AlgorithmParameterValues = testBatch.TopModelTestRun.AlgorithmParameterValues;
                 }
             }
         }

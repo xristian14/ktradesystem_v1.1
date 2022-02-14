@@ -1082,7 +1082,7 @@ namespace ktradesystem.Models
                             //ждем пока один из выполняющихся testRun-ов не будет выполнен
                             while(isAnyComplete == false)
                             {
-                                Thread.Sleep(50);
+                                Thread.Sleep(20);
                                 int taskIndex = 0;
                                 while(taskIndex < tasksExecutingTestRuns.Length && isAnyComplete == false) //проходим по всем задачам и смотрим на статусы выполненности testRun-ов
                                 {
@@ -1111,6 +1111,7 @@ namespace ktradesystem.Models
                                             }
                                         }
                                     }
+                                    taskIndex++;
                                 }
                             }
 
@@ -1207,6 +1208,7 @@ namespace ktradesystem.Models
                                         testRunsStatus[tasksExecutingTestRuns[taskIndex1][0]][tasksExecutingTestRuns[taskIndex1][1]] = 2; //отмечаем в статусе testRun-а что он выполнен
                                     }
                                 }
+                                taskIndex1++;
                             }
 
                             //проходим по всем задачам, и для каждой завершенной, ищем невыполненный и незапущенный тест, и если нашли, то запускаем его в задаче
@@ -1272,8 +1274,9 @@ namespace ktradesystem.Models
                                                 }
                                             }
                                         }
+
                                         //если не нашли не запущенный тест, и tRunIndex превысил размер массива, переходим на следующий testBatch
-                                        if(isTestFind == false && tRunIndex >= TestBatches[tBatchIndex].OptimizationTestRuns.Count)
+                                        if(isTestFind == false && tRunIndex >= TestBatches[0].OptimizationTestRuns.Count)
                                         {
                                             tRunIndex = 0;
                                             tBatchIndex++;
@@ -1289,20 +1292,21 @@ namespace ktradesystem.Models
                                         testRunsStatus2[tBatchIndex][tRunIndex] = indexTask; //запоминаем индекс task в котором выполняется данный testRun
                                     }
                                 }
+                                indexTask++;
                             }
-                        }
-                        //смотрим на статусы testRun-ов в задачах, и если нет ни одного со статусом Запущен, значит все testRun-ы выполнены, тестирование окончено
-                        bool isAnyLaunched = false;
-                        for(int i = 0; i < tasksExecutingTestRuns.Length; i++)
-                        {
-                            if(testRunsStatus[tasksExecutingTestRuns[i][0]][tasksExecutingTestRuns[i][1]] == 1)
+                            //смотрим на статусы testRun-ов в задачах, и если нет ни одного со статусом Запущен, значит все testRun-ы выполнены, тестирование окончено
+                            bool isAnyLaunched = false;
+                            for(int i = 0; i < tasksExecutingTestRuns.Length; i++)
                             {
-                                isAnyLaunched = true;
+                                if(testRunsStatus[tasksExecutingTestRuns[i][0]][tasksExecutingTestRuns[i][1]] == 1)
+                                {
+                                    isAnyLaunched = true;
+                                }
                             }
-                        }
-                        if(isAnyLaunched == false)
-                        {
-                            isAllTestRunsComplete = true; //если ни один из testRun-ов в задачах не имеет статус Запущен, отмечаем что тестирование окончено
+                            if(isAnyLaunched == false)
+                            {
+                                isAllTestRunsComplete = true; //если ни один из testRun-ов в задачах не имеет статус Запущен, отмечаем что тестирование окончено
+                            }
                         }
                         n++;
                     }

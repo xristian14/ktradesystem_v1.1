@@ -1025,6 +1025,7 @@ namespace ktradesystem.Models
                     {
                         processorCount = 1;
                     }
+                    processorCount = 1;
                     Task[] tasks = new Task[processorCount]; //задачи
                     Stopwatch stopwatch = new Stopwatch();
                     stopwatch.Start();
@@ -1527,9 +1528,9 @@ namespace ktradesystem.Models
                     }
                 }
                 fileIndexes[i] = fileIndex;
-                //если нашли файл, последняя свечка которого позже даты начала тестирования, находим индекс свечка, дата которой позже или равняется дате начала тестирования
+                //если нашли файл, последняя свечка которого позже даты начала тестирования, находим индекс свечки, дата которой позже или равняется дате начала тестирования
                 int candleIndex = 0;
-                if (fileIndexes[i] < dataSourceCandles[i].Candles.Length)
+                if (isFindFile)
                 {
                     bool isFindCandle = false;
                     while (isFindCandle == false)
@@ -1963,7 +1964,7 @@ namespace ktradesystem.Models
                         if (isLimitExecute)
                         {
                             //определяем количество лотов, которое находится за ценой заявки, и которое могло быть куплено/продано на текущей свечке
-                            int stepCount = (int)Math.Round((dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H - dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L + 1) / order.DataSource.PriceStep); //количество пунктов цены
+                            int stepCount = (int)Math.Round((dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H - dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L + order.DataSource.PriceStep) / order.DataSource.PriceStep); //количество пунктов цены
                             decimal stepLots = (decimal)dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].V / stepCount; //среднее количество лотов на 1 пункт цены
                             int stepsOver = order.Direction ? (int)Math.Round((order.Price - dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L) / order.DataSource.PriceStep) : (int)Math.Round((dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H - order.Price) / order.DataSource.PriceStep); //количество пунктов за ценой заявки
                             decimal overLots = stepLots * stepsOver / 2; //количество лотов которое могло быть куплено/продано на текущей свечке (делить на 2 т.к. лишь половина от лотов - это сделки в нужной нам операции (купить или продать))

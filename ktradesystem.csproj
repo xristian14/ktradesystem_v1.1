@@ -135,6 +135,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ViewModels\ViewModelPageTestingNavigation.cs" />
     <Compile Include="Views\AddAlgorithmParameter.xaml.cs">
       <DependentUpon>AddAlgorithmParameter.xaml</DependentUpon>
     </Compile>
@@ -152,6 +153,12 @@
     </Compile>
     <Compile Include="Views\Pages\PageTesting.xaml.cs">
       <DependentUpon>PageTesting.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Pages\PageTestingNavigation.xaml.cs">
+      <DependentUpon>PageTestingNavigation.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Pages\PageTestingResult.xaml.cs">
+      <DependentUpon>PageTestingResult.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ViewAddDataSource.xaml.cs">
       <DependentUpon>ViewAddDataSource.xaml</DependentUpon>
@@ -247,6 +254,14 @@
     <Page Include="Views\Pages\PageTesting.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\Pages\PageTestingNavigation.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Pages\PageTestingResult.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\ViewAddDataSource.xaml">
       <Generator>MSBuild:Compile</Generator>

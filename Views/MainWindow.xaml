@@ -17,8 +17,8 @@
         <Grid Grid.Row="0">
             <StackPanel Grid.Row="0" Background="#FFFAFAFA" Orientation="Horizontal">
                 <Button Content="Настройки" Command="{Binding MenuSettings_Click}" Height="25" Width="74" Margin="5 0 0 0"/>
-                <Button Content="Источники данных" Command="{Binding MenuDataSource_Click}" Height="25" Width="120" Margin="5 0 0 0"/>
-                <Button Content="Тестирование" Command="{Binding MenuTesting_Click}" Height="25" Width="90" Margin="5 0 0 0"/>
+                <Button Content="Источники данных" Command="{Binding MenuDataSource_Click}" Height="25" Width="130" Margin="5 0 0 0"/>
+                <Button Content="Тестирование" Command="{Binding MenuTesting_Click}" Height="25" Width="102" Margin="5 0 0 0"/>
             </StackPanel>
         </Grid>
         <Frame IsEnabled="{Binding IsPagesAndMainMenuButtonsEnabled}" Grid.Row="1" Content="{Binding CurrentPage}" NavigationUIVisibility="Hidden"/>

@@ -33,7 +33,7 @@ namespace ktradesystem.ViewModels
             _mainCommunicationChannel.TestingProgress.CollectionChanged += MainCommunicationChannel_TestingProgressCollectionChanged;
 
             _dataSource = new Views.Pages.PageDataSource();
-            _testing = new Views.Pages.PageTesting();
+            _testing = new Views.Pages.PageTestingNavigation();
             CurrentPage = _dataSource;
         }
 

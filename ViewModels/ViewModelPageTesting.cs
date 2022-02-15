@@ -160,17 +160,6 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private Visibility _indicatorsVisibility = Visibility.Collapsed;
-        public Visibility IndicatorsVisibility //видимость панели индикаторов
-        {
-            get { return _indicatorsVisibility; }
-            private set
-            {
-                _indicatorsVisibility = value;
-                OnPropertyChanged();
-            }
-        }
-
         private void SelectedIndicatorChanged() //помещяет в переменные редактора значения выбранного индикатора для просмотра данного индиктора
         {
             if(SelectedIndicator != null)
@@ -258,24 +247,6 @@ namespace ktradesystem.ViewModels
             {
                 IndicatorStatusText = "Просмотр";
                 IsIndicatorReadOnly = true;
-            }
-        }
-
-        public ICommand IndicatorsVisibility_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    if (IndicatorsVisibility == Visibility.Visible)
-                    {
-                        IndicatorsVisibility = Visibility.Collapsed;
-                    }
-                    else
-                    {
-                        IndicatorsVisibility = Visibility.Visible;
-                    }
-                }, (obj) => true);
             }
         }
 

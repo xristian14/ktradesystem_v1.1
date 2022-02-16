@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models
 {
+    [Serializable]
     public class Candle
     {
         public DateTime DateTime { get; set; }

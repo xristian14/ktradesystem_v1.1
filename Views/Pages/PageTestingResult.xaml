@@ -10,19 +10,19 @@
 
     <Grid>
         <StackPanel Orientation="Vertical" Margin="10">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Просматриваемое тестирование:" Width="190"/>
+            <StackPanel Orientation="Horizontal" Margin="10 0 0 0">
+                <TextBlock Text="Результат тестирования:" Width="144"/>
                 <ComboBox MaxWidth="350"/>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
+            <StackPanel Orientation="Horizontal" Margin="10 10 0 0">
                 <TextBlock Text="Источники данных:" Width="115"/>
                 <ComboBox MaxWidth="300"/>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="0 3 0 0">
+            <StackPanel Orientation="Horizontal" Margin="32 3 0 0">
                 <TextBlock Text="Тестовая связка:" Width="115"/>
                 <ComboBox/>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="0 3 0 0">
+            <StackPanel Orientation="Horizontal" Margin="54 3 0 0">
                 <TextBlock Text="Тестовый прогон:" Width="115"/>
                 <ComboBox/>
             </StackPanel>

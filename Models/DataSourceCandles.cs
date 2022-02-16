@@ -7,6 +7,7 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
+    [Serializable]
     public class DataSourceCandles //класс содержит источник данных, и массив массивов свечек которые содержат данные файлов
     {
         public DataSource DataSource { get; set; }

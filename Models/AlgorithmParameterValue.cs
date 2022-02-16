@@ -7,6 +7,7 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
+    [Serializable]
     public class AlgorithmParameterValue
     {
         public AlgorithmParameter AlgorithmParameter { get; set; }

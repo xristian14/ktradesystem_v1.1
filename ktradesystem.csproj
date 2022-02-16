@@ -127,6 +127,7 @@
     <Compile Include="ViewModels\FilterTopModelView.cs" />
     <Compile Include="ViewModels\IndicatorParameterRangeView.cs" />
     <Compile Include="ViewModels\IndicatorParameterTemplateView.cs" />
+    <Compile Include="ViewModels\TestingView.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\ViewModelData.cs" />
     <Compile Include="ViewModels\ViewModelPageDataSource.cs" />

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Runtime.Serialization.Formatters.Binary;
+using ktradesystem.Models;
 using System.IO;
 
 using System.Reflection;
@@ -30,6 +31,10 @@ namespace ktradesystem.ViewModels
             return _instance;
         }
 
+        public void WriteTestingView(Testing testing) //создает объект тестирования для представления, создает папку для данного тестирования, сериализует созданный объект и сохраняет в файл, вычисляет значения индикаторов для каждого тестового прогона, сериализует их и сохраняет в файлы
+        {
+
+        }
 
         private string _testText;
         public string TestText

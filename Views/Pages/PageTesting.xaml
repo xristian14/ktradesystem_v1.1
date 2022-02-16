@@ -9,7 +9,7 @@
       Title="PageTesting" Background="WhiteSmoke">
     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="590"/>
+            <ColumnDefinition Width="580"/>
             <ColumnDefinition Width="680"/>
             <ColumnDefinition Width="477"/>
             <ColumnDefinition Width="1*"/>
@@ -118,7 +118,7 @@
                             </Grid>
 
                             <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
-                                <TextBlock Text="Сценарий индикатора" Margin="198 0 0 0"/>
+                                <TextBlock Text="Сценарий индикатора" Margin="188 0 0 0"/>
                                 <Button Content="Сбросить до шаблона по умолчанию" Command="{Binding IndicatorResetToTemplate_Click}" Width="215" Margin="7 0 0 0"/>
                             </StackPanel>
                             <StackPanel Orientation="Vertical">

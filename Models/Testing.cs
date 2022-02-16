@@ -13,7 +13,6 @@ using System.Globalization;
 
 namespace ktradesystem.Models
 {
-    [Serializable]
     public class Testing
     {
         public Algorithm Algorithm { get; set; }

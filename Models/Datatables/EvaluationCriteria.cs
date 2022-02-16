@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models.Datatables
 {
+    [Serializable]
     public class EvaluationCriteria //критерий оценки тестирвоания
     {
         public int Id { get; set; }

@@ -1131,48 +1131,51 @@ namespace ktradesystem.Models
 
                             //обрабатываем выполненные testRun-ы
                             int taskIndex1 = 0;
-                            while (taskIndex1 < tasksExecutingTestRuns.Length) //проходим по всем задачам и смотрим на статусы выполненности testRun-ов, у выполненных отмечаем в статусе как выполнена
+                            while (taskIndex1 < tasksExecutingTestRuns.Length) //проходим по всем задачам и смотрим на статусы выполненности testRun-ов, у выполненных, которые имееют статус Запущен, отмечаем в статусе как выполнена
                             {
-                                if (tasksExecutingTestRuns[taskIndex1][1] < TestBatches[0].OptimizationTestRuns.Count) //оптимизационный тест
+                                if(testRunsStatus[tasksExecutingTestRuns[taskIndex1][0]][tasksExecutingTestRuns[taskIndex1][1]] == 1) //если testRun в текущей задаче имеет статус Запущен
                                 {
-                                    if (TestBatches[tasksExecutingTestRuns[taskIndex1][0]].OptimizationTestRuns[tasksExecutingTestRuns[taskIndex1][1]].IsComplete)
+                                    if (tasksExecutingTestRuns[taskIndex1][1] < TestBatches[0].OptimizationTestRuns.Count) //оптимизационный тест
                                     {
-                                        testRunsStatus[tasksExecutingTestRuns[taskIndex1][0]][tasksExecutingTestRuns[taskIndex1][1]] = 2; //отмечаем в статусе testRun-а что он выполнен
-                                        completedCount++; //увеличиваем количество выполненных тестов на 1
-                                        //определяем, выполнены ли все оптимизационные тесты данного testBatch
-                                        bool isOptimizationTestsComplete = true;
-                                        int a = 0;
-                                        while (isOptimizationTestsComplete && a < TestBatches[tasksExecutingTestRuns[taskIndex1][0]].OptimizationTestRuns.Count)
+                                        if (TestBatches[tasksExecutingTestRuns[taskIndex1][0]].OptimizationTestRuns[tasksExecutingTestRuns[taskIndex1][1]].IsComplete)
                                         {
-                                            if (testRunsStatus[tasksExecutingTestRuns[taskIndex1][0]][a] != 2)
+                                            testRunsStatus[tasksExecutingTestRuns[taskIndex1][0]][tasksExecutingTestRuns[taskIndex1][1]] = 2; //отмечаем в статусе testRun-а что он выполнен
+                                            completedCount++; //увеличиваем количество выполненных тестов на 1
+                                                              //определяем, выполнены ли все оптимизационные тесты данного testBatch
+                                            bool isOptimizationTestsComplete = true;
+                                            int a = 0;
+                                            while (isOptimizationTestsComplete && a < TestBatches[tasksExecutingTestRuns[taskIndex1][0]].OptimizationTestRuns.Count)
                                             {
-                                                isOptimizationTestsComplete = false;
+                                                if (testRunsStatus[tasksExecutingTestRuns[taskIndex1][0]][a] != 2)
+                                                {
+                                                    isOptimizationTestsComplete = false;
+                                                }
+                                                a++;
                                             }
-                                            a++;
+                                            if (isOptimizationTestsComplete) //если все оптимизационные тесты данного testBatch выполнены и топ-модель еще не была определена, запускаем определение топ-модели и статистической значимости
+                                            {
+                                                //определяем топ-модель и статистичекую значимость
+                                                TestBatch testBatch = TestBatches[tasksExecutingTestRuns[taskIndex1][0]]; //tasksExecutingTestRuns[taskIndex1][0] - testBatchIndex
+                                                TestBatchTopModelDetermining(testBatch); //определяем топ-модель
+                                                testBatch.IsTopModelDetermining = true; //отмечаем что определили топ-модель для данного testBatch
+                                            }
                                         }
-                                        if (isOptimizationTestsComplete && TestBatches[tasksExecutingTestRuns[taskIndex1][0]].IsTopModelDetermining == false) //если все оптимизационные тесты данного testBatch выполнены и топ-модель еще не была определена, запускаем определение топ-модели и статистической значимости
+                                    }
+                                    else if (tasksExecutingTestRuns[taskIndex1][1] == TestBatches[0].OptimizationTestRuns.Count) //форвардный тест
+                                    {
+                                        if (TestBatches[tasksExecutingTestRuns[taskIndex1][0]].ForwardTestRun.IsComplete)
                                         {
-                                            //определяем топ-модель и статистичекую значимость
-                                            TestBatch testBatch = TestBatches[tasksExecutingTestRuns[taskIndex1][0]]; //tasksExecutingTestRuns[taskIndex1][0] - testBatchIndex
-                                            TestBatchTopModelDetermining(testBatch); //определяем топ-модель
-                                            testBatch.IsTopModelDetermining = true; //отмечаем что определили топ-модель для данного testBatch
+                                            testRunsStatus[tasksExecutingTestRuns[taskIndex1][0]][tasksExecutingTestRuns[taskIndex1][1]] = 2; //отмечаем в статусе testRun-а что он выполнен
+                                            completedCount++; //увеличиваем количество выполненных тестов на 1
                                         }
                                     }
-                                }
-                                else if (tasksExecutingTestRuns[taskIndex1][1] == TestBatches[0].OptimizationTestRuns.Count) //форвардный тест
-                                {
-                                    if (TestBatches[tasksExecutingTestRuns[taskIndex1][0]].ForwardTestRun.IsComplete)
+                                    else if (tasksExecutingTestRuns[taskIndex1][1] == TestBatches[0].OptimizationTestRuns.Count + 1) //форвардный тест с торговлей депозитом
                                     {
-                                        testRunsStatus[tasksExecutingTestRuns[taskIndex1][0]][tasksExecutingTestRuns[taskIndex1][1]] = 2; //отмечаем в статусе testRun-а что он выполнен
-                                        completedCount++; //увеличиваем количество выполненных тестов на 1
-                                    }
-                                }
-                                else if (tasksExecutingTestRuns[taskIndex1][1] == TestBatches[0].OptimizationTestRuns.Count + 1) //форвардный тест с торговлей депозитом
-                                {
-                                    if (TestBatches[tasksExecutingTestRuns[taskIndex1][0]].ForwardTestRunDepositTrading.IsComplete)
-                                    {
-                                        testRunsStatus[tasksExecutingTestRuns[taskIndex1][0]][tasksExecutingTestRuns[taskIndex1][1]] = 2; //отмечаем в статусе testRun-а что он выполнен
-                                        completedCount++; //увеличиваем количество выполненных тестов на 1
+                                        if (TestBatches[tasksExecutingTestRuns[taskIndex1][0]].ForwardTestRunDepositTrading.IsComplete)
+                                        {
+                                            testRunsStatus[tasksExecutingTestRuns[taskIndex1][0]][tasksExecutingTestRuns[taskIndex1][1]] = 2; //отмечаем в статусе testRun-а что он выполнен
+                                            completedCount++; //увеличиваем количество выполненных тестов на 1
+                                        }
                                     }
                                 }
                                 taskIndex1++;

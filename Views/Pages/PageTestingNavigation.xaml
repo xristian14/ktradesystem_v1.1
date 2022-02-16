@@ -16,7 +16,7 @@
         <Grid Grid.Row="0">
             <StackPanel Grid.Row="0" Background="#FFFAFAFA" Orientation="Horizontal">
                 <Button Content="Создание тестирования" Command="{Binding NavigationCreateTesting_Click}" Height="19" Width="144" Margin="15 0 0 0"/>
-                <Button Content="Результат тестирования" Command="{Binding NavigationResultTesting_Click}" Height="19" Width="144" Margin="5 0 0 0"/>
+                <Button Content="Результаты тестирования" Command="{Binding NavigationResultTesting_Click}" Height="19" Width="152" Margin="5 0 0 0"/>
             </StackPanel>
         </Grid>
         <Frame Grid.Row="1" Content="{Binding CurrentPage}" NavigationUIVisibility="Hidden"/>

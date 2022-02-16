@@ -13,7 +13,8 @@ using System.Globalization;
 
 namespace ktradesystem.Models
 {
-    class Testing
+    [Serializable]
+    public class Testing
     {
         public Algorithm Algorithm { get; set; }
         public List<DataSourceGroup> DataSourceGroups { get; set; }
@@ -3144,11 +3145,6 @@ namespace ktradesystem.Models
             string[] totalTests = new string[3] { (lossCount + profitCount).ToString(), "100.0%", (lossMoney + profitMoney).ToString() + DefaultCurrency.Name };
             string[] lossTests = new string[3] { lossCount.ToString(), Math.Round((double)lossCount / (lossCount + profitCount) * 100, 1).ToString() + "%", lossMoney.ToString() + DefaultCurrency.Name };
             string[] profitTests = new string[3] { profitCount.ToString(), Math.Round((double)profitCount / (lossCount + profitCount) * 100, 1).ToString() + "%", profitMoney.ToString() + DefaultCurrency.Name };
-
-            if (testBatch.StatisticalSignificance.Count > 0)
-            {
-                int y = 0;
-            }
 
             testBatch.StatisticalSignificance.Add(totalTests);
             testBatch.StatisticalSignificance.Add(lossTests);

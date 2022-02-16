@@ -30,7 +30,10 @@
                 <TabItem>
                     <TabItem.Header>Таблицы</TabItem.Header>
                     <TabItem.Content>
-                        <StackPanel Orientation="Vertical"></StackPanel>
+                        <StackPanel Orientation="Vertical">
+                            <Button Content="Button test" Command="{Binding ButtonTest_Click}" Width="100"/>
+                            <TextBlock Text="{Binding TestText}"/>
+                        </StackPanel>
                     </TabItem.Content>
                 </TabItem>
                 <TabItem>

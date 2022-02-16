@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using ktradesystem.ViewModels;
 
 namespace ktradesystem.Views.Pages
 {
@@ -23,6 +24,9 @@ namespace ktradesystem.Views.Pages
         public PageTestingResult()
         {
             InitializeComponent();
+
+            ViewModelPageTestingResult viewModelPageTestingResult = ViewModelPageTestingResult.getInstance();
+            DataContext = viewModelPageTestingResult;
         }
     }
 }

@@ -9,7 +9,7 @@ using ktradesystem.Models.Datatables;
 namespace ktradesystem.ViewModels
 {
     [Serializable]
-    public class TestingView
+    public class TestingView //тестирование для представления
     {
         public Algorithm Algorithm { get; set; }
         public List<DataSourceGroup> DataSourceGroups { get; set; }

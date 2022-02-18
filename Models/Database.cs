@@ -271,13 +271,10 @@ namespace ktradesystem.Models
         public void InsertIndicatorParameterRange(IndicatorParameterRange indicatorParameterRange)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "INSERT INTO IndicatorParameterRanges (minValue, maxValue, step, isStepPercent, idAlgorithm, idIndicatorParameterTemplate) VALUES (:minValue, :maxValue, :step, :isStepPercent, :idAlgorithm, :idIndicatorParameterTemplate)";
-            command.Parameters.AddWithValue("minValue", indicatorParameterRange.MinValue);
-            command.Parameters.AddWithValue("maxValue", indicatorParameterRange.MaxValue);
-            command.Parameters.AddWithValue("step", indicatorParameterRange.Step);
-            command.Parameters.AddWithValue("isStepPercent", indicatorParameterRange.IsStepPercent);
-            command.Parameters.AddWithValue("idAlgorithm", indicatorParameterRange.IdAlgorithm);
+            command.CommandText = "INSERT INTO IndicatorParameterRanges (idIndicatorParameterTemplate, idAlgorithmParameter, idAlgorithmIndicator) VALUES (:idIndicatorParameterTemplate, :idAlgorithmParameter, :idAlgorithmIndicator)";
             command.Parameters.AddWithValue("idIndicatorParameterTemplate", indicatorParameterRange.IndicatorParameterTemplate.Id);
+            command.Parameters.AddWithValue("idAlgorithmParameter", indicatorParameterRange.AlgorithmParameter.Id);
+            command.Parameters.AddWithValue("idAlgorithmIndicator", indicatorParameterRange.AlgorithmIndicator.Id);
 
             command.ExecuteNonQuery();
         }
@@ -322,12 +319,9 @@ namespace ktradesystem.Models
         public void UpdateIndicatorParameterRange(IndicatorParameterRange indicatorParameterRange)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "UPDATE IndicatorParameterRanges SET minValue = :minValue, maxValue = :maxValue, step = :step, isStepPercent = :isStepPercent, idIndicatorParameterTemplate = :idIndicatorParameterTemplate WHERE id = :id";
-            command.Parameters.AddWithValue("minValue", indicatorParameterRange.MinValue);
-            command.Parameters.AddWithValue("maxValue", indicatorParameterRange.MaxValue);
-            command.Parameters.AddWithValue("step", indicatorParameterRange.Step);
-            command.Parameters.AddWithValue("isStepPercent", indicatorParameterRange.IsStepPercent);
+            command.CommandText = "UPDATE IndicatorParameterRanges SET idIndicatorParameterTemplate = :idIndicatorParameterTemplate, idAlgorithmParameter = :idAlgorithmParameter WHERE id = :id";
             command.Parameters.AddWithValue("idIndicatorParameterTemplate", indicatorParameterRange.IndicatorParameterTemplate.Id);
+            command.Parameters.AddWithValue("idAlgorithmParameter", indicatorParameterRange.AlgorithmParameter.Id);
             command.Parameters.AddWithValue("id", indicatorParameterRange.Id);
 
             command.ExecuteNonQuery();

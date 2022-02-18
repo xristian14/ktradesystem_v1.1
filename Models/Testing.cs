@@ -852,7 +852,7 @@ namespace ktradesystem.Models
                     using ktradesystem.Models.Datatables;
                     public class CompiledEvaluationCriteria_" + i.ToString() +
                     @"{
-                        public EvaluationCriteriaValue Calculate(DataSourceCandles[] dataSourcesCandles, TestRun testRun, System.Collections.ObjectModel.ObservableCollection<Setting> settings)
+                        public EvaluationCriteriaValue Calculate(DataSourceCandles[] dataSourcesCandles, TestRun testRun, ObservableCollection<Setting> settings)
                         {
                             double ResultDoubleValue = 0;
                             string ResultStringValue = """";
@@ -865,6 +865,7 @@ namespace ktradesystem.Models
                         }
                     }"
                 });
+
                 if (compiled.Errors.Count == 0)
                 {
                     CompiledEvaluationCriterias[i] = compiled.CompiledAssembly.CreateInstance("CompiledEvaluationCriteria_" + i.ToString());

@@ -91,6 +91,7 @@
     <Compile Include="Models\CompareSign.cs" />
     <Compile Include="Models\DataSourceCandles.cs" />
     <Compile Include="Models\DataSourceForCalculate.cs" />
+    <Compile Include="Models\Datatables\AlgorithmIndicator.cs" />
     <Compile Include="Models\Datatables\ParameterValueType.cs" />
     <Compile Include="Models\DateTimeDuration.cs" />
     <Compile Include="Models\Deal.cs" />
@@ -99,6 +100,7 @@
     <Compile Include="Models\IndicatorCalculateResult.cs" />
     <Compile Include="Models\IndicatorParameterValue.cs" />
     <Compile Include="Models\IndicatorValues.cs" />
+    <Compile Include="Models\ModelFunctions.cs" />
     <Compile Include="Models\Order.cs" />
     <Compile Include="Models\TestBatch.cs" />
     <Compile Include="Models\TestRun.cs" />

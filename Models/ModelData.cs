@@ -223,17 +223,6 @@ namespace ktradesystem.Models
             }
         }
 
-        private ObservableCollection<IndicatorParameterRange> _indicatorParameterRanges = new ObservableCollection<IndicatorParameterRange>(); //диапазоны значений для параметров индикаторов
-        public ObservableCollection<IndicatorParameterRange> IndicatorParameterRanges
-        {
-            get { return _indicatorParameterRanges; }
-            private set
-            {
-                _indicatorParameterRanges = value;
-                OnPropertyChanged();
-            }
-        }
-
         private ObservableCollection<AlgorithmParameter> _algorithmParameters = new ObservableCollection<AlgorithmParameter>(); //оптимизируемые параметры алгоритмов
         public ObservableCollection<AlgorithmParameter> AlgorithmParameters
         {
@@ -241,6 +230,28 @@ namespace ktradesystem.Models
             private set
             {
                 _algorithmParameters = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<AlgorithmIndicator> _algorithmIndicators = new ObservableCollection<AlgorithmIndicator>(); //индикаторы алгоритмов
+        public ObservableCollection<AlgorithmIndicator> AlgorithmIndicators
+        {
+            get { return _algorithmIndicators; }
+            private set
+            {
+                _algorithmIndicators = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<IndicatorParameterRange> _indicatorParameterRanges = new ObservableCollection<IndicatorParameterRange>(); //диапазоны значений для параметров индикаторов
+        public ObservableCollection<IndicatorParameterRange> IndicatorParameterRanges
+        {
+            get { return _indicatorParameterRanges; }
+            private set
+            {
+                _indicatorParameterRanges = value;
                 OnPropertyChanged();
             }
         }
@@ -587,11 +598,28 @@ namespace ktradesystem.Models
                 AlgorithmParameters.Add(algorithmParameter);
             }
 
-            //считываем диапазоны значений параметров индикаторов данных из базы данных
+            //считываем индикаторы алгоритмов (IndicatorParameterRanges установим при их считывании, Algorithm установим при считывании алгоритмов)
+            AlgorithmIndicators.Clear();
+            DataTable dataAlgorithmIndicators = _database.QuerySelect("SELECT * FROM AlgorithmIndicators");
+            foreach (DataRow row in dataAlgorithmIndicators.Rows)
+            {
+                int idIndicator = (int)row.Field<long>("idIndicator"); //id индикатора
+                Indicator indicator = new Indicator();
+                foreach(Indicator indicator1 in Indicators)
+                {
+                    if(indicator1.Id == idIndicator)
+                    {
+                        indicator = indicator1;
+                    }
+                }
+                AlgorithmIndicator algorithmIndicator = new AlgorithmIndicator { Id = (int)row.Field<long>("id"), IdAlgorithm = (int)row.Field<long>("idAlgorithm"), Indicator = indicator, IndicatorParameterRanges = new List<IndicatorParameterRange>(), Ending = row.Field<string>("ending") };
+                AlgorithmIndicators.Add(algorithmIndicator);
+            }
+
+            //считываем диапазоны значений параметров индикаторов из базы данных
             IndicatorParameterRanges.Clear();
 
-            //данный запрос выполняет операцию FULL OUTER JOIN с помощью двух LEFT JOIN и UNION т.к. FULL OUTER JOIN не поддерживается, это нужно чтобы отсортировать записи по id индикатора к которому принадлежит параметр, чтобы в таблице значений параметров выбранных индикаторов, записи шли по индикаторам
-            DataTable dataIndicatorParameterRanges = _database.QuerySelect("SELECT ipr.*, ipt.idIndicator AS iptIdIndicator, ipt.id AS iptId, ipt.name AS iptName FROM IndicatorParameterRanges AS ipr LEFT JOIN IndicatorParameterTemplates AS ipt ON ipr.idIndicatorParameterTemplate = ipt.id     UNION ALL     SELECT ipr.*, ipt.idIndicator AS iptIdIndicator, ipt.id AS iptId, ipt.name AS iptName FROM IndicatorParameterTemplates AS ipt LEFT JOIN IndicatorParameterRanges AS ipr ON ipr.idIndicatorParameterTemplate = ipt.id     WHERE ipr.idIndicatorParameterTemplate IS NULL AND ipr.id NOTNULL     ORDER BY idIndicator");
+            DataTable dataIndicatorParameterRanges = _database.QuerySelect("SELECT * FROM IndicatorParameterRanges ORDER BY idAlgorithmIndicator");
             foreach (DataRow row in dataIndicatorParameterRanges.Rows)
             {
                 int idIndicatorParameterTemplate = (int)row.Field<long>("idIndicatorParameterTemplate"); //id шаблона параметра
@@ -614,9 +642,20 @@ namespace ktradesystem.Models
                         algorithmParameter = algorithmParameter1;
                     }
                 }
+                int idAlgorithmIndicator = (int)row.Field<long>("idAlgorithmIndicator"); //id индикатора алгоритма
+                AlgorithmIndicator algorithmIndicator = new AlgorithmIndicator();
+                foreach(AlgorithmIndicator algorithmIndicator1 in AlgorithmIndicators)
+                {
+                    if(algorithmIndicator1.Id == idAlgorithmIndicator)
+                    {
+                        algorithmIndicator = algorithmIndicator1;
+                    }
+                }
 
-                IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange { Id = (int)row.Field<long>("id"), IdAlgorithm = (int)row.Field<long>("idAlgorithm"), IndicatorParameterTemplate = indicatorParameterTemplate1, AlgorithmParameter = algorithmParameter, Indicator = indicator };
-                
+                IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange { Id = (int)row.Field<long>("id"), IdAlgorithm = (int)row.Field<long>("idAlgorithm"), IndicatorParameterTemplate = indicatorParameterTemplate1, AlgorithmParameter = algorithmParameter, AlgorithmIndicator = algorithmIndicator };
+                //добавляем indicatorParameterRange в IndicatorParameterRanges algorithmIndicator-а
+                algorithmIndicator.IndicatorParameterRanges.Add(indicatorParameterRange);
+
                 IndicatorParameterRanges.Add(indicatorParameterRange);
             }
 
@@ -639,16 +678,6 @@ namespace ktradesystem.Models
                 }
                 algorithm.DataSourceTemplates = dataSourceTemplates;
 
-                List<IndicatorParameterRange> indicatorParameterRanges = new List<IndicatorParameterRange>();
-                foreach (IndicatorParameterRange indicatorParameterRange in IndicatorParameterRanges)
-                {
-                    if (indicatorParameterRange.IdAlgorithm == idAlgorithm)
-                    {
-                        indicatorParameterRanges.Add(indicatorParameterRange);
-                    }
-                }
-                algorithm.IndicatorParameterRanges = indicatorParameterRanges;
-
                 List<AlgorithmParameter> algorithmParameters = new List<AlgorithmParameter>();
                 foreach (AlgorithmParameter algorithmParameter in AlgorithmParameters)
                 {
@@ -658,6 +687,18 @@ namespace ktradesystem.Models
                     }
                 }
                 algorithm.AlgorithmParameters = algorithmParameters;
+
+                List<AlgorithmIndicator> algorithmIndicators = new List<AlgorithmIndicator>();
+                foreach (AlgorithmIndicator algorithmIndicator in AlgorithmIndicators)
+                {
+                    if (algorithmIndicator.IdAlgorithm == idAlgorithm)
+                    {
+                        algorithmIndicators.Add(algorithmIndicator);
+                        //устанавливаем Algorithm для algorithmIndicator-а
+                        algorithmIndicator.Algorithm = algorithm;
+                    }
+                }
+                algorithm.AlgorithmIndicators = algorithmIndicators;
 
                 Algorithms.Add(algorithm);
             }

@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ktradesystem.Models.Datatables;
 
-namespace ktradesystem.Models.Datatables
+namespace ktradesystem.ViewModels
 {
-    public class AlgorithmIndicator
+    public class AlgorithmIndicatorView
     {
         public int Id { get; set; }
-        public int IdAlgorithm { get; set; }
         public Algorithm Algorithm { get; set; }
         public Indicator Indicator { get; set; }
         public List<IndicatorParameterRange> IndicatorParameterRanges { get; set; }

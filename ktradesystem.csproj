@@ -118,6 +118,7 @@
     <Compile Include="Models\ModelTesting.cs" />
     <Compile Include="Models\Testing.cs" />
     <Compile Include="Models\Datatables\TypeOrder.cs" />
+    <Compile Include="ViewModels\AlgorithmIndicatorView.cs" />
     <Compile Include="ViewModels\AlgorithmParameterView.cs" />
     <Compile Include="ViewModels\AxesParameterSelectView.cs" />
     <Compile Include="ViewModels\DataSourceAccordanceView.cs" />

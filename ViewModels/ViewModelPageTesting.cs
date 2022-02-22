@@ -38,6 +38,9 @@ namespace ktradesystem.ViewModels
             _modelData.DataSourceTemplates.CollectionChanged += modelData_DataSourceTemplatesCollectionChanged;
             DataSourceTemplates = _modelData.DataSourceTemplates;
 
+            _modelData.AlgorithmIndicators.CollectionChanged += modelData_AlgorithmIndicatorsCollectionChanged;
+            AlgorithmIndicators = _modelData.AlgorithmIndicators;
+
             _modelData.Algorithms.CollectionChanged += modelData_AlgorithmsCollectionChanged;
             Algorithms = _modelData.Algorithms;
 
@@ -2055,8 +2058,8 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private ObservableCollection<Indicator> _algorithmIndicators = new ObservableCollection<Indicator>();
-        public ObservableCollection<Indicator> AlgorithmIndicators //индикаторы алгоритма
+        private ObservableCollection<AlgorithmIndicator> _algorithmIndicators = new ObservableCollection<AlgorithmIndicator>();
+        public ObservableCollection<AlgorithmIndicator> AlgorithmIndicators //индикаторы алгоритма
         {
             get { return _algorithmIndicators; }
             private set
@@ -2065,14 +2068,30 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        
-        private Indicator _selectedAlgorithmIndicator;
-        public Indicator SelectedAlgorithmIndicator //выбранный индикатор алгоритма
+
+        private void modelData_AlgorithmIndicatorsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            get { return _selectedAlgorithmIndicator; }
+            AlgorithmIndicators = (ObservableCollection<AlgorithmIndicator>)sender;
+        }
+
+        private ObservableCollection<AlgorithmIndicatorView> _algorithmIndicatorsView = new ObservableCollection<AlgorithmIndicatorView>();
+        public ObservableCollection<AlgorithmIndicatorView> AlgorithmIndicatorsView //индикаторы алгоритма для представления
+        {
+            get { return _algorithmIndicatorsView; }
+            private set
+            {
+                _algorithmIndicatorsView = value;
+                OnPropertyChanged();
+            }
+        }
+        
+        private Indicator _selectedAlgorithmIndicatorView;
+        public Indicator SelectedAlgorithmIndicatorView //выбранный индикатор алгоритма
+        {
+            get { return _selectedAlgorithmIndicatorView; }
             set
             {
-                _selectedAlgorithmIndicator = value;
+                _selectedAlgorithmIndicatorView = value;
                 OnPropertyChanged();
             }
         }

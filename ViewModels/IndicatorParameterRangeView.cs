@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Collections.ObjectModel;
 using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.ViewModels
@@ -12,9 +13,10 @@ namespace ktradesystem.ViewModels
         public int Id { get; set; }
         public int IdAlgorithm { get; set; }
         public IndicatorParameterTemplate IndicatorParameterTemplate { get; set; }
-        public Indicator Indicator { get; set; }
-        public string NameIndicator { get; set; }
-        public string NameIndicatorParameterTemplate { get; set; }
         public AlgorithmParameter AlgorithmParameter { get; set; }
+        public AlgorithmIndicator AlgorithmIndicator { get; set; }
+        public string NameAlgorithmIndicator { get; set; }
+        public ObservableCollection<AlgorithmParameterView> AlgorithmParametersView { get; set; }
+        public AlgorithmParameterView SelectedAlgorithmParameterView { get; set; }
     }
 }

@@ -266,12 +266,12 @@
                             <Button Content="Добавить" Command="{Binding AddAlgorithmIndicator_Click}" Width="70" Margin="7 0 0 0"/>
                             <Button Content="Удалить" Command="{Binding DeleteAlgorithmIndicator_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView Grid.Row="2" ItemsSource="{Binding AlgorithmIndicatorsView, Mode=OneWay}" SelectedItem="{Binding SelectedAlgorithmIndicatorView, Mode=OneWayToSource}" SelectionMode="Single" MinHeight="0" MaxHeight="105">
+                        <ListView Grid.Row="2" ItemsSource="{Binding AlgorithmIndicatorsView, Mode=OneWay}" SelectedItem="{Binding SelectedAlgorithmIndicatorView, Mode=TwoWay}" SelectionMode="Single" MinHeight="0" MaxHeight="105">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="{Binding ElementName=helperAlgInd1, Path=ActualWidth}"/>
-                                    <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="{Binding ElementName=helperAlgInd2, Path=ActualWidth}"/>
-                                    <GridViewColumn DisplayMemberBinding="{Binding Ending}" Header="Прибавление к названию" Width="{Binding ElementName=helperAlgInd3, Path=ActualWidth}"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Indicator.Name}" Header="Название" Width="{Binding ElementName=helperAlgInd2, Path=ActualWidth}"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Ending}" Header="Окончание названия" Width="{Binding ElementName=helperAlgInd3, Path=ActualWidth}"/>
                                 </GridView>
                             </ListView.View>
                         </ListView>
@@ -294,19 +294,20 @@
                         <ListView ItemsSource="{Binding IndicatorParameterRangesView, Mode=OneWay}" SelectedItem="{Binding SelectedIndicatorParameterRangeView, Mode=TwoWay}" SelectionMode="Single" MinHeight="0" MaxHeight="140">
                             <ListView.View>
                                 <GridView>
-                                    <GridViewColumn DisplayMemberBinding="{Binding NameIndicator}" Header="Название индикатора" Width="{Binding ElementName=helperParRan1, Path=ActualWidth}"/>
-                                    <GridViewColumn DisplayMemberBinding="{Binding NameIndicatorParameterTemplate}" Header="Название параметра" Width="{Binding ElementName=helperParRan2, Path=ActualWidth}"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding NameAlgorithmIndicator}" Header="Индикатор алгоритма" Width="{Binding ElementName=helperParRan1, Path=ActualWidth}"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding IndicatorParameterTemplate.Name}" Header="Параметр индикатора" Width="{Binding ElementName=helperParRan2, Path=ActualWidth}"/>
                                     <GridViewColumn Header="Описание параметра" Width="{Binding ElementName=helperParRan3, Path=ActualWidth}">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBox Text="{Binding DescriptionIndicatorParameterTemplate}" TextWrapping="Wrap" IsReadOnly="True"/>
+                                                <TextBox Text="{Binding IndicatorParameterTemplate.Description}" TextWrapping="Wrap" MaxLines="2" IsReadOnly="True"/>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
-                                    <GridViewColumn Header="Переменная" Width="{Binding ElementName=helperParRan4, Path=ActualWidth}">
+                                    <GridViewColumn DisplayMemberBinding="{Binding IndicatorParameterTemplate.ParameterValueType.Name}" Header="Тип числа" Width="{Binding ElementName=helperParRan4, Path=ActualWidth}"/>
+                                    <GridViewColumn Header="Выбранная переменная" Width="{Binding ElementName=helperParRan5, Path=ActualWidth}">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <ComboBox ItemsSource="{Binding NamesParameters}" SelectedItem="{Binding SelectedNameParameter, Mode=TwoWay}"/>
+                                                <ComboBox ItemsSource="{Binding AlgorithmParametersView}" SelectedItem="{Binding SelectedAlgorithmParameterView, Mode=TwoWay}" DisplayMemberPath="Name"/>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
@@ -315,9 +316,10 @@
                         </ListView>
                         <Grid Visibility="Visible">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="124"/>
+                                <ColumnDefinition Width="0.95*"/>
+                                <ColumnDefinition Width="0.95*"/>
                                 <ColumnDefinition Width="1*"/>
-                                <ColumnDefinition Width="1.4*"/>
+                                <ColumnDefinition Width="60"/>
                                 <ColumnDefinition Width="1*"/>
                                 <ColumnDefinition Width="33"/>
                             </Grid.ColumnDefinitions>
@@ -325,6 +327,7 @@
                             <Grid Grid.Column="1" x:Name="helperParRan2"/>
                             <Grid Grid.Column="2" x:Name="helperParRan3"/>
                             <Grid Grid.Column="3" x:Name="helperParRan4"/>
+                            <Grid Grid.Column="4" x:Name="helperParRan5"/>
                         </Grid>
 
                         <StackPanel Orientation="Horizontal" Margin="0 7 0 0">

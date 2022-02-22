@@ -1027,9 +1027,9 @@ namespace ktradesystem.ViewModels
                 AlgorithmName = SelectedAlgorithm.Name;
                 AlgorithmDescription = SelectedAlgorithm.Description;
                 CreateDataSourceTemplatesView();
-                CreateIndicatorParameterRangesView();
-                UpdateAlgorithmIndicators();
                 CreateAlgorithmParametersView();
+                CreateAlgorithmParametersViewIntDouble();
+                CreateAlgorithmIndicators();
                 AlgorithmScript = SelectedAlgorithm.Script;
             }
             else
@@ -2031,33 +2031,6 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private void CreateIndicatorParameterRangesView()
-        {
-            IndicatorParameterRangesView.Clear();
-
-            foreach(IndicatorParameterRange indicatorParameterRange in SelectedAlgorithm.IndicatorParameterRanges)
-            {
-                int index = -1;
-                foreach(IndicatorParameterTemplate indicatorParameterTemplate in IndicatorParameterTemplates)
-                {
-                    if(indicatorParameterTemplate == indicatorParameterRange.IndicatorParameterTemplate)
-                    {
-                        index = IndicatorParameterTemplates.IndexOf(indicatorParameterTemplate);
-                    }
-                }
-                string rangeValuesView = indicatorParameterRange.MinValue.ToString() + " – " + indicatorParameterRange.MaxValue.ToString();
-                string stepView = "";
-                stepView += indicatorParameterRange.Step.ToString();
-                if (indicatorParameterRange.IsStepPercent == true)
-                {
-                    stepView += "%";
-                }
-
-                IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { Id = indicatorParameterRange.Id, MinValue = indicatorParameterRange.MinValue.ToString(), MaxValue = indicatorParameterRange.MaxValue.ToString(), Step = indicatorParameterRange.Step.ToString(), IsStepPercent = indicatorParameterRange.IsStepPercent, IdAlgorithm = indicatorParameterRange.IdAlgorithm, IndicatorParameterTemplate = indicatorParameterRange.IndicatorParameterTemplate, Indicator = indicatorParameterRange.Indicator, NameIndicator = indicatorParameterRange.Indicator.Name, NameIndicatorParameterTemplate = IndicatorParameterTemplates[index].Name, DescriptionIndicatorParameterTemplate = IndicatorParameterTemplates[index].Description, RangeValuesView = rangeValuesView, StepView = stepView };
-                IndicatorParameterRangesView.Add(indicatorParameterRangeView);
-            }
-        }
-
         private ObservableCollection<AlgorithmIndicator> _algorithmIndicators = new ObservableCollection<AlgorithmIndicator>();
         public ObservableCollection<AlgorithmIndicator> AlgorithmIndicators //индикаторы алгоритма
         {
@@ -2096,6 +2069,30 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        private void CreateAlgorithmIndicators() //формирует список индикаторов выбранного алгоритма для представления, а так же список параметров индикаторов выбранного алгоритма
+        {
+            AlgorithmIndicatorsView.Clear();
+            IndicatorParameterRangesView.Clear();
+            foreach(AlgorithmIndicator algorithmIndicator in SelectedAlgorithm.AlgorithmIndicators)
+            {
+                AlgorithmIndicatorsView.Add(new AlgorithmIndicatorView { Id = algorithmIndicator.Id, Algorithm = algorithmIndicator.Algorithm, Indicator = algorithmIndicator.Indicator, IndicatorParameterRanges = algorithmIndicator.IndicatorParameterRanges, Ending = algorithmIndicator.Ending });
+                foreach(IndicatorParameterRange indicatorParameterRange in algorithmIndicator.IndicatorParameterRanges)
+                {
+                    string nameAlgorithmindicator = indicatorParameterRange.IndicatorParameterTemplate.Name + "_" + indicatorParameterRange.AlgorithmIndicator.Ending;
+                    IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { Id = indicatorParameterRange.Id, IdAlgorithm = indicatorParameterRange.IdAlgorithm, IndicatorParameterTemplate = indicatorParameterRange.IndicatorParameterTemplate, AlgorithmParameter = indicatorParameterRange.AlgorithmParameter, AlgorithmIndicator = indicatorParameterRange.AlgorithmIndicator, NameAlgorithmIndicator = nameAlgorithmindicator };
+                    if (indicatorParameterRange.IndicatorParameterTemplate.ParameterValueType.Id == 1)
+                    {
+                        indicatorParameterRangeView.AlgorithmParametersView = AlgorithmParametersViewInt;
+                    }
+                    else
+                    {
+                        indicatorParameterRangeView.AlgorithmParametersView = AlgorithmParametersViewDouble;
+                    }
+                    IndicatorParameterRangesView.Add(indicatorParameterRangeView);
+                }
+            }
+        }
+
         public ICommand AddAlgorithmIndicator_Click
         {
             get
@@ -2131,20 +2128,6 @@ namespace ktradesystem.ViewModels
                     }
                     UpdateAlgorithmIndicators();
                 }, (obj) => IsAddOrEditAlgorithm() && SelectedIndicator != null && AlgorithmIndicators.IndexOf(SelectedIndicator) == -1 );
-            }
-        }
-
-        private void UpdateAlgorithmIndicators() //обновляет AlgorithmIndicators в соответствии с IndicatorParameterRangesView
-        {
-            AlgorithmIndicators.Clear();
-            int lastId = -1; //id последнего добавленного индикатора
-            foreach(IndicatorParameterRangeView item in IndicatorParameterRangesView)
-            {
-                if(item.Indicator.Id != lastId)
-                {
-                    AlgorithmIndicators.Add(item.Indicator);
-                    lastId = item.Indicator.Id;
-                }
             }
         }
 
@@ -2415,7 +2398,46 @@ namespace ktradesystem.ViewModels
                 AlgorithmParametersView.Add(new AlgorithmParameterView { Id = algorithmParameter.Id, Name = algorithmParameter.Name, Description = algorithmParameter.Description, ParameterValueType = algorithmParameter.ParameterValueType, MinValue = algorithmParameter.MinValue.ToString(), MaxValue = algorithmParameter.MaxValue.ToString(), Step = algorithmParameter.Step.ToString(), IsStepPercent = algorithmParameter.IsStepPercent, IdAlgorithm = algorithmParameter.IdAlgorithm, RangeValuesView = rangeValuesView, StepView = stepView });
             }
         }
-        
+
+        private ObservableCollection<AlgorithmParameterView> _algorithmParametersViewInt = new ObservableCollection<AlgorithmParameterView>();
+        public ObservableCollection<AlgorithmParameterView> AlgorithmParametersViewInt //параметры алгоритма с типом значения int (используется как источник данных для combobox IndicatorParameterRangesView)
+        {
+            get { return _algorithmParametersViewInt; }
+            private set
+            {
+                _algorithmParametersViewInt = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<AlgorithmParameterView> _algorithmParametersViewDouble = new ObservableCollection<AlgorithmParameterView>();
+        public ObservableCollection<AlgorithmParameterView> AlgorithmParametersViewDouble //параметры алгоритма с типом значения double (используется как источник данных для combobox IndicatorParameterRangesView)
+        {
+            get { return _algorithmParametersViewDouble; }
+            private set
+            {
+                _algorithmParametersViewDouble = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public void CreateAlgorithmParametersViewIntDouble() //формирует списки с параметрами int и double для combobox выбора переменной в параметрах индикаторов
+        {
+            AlgorithmParametersViewInt.Clear();
+            AlgorithmParametersViewDouble.Clear();
+            foreach (AlgorithmParameterView algorithmParameterView in AlgorithmParametersView)
+            {
+                if (algorithmParameterView.ParameterValueType.Id == 1) //целое
+                {
+                    AlgorithmParametersViewInt.Add(algorithmParameterView);
+                }
+                else //дробное
+                {
+                    AlgorithmParametersViewDouble.Add(algorithmParameterView);
+                }
+            }
+        }
+
         private string _algorithmParameterName;
         public string AlgorithmParameterName //название параметра алгоритма
         {

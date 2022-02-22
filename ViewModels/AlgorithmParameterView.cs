@@ -7,7 +7,7 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.ViewModels
 {
-    class AlgorithmParameterView
+    public class AlgorithmParameterView
     {
         public int Id { get; set; }
         public string Name { get; set; }

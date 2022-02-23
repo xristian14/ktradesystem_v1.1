@@ -133,7 +133,7 @@ namespace ktradesystem.Models
         }
 
         public void AlgorithmInsertUpdate(string name, string description, List<DataSourceTemplate> dataSourceTemplates, List<IndicatorParameterRange> indicatorParameterRanges, List<AlgorithmParameter> algorithmParameters, string script, int id = -1) //если прислан id, отправляет запрос update, иначе insert
-        {
+        {/*
             if (id == -1)
             {
                 //добавляет алгоритм, и после для него: макеты источников данных, диапазоны значений шаблонов параметров, и параметры алгоритма
@@ -324,7 +324,7 @@ namespace ktradesystem.Models
                 _database.UpdateAlgorithm(new Algorithm { Id = id, Name = name, Description = description, Script = script });
             }
 
-            _modelData.ReadAlgorithms();
+            _modelData.ReadAlgorithms();*/
         }
 
         public void AlgorithmDelete(int id)

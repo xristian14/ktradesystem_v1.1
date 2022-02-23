@@ -1384,8 +1384,8 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + "_Indicator_" + SelectedAlgorithmIndicator.Name);
-                }, (obj) => SelectedDataSourceTemplateView != null && SelectedAlgorithmIndicator != null && IsAddOrEditAlgorithm());
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + "_Indicator_" + SelectedAlgorithmIndicatorView.Name);
+                }, (obj) => SelectedDataSourceTemplateView != null && SelectedAlgorithmIndicatorView != null && IsAddOrEditAlgorithm());
             }
         }
         public ICommand AlgorithmPasteAlgorithmParameter_Click
@@ -1608,19 +1608,19 @@ namespace ktradesystem.ViewModels
                 TooltipSaveAlgorithm.Add("Необходимо добавить минимум один макет источника данных.");
             }
 
-            //проверка на заполненные значения параметров индикаторов
-            bool isFilledRanges = true;
+            //проверка на выбранность переменной для параметров индикаторов
+            bool isChosenAlgorithmParameter = true;
             foreach(IndicatorParameterRangeView indicatorParameterRangeView in IndicatorParameterRangesView)
             {
-                if(indicatorParameterRangeView.MinValue == "")
+                if(indicatorParameterRangeView.SelectedAlgorithmParameterView == null)
                 {
-                    isFilledRanges = false;
+                    isChosenAlgorithmParameter = false;
                 }
             }
-            if(isFilledRanges == false)
+            if(isChosenAlgorithmParameter == false)
             {
                 result = false;
-                TooltipSaveAlgorithm.Add("Не заполнены значения параметров индикаторов.");
+                TooltipSaveAlgorithm.Add("Не выбраны переменные для параметров индикаторов.");
             }
 
             return result;
@@ -1642,7 +1642,7 @@ namespace ktradesystem.ViewModels
                     List<IndicatorParameterRange> indicatorParameterRanges = new List<IndicatorParameterRange>();
                     foreach(IndicatorParameterRangeView indicatorParameterRangeView in IndicatorParameterRangesView)
                     {
-                        IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange {Id = indicatorParameterRangeView.Id,  MinValue = double.Parse(indicatorParameterRangeView.MinValue), MaxValue = double.Parse(indicatorParameterRangeView.MaxValue), Step = double.Parse(indicatorParameterRangeView.Step), IsStepPercent = indicatorParameterRangeView.IsStepPercent, IdAlgorithm = indicatorParameterRangeView.IdAlgorithm, IndicatorParameterTemplate = indicatorParameterRangeView.IndicatorParameterTemplate, Indicator = indicatorParameterRangeView.Indicator };
+                        IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange {/*Id = indicatorParameterRangeView.Id,  MinValue = double.Parse(indicatorParameterRangeView.MinValue), MaxValue = double.Parse(indicatorParameterRangeView.MaxValue), Step = double.Parse(indicatorParameterRangeView.Step), IsStepPercent = indicatorParameterRangeView.IsStepPercent, IdAlgorithm = indicatorParameterRangeView.IdAlgorithm, IndicatorParameterTemplate = indicatorParameterRangeView.IndicatorParameterTemplate, Indicator = indicatorParameterRangeView.Indicator */};
                         indicatorParameterRanges.Add(indicatorParameterRange);
                     }
 
@@ -2099,7 +2099,11 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    //вставляет parameterTemplates выбранного индикатора в IndicatorParameterRangesView, так чтобы индикаторы распологались по порядку в IndicatorParameterRangesView
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
+                    ViewAddAlgorithmIndicator viewAddAlgorithmIndicator = new ViewAddAlgorithmIndicator();
+                    viewAddAlgorithmIndicator.Show();
+
+                    /*//вставляет parameterTemplates выбранного индикатора в IndicatorParameterRangesView, так чтобы индикаторы распологались по порядку в IndicatorParameterRangesView
                     int nextIdIndex = -1; //индекс IndicatorParameterRangeView, у которого id индикатора больше id добавляемого индикатора (добавляемые параметры индикатора будут добавлены до него)
                     foreach (IndicatorParameterRangeView item in IndicatorParameterRangesView)
                     {
@@ -2126,8 +2130,161 @@ namespace ktradesystem.ViewModels
                             i++;
                         }
                     }
-                    UpdateAlgorithmIndicators();
-                }, (obj) => IsAddOrEditAlgorithm() && SelectedIndicator != null && AlgorithmIndicators.IndexOf(SelectedIndicator) == -1 );
+                    UpdateAlgorithmIndicators();*/
+                }, (obj) => IsAddOrEditAlgorithm() );
+            }
+        }
+
+        private Indicator _addAlgorithmIndicatorSelectedIndicator;
+        public Indicator AddAlgorithmIndicatorSelectedIndicator //выбранный индикатор при добавлении индикатора алгоритму
+        {
+            get { return _addAlgorithmIndicatorSelectedIndicator; }
+            set
+            {
+                _addAlgorithmIndicatorSelectedIndicator = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _addAlgorithmIndicatorEnding;
+        public string AddAlgorithmIndicatorEnding //окончание названия добавляемого индикатора алгоритма
+        {
+            get { return _addAlgorithmIndicatorEnding; }
+            set
+            {
+                _addAlgorithmIndicatorEnding = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<string> _tooltipAddAddAlgorithmIndicator = new ObservableCollection<string>();
+        public ObservableCollection<string> TooltipAddAddAlgorithmIndicator //подсказка, показываемая при наведении на кнопку добавить
+        {
+            get { return _tooltipAddAddAlgorithmIndicator; }
+            set
+            {
+                _tooltipAddAddAlgorithmIndicator = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool IsFieldsAddAlgorithmIndicatorCorrect()
+        {
+            bool result = true;
+            TooltipAddAddAlgorithmIndicator.Clear(); //очищаем подсказку кнопки добавить
+
+            //проверка на выбранность индикатора
+            if(AddAlgorithmIndicatorSelectedIndicator == null)
+            {
+                result = false;
+                TooltipAddAddAlgorithmIndicator.Add("Не выбран индикатор.");
+            }
+            else //если индиктаор выбран, проверяем уникальность названия
+            {
+
+            }
+
+            //проверка на пустое значение
+            if (name == "" || AlgorithmParameterMinValue == "" || AlgorithmParameterMaxValue == "" || AlgorithmParameterstep == "")
+            {
+                result = false;
+                TooltipAddAddAlgorithmIndicator.Add("Не заполнены все поля.");
+            }
+
+            //проверка на допустимые символы
+            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            bool isNotFind = false;
+            for (int i = 0; i < name.Length; i++)
+            {
+                if (letters.IndexOf(name[i]) == -1)
+                {
+                    isNotFind = true;
+                }
+
+            }
+            if (isNotFind)
+            {
+                result = false;
+                TooltipAddAddAlgorithmIndicator.Add("Допустимо использование только английского алфавита.");
+            }
+
+            //проверка на уникальность названия
+            bool isUnique = true;
+            foreach (AlgorithmParameterView item in AlgorithmParametersView)
+            {
+                if (name == item.Name) //проверяем имя на уникальность среди всех записей
+                {
+                    isUnique = false;
+                }
+            }
+            if (isUnique == false)
+            {
+                result = false;
+                TooltipAddAddAlgorithmIndicator.Add("Данное название уже используется.");
+            }
+
+            //проверка на возможность конвертации в число с плавающей точкой
+            if (double.TryParse(AlgorithmParameterMinValue, out double res) == false)
+            {
+                result = false;
+                TooltipAddAddAlgorithmIndicator.Add("Минимальное значение должно быть числом.");
+            }
+
+            //проверка на возможность конвертации в число с плавающей точкой
+            if (double.TryParse(AlgorithmParameterMaxValue, out res) == false)
+            {
+                result = false;
+                TooltipAddAddAlgorithmIndicator.Add("Максимальное значение должно быть числом.");
+            }
+
+            //проверка на возможность конвертации в число с плавающей точкой
+            if (double.TryParse(AlgorithmParameterstep, out res) == false)
+            {
+                result = false;
+                TooltipAddAddAlgorithmIndicator.Add("Шаг должен быть числом.");
+            }
+
+            //проверка на возможность достигнуть максимума с минимума с шагом
+            if (double.TryParse(AlgorithmParameterMinValue, out double min) && double.TryParse(AlgorithmParameterMaxValue, out double max) && double.TryParse(AlgorithmParameterstep, out double step))
+            {
+                if ((max > min && step > 0) == false)
+                {
+                    result = false;
+                    TooltipAddAddAlgorithmIndicator.Add("Максимум должен быть больше минимума, а шаг должен быть положительным.");
+                }
+            }
+
+            return result;
+        }
+
+        public ICommand AddAddAlgorithmIndicator_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    string name = AlgorithmParameterName != null ? AlgorithmParameterName.Replace(" ", "") : "";
+
+
+
+                    bool isStepPercent = false;
+                    if (AlgorithmParameterselectedTypeStep == AlgorithmParameterTypesStep[0])
+                    {
+                        isStepPercent = true;
+                    }
+                    string rangeValuesView = AlgorithmParameterMinValue + " – " + AlgorithmParameterMaxValue;
+
+                    string steView = AlgorithmParameterstep;
+                    if (isStepPercent)
+                    {
+                        steView += "%";
+                    }
+
+                    AlgorithmParameterView algorithmParameterView = new AlgorithmParameterView { Name = name, Description = AlgorithmParameterDescription, ParameterValueType = AlgorithmParameterSelectedParameterValueType, MinValue = AlgorithmParameterMinValue, MaxValue = AlgorithmParameterMaxValue, IsStepPercent = isStepPercent, Step = AlgorithmParameterstep, RangeValuesView = rangeValuesView, StepView = steView };
+                    AlgorithmParametersView.Add(algorithmParameterView);
+
+                    CloseAddDataSourceTemplateAction?.Invoke();
+                }, (obj) => IsFieldsAddAlgorithmIndicatorCorrect());
             }
         }
 
@@ -2137,7 +2294,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    List<int> removeIndexs = new List<int>(); //список с индексами элементов которые нужно удалить в порядке убывания (т.к. при удалении первых индексы следующих будут смещаться)
+                    /*List<int> removeIndexs = new List<int>(); //список с индексами элементов которые нужно удалить в порядке убывания (т.к. при удалении первых индексы следующих будут смещаться)
                     for (int i = IndicatorParameterRangesView.Count - 1; i >= 0; i--)
                     {
                         if (IndicatorParameterRangesView[i].Indicator.Id == SelectedAlgorithmIndicator.Id)
@@ -2149,9 +2306,9 @@ namespace ktradesystem.ViewModels
                     {
                         IndicatorParameterRangesView.RemoveAt(item);
                     }
-                    UpdateAlgorithmIndicators();
+                    UpdateAlgorithmIndicators();*/
 
-                }, (obj) => SelectedAlgorithmIndicator != null && IsAddOrEditAlgorithm());
+                }, (obj) => /*SelectedAlgorithmIndicator != null &&*/ IsAddOrEditAlgorithm());
             }
         }
         
@@ -2216,7 +2373,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    EditIndicatorParameterRangesViewMinValue = SelectedIndicatorParameterRangeView.MinValue != null ? SelectedIndicatorParameterRangeView.MinValue : null;
+                    /*EditIndicatorParameterRangesViewMinValue = SelectedIndicatorParameterRangeView.MinValue != null ? SelectedIndicatorParameterRangeView.MinValue : null;
                     EditIndicatorParameterRangesViewMaxValue = SelectedIndicatorParameterRangeView.MaxValue != null ? SelectedIndicatorParameterRangeView.MaxValue : null;
                     EditIndicatorParameterRangesViewStep = SelectedIndicatorParameterRangeView.Step != null ? SelectedIndicatorParameterRangeView.Step : null;
 
@@ -2232,7 +2389,7 @@ namespace ktradesystem.ViewModels
                     {
                         EditIndicatorParameterRangesViewSelectedTypeStep = EditIndicatorParameterRangesViewTypesStep[0];
                     }
-
+                    */
                     viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewEditIndicatorParameterRangesView viewEditIndicatorParameterRangesView = new ViewEditIndicatorParameterRangesView();
                     viewEditIndicatorParameterRangesView.Show();
@@ -2315,7 +2472,7 @@ namespace ktradesystem.ViewModels
                     {
                         steView += "%";
                     }
-                    IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { Id = SelectedIndicatorParameterRangeView.Id, MinValue = EditIndicatorParameterRangesViewMinValue, MaxValue = EditIndicatorParameterRangesViewMaxValue, Step = EditIndicatorParameterRangesViewStep, IsStepPercent = isStepPercent, IdAlgorithm = SelectedIndicatorParameterRangeView.IdAlgorithm, IndicatorParameterTemplate = SelectedIndicatorParameterRangeView.IndicatorParameterTemplate, Indicator = SelectedIndicatorParameterRangeView.Indicator, NameIndicator = SelectedIndicatorParameterRangeView.NameIndicator, NameIndicatorParameterTemplate = SelectedIndicatorParameterRangeView.NameIndicatorParameterTemplate, DescriptionIndicatorParameterTemplate = SelectedIndicatorParameterRangeView.DescriptionIndicatorParameterTemplate, RangeValuesView = rangeValuesView, StepView = steView };
+                    IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { /*Id = SelectedIndicatorParameterRangeView.Id, MinValue = EditIndicatorParameterRangesViewMinValue, MaxValue = EditIndicatorParameterRangesViewMaxValue, Step = EditIndicatorParameterRangesViewStep, IsStepPercent = isStepPercent, IdAlgorithm = SelectedIndicatorParameterRangeView.IdAlgorithm, IndicatorParameterTemplate = SelectedIndicatorParameterRangeView.IndicatorParameterTemplate, Indicator = SelectedIndicatorParameterRangeView.Indicator, NameIndicator = SelectedIndicatorParameterRangeView.NameIndicator, NameIndicatorParameterTemplate = SelectedIndicatorParameterRangeView.NameIndicatorParameterTemplate, DescriptionIndicatorParameterTemplate = SelectedIndicatorParameterRangeView.DescriptionIndicatorParameterTemplate, RangeValuesView = rangeValuesView, StepView = steView */};
 
                     int index = IndicatorParameterRangesView.IndexOf(SelectedIndicatorParameterRangeView);
                     IndicatorParameterRangesView.RemoveAt(index);
@@ -3256,7 +3413,7 @@ namespace ktradesystem.ViewModels
                 List<string> namesParameters = new List<string>();
                 foreach(IndicatorParameterRangeView indicatorParameterRangeView in IndicatorParameterRangesView)
                 {
-                    namesParameters.Add("Индикатор " + indicatorParameterRangeView.NameIndicator +  " – " + indicatorParameterRangeView.NameIndicatorParameterTemplate);
+                    namesParameters.Add("Индикатор " + indicatorParameterRangeView.NameAlgorithmIndicator +  " – " + indicatorParameterRangeView.IndicatorParameterTemplate.Name);
                 }
                 foreach(AlgorithmParameterView algorithmParameterView in AlgorithmParametersView)
                 {

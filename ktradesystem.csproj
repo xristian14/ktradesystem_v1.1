@@ -165,6 +165,9 @@
     <Compile Include="Views\Pages\PageTestingResult.xaml.cs">
       <DependentUpon>PageTestingResult.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\ViewAddAlgorithmIndicator.xaml.cs">
+      <DependentUpon>ViewAddAlgorithmIndicator.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ViewAddDataSource.xaml.cs">
       <DependentUpon>ViewAddDataSource.xaml</DependentUpon>
     </Compile>
@@ -265,6 +268,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Pages\PageTestingResult.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ViewAddAlgorithmIndicator.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

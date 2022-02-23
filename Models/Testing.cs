@@ -52,11 +52,11 @@ namespace ktradesystem.Models
             _modelTesting = ModelTesting.getInstance();
             _mainCommunicationChannel = MainCommunicationChannel.getInstance();
         }
-
+        
         public void LaunchTesting()
         {
             TestBatches = new List<TestBatch>();
-
+            /*
             //находим индекс критерия оценки топ-модели
             TopModelEvaluationCriteriaIndex = _modelData.EvaluationCriterias.IndexOf(TopModelCriteria.EvaluationCriteria);
 
@@ -1291,7 +1291,7 @@ namespace ktradesystem.Models
             else //если были ошибки при компиляции, завершаем тестирование
             {
                 TestingEnding(false);
-            }
+            }*/
         }
 
         private List<int[]> CreateCombinations(List<int[]> combination, List<int> indexes) //принимает 2 списка, 1-й - содержит массив с комбинации индексов параметров: {[0,0],[0,1],[1,0],[1,1]}, второй только индексы: {0,1}, функция перебирает все комбинации элементов обоих списков и возвращает новый список в котором индексы 2-го списка добавлены в комбинацию 1-го: {[0,0,0],[0,0,1],[0,1,0]..}
@@ -2097,7 +2097,7 @@ namespace ktradesystem.Models
 
         private void TestBatchTopModelDetermining(TestBatch testBatch) //определение топ-модели среди оптимизационных тестов тестовой связки
         {
-            if (IndicatorsParametersAllIntValues.Length + AlgorithmParametersAllIntValues.Length == 0) //если параметров нет - оптимизационный тест всего один, топ модель - testBatch.OptimizationTestRuns[0]
+            /*if (IndicatorsParametersAllIntValues.Length + AlgorithmParametersAllIntValues.Length == 0) //если параметров нет - оптимизационный тест всего один, топ модель - testBatch.OptimizationTestRuns[0]
             {
                 testBatch.TopModelTestRun = testBatch.OptimizationTestRuns[0];
             }
@@ -2785,7 +2785,7 @@ namespace ktradesystem.Models
                     */
                     //формируем группы с комбинациями параметров плоскости поиска топ-модели
                     //проходим по оси X столько раз, сколько помещается размер стороны группы по оси X
-                    for (int x = 0; x < xAxisCountParameterValue - (xAxisSize - 1); x++)
+                    /*for (int x = 0; x < xAxisCountParameterValue - (xAxisSize - 1); x++)
                     {
                         //проходим по оси Y столько раз, сколько помещается размер стороны группы по оси Y
                         for (int y = 0; y < yAxisCountParameterValue - (yAxisSize - 1); y++)
@@ -3159,7 +3159,7 @@ namespace ktradesystem.Models
                     testBatch.ForwardTestRunDepositTrading.IndicatorParameterValues = testBatch.TopModelTestRun.IndicatorParameterValues;
                     testBatch.ForwardTestRunDepositTrading.AlgorithmParameterValues = testBatch.TopModelTestRun.AlgorithmParameterValues;
                 }
-            }
+            }*/
         }
     }
 }

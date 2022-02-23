@@ -508,7 +508,7 @@ namespace ktradesystem.Models
         private void CheckMissingIndicatorParameterRange() //при добавлении шаблона параметра индикатору, в алгоритме, запись со значениями данного параметра не добавляется. Эта функция определяет диапазоны значений которых "недостаёт" и добавляет их.
         {
             //проходим по алгоритмам, далее по диапазонам параметров и формируем список с шаблонами параметров соответствующих диапазонам. Далее проходимся по полученному списку шаблонов параметров и формируем список индикаторов для данного набора шаблонов параметров. Далее проходим по индикаторам, и для каждого находим полный список шаблонов параметров. Далее ищем id шаблона параметров в списке диапазонов параметров, и если не находим добавляем в список диапазонов значений которые нужно будет добавить. Далее проходимся по этому списку и выполняем операацию insert для каждого.
-            List<IndicatorParameterRange> indicatorParameterRangesForInsert = new List<IndicatorParameterRange>(); //список с диапазонами значений которые необходимо добавить в БД
+            /*List<IndicatorParameterRange> indicatorParameterRangesForInsert = new List<IndicatorParameterRange>(); //список с диапазонами значений которые необходимо добавить в БД
             foreach(Algorithm algorithm in Algorithms)
             {
                 List<IndicatorParameterTemplate> indicatorParameterTemplates = new List<IndicatorParameterTemplate>(); //список с шаблонами параметров, соответствующих диапазонам значений
@@ -566,7 +566,7 @@ namespace ktradesystem.Models
             foreach(IndicatorParameterRange indicatorParameterRange1 in indicatorParameterRangesForInsert)
             {
                 _database.InsertIndicatorParameterRange(indicatorParameterRange1);
-            }
+            }*/
         }
 
         public void ReadAlgorithms()

@@ -600,7 +600,7 @@ namespace ktradesystem.Models
 
             //считываем индикаторы алгоритмов (IndicatorParameterRanges установим при их считывании, Algorithm установим при считывании алгоритмов)
             AlgorithmIndicators.Clear();
-            DataTable dataAlgorithmIndicators = _database.QuerySelect("SELECT * FROM AlgorithmIndicators");
+            DataTable dataAlgorithmIndicators = _database.QuerySelect("SELECT * FROM AlgorithmIndicators ORDER BY idIndicator");
             foreach (DataRow row in dataAlgorithmIndicators.Rows)
             {
                 int idIndicator = (int)row.Field<long>("idIndicator"); //id индикатора

@@ -97,7 +97,7 @@
                                         <GridViewColumn Header="Описание" Width="{Binding ElementName=helperIndPar2, Path=ActualWidth}">
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <TextBox Text="{Binding Description}" TextWrapping="Wrap" IsReadOnly="True"/>
+                                                    <TextBox Text="{Binding Description}" TextWrapping="Wrap" MaxLines="3" IsReadOnly="True"/>
                                                 </DataTemplate>
                                             </GridViewColumn.CellTemplate>
                                         </GridViewColumn>
@@ -197,7 +197,7 @@
                             <GridViewColumn Header="Описание" Width="{Binding ElementName=helperAlg3, Path=ActualWidth}">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBox Text="{Binding Description}" TextWrapping="Wrap" IsReadOnly="True"/>
+                                        <TextBox Text="{Binding Description}" TextWrapping="Wrap" MaxLines="2" IsReadOnly="True"/>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
@@ -216,9 +216,9 @@
                     <Grid Grid.Column="2" x:Name="helperAlg3"/>
                 </Grid>
             </StackPanel>
-            <ScrollViewer MaxHeight="{Binding ElementName=helperPageHeight1, Path=ActualHeight}">
-                <StackPanel Background="#FFFAFAFA">
-                    <StackPanel Background="White" Margin="10">
+            <StackPanel Background="#FFFAFAFA" MaxHeight="{Binding ElementName=helperPageHeight1, Path=ActualHeight}">
+                <ScrollViewer Margin="10">
+                    <StackPanel Background="White">
                         <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
                             <TextBlock Text="Статус:"/>
                             <TextBlock Text="{Binding AlgorithmStatusText}" Margin="5 0 0 0"/>
@@ -244,7 +244,7 @@
                                     <GridViewColumn Header="Описание" Width="{Binding ElementName=helperDsTemp2, Path=ActualWidth}">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBox Text="{Binding Description}" TextWrapping="Wrap" IsReadOnly="True"/>
+                                                <TextBox Text="{Binding Description}" TextWrapping="Wrap" MaxLines="3" IsReadOnly="True"/>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
@@ -264,13 +264,21 @@
                         <StackPanel Orientation="Horizontal" Margin="0 7 0 0">
                             <TextBlock Text="Индикаторы алгоритма"/>
                             <Button Content="Добавить" Command="{Binding AddAlgorithmIndicator_Click}" Width="70" Margin="7 0 0 0"/>
+                            <Button Content="Редактировать" Command="{Binding EditAlgorithmIndicator_Click}" Width="95" Margin="7 0 0 0"/>
                             <Button Content="Удалить" Command="{Binding DeleteAlgorithmIndicator_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
                         <ListView Grid.Row="2" ItemsSource="{Binding AlgorithmIndicatorsView, Mode=OneWay}" SelectedItem="{Binding SelectedAlgorithmIndicatorView, Mode=TwoWay}" SelectionMode="Single" MinHeight="0" MaxHeight="105">
                             <ListView.View>
                                 <GridView>
-                                    <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="{Binding ElementName=helperAlgInd1, Path=ActualWidth}"/>
-                                    <GridViewColumn DisplayMemberBinding="{Binding Indicator.Name}" Header="Название" Width="{Binding ElementName=helperAlgInd2, Path=ActualWidth}"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="{Binding ElementName=helperAlgInd0, Path=ActualWidth}"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Indicator.Name}" Header="Название индикатора" Width="{Binding ElementName=helperAlgInd1, Path=ActualWidth}"/>
+                                    <GridViewColumn Header="Описание индикатора" Width="{Binding ElementName=helperAlgInd2, Path=ActualWidth}">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBox Text="{Binding Indicator.Description}" TextWrapping="Wrap" MaxLines="2" IsReadOnly="True"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
                                     <GridViewColumn DisplayMemberBinding="{Binding Ending}" Header="Окончание названия" Width="{Binding ElementName=helperAlgInd3, Path=ActualWidth}"/>
                                 </GridView>
                             </ListView.View>
@@ -278,13 +286,15 @@
                         <Grid Visibility="Visible">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="37"/>
-                                <ColumnDefinition Width="3*"/>
-                                <ColumnDefinition Width="4*"/>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1.5*"/>
+                                <ColumnDefinition Width="120"/>
                                 <ColumnDefinition Width="33"/>
                             </Grid.ColumnDefinitions>
-                            <Grid Grid.Column="0" x:Name="helperAlgInd1"/>
-                            <Grid Grid.Column="1" x:Name="helperAlgInd2"/>
-                            <Grid Grid.Column="2" x:Name="helperAlgInd3"/>
+                            <Grid Grid.Column="0" x:Name="helperAlgInd0"/>
+                            <Grid Grid.Column="1" x:Name="helperAlgInd1"/>
+                            <Grid Grid.Column="2" x:Name="helperAlgInd2"/>
+                            <Grid Grid.Column="3" x:Name="helperAlgInd3"/>
                         </Grid>
 
                         <StackPanel Orientation="Horizontal" Margin="0 7 0 0">
@@ -343,7 +353,7 @@
                                     <GridViewColumn Header="Описание" Width="{Binding ElementName=helperAlgPar2, Path=ActualWidth}">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBox Text="{Binding Description}" TextWrapping="Wrap" IsReadOnly="True"/>
+                                                <TextBox Text="{Binding Description}" TextWrapping="Wrap" MaxLines="3" IsReadOnly="True"/>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
@@ -468,8 +478,8 @@
                         </StackPanel>
                         <TextBox x:Name="algorithmScriptText" Text="{Binding AlgorithmScript, Mode=TwoWay}" IsReadOnly="{Binding IsAlgorithmReadOnly}" TextWrapping="Wrap" AcceptsReturn="True"/>
                     </StackPanel>
-                </StackPanel>
-            </ScrollViewer>
+                </ScrollViewer>
+            </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="Проверить на ошибки" Command="{Binding AlgorithmCheckScript_Click}" Width="134" Margin="0 0 7 0"/>
                 <Button Content="Сохранить" Command="{Binding AlgorithmSave_Click}" Width="110" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000" Margin="0 0 7 0">

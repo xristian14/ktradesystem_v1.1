@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ktradesystem.Views"
         mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
         Title="Добавить источники данных для тестирования" Height="200" Width="500">
     <Grid>
         <StackPanel Orientation="Vertical" Margin="10">

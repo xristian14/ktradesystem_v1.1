@@ -1384,7 +1384,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + "_Indicator_" + SelectedAlgorithmIndicatorView.Name);
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + "_Indicator_" + SelectedAlgorithmIndicatorView.Indicator.Name + "_" + SelectedAlgorithmIndicatorView.Ending);
                 }, (obj) => SelectedDataSourceTemplateView != null && SelectedAlgorithmIndicatorView != null && IsAddOrEditAlgorithm());
             }
         }
@@ -2031,6 +2031,18 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        public void UpdateIndicatorParameterRangeViewAlgorithmParameters() //обновляет списки для параметров индикаторов со значениями, для параметра типа int - устанавливается список с int параметрами алгоритма, для double - список с double параметрами алгоритма
+        {
+            foreach (IndicatorParameterRangeView indicatorParameterRangeView in IndicatorParameterRangesView)
+            {
+                indicatorParameterRangeView.AlgorithmParametersView = indicatorParameterRangeView.IndicatorParameterTemplate.ParameterValueType.Id == 1 ? AlgorithmParametersViewInt : AlgorithmParametersViewDouble;
+                if (indicatorParameterRangeView.AlgorithmParametersView.IndexOf(indicatorParameterRangeView.SelectedAlgorithmParameterView) == -1) //если выбранный параметр алгоритма отсутствует в списке с параметрами, очищаем выбранный параметр
+                {
+                    indicatorParameterRangeView.SelectedAlgorithmParameterView = null;
+                }
+            }
+        }
+
         private ObservableCollection<AlgorithmIndicator> _algorithmIndicators = new ObservableCollection<AlgorithmIndicator>();
         public ObservableCollection<AlgorithmIndicator> AlgorithmIndicators //индикаторы алгоритма
         {
@@ -2058,8 +2070,8 @@ namespace ktradesystem.ViewModels
             }
         }
         
-        private Indicator _selectedAlgorithmIndicatorView;
-        public Indicator SelectedAlgorithmIndicatorView //выбранный индикатор алгоритма
+        private AlgorithmIndicatorView _selectedAlgorithmIndicatorView;
+        public AlgorithmIndicatorView SelectedAlgorithmIndicatorView //выбранный индикатор алгоритма
         {
             get { return _selectedAlgorithmIndicatorView; }
             set
@@ -2075,11 +2087,11 @@ namespace ktradesystem.ViewModels
             IndicatorParameterRangesView.Clear();
             foreach(AlgorithmIndicator algorithmIndicator in SelectedAlgorithm.AlgorithmIndicators)
             {
-                AlgorithmIndicatorsView.Add(new AlgorithmIndicatorView { Id = algorithmIndicator.Id, Algorithm = algorithmIndicator.Algorithm, Indicator = algorithmIndicator.Indicator, IndicatorParameterRanges = algorithmIndicator.IndicatorParameterRanges, Ending = algorithmIndicator.Ending });
+                AlgorithmIndicatorView algorithmIndicatorView = new AlgorithmIndicatorView { Id = algorithmIndicator.Id, Algorithm = algorithmIndicator.Algorithm, Indicator = algorithmIndicator.Indicator, IndicatorParameterRangesView = new List<IndicatorParameterRangeView>(), Ending = algorithmIndicator.Ending };
                 foreach(IndicatorParameterRange indicatorParameterRange in algorithmIndicator.IndicatorParameterRanges)
                 {
                     string nameAlgorithmindicator = indicatorParameterRange.IndicatorParameterTemplate.Name + "_" + indicatorParameterRange.AlgorithmIndicator.Ending;
-                    IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { Id = indicatorParameterRange.Id, IdAlgorithm = indicatorParameterRange.IdAlgorithm, IndicatorParameterTemplate = indicatorParameterRange.IndicatorParameterTemplate, AlgorithmParameter = indicatorParameterRange.AlgorithmParameter, AlgorithmIndicator = indicatorParameterRange.AlgorithmIndicator, NameAlgorithmIndicator = nameAlgorithmindicator };
+                    IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { Id = indicatorParameterRange.Id, IdAlgorithm = indicatorParameterRange.IdAlgorithm, IndicatorParameterTemplate = indicatorParameterRange.IndicatorParameterTemplate, AlgorithmIndicatorView = algorithmIndicatorView, NameAlgorithmIndicator = nameAlgorithmindicator };
                     if (indicatorParameterRange.IndicatorParameterTemplate.ParameterValueType.Id == 1)
                     {
                         indicatorParameterRangeView.AlgorithmParametersView = AlgorithmParametersViewInt;
@@ -2088,8 +2100,10 @@ namespace ktradesystem.ViewModels
                     {
                         indicatorParameterRangeView.AlgorithmParametersView = AlgorithmParametersViewDouble;
                     }
-                    IndicatorParameterRangesView.Add(indicatorParameterRangeView);
+                    IndicatorParameterRangesView.Add(indicatorParameterRangeView); //добавляем параметр индикатора со значением во все параметры с выбираемым значением
+                    algorithmIndicatorView.IndicatorParameterRangesView.Add(indicatorParameterRangeView); //добавляем параметр индикатора со значением в параметры конкретного индикатора алгоритма
                 }
+                AlgorithmIndicatorsView.Add(algorithmIndicatorView);
             }
         }
 
@@ -2099,6 +2113,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
+                    AddAlgorithmIndicatorEnding = "";
                     viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewAddAlgorithmIndicator viewAddAlgorithmIndicator = new ViewAddAlgorithmIndicator();
                     viewAddAlgorithmIndicator.Show();
@@ -2181,22 +2196,26 @@ namespace ktradesystem.ViewModels
             }
             else //если индиктаор выбран, проверяем уникальность названия
             {
-
+                if(AlgorithmIndicatorsView.Where(j=>j.Indicator.Name + j.Ending == AddAlgorithmIndicatorSelectedIndicator.Name + AddAlgorithmIndicatorEnding).Any())
+                {
+                    result = false;
+                    TooltipAddAddAlgorithmIndicator.Add("Данный индикатор с таким окончанием названия уже существует.");
+                }
             }
 
             //проверка на пустое значение
-            if (name == "" || AlgorithmParameterMinValue == "" || AlgorithmParameterMaxValue == "" || AlgorithmParameterstep == "")
+            if (AddAlgorithmIndicatorEnding == "")
             {
                 result = false;
                 TooltipAddAddAlgorithmIndicator.Add("Не заполнены все поля.");
             }
 
             //проверка на допустимые символы
-            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
             bool isNotFind = false;
-            for (int i = 0; i < name.Length; i++)
+            for (int i = 0; i < AddAlgorithmIndicatorEnding.Length; i++)
             {
-                if (letters.IndexOf(name[i]) == -1)
+                if (letters.IndexOf(AddAlgorithmIndicatorEnding[i]) == -1)
                 {
                     isNotFind = true;
                 }
@@ -2205,53 +2224,7 @@ namespace ktradesystem.ViewModels
             if (isNotFind)
             {
                 result = false;
-                TooltipAddAddAlgorithmIndicator.Add("Допустимо использование только английского алфавита.");
-            }
-
-            //проверка на уникальность названия
-            bool isUnique = true;
-            foreach (AlgorithmParameterView item in AlgorithmParametersView)
-            {
-                if (name == item.Name) //проверяем имя на уникальность среди всех записей
-                {
-                    isUnique = false;
-                }
-            }
-            if (isUnique == false)
-            {
-                result = false;
-                TooltipAddAddAlgorithmIndicator.Add("Данное название уже используется.");
-            }
-
-            //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(AlgorithmParameterMinValue, out double res) == false)
-            {
-                result = false;
-                TooltipAddAddAlgorithmIndicator.Add("Минимальное значение должно быть числом.");
-            }
-
-            //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(AlgorithmParameterMaxValue, out res) == false)
-            {
-                result = false;
-                TooltipAddAddAlgorithmIndicator.Add("Максимальное значение должно быть числом.");
-            }
-
-            //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(AlgorithmParameterstep, out res) == false)
-            {
-                result = false;
-                TooltipAddAddAlgorithmIndicator.Add("Шаг должен быть числом.");
-            }
-
-            //проверка на возможность достигнуть максимума с минимума с шагом
-            if (double.TryParse(AlgorithmParameterMinValue, out double min) && double.TryParse(AlgorithmParameterMaxValue, out double max) && double.TryParse(AlgorithmParameterstep, out double step))
-            {
-                if ((max > min && step > 0) == false)
-                {
-                    result = false;
-                    TooltipAddAddAlgorithmIndicator.Add("Максимум должен быть больше минимума, а шаг должен быть положительным.");
-                }
+                TooltipAddAddAlgorithmIndicator.Add("Допустимо использование только английского алфавита и цифр.");
             }
 
             return result;
@@ -2263,25 +2236,61 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    string name = AlgorithmParameterName != null ? AlgorithmParameterName.Replace(" ", "") : "";
-
-
-
-                    bool isStepPercent = false;
-                    if (AlgorithmParameterselectedTypeStep == AlgorithmParameterTypesStep[0])
+                    AlgorithmIndicatorView algorithmIndicatorView = new AlgorithmIndicatorView { Indicator = AddAlgorithmIndicatorSelectedIndicator, Ending = AddAlgorithmIndicatorEnding };
+                    List<IndicatorParameterRangeView> indicatorParameterRanges = new List<IndicatorParameterRangeView>();
+                    foreach(IndicatorParameterTemplate indicatorParameterTemplate in AddAlgorithmIndicatorSelectedIndicator.IndicatorParameterTemplates)
                     {
-                        isStepPercent = true;
+                        indicatorParameterRanges.Add(new IndicatorParameterRangeView { IndicatorParameterTemplate = indicatorParameterTemplate, AlgorithmIndicatorView = algorithmIndicatorView, NameAlgorithmIndicator = AddAlgorithmIndicatorSelectedIndicator.Name + "_" + AddAlgorithmIndicatorEnding });
                     }
-                    string rangeValuesView = AlgorithmParameterMinValue + " – " + AlgorithmParameterMaxValue;
-
-                    string steView = AlgorithmParameterstep;
-                    if (isStepPercent)
+                    algorithmIndicatorView.IndicatorParameterRangesView = indicatorParameterRanges;
+                    //вставляем в порядке следования индикаторов
+                    int nextIndex = -1; //индкс элемента с id индикатора больше созданного
+                    foreach(AlgorithmIndicatorView algorithmIndicatorView1 in AlgorithmIndicatorsView)
                     {
-                        steView += "%";
+                        if(algorithmIndicatorView1.Indicator.Id > algorithmIndicatorView.Indicator.Id)
+                        {
+                            if(nextIndex == -1)
+                            {
+                                nextIndex = AlgorithmIndicatorsView.IndexOf(algorithmIndicatorView1);
+                            }
+                        }
+                    }
+                    if(nextIndex == -1)
+                    {
+                        AlgorithmIndicatorsView.Add(algorithmIndicatorView);
+                    }
+                    else
+                    {
+                        AlgorithmIndicatorsView.Insert(nextIndex, algorithmIndicatorView);
                     }
 
-                    AlgorithmParameterView algorithmParameterView = new AlgorithmParameterView { Name = name, Description = AlgorithmParameterDescription, ParameterValueType = AlgorithmParameterSelectedParameterValueType, MinValue = AlgorithmParameterMinValue, MaxValue = AlgorithmParameterMaxValue, IsStepPercent = isStepPercent, Step = AlgorithmParameterstep, RangeValuesView = rangeValuesView, StepView = steView };
-                    AlgorithmParametersView.Add(algorithmParameterView);
+                    //вставляем algorithmIndicatorView.IndicatorParameterRangesView в IndicatorParameterRangesView, в порядке следования индикаторов
+                    nextIndex = -1; //индкс элемента с id индикатора больше созданного
+                    foreach (IndicatorParameterRangeView indicatorParameterRangeView in IndicatorParameterRangesView)
+                    {
+                        if (indicatorParameterRangeView.IndicatorParameterTemplate.IdIndicator > algorithmIndicatorView.Indicator.Id)
+                        {
+                            if (nextIndex == -1)
+                            {
+                                nextIndex = IndicatorParameterRangesView.IndexOf(indicatorParameterRangeView);
+                            }
+                        }
+                    }
+                    if (nextIndex == -1) //вставляем в конец если не было индикатора с id больше текущего
+                    {
+                        foreach(IndicatorParameterRangeView indicatorParameterRangeView in algorithmIndicatorView.IndicatorParameterRangesView)
+                        {
+                            IndicatorParameterRangesView.Add(indicatorParameterRangeView);
+                        }
+                    }
+                    else //вставляем на место индикатора с id больше текущего
+                    {
+                        for(int i = 0; i < algorithmIndicatorView.IndicatorParameterRangesView.Count; i++)
+                        {
+                            IndicatorParameterRangesView.Insert(nextIndex, algorithmIndicatorView.IndicatorParameterRangesView[nextIndex + i]);
+                        }
+                    }
+                    UpdateIndicatorParameterRangeViewAlgorithmParameters(); //обновляем списки с парараметрами алгоритма для выбора параметра алгоритма параметру индикатора алгоритма
 
                     CloseAddDataSourceTemplateAction?.Invoke();
                 }, (obj) => IsFieldsAddAlgorithmIndicatorCorrect());
@@ -2804,8 +2813,6 @@ namespace ktradesystem.ViewModels
                 {
                     string name = AlgorithmParameterName != null ? AlgorithmParameterName.Replace(" ", "") : "";
 
-
-
                     bool isStepPercent = false;
                     if (AlgorithmParameterselectedTypeStep == AlgorithmParameterTypesStep[0])
                     {
@@ -2821,7 +2828,9 @@ namespace ktradesystem.ViewModels
 
                     AlgorithmParameterView algorithmParameterView = new AlgorithmParameterView { Name = name, Description = AlgorithmParameterDescription, ParameterValueType = AlgorithmParameterSelectedParameterValueType, MinValue = AlgorithmParameterMinValue, MaxValue = AlgorithmParameterMaxValue, IsStepPercent = isStepPercent, Step = AlgorithmParameterstep, RangeValuesView = rangeValuesView, StepView = steView };
                     AlgorithmParametersView.Add(algorithmParameterView);
-                    
+
+                    CreateAlgorithmParametersViewIntDouble(); //создаем списки с параметрами агоритма типов int и double
+
                     CloseAddDataSourceTemplateAction?.Invoke();
                 }, (obj) => IsFieldsAddAlgorithmParameterCorrect());
             }

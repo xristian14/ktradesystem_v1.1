@@ -13,8 +13,7 @@ namespace ktradesystem.ViewModels
         public int Id { get; set; }
         public int IdAlgorithm { get; set; }
         public IndicatorParameterTemplate IndicatorParameterTemplate { get; set; }
-        public AlgorithmParameter AlgorithmParameter { get; set; }
-        public AlgorithmIndicator AlgorithmIndicator { get; set; }
+        public AlgorithmIndicatorView AlgorithmIndicatorView { get; set; }
         public string NameAlgorithmIndicator { get; set; }
         public ObservableCollection<AlgorithmParameterView> AlgorithmParametersView { get; set; }
         public AlgorithmParameterView SelectedAlgorithmParameterView { get; set; }

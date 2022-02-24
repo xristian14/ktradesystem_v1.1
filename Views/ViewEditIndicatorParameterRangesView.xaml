@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ktradesystem.Views"
         mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
         Title="Редактровать значения оптимизируемых параметров индикатора" Height="250" Width="420">
     <Grid Margin="10">
         <Grid.RowDefinitions>

@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ktradesystem.Views"
         mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
         Title="Изменить макет источника данных" Height="230" Width="270">
     <Grid>
         <StackPanel Orientation="Vertical" Margin="10" Width="240">

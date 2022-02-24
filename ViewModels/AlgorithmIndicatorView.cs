@@ -12,7 +12,7 @@ namespace ktradesystem.ViewModels
         public int Id { get; set; }
         public Algorithm Algorithm { get; set; }
         public Indicator Indicator { get; set; }
-        public List<IndicatorParameterRange> IndicatorParameterRanges { get; set; }
+        public List<IndicatorParameterRangeView> IndicatorParameterRangesView { get; set; }
         public string Ending { get; set; }
     }
 }

@@ -186,9 +186,6 @@
     <Compile Include="Views\ViewEditDataSourceTemplate.xaml.cs">
       <DependentUpon>ViewEditDataSourceTemplate.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\ViewEditIndicatorParameterRangesView.xaml.cs">
-      <DependentUpon>ViewEditIndicatorParameterRangesView.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Views\ViewEditIndicatorParameterTemplate.xaml.cs">
       <DependentUpon>ViewEditIndicatorParameterTemplate.xaml</DependentUpon>
     </Compile>
@@ -299,10 +296,6 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\ViewEditDataSourceTemplate.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\ViewEditIndicatorParameterRangesView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

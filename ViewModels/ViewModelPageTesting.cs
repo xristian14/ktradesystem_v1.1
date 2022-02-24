@@ -2414,189 +2414,6 @@ namespace ktradesystem.ViewModels
                 }, (obj) => SelectedAlgorithmIndicatorView != null && IsAddOrEditAlgorithm());
             }
         }
-        
-        private string _editIndicatorParameterRangesViewMinValue;
-        public string EditIndicatorParameterRangesViewMinValue //минимальное значение оптимизируемого параметра
-        {
-            get { return _editIndicatorParameterRangesViewMinValue; }
-            set
-            {
-                _editIndicatorParameterRangesViewMinValue = value;
-                OnPropertyChanged();
-            }
-        }
-        
-        private string _editIndicatorParameterRangesViewMaxValue;
-        public string EditIndicatorParameterRangesViewMaxValue //максимальное значение оптимизируемого параметра
-        {
-            get { return _editIndicatorParameterRangesViewMaxValue; }
-            set
-            {
-                _editIndicatorParameterRangesViewMaxValue = value;
-                OnPropertyChanged();
-            }
-        }
-        
-        private string _editIndicatorParameterRangesViewStep;
-        public string EditIndicatorParameterRangesViewStep //шаг оптимизируемого параметра
-        {
-            get { return _editIndicatorParameterRangesViewStep; }
-            set
-            {
-                _editIndicatorParameterRangesViewStep = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private List<string> _editIndicatorParameterRangesViewTypesStep = new List<string> { "процентный", "числовой" };
-        public List<string> EditIndicatorParameterRangesViewTypesStep //список с возможными типами шага оптимизируемого параметра
-        {
-            get { return _editIndicatorParameterRangesViewTypesStep; }
-            set
-            {
-                _editIndicatorParameterRangesViewTypesStep = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private string _editIndicatorParameterRangesViewSelectedTypeStep;
-        public string EditIndicatorParameterRangesViewSelectedTypeStep //выбранный тип шага оптимизируемого параметра
-        {
-            get { return _editIndicatorParameterRangesViewSelectedTypeStep; }
-            set
-            {
-                _editIndicatorParameterRangesViewSelectedTypeStep = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public ICommand EditIndicatorParameterRangesView_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    /*EditIndicatorParameterRangesViewMinValue = SelectedIndicatorParameterRangeView.MinValue != null ? SelectedIndicatorParameterRangeView.MinValue : null;
-                    EditIndicatorParameterRangesViewMaxValue = SelectedIndicatorParameterRangeView.MaxValue != null ? SelectedIndicatorParameterRangeView.MaxValue : null;
-                    EditIndicatorParameterRangesViewStep = SelectedIndicatorParameterRangeView.Step != null ? SelectedIndicatorParameterRangeView.Step : null;
-
-                    if (SelectedIndicatorParameterRangeView.IsStepPercent == true)
-                    {
-                        EditIndicatorParameterRangesViewSelectedTypeStep = EditIndicatorParameterRangesViewTypesStep[0];
-                    }
-                    else if(SelectedIndicatorParameterRangeView.IsStepPercent == false)
-                    {
-                        EditIndicatorParameterRangesViewSelectedTypeStep = EditIndicatorParameterRangesViewTypesStep[1];
-                    }
-                    else //если null, выбираем первый
-                    {
-                        EditIndicatorParameterRangesViewSelectedTypeStep = EditIndicatorParameterRangesViewTypesStep[0];
-                    }
-                    */
-                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
-                    ViewEditIndicatorParameterRangesView viewEditIndicatorParameterRangesView = new ViewEditIndicatorParameterRangesView();
-                    viewEditIndicatorParameterRangesView.Show();
-                }, (obj) => SelectedIndicatorParameterRangeView != null && IsAddOrEditAlgorithm());
-            }
-        }
-
-        private ObservableCollection<string> _tooltipEditIndicatorParameterRangesView = new ObservableCollection<string>();
-        public ObservableCollection<string> TooltipEditIndicatorParameterRangesView //подсказка, показываемая при наведении на кнопку добавить
-        {
-            get { return _tooltipEditIndicatorParameterRangesView; }
-            set
-            {
-                _tooltipEditIndicatorParameterRangesView = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private bool IsFieldsEditIndicatorParameterRangesViewCorrect()
-        {
-            bool result = true;
-            TooltipEditIndicatorParameterRangesView.Clear(); //очищаем подсказку кнопки добавить
-
-            //проверка на пустое значение
-            if (EditIndicatorParameterRangesViewMinValue == "" || EditIndicatorParameterRangesViewMaxValue == "" || EditIndicatorParameterRangesViewStep == "")
-            {
-                result = false;
-                TooltipEditIndicatorParameterRangesView.Add("Не заполнены все поля.");
-            }
-
-            //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(EditIndicatorParameterRangesViewMinValue, out double res) == false)
-            {
-                result = false;
-                TooltipEditIndicatorParameterRangesView.Add("Минимальное значение должно быть числом.");
-            }
-
-            //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(EditIndicatorParameterRangesViewMaxValue, out res) == false)
-            {
-                result = false;
-                TooltipEditIndicatorParameterRangesView.Add("Максимальное значение должно быть числом.");
-            }
-
-            //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(EditIndicatorParameterRangesViewStep, out res) == false)
-            {
-                result = false;
-                TooltipEditIndicatorParameterRangesView.Add("Шаг должен быть числом.");
-            }
-
-            //проверка на возможность достигнуть максимума с минимума с шагом
-            if (double.TryParse(EditIndicatorParameterRangesViewMinValue, out double min) && double.TryParse(EditIndicatorParameterRangesViewMaxValue, out double max) && double.TryParse(EditIndicatorParameterRangesViewStep, out double step))
-            {
-                if( (max > min && step > 0) == false)
-                {
-                    result = false;
-                    TooltipEditIndicatorParameterRangesView.Add("Максимум должен быть больше минимума, а шаг должен быть положительным.");
-                }
-            }
-
-                return result;
-        }
-
-        public ICommand EditSaveIndicatorParameterRangesView_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    bool isStepPercent = false;
-                    if(EditIndicatorParameterRangesViewSelectedTypeStep == EditIndicatorParameterRangesViewTypesStep[0])
-                    {
-                        isStepPercent = true;
-                    }
-                    string rangeValuesView = EditIndicatorParameterRangesViewMinValue + " – " + EditIndicatorParameterRangesViewMaxValue;
-
-                    string steView = EditIndicatorParameterRangesViewStep;
-                    if (isStepPercent)
-                    {
-                        steView += "%";
-                    }
-                    IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { /*Id = SelectedIndicatorParameterRangeView.Id, MinValue = EditIndicatorParameterRangesViewMinValue, MaxValue = EditIndicatorParameterRangesViewMaxValue, Step = EditIndicatorParameterRangesViewStep, IsStepPercent = isStepPercent, IdAlgorithm = SelectedIndicatorParameterRangeView.IdAlgorithm, IndicatorParameterTemplate = SelectedIndicatorParameterRangeView.IndicatorParameterTemplate, Indicator = SelectedIndicatorParameterRangeView.Indicator, NameIndicator = SelectedIndicatorParameterRangeView.NameIndicator, NameIndicatorParameterTemplate = SelectedIndicatorParameterRangeView.NameIndicatorParameterTemplate, DescriptionIndicatorParameterTemplate = SelectedIndicatorParameterRangeView.DescriptionIndicatorParameterTemplate, RangeValuesView = rangeValuesView, StepView = steView */};
-
-                    int index = IndicatorParameterRangesView.IndexOf(SelectedIndicatorParameterRangeView);
-                    IndicatorParameterRangesView.RemoveAt(index);
-                    IndicatorParameterRangesView.Insert(index, indicatorParameterRangeView);
-                    SelectedIndicatorParameterRangeView = indicatorParameterRangeView;
-
-                    CloseAddDataSourceTemplateAction?.Invoke();
-                }, (obj) => IsFieldsEditIndicatorParameterRangesViewCorrect());
-            }
-        }
-
-        public ICommand CloseEditIndicatorParameterRangesView_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    CloseAddDataSourceTemplateAction?.Invoke();
-                }, (obj) => true);
-            }
-        }
 
         #endregion
 
@@ -2694,6 +2511,54 @@ namespace ktradesystem.ViewModels
                 else //дробное
                 {
                     AlgorithmParametersViewDouble.Add(algorithmParameterView);
+                }
+            }
+        }
+
+        public void UpdateAlgorithmParametersViewIntDouble() //обновляет списки с параметрами int и double для combobox выбора переменной в параметрах индикаторов, добавляя недостающие параметры и удаляя лишние
+        {
+            int intNumber = -1; //номер int параметра
+            int doubleNumber = -1; //номер double параметра
+            for(int i = 0; i < AlgorithmParametersView.Count; i++)
+            {
+                if (AlgorithmParametersView[i].ParameterValueType.Id == 1) //int параметр
+                {
+                    intNumber++; //увеличиваем номер параметра, чтобы знать по какому индексу вставлять параметр
+                    if(AlgorithmParametersViewInt.Where(j=>j.Name== AlgorithmParametersView[i].Name).Any() == false) //если данного параметра недостает, добавляем его
+                    {
+                        AlgorithmParametersViewInt.Insert(intNumber, AlgorithmParametersView[i]);
+                    }
+                    if (AlgorithmParametersViewDouble.Where(j => j.Name == AlgorithmParametersView[i].Name).Any() == true) //если данный параметр лишний, удаляем его
+                    {
+                        AlgorithmParametersViewDouble.Remove(AlgorithmParametersViewDouble.Where(j => j.Name == AlgorithmParametersView[i].Name).First());
+                    }
+                }
+                else //double параметр
+                {
+                    doubleNumber++; //увеличиваем номер параметра, чтобы знать по какому индексу вставлять параметр
+                    if (AlgorithmParametersViewDouble.Where(j => j.Name == AlgorithmParametersView[i].Name).Any() == false) //если данного параметра недостает, добавляем его
+                    {
+                        AlgorithmParametersViewDouble.Insert(doubleNumber, AlgorithmParametersView[i]);
+                    }
+                    if (AlgorithmParametersViewInt.Where(j => j.Name == AlgorithmParametersView[i].Name).Any() == true) //если данный параметр лишний, удаляем его
+                    {
+                        AlgorithmParametersViewInt.Remove(AlgorithmParametersViewInt.Where(j => j.Name == AlgorithmParametersView[i].Name).First());
+                    }
+                }
+            }
+            //удаляем параметры int и double, которых нет в AlgorithmParametersView. Чтобы при удалении параметра, он удалялся из списка
+            for(int i = AlgorithmParametersViewInt.Count - 1; i >= 0; i--)
+            {
+                if(AlgorithmParametersView.IndexOf(AlgorithmParametersViewInt[i]) == -1)
+                {
+                    AlgorithmParametersViewInt.RemoveAt(i);
+                }
+            }
+            for(int i = AlgorithmParametersViewDouble.Count - 1; i >= 0; i--)
+            {
+                if(AlgorithmParametersView.IndexOf(AlgorithmParametersViewDouble[i]) == -1)
+                {
+                    AlgorithmParametersViewDouble.RemoveAt(i);
                 }
             }
         }
@@ -2923,7 +2788,7 @@ namespace ktradesystem.ViewModels
                     AlgorithmParameterView algorithmParameterView = new AlgorithmParameterView { Name = name, Description = AlgorithmParameterDescription, ParameterValueType = AlgorithmParameterSelectedParameterValueType, MinValue = AlgorithmParameterMinValue, MaxValue = AlgorithmParameterMaxValue, IsStepPercent = isStepPercent, Step = AlgorithmParameterstep, RangeValuesView = rangeValuesView, StepView = steView };
                     AlgorithmParametersView.Add(algorithmParameterView);
 
-                    CreateAlgorithmParametersViewIntDouble(); //создаем списки с параметрами агоритма типов int и double
+                    UpdateAlgorithmParametersViewIntDouble(); //обновляем списки с параметрами агоритма типов int и double
 
                     CloseAddDataSourceTemplateAction?.Invoke();
                 }, (obj) => IsFieldsAddAlgorithmParameterCorrect());
@@ -3069,6 +2934,8 @@ namespace ktradesystem.ViewModels
                     AlgorithmParametersView.Insert(index, algorithmParameterView);
                     SelectedAlgorithmParameterView = algorithmParameterView;
 
+                    UpdateAlgorithmParametersViewIntDouble(); //обновляем списки с параметрами алгоритма типов int и double
+
                     CloseAddDataSourceTemplateAction?.Invoke();
                 }, (obj) => IsFieldsEditAlgorithmParameterCorrect());
             }
@@ -3089,6 +2956,7 @@ namespace ktradesystem.ViewModels
                     {
                         AlgorithmParametersView.RemoveAt(index);
                     }
+                    UpdateAlgorithmParametersViewIntDouble(); //обновляем списки с параметрами агоритма типов int и double
                 }, (obj) => SelectedAlgorithmParameterView != null && IsAddOrEditAlgorithm());
             }
         }

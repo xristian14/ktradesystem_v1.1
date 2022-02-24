@@ -1038,8 +1038,9 @@ namespace ktradesystem.ViewModels
                 AlgorithmDescription = "";
                 DataSourceTemplatesView.Clear();
                 IndicatorParameterRangesView.Clear();
-                AlgorithmIndicators.Clear();
+                AlgorithmIndicatorsView.Clear();
                 AlgorithmParametersView.Clear();
+                CreateAlgorithmParametersViewIntDouble();
                 AlgorithmScript = "";
             }
         }
@@ -2113,42 +2114,34 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
+                    AddAlgorithmIndicatorSelectedIndicator = null;
                     AddAlgorithmIndicatorEnding = "";
                     viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewAddAlgorithmIndicator viewAddAlgorithmIndicator = new ViewAddAlgorithmIndicator();
                     viewAddAlgorithmIndicator.Show();
 
-                    /*//вставляет parameterTemplates выбранного индикатора в IndicatorParameterRangesView, так чтобы индикаторы распологались по порядку в IndicatorParameterRangesView
-                    int nextIdIndex = -1; //индекс IndicatorParameterRangeView, у которого id индикатора больше id добавляемого индикатора (добавляемые параметры индикатора будут добавлены до него)
-                    foreach (IndicatorParameterRangeView item in IndicatorParameterRangesView)
-                    {
-                        if(nextIdIndex == -1)
-                        {
-                            if(item.Indicator.Id > SelectedIndicator.Id)
-                            {
-                                nextIdIndex = IndicatorParameterRangesView.IndexOf(item);
-                            }
-                        }
-                    }
-                    //добавляет parameterTemplates в IndicatorParameterRangesView
-                    int i = 0; //показывает количество вставленных элементов (при добавлении параметра перед каким-либо, индекс следующего элемента сдвинется, а добавление по старому индексу поставит элемент перед только что добавленным. Чтобы это исправить элемент вставляется на nextIdIndex + i)
-                    foreach (IndicatorParameterTemplate item in SelectedIndicator.IndicatorParameterTemplates)
-                    {
-                        IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { MinValue = "", MaxValue = "", Step = "", IndicatorParameterTemplate = item, Indicator = item.Indicator, NameIndicator = item.Indicator.Name, NameIndicatorParameterTemplate = item.Name, DescriptionIndicatorParameterTemplate = item.Description };
-                        if (nextIdIndex == -1)
-                        {
-                            IndicatorParameterRangesView.Add(indicatorParameterRangeView);
-                        }
-                        else
-                        {
-                            IndicatorParameterRangesView.Insert(nextIdIndex + i, indicatorParameterRangeView);
-                            i++;
-                        }
-                    }
-                    UpdateAlgorithmIndicators();*/
                 }, (obj) => IsAddOrEditAlgorithm() );
             }
         }
+
+        public ICommand EditAlgorithmIndicator_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    _editedAlgorithmIndicatorView = SelectedAlgorithmIndicatorView;
+                    AddAlgorithmIndicatorSelectedIndicator = SelectedAlgorithmIndicatorView.Indicator;
+                    AddAlgorithmIndicatorEnding = SelectedAlgorithmIndicatorView.Ending;
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
+                    ViewEditAlgorithmIndicator viewEditAlgorithmIndicator = new ViewEditAlgorithmIndicator();
+                    viewEditAlgorithmIndicator.Show();
+
+                }, (obj) => IsAddOrEditAlgorithm() && SelectedAlgorithmIndicatorView != null);
+            }
+        }
+
+        private AlgorithmIndicatorView _editedAlgorithmIndicatorView; //редактируемый индикатор алгоритма
 
         private Indicator _addAlgorithmIndicatorSelectedIndicator;
         public Indicator AddAlgorithmIndicatorSelectedIndicator //выбранный индикатор при добавлении индикатора алгоритму
@@ -2183,7 +2176,7 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private bool IsFieldsAddAlgorithmIndicatorCorrect()
+        private bool IsFieldsAddAlgorithmIndicatorCorrect(bool isAdd) //isAdd: true - добавление индикатора алгоритму, false - редактирование индикатора алгоритма
         {
             bool result = true;
             TooltipAddAddAlgorithmIndicator.Clear(); //очищаем подсказку кнопки добавить
@@ -2194,9 +2187,27 @@ namespace ktradesystem.ViewModels
                 result = false;
                 TooltipAddAddAlgorithmIndicator.Add("Не выбран индикатор.");
             }
-            else //если индиктаор выбран, проверяем уникальность названия
+            else //если индикатор выбран, проверяем уникальность названия
             {
-                if(AlgorithmIndicatorsView.Where(j=>j.Indicator.Name + j.Ending == AddAlgorithmIndicatorSelectedIndicator.Name + AddAlgorithmIndicatorEnding).Any())
+                bool isUnique = true;
+                foreach(AlgorithmIndicatorView algorithmIndicatorView in AlgorithmIndicatorsView)
+                {
+                    if(algorithmIndicatorView.Indicator.Name + algorithmIndicatorView.Ending == AddAlgorithmIndicatorSelectedIndicator.Name + AddAlgorithmIndicatorEnding)
+                    {
+                        if(isAdd == false) //редактирование индикатора алгоритма
+                        {
+                            if((AddAlgorithmIndicatorSelectedIndicator == _editedAlgorithmIndicatorView.Indicator && AddAlgorithmIndicatorEnding == _editedAlgorithmIndicatorView.Ending) == false) //если текущая комбинация индикатора и окончания названия не совпадает с редактируемым индикатором алгоритма, отмечаем что данный индикатор и окончание названия уже используется. Если совпадает -> все в порядке, можно сохранять прежнее значение индикатора
+                            {
+                                isUnique = false;
+                            }
+                        }
+                        else //добавление индикатора
+                        {
+                            isUnique = false;
+                        }
+                    }
+                }
+                if(isUnique == false)
                 {
                     result = false;
                     TooltipAddAddAlgorithmIndicator.Add("Данный индикатор с таким окончанием названия уже существует.");
@@ -2237,12 +2248,13 @@ namespace ktradesystem.ViewModels
                 return new DelegateCommand((obj) =>
                 {
                     AlgorithmIndicatorView algorithmIndicatorView = new AlgorithmIndicatorView { Indicator = AddAlgorithmIndicatorSelectedIndicator, Ending = AddAlgorithmIndicatorEnding };
-                    List<IndicatorParameterRangeView> indicatorParameterRanges = new List<IndicatorParameterRangeView>();
-                    foreach(IndicatorParameterTemplate indicatorParameterTemplate in AddAlgorithmIndicatorSelectedIndicator.IndicatorParameterTemplates)
+                    List<IndicatorParameterRangeView> indicatorParameterRangesView = new List<IndicatorParameterRangeView>();
+                    for (int i = 0; i < AddAlgorithmIndicatorSelectedIndicator.IndicatorParameterTemplates.Count; i++)
                     {
-                        indicatorParameterRanges.Add(new IndicatorParameterRangeView { IndicatorParameterTemplate = indicatorParameterTemplate, AlgorithmIndicatorView = algorithmIndicatorView, NameAlgorithmIndicator = AddAlgorithmIndicatorSelectedIndicator.Name + "_" + AddAlgorithmIndicatorEnding });
+                        IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { IndicatorParameterTemplate = AddAlgorithmIndicatorSelectedIndicator.IndicatorParameterTemplates[i], AlgorithmIndicatorView = algorithmIndicatorView, NameAlgorithmIndicator = AddAlgorithmIndicatorSelectedIndicator.Name + "_" + AddAlgorithmIndicatorEnding };
+                        indicatorParameterRangesView.Add(indicatorParameterRangeView);
                     }
-                    algorithmIndicatorView.IndicatorParameterRangesView = indicatorParameterRanges;
+                    algorithmIndicatorView.IndicatorParameterRangesView = indicatorParameterRangesView;
                     //вставляем в порядке следования индикаторов
                     int nextIndex = -1; //индкс элемента с id индикатора больше созданного
                     foreach(AlgorithmIndicatorView algorithmIndicatorView1 in AlgorithmIndicatorsView)
@@ -2287,13 +2299,98 @@ namespace ktradesystem.ViewModels
                     {
                         for(int i = 0; i < algorithmIndicatorView.IndicatorParameterRangesView.Count; i++)
                         {
-                            IndicatorParameterRangesView.Insert(nextIndex, algorithmIndicatorView.IndicatorParameterRangesView[nextIndex + i]);
+                            IndicatorParameterRangesView.Insert(nextIndex, algorithmIndicatorView.IndicatorParameterRangesView[i]);
                         }
                     }
                     UpdateIndicatorParameterRangeViewAlgorithmParameters(); //обновляем списки с парараметрами алгоритма для выбора параметра алгоритма параметру индикатора алгоритма
 
                     CloseAddDataSourceTemplateAction?.Invoke();
-                }, (obj) => IsFieldsAddAlgorithmIndicatorCorrect());
+                }, (obj) => IsFieldsAddAlgorithmIndicatorCorrect(true));
+            }
+        }
+
+        public ICommand EditSaveAlgorithmIndicator_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    //формируем новый индикатор алгоритма, удаляем старый и вставляем новый. Если индикатор не изменился, сохраняем параметрам индикатору алгоритма выбранный параметр алгоритма
+                    bool isIndicatorChanged = AddAlgorithmIndicatorSelectedIndicator != SelectedAlgorithmIndicatorView.Indicator; //изменился ли индикатор
+                    //удаляем редактируемый индикатор алгоритма
+                    AlgorithmIndicatorsView.Remove(SelectedAlgorithmIndicatorView);
+                    //добавляем новый индикатор алгоритма
+                    AlgorithmIndicatorView algorithmIndicatorView = new AlgorithmIndicatorView { Indicator = AddAlgorithmIndicatorSelectedIndicator, Ending = AddAlgorithmIndicatorEnding };
+                    List<IndicatorParameterRangeView> indicatorParameterRangesView = new List<IndicatorParameterRangeView>();
+                    for(int i = 0; i < AddAlgorithmIndicatorSelectedIndicator.IndicatorParameterTemplates.Count; i++)
+                    {
+                        IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { IndicatorParameterTemplate = AddAlgorithmIndicatorSelectedIndicator.IndicatorParameterTemplates[i], AlgorithmIndicatorView = algorithmIndicatorView, NameAlgorithmIndicator = AddAlgorithmIndicatorSelectedIndicator.Name + "_" + AddAlgorithmIndicatorEnding };
+                        if (isIndicatorChanged == false) //если индикатор не изменился, сохраняем выбранный параметр алгоритма
+                        {
+                            indicatorParameterRangeView.SelectedAlgorithmParameterView = _editedAlgorithmIndicatorView.IndicatorParameterRangesView[i].SelectedAlgorithmParameterView;
+                        }
+                        indicatorParameterRangesView.Add(indicatorParameterRangeView);
+                    }
+                    algorithmIndicatorView.IndicatorParameterRangesView = indicatorParameterRangesView;
+                    //вставляем в порядке следования индикаторов
+                    int nextIndex = -1; //индкс элемента с id индикатора больше созданного
+                    foreach (AlgorithmIndicatorView algorithmIndicatorView1 in AlgorithmIndicatorsView)
+                    {
+                        if (algorithmIndicatorView1.Indicator.Id > algorithmIndicatorView.Indicator.Id)
+                        {
+                            if (nextIndex == -1)
+                            {
+                                nextIndex = AlgorithmIndicatorsView.IndexOf(algorithmIndicatorView1);
+                            }
+                        }
+                    }
+                    if (nextIndex == -1)
+                    {
+                        AlgorithmIndicatorsView.Add(algorithmIndicatorView);
+                    }
+                    else
+                    {
+                        AlgorithmIndicatorsView.Insert(nextIndex, algorithmIndicatorView);
+                    }
+
+                    //удаляем параметры редактируемого индикатора алгоритма
+                    for (int i = IndicatorParameterRangesView.Count - 1; i >= 0; i--)
+                    {
+                        if (IndicatorParameterRangesView[i].AlgorithmIndicatorView == _editedAlgorithmIndicatorView)
+                        {
+                            IndicatorParameterRangesView.RemoveAt(i);
+                        }
+                    }
+                    nextIndex = -1; //индкс элемента с id индикатора больше созданного
+                    foreach (IndicatorParameterRangeView indicatorParameterRangeView in IndicatorParameterRangesView)
+                    {
+                        if (indicatorParameterRangeView.IndicatorParameterTemplate.IdIndicator > algorithmIndicatorView.Indicator.Id)
+                        {
+                            if (nextIndex == -1)
+                            {
+                                nextIndex = IndicatorParameterRangesView.IndexOf(indicatorParameterRangeView);
+                            }
+                        }
+                    }
+                    //вставляем параметры индикатора алгоритма в IndicatorParameterRangesView, в порядке следования индикаторов
+                    if (nextIndex == -1) //вставляем в конец если не было индикатора с id больше текущего
+                    {
+                        foreach (IndicatorParameterRangeView indicatorParameterRangeView in algorithmIndicatorView.IndicatorParameterRangesView)
+                        {
+                            IndicatorParameterRangesView.Add(indicatorParameterRangeView);
+                        }
+                    }
+                    else //вставляем на место индикатора с id больше текущего
+                    {
+                        for (int i = 0; i < algorithmIndicatorView.IndicatorParameterRangesView.Count; i++)
+                        {
+                            IndicatorParameterRangesView.Insert(nextIndex, algorithmIndicatorView.IndicatorParameterRangesView[i]);
+                        }
+                    }
+                    UpdateIndicatorParameterRangeViewAlgorithmParameters(); //обновляем списки с параметрами алгоритма для выбора параметра алгоритма параметру индикатора алгоритма
+
+                    CloseAddDataSourceTemplateAction?.Invoke();
+                }, (obj) => IsFieldsAddAlgorithmIndicatorCorrect(false));
             }
         }
 
@@ -2303,21 +2400,18 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    /*List<int> removeIndexs = new List<int>(); //список с индексами элементов которые нужно удалить в порядке убывания (т.к. при удалении первых индексы следующих будут смещаться)
-                    for (int i = IndicatorParameterRangesView.Count - 1; i >= 0; i--)
+                    //удаляем параметры индикаторов со значениями
+                    for(int i = IndicatorParameterRangesView.Count - 1; i >= 0; i--)
                     {
-                        if (IndicatorParameterRangesView[i].Indicator.Id == SelectedAlgorithmIndicator.Id)
+                        if(IndicatorParameterRangesView[i].AlgorithmIndicatorView == SelectedAlgorithmIndicatorView)
                         {
-                            removeIndexs.Add(i);
+                            IndicatorParameterRangesView.RemoveAt(i);
                         }
                     }
-                    foreach(int item in removeIndexs)
-                    {
-                        IndicatorParameterRangesView.RemoveAt(item);
-                    }
-                    UpdateAlgorithmIndicators();*/
+                    //удаляем индикатор алгоритма
+                    AlgorithmIndicatorsView.Remove(SelectedAlgorithmIndicatorView);
 
-                }, (obj) => /*SelectedAlgorithmIndicator != null &&*/ IsAddOrEditAlgorithm());
+                }, (obj) => SelectedAlgorithmIndicatorView != null && IsAddOrEditAlgorithm());
             }
         }
         

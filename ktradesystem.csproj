@@ -177,6 +177,9 @@
     <Compile Include="Views\ViewAddIndicatorParameterTemplate.xaml.cs">
       <DependentUpon>ViewAddIndicatorParameterTemplate.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\ViewEditAlgorithmIndicator.xaml.cs">
+      <DependentUpon>ViewEditAlgorithmIndicator.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ViewEditDataSource.xaml.cs">
       <DependentUpon>ViewEditDataSource.xaml</DependentUpon>
     </Compile>
@@ -286,6 +289,10 @@
     <Page Include="Views\ViewAddIndicatorParameterTemplate.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\ViewEditAlgorithmIndicator.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\ViewEditDataSource.xaml">
       <Generator>MSBuild:Compile</Generator>

@@ -11,6 +11,7 @@ namespace ktradesystem.Models
     {
         public int idDataSource { get; set; }
         public double[] IndicatorsValues { get; set; }
+        public bool IsCurrencyRuble { get; set; } //валюта рубль, true - рубль, false - доллар
         public double PriceStep { get; set; } //шаг цены для 1 пункта
         public double CostPriceStep { get; set; } //стоимость шага цены в 1 пункт
         public double OneLotCost { get; set; } //стоимость 1 лота

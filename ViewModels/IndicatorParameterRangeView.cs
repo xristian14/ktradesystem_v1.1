@@ -11,7 +11,6 @@ namespace ktradesystem.ViewModels
     public class IndicatorParameterRangeView
     {
         public int Id { get; set; }
-        public int IdAlgorithm { get; set; }
         public IndicatorParameterTemplate IndicatorParameterTemplate { get; set; }
         public AlgorithmIndicatorView AlgorithmIndicatorView { get; set; }
         public string NameAlgorithmIndicator { get; set; }

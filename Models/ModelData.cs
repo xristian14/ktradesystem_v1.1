@@ -652,7 +652,7 @@ namespace ktradesystem.Models
                     }
                 }
 
-                IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange { Id = (int)row.Field<long>("id"), IdAlgorithm = (int)row.Field<long>("idAlgorithm"), IndicatorParameterTemplate = indicatorParameterTemplate1, AlgorithmParameter = algorithmParameter, AlgorithmIndicator = algorithmIndicator };
+                IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange { Id = (int)row.Field<long>("id"), IndicatorParameterTemplate = indicatorParameterTemplate1, AlgorithmParameter = algorithmParameter, AlgorithmIndicator = algorithmIndicator };
                 //добавляем indicatorParameterRange в IndicatorParameterRanges algorithmIndicator-а
                 algorithmIndicator.IndicatorParameterRanges.Add(indicatorParameterRange);
 

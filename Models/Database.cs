@@ -268,6 +268,17 @@ namespace ktradesystem.Models
             command.ExecuteNonQuery();
         }
 
+        public void InsertAlgorithmIndicator(AlgorithmIndicator algorithmIndicator)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "INSERT INTO AlgorithmIndicators (idAlgorithm, idIndicator, ending) VALUES (:idAlgorithm, :idIndicator, :ending)";
+            command.Parameters.AddWithValue("idAlgorithm", algorithmIndicator.IdAlgorithm);
+            command.Parameters.AddWithValue("idIndicator", algorithmIndicator.Indicator.Id);
+            command.Parameters.AddWithValue("ending", algorithmIndicator.Ending);
+
+            command.ExecuteNonQuery();
+        }
+
         public void InsertIndicatorParameterRange(IndicatorParameterRange indicatorParameterRange)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
@@ -311,6 +322,26 @@ namespace ktradesystem.Models
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
             string query = "DELETE FROM DataSourceTemplates WHERE id = :id";
+            command.CommandText = query;
+            command.Parameters.AddWithValue("id", id);
+            command.ExecuteNonQuery();
+        }
+
+        public void UpdateAlgorithmIndicator(AlgorithmIndicator algorithmIndicator)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            command.CommandText = "UPDATE AlgorithmIndicators SET idIndicator = :idIndicator, ending = :ending WHERE id = :id";
+            command.Parameters.AddWithValue("idIndicator", algorithmIndicator.Indicator.Id);
+            command.Parameters.AddWithValue("ending", algorithmIndicator.Ending);
+            command.Parameters.AddWithValue("id", algorithmIndicator.Id);
+
+            command.ExecuteNonQuery();
+        }
+
+        public void DeleteAlgorithmIndicator(int id)
+        {
+            SQLiteCommand command = new SQLiteCommand(_connection);
+            string query = "DELETE FROM AlgorithmIndicators WHERE id = :id";
             command.CommandText = query;
             command.Parameters.AddWithValue("id", id);
             command.ExecuteNonQuery();

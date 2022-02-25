@@ -132,8 +132,8 @@ namespace ktradesystem.Models
             _modelData.ReadIndicators();
         }
 
-        public void AlgorithmInsertUpdate(string name, string description, List<DataSourceTemplate> dataSourceTemplates, List<IndicatorParameterRange> indicatorParameterRanges, List<AlgorithmParameter> algorithmParameters, string script, int id = -1) //если прислан id, отправляет запрос update, иначе insert
-        {/*
+        public void AlgorithmInsertUpdate(string name, string description, List<DataSourceTemplate> dataSourceTemplates, List<AlgorithmIndicator> algorithmIndicators, List<AlgorithmParameter> algorithmParameters, string script, int id = -1) //если прислан id, отправляет запрос update, иначе insert
+        {
             if (id == -1)
             {
                 //добавляет алгоритм, и после для него: макеты источников данных, диапазоны значений шаблонов параметров, и параметры алгоритма
@@ -148,16 +148,30 @@ namespace ktradesystem.Models
                     _database.InsertDataSourceTemplate(dataSourceTemplate);
                 }
 
-                foreach (IndicatorParameterRange indicatorParameterRange in indicatorParameterRanges)
+                foreach(AlgorithmIndicator algorithmIndicator in algorithmIndicators)
                 {
-                    indicatorParameterRange.IdAlgorithm = newAlgorithmId;
-                    _database.InsertIndicatorParameterRange(indicatorParameterRange);
+                    algorithmIndicator.IdAlgorithm = newAlgorithmId;
+                    _database.InsertAlgorithmIndicator(algorithmIndicator);
                 }
 
                 foreach (AlgorithmParameter algorithmParameter in algorithmParameters)
                 {
                     algorithmParameter.IdAlgorithm = newAlgorithmId;
                     _database.InsertAlgorithmParameter(algorithmParameter);
+                }
+                _modelData.ReadAlgorithms();
+
+                foreach (AlgorithmIndicator algorithmIndicator in algorithmIndicators)
+                {
+                    int newAlgorithmIndicatorId = _modelData.AlgorithmIndicators.Where(j => j.Indicator == algorithmIndicator.Indicator && j.Ending == algorithmIndicator.Ending).First().Id;
+                    algorithmIndicator.Id = newAlgorithmIndicatorId;
+
+                    foreach (IndicatorParameterRange indicatorParameterRange in algorithmIndicator.IndicatorParameterRanges)
+                    {
+                        indicatorParameterRange.AlgorithmParameter = _modelData.AlgorithmParameters.Where(j => j.IdAlgorithm == newAlgorithmId && j.Name == indicatorParameterRange.AlgorithmParameter.Name).First();
+                        indicatorParameterRange.AlgorithmIndicator = algorithmIndicator;
+                        _database.InsertIndicatorParameterRange(indicatorParameterRange);
+                    }
                 }
             }
             else
@@ -222,52 +236,52 @@ namespace ktradesystem.Models
                 }
 
 
-                //обновляем диапазоны значений параметров индикаторов
-                List<IndicatorParameterRange> updateIndParRan = new List<IndicatorParameterRange>(); //список с id записи которую нужно обновить, и новые данные для этой записи
-                List<IndicatorParameterRange> addIndParRan = new List<IndicatorParameterRange>(); //список с записями которые нужно добавить
-                List<int> deleteIndParRan = new List<int>(); //список с id записей которые нужно удалить
+                //обновляем индикаторы алгоритмов
+                List<AlgorithmIndicator> updateAlgInd = new List<AlgorithmIndicator>(); //список с id записи которую нужно обновить, и новые данные для этой записи
+                List<AlgorithmIndicator> addDatAlgInd = new List<AlgorithmIndicator>(); //список с записями которые нужно добавить
+                List<int> deleteAlgInd = new List<int>(); //список с id записей которые нужно удалить
 
-                int maxLengthIndicatorParameterRange = indicatorParameterRanges.Count;
-                if (oldAlgorithm.IndicatorParameterRanges.Count > maxLengthIndicatorParameterRange)
+                int maxLengthAlgorithmIndicator = algorithmIndicators.Count;
+                if (oldAlgorithm.AlgorithmIndicators.Count > maxLengthAlgorithmIndicator)
                 {
-                    maxLengthIndicatorParameterRange = oldAlgorithm.IndicatorParameterRanges.Count;
+                    maxLengthAlgorithmIndicator = oldAlgorithm.AlgorithmIndicators.Count;
                 }
                 //проходим по всем элементам старого и нового списка, и определяем какие обновить, какие добавить, а какие удалить
-                for (int i = 0; i < maxLengthIndicatorParameterRange; i++)
+                for (int i = 0; i < maxLengthDataSourceTemplate; i++)
                 {
-                    if (indicatorParameterRanges.Count > i && oldAlgorithm.IndicatorParameterRanges.Count > i)
+                    if (algorithmIndicators.Count > i && oldAlgorithm.AlgorithmIndicators.Count > i)
                     {
-                        if (indicatorParameterRanges[i].MinValue != oldAlgorithm.IndicatorParameterRanges[i].MinValue || indicatorParameterRanges[i].MaxValue != oldAlgorithm.IndicatorParameterRanges[i].MaxValue || indicatorParameterRanges[i].Step != oldAlgorithm.IndicatorParameterRanges[i].Step || indicatorParameterRanges[i].IsStepPercent != oldAlgorithm.IndicatorParameterRanges[i].IsStepPercent || indicatorParameterRanges[i].IndicatorParameterTemplate.Id != oldAlgorithm.IndicatorParameterRanges[i].IndicatorParameterTemplate.Id)
+                        if (algorithmIndicators[i].Indicator != oldAlgorithm.AlgorithmIndicators[i].Indicator || algorithmIndicators[i].Ending != oldAlgorithm.AlgorithmIndicators[i].Ending)
                         {
-                            indicatorParameterRanges[i].Id = oldAlgorithm.IndicatorParameterRanges[i].Id;
-                            indicatorParameterRanges[i].IdAlgorithm = oldAlgorithm.IndicatorParameterRanges[i].IdAlgorithm;
-                            updateIndParRan.Add(indicatorParameterRanges[i]);
+                            algorithmIndicators[i].Id = oldAlgorithm.AlgorithmIndicators[i].Id;
+                            algorithmIndicators[i].IdAlgorithm = oldAlgorithm.AlgorithmIndicators[i].IdAlgorithm;
+                            updateAlgInd.Add(algorithmIndicators[i]);
                         }
                     }
-                    else if (indicatorParameterRanges.Count > i && oldAlgorithm.IndicatorParameterRanges.Count <= i)
+                    else if (algorithmIndicators.Count > i && oldAlgorithm.AlgorithmIndicators.Count <= i)
                     {
-                        indicatorParameterRanges[i].IdAlgorithm = oldAlgorithm.Id;
-                        addIndParRan.Add(indicatorParameterRanges[i]);
+                        algorithmIndicators[i].IdAlgorithm = oldAlgorithm.Id;
+                        addDatAlgInd.Add(algorithmIndicators[i]);
                     }
-                    else if (indicatorParameterRanges.Count <= i && oldAlgorithm.IndicatorParameterRanges.Count > i)
+                    else if (algorithmIndicators.Count <= i && oldAlgorithm.AlgorithmIndicators.Count > i)
                     {
-                        deleteIndParRan.Add(oldAlgorithm.IndicatorParameterRanges[i].Id);
+                        deleteAlgInd.Add(oldAlgorithm.AlgorithmIndicators[i].Id);
                     }
                 }
                 //обновляем
-                foreach (IndicatorParameterRange indicatorParameterRange in updateIndParRan)
+                foreach (AlgorithmIndicator algorithmIndicator in updateAlgInd)
                 {
-                    _database.UpdateIndicatorParameterRange(indicatorParameterRange);
+                    _database.UpdateAlgorithmIndicator(algorithmIndicator);
                 }
                 //добавляем
-                foreach (IndicatorParameterRange indicatorParameterRange1 in addIndParRan)
+                foreach (AlgorithmIndicator algorithmIndicator in addDatAlgInd)
                 {
-                    _database.InsertIndicatorParameterRange(indicatorParameterRange1);
+                    _database.InsertAlgorithmIndicator(algorithmIndicator);
                 }
                 //удаляем
-                foreach (int idIndParRan in deleteIndParRan)
+                foreach (int idAlgInd in deleteAlgInd)
                 {
-                    _database.DeleteIndicatorParameterRange(idIndParRan);
+                    _database.DeleteAlgorithmIndicator(idAlgInd);
                 }
 
 
@@ -320,11 +334,79 @@ namespace ktradesystem.Models
                 }
 
 
+                //обновляем диапазоны значений параметров индикаторов
+                List<IndicatorParameterRange> indicatorParameterRanges = new List<IndicatorParameterRange>(); //параметры индикаторов которые должны быть
+                List<IndicatorParameterRange> oldIndicatorParameterRanges = new List<IndicatorParameterRange>(); //параметры индикаторов которые были раньше
+                _modelData.ReadAlgorithms();
+                Algorithm updatedAlgorithm = _modelData.Algorithms.Where(j => j.Id == oldAlgorithm.Id).First(); //алгоритм с обновленными макетами источников данных и индикаторами алгоритмов без обновленных параметров индикаторов
+                foreach (AlgorithmIndicator algorithmIndicator1 in algorithmIndicators)
+                {
+                    algorithmIndicator1.Id = updatedAlgorithm.AlgorithmIndicators.Where(j => j.Indicator == algorithmIndicator1.Indicator && j.Ending == algorithmIndicator1.Ending).First().Id;
+                    indicatorParameterRanges.AddRange(algorithmIndicator1.IndicatorParameterRanges);
+                }
+                foreach (AlgorithmIndicator algorithmIndicator1 in updatedAlgorithm.AlgorithmIndicators)
+                {
+                    oldIndicatorParameterRanges.AddRange(algorithmIndicator1.IndicatorParameterRanges);
+                }
+
+                //устанавливаем id параметра алгоритма, параметрам индикаторов
+                foreach(IndicatorParameterRange indicatorParameterRange2 in indicatorParameterRanges)
+                {
+                    indicatorParameterRange2.AlgorithmParameter = _modelData.AlgorithmParameters.Where(j => j.IdAlgorithm == oldAlgorithm.Id && j.Name == indicatorParameterRange2.AlgorithmParameter.Name).First();
+                }
+
+                //обновляем диапазоны значений параметров индикаторов
+                List<IndicatorParameterRange> updateIndParRan = new List<IndicatorParameterRange>(); //список с id записи которую нужно обновить, и новые данные для этой записи
+                List<IndicatorParameterRange> addIndParRan = new List<IndicatorParameterRange>(); //список с записями которые нужно добавить
+                List<int> deleteIndParRan = new List<int>(); //список с id записей которые нужно удалить
+
+                int maxLengthIndicatorParameterRange = indicatorParameterRanges.Count;
+                if (oldIndicatorParameterRanges.Count > maxLengthIndicatorParameterRange)
+                {
+                    maxLengthIndicatorParameterRange = oldIndicatorParameterRanges.Count;
+                }
+                //проходим по всем элементам старого и нового списка, и определяем какие обновить, какие добавить, а какие удалить
+                for (int i = 0; i < maxLengthIndicatorParameterRange; i++)
+                {
+                    if (indicatorParameterRanges.Count > i && oldIndicatorParameterRanges.Count > i)
+                    {
+                        if (indicatorParameterRanges[i].IndicatorParameterTemplate.Id != oldIndicatorParameterRanges[i].IndicatorParameterTemplate.Id || indicatorParameterRanges[i].AlgorithmParameter.Id != oldIndicatorParameterRanges[i].AlgorithmParameter.Id || indicatorParameterRanges[i].AlgorithmIndicator.Id != oldIndicatorParameterRanges[i].AlgorithmIndicator.Id)
+                        {
+                            indicatorParameterRanges[i].Id = oldIndicatorParameterRanges[i].Id;
+                            updateIndParRan.Add(indicatorParameterRanges[i]);
+                        }
+                    }
+                    else if (indicatorParameterRanges.Count > i && oldIndicatorParameterRanges.Count <= i)
+                    {
+                        addIndParRan.Add(indicatorParameterRanges[i]);
+                    }
+                    else if (indicatorParameterRanges.Count <= i && oldIndicatorParameterRanges.Count > i)
+                    {
+                        deleteIndParRan.Add(oldIndicatorParameterRanges[i].Id);
+                    }
+                }
+                //обновляем
+                foreach (IndicatorParameterRange indicatorParameterRange in updateIndParRan)
+                {
+                    _database.UpdateIndicatorParameterRange(indicatorParameterRange);
+                }
+                //добавляем
+                foreach (IndicatorParameterRange indicatorParameterRange1 in addIndParRan)
+                {
+                    _database.InsertIndicatorParameterRange(indicatorParameterRange1);
+                }
+                //удаляем
+                foreach (int idIndParRan in deleteIndParRan)
+                {
+                    _database.DeleteIndicatorParameterRange(idIndParRan);
+                }
+
+
                 //обновляем алгоритм
                 _database.UpdateAlgorithm(new Algorithm { Id = id, Name = name, Description = description, Script = script });
             }
 
-            _modelData.ReadAlgorithms();*/
+            _modelData.ReadAlgorithms();
         }
 
         public void AlgorithmDelete(int id)

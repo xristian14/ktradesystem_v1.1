@@ -10,7 +10,6 @@ namespace ktradesystem.Models.Datatables
     public class IndicatorParameterRange
     {
         public int Id { get; set; }
-        public int IdAlgorithm { get; set; }
         public IndicatorParameterTemplate IndicatorParameterTemplate { get; set; }
         public AlgorithmParameter AlgorithmParameter { get; set; }
         public AlgorithmIndicator AlgorithmIndicator { get; set; }

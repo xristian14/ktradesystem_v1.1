@@ -120,6 +120,39 @@ namespace ktradesystem.Models
 
                 //обновляем индикатор
                 _database.UpdateIndicator(new Indicator { Id = id, Name = name, Description = description, Script = script });
+
+                //проверяем все алгоритмы в которых есть индикаторы алгоритма с данным индикатором, и если тип значения параметров индикаторов не совпадает с выбранными параметрами алгоритма, создаем параметр алгоритма с нужным типом значения для параметра индикатора, и присваиваем параметру индикатора новый параметр алгоритма
+
+                //проверяем все алгоритмы на то что индикаторы алгоритма имеют параметры для всех шаблонов параметров индикатора. Если не все, то создаем параметр индикатора, создаем параметр алгоритма для него и присваиваем его параметру индикатора
+                _modelData.ReadIndicators();
+
+
+
+                foreach (Algorithm algorithm in _modelData.Algorithms)
+                {
+                    if(algorithm.AlgorithmIndicators.Where(j=>j.Indicator.Id == id).Any()) //если в данном алгоритме есть редактируемый индикатор
+                    {
+                        AlgorithmParameter algorithmParameterInt = new AlgorithmParameter(); //созданный параметр алгоритма с типом int
+                        AlgorithmParameter algorithmParameterDouble = new AlgorithmParameter(); //созданный параметр алгоритма с типом double
+                        bool isIntParameterCreated = false; //был ли создан параметр алгоритма с типом int
+                        bool isDoubleParameterCreated = false; //был ли создан параметр алгоритма с типом double
+                        string msgIntParameter = ""; //сообщение которое будет в описании созданного параметра алгоритма с типом int, уведомляющее о том для чего был создан данный параметр алгоритма
+                        string msgDoubleParameter = ""; //сообщение которое будет в описании созданного параметра алгоритма с типом double, уведомляющее о том для чего был создан данный параметр алгоритма
+                        //проходим по всем индикаторам алгоритма
+                        foreach(AlgorithmIndicator algorithmIndicator in algorithm.AlgorithmIndicators)
+                        {
+                            if(algorithmIndicator.Id == id) //если индикатор совпадает с редактируемым, проверяем, совпадает ли тип параметра
+                            {
+                                //проходим по всем параметрам индикатора алгоритма, и проверяем, совпадает ли тип параметра индикатора и выбранного параметра алгоритма
+                                foreach(IndicatorParameterRange indicatorParameterRange in algorithmIndicator.IndicatorParameterRanges)
+                                {
+                                    
+
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             _modelData.ReadIndicators();

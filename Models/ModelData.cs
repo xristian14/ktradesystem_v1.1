@@ -500,13 +500,16 @@ namespace ktradesystem.Models
                 Indicators.Add(indicator);
             }
 
-            CheckMissingIndicatorParameterRange();
+            CheckAlgorithmIndicators();
 
-            ReadAlgorithms(); //считываем алгоритмы, т.к. после изменения индикаторов, при каскадном удалении параметров или индикаторов, в алгоритмах будут новые данные
+            ReadAndSetAlgorithms(); //считываем алгоритмы, т.к. после изменения индикаторов, при каскадном удалении параметров или индикаторов, в алгоритмах будут новые данные
         }
 
-        private void CheckMissingIndicatorParameterRange() //при добавлении шаблона параметра индикатору, в алгоритме, запись со значениями данного параметра не добавляется. Эта функция определяет диапазоны значений которых "недостаёт" и добавляет их.
+        private void CheckAlgorithmIndicators() //проверяет, все ли параметры индикаторов имеются в индикаторах алгоритмов, если нет, - добавляются и добавляется параметр алгоритма для них. Так же проверяется, все ли параметры индикаторов алгоритмов имеют тот же тип значения что и выбранный параметр алгоритма, если тип значения не совпадает, - добавляется новый параметр алгоритма и выбирается для параметра индикатора. Добавлено может быть не более 2-х параметров алгоритма для одного алгоритма. Если необходимы параметры под разные нужды (сменился тип + добавился параметр индикатора), тогда в описании созданного параметра алгоритма будут указаны все его функции
         {
+
+
+
             //проходим по алгоритмам, далее по диапазонам параметров и формируем список с шаблонами параметров соответствующих диапазонам. Далее проходимся по полученному списку шаблонов параметров и формируем список индикаторов для данного набора шаблонов параметров. Далее проходим по индикаторам, и для каждого находим полный список шаблонов параметров. Далее ищем id шаблона параметров в списке диапазонов параметров, и если не находим добавляем в список диапазонов значений которые нужно будет добавить. Далее проходимся по этому списку и выполняем операацию insert для каждого.
             /*List<IndicatorParameterRange> indicatorParameterRangesForInsert = new List<IndicatorParameterRange>(); //список с диапазонами значений которые необходимо добавить в БД
             foreach(Algorithm algorithm in Algorithms)
@@ -569,55 +572,67 @@ namespace ktradesystem.Models
             }*/
         }
 
-        public void ReadAlgorithms()
+        public ObservableCollection<DataSourceTemplate> ReadDataSourceTemplates() //возвращает считанные шаблоны источников данных
         {
-            //считываем макеты источников данных из базы данных
-            DataSourceTemplates.Clear();
+            ObservableCollection<DataSourceTemplate> dataSourceTemplates = new ObservableCollection<DataSourceTemplate>();
 
             DataTable dataDataSourceTemplates = _database.QuerySelect("SELECT * FROM DataSourceTemplates");
             foreach (DataRow row in dataDataSourceTemplates.Rows)
             {
                 DataSourceTemplate dataSourceTemplate = new DataSourceTemplate { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name"), Description = row.Field<string>("description"), IdAlgorithm = (int)row.Field<long>("idAlgorithm") };
-                DataSourceTemplates.Add(dataSourceTemplate);
+                dataSourceTemplates.Add(dataSourceTemplate);
             }
 
-            //считываем параметры алгоритмов из базы данных
-            AlgorithmParameters.Clear();
+            return dataSourceTemplates;
+        }
+
+        public ObservableCollection<AlgorithmParameter> ReadAlgorithmParameters() //возвращает считанные параметры алгоритмов
+        {
+            ObservableCollection<AlgorithmParameter> algorithmParameters = new ObservableCollection<AlgorithmParameter>();
 
             DataTable dataAlgorithmParameters = _database.QuerySelect("SELECT * FROM AlgorithmParameters");
             foreach (DataRow row in dataAlgorithmParameters.Rows)
             {
                 bool isStepPercent = false;
-                if((int)row.Field<long>("isStepPercent") == 1)
+                if ((int)row.Field<long>("isStepPercent") == 1)
                 {
                     isStepPercent = true;
                 }
                 int idParameterValueType = (int)row.Field<long>("idParameterValueType");
                 ParameterValueType parameterValueType = idParameterValueType == ParameterValueTypes[0].Id ? ParameterValueTypes[0] : ParameterValueTypes[1];
                 AlgorithmParameter algorithmParameter = new AlgorithmParameter { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name"), Description = row.Field<string>("description"), MinValue = row.Field<double>("minValue"), MaxValue = row.Field<double>("maxValue"), Step = row.Field<double>("step"), IsStepPercent = isStepPercent, IdAlgorithm = (int)row.Field<long>("idAlgorithm"), ParameterValueType = parameterValueType };
-                AlgorithmParameters.Add(algorithmParameter);
+                algorithmParameters.Add(algorithmParameter);
             }
 
-            //считываем индикаторы алгоритмов (IndicatorParameterRanges установим при их считывании, Algorithm установим при считывании алгоритмов)
-            AlgorithmIndicators.Clear();
+            return algorithmParameters;
+        }
+
+        public ObservableCollection<AlgorithmIndicator> ReadAlgorithmIndicators(ObservableCollection<Indicator> indicators) //возвращает считанные алгоритмы индикаторов
+        {
+            ObservableCollection<AlgorithmIndicator> algorithmIndicators = new ObservableCollection<AlgorithmIndicator>();
+
             DataTable dataAlgorithmIndicators = _database.QuerySelect("SELECT * FROM AlgorithmIndicators ORDER BY idIndicator");
             foreach (DataRow row in dataAlgorithmIndicators.Rows)
             {
                 int idIndicator = (int)row.Field<long>("idIndicator"); //id индикатора
                 Indicator indicator = new Indicator();
-                foreach(Indicator indicator1 in Indicators)
+                foreach (Indicator indicator1 in indicators)
                 {
-                    if(indicator1.Id == idIndicator)
+                    if (indicator1.Id == idIndicator)
                     {
                         indicator = indicator1;
                     }
                 }
                 AlgorithmIndicator algorithmIndicator = new AlgorithmIndicator { Id = (int)row.Field<long>("id"), IdAlgorithm = (int)row.Field<long>("idAlgorithm"), Indicator = indicator, IndicatorParameterRanges = new List<IndicatorParameterRange>(), Ending = row.Field<string>("ending") };
-                AlgorithmIndicators.Add(algorithmIndicator);
+                algorithmIndicators.Add(algorithmIndicator);
             }
 
-            //считываем диапазоны значений параметров индикаторов из базы данных
-            IndicatorParameterRanges.Clear();
+            return algorithmIndicators;
+        }
+
+        public ObservableCollection<IndicatorParameterRange> ReadIndicatorParameterRanges(ObservableCollection<IndicatorParameterTemplate> indicatorParameterTemplates, ObservableCollection<AlgorithmParameter> algorithmParameters, ObservableCollection<AlgorithmIndicator> algorithmIndicators) //возвращает считанные параметры индикаторов алгоритмов
+        {
+            ObservableCollection<IndicatorParameterRange> indicatorParameterRanges = new ObservableCollection<IndicatorParameterRange>();
 
             DataTable dataIndicatorParameterRanges = _database.QuerySelect("SELECT * FROM IndicatorParameterRanges ORDER BY idAlgorithmIndicator");
             foreach (DataRow row in dataIndicatorParameterRanges.Rows)
@@ -625,7 +640,7 @@ namespace ktradesystem.Models
                 int idIndicatorParameterTemplate = (int)row.Field<long>("idIndicatorParameterTemplate"); //id шаблона параметра
                 IndicatorParameterTemplate indicatorParameterTemplate1 = new IndicatorParameterTemplate();
                 Indicator indicator = new Indicator();
-                foreach (IndicatorParameterTemplate indicatorParameterTemplate in IndicatorParameterTemplates)
+                foreach (IndicatorParameterTemplate indicatorParameterTemplate in indicatorParameterTemplates)
                 {
                     if (indicatorParameterTemplate.Id == idIndicatorParameterTemplate)
                     {
@@ -635,18 +650,18 @@ namespace ktradesystem.Models
                 }
                 int idAlgorithmParameter = (int)row.Field<long>("idAlgorithmParameter"); //id параметра алгоритма
                 AlgorithmParameter algorithmParameter = new AlgorithmParameter();
-                foreach(AlgorithmParameter algorithmParameter1 in AlgorithmParameters)
+                foreach (AlgorithmParameter algorithmParameter1 in algorithmParameters)
                 {
-                    if(algorithmParameter1.Id == idAlgorithmParameter)
+                    if (algorithmParameter1.Id == idAlgorithmParameter)
                     {
                         algorithmParameter = algorithmParameter1;
                     }
                 }
                 int idAlgorithmIndicator = (int)row.Field<long>("idAlgorithmIndicator"); //id индикатора алгоритма
                 AlgorithmIndicator algorithmIndicator = new AlgorithmIndicator();
-                foreach(AlgorithmIndicator algorithmIndicator1 in AlgorithmIndicators)
+                foreach (AlgorithmIndicator algorithmIndicator1 in algorithmIndicators)
                 {
-                    if(algorithmIndicator1.Id == idAlgorithmIndicator)
+                    if (algorithmIndicator1.Id == idAlgorithmIndicator)
                     {
                         algorithmIndicator = algorithmIndicator1;
                     }
@@ -656,11 +671,15 @@ namespace ktradesystem.Models
                 //добавляем indicatorParameterRange в IndicatorParameterRanges algorithmIndicator-а
                 algorithmIndicator.IndicatorParameterRanges.Add(indicatorParameterRange);
 
-                IndicatorParameterRanges.Add(indicatorParameterRange);
+                indicatorParameterRanges.Add(indicatorParameterRange);
             }
 
-            //считываем алгоритмы из базы данных
-            Algorithms.Clear();
+            return indicatorParameterRanges;
+        }
+
+        public ObservableCollection<Algorithm> ReadAlgorithms(ObservableCollection<DataSourceTemplate> inputDataSourceTemplates, ObservableCollection<AlgorithmParameter> inputAlgorithmParameters, ObservableCollection<AlgorithmIndicator> inputAlgorithmIndicators) //возвращает считанные алгоритмы
+        {
+            ObservableCollection<Algorithm> algorithms = new ObservableCollection<Algorithm>();
 
             DataTable dataAlgorithms = _database.QuerySelect("SELECT * FROM Algorithms");
             foreach (DataRow row in dataAlgorithms.Rows)
@@ -669,7 +688,7 @@ namespace ktradesystem.Models
                 Algorithm algorithm = new Algorithm { Id = idAlgorithm, Name = row.Field<string>("name"), Description = row.Field<string>("description"), Script = row.Field<string>("script") };
 
                 List<DataSourceTemplate> dataSourceTemplates = new List<DataSourceTemplate>();
-                foreach (DataSourceTemplate dataSourceTemplate in DataSourceTemplates)
+                foreach (DataSourceTemplate dataSourceTemplate in inputDataSourceTemplates)
                 {
                     if (dataSourceTemplate.IdAlgorithm == idAlgorithm)
                     {
@@ -679,7 +698,7 @@ namespace ktradesystem.Models
                 algorithm.DataSourceTemplates = dataSourceTemplates;
 
                 List<AlgorithmParameter> algorithmParameters = new List<AlgorithmParameter>();
-                foreach (AlgorithmParameter algorithmParameter in AlgorithmParameters)
+                foreach (AlgorithmParameter algorithmParameter in inputAlgorithmParameters)
                 {
                     if (algorithmParameter.IdAlgorithm == idAlgorithm)
                     {
@@ -689,7 +708,7 @@ namespace ktradesystem.Models
                 algorithm.AlgorithmParameters = algorithmParameters;
 
                 List<AlgorithmIndicator> algorithmIndicators = new List<AlgorithmIndicator>();
-                foreach (AlgorithmIndicator algorithmIndicator in AlgorithmIndicators)
+                foreach (AlgorithmIndicator algorithmIndicator in inputAlgorithmIndicators)
                 {
                     if (algorithmIndicator.IdAlgorithm == idAlgorithm)
                     {
@@ -700,6 +719,46 @@ namespace ktradesystem.Models
                 }
                 algorithm.AlgorithmIndicators = algorithmIndicators;
 
+                algorithms.Add(algorithm);
+            }
+
+            return algorithms;
+        }
+
+        public void ReadAndSetAlgorithms() //считывает шаблоны источников данных, параметры алгоритмов, индикаторы алгоритмов, параметры индикаторов алгоритмов со значениями, алгоритмы, и устанавливает их в списки на которые оформлена подписка у модели-представления
+        {
+            //считываем макеты источников данных из базы данных
+            DataSourceTemplates.Clear();
+            foreach(DataSourceTemplate dataSourceTemplate in ReadDataSourceTemplates())
+            {
+                DataSourceTemplates.Add(dataSourceTemplate);
+            }
+
+            //считываем параметры алгоритмов из базы данных
+            AlgorithmParameters.Clear();
+            foreach (AlgorithmParameter algorithmParameter in ReadAlgorithmParameters())
+            {
+                AlgorithmParameters.Add(algorithmParameter);
+            }
+
+            //считываем индикаторы алгоритмов (IndicatorParameterRanges установим при их считывании, Algorithm установим при считывании алгоритмов)
+            AlgorithmIndicators.Clear();
+            foreach (AlgorithmIndicator algorithmIndicator in ReadAlgorithmIndicators(Indicators))
+            {
+                AlgorithmIndicators.Add(algorithmIndicator);
+            }
+
+            //считываем диапазоны значений параметров индикаторов из базы данных
+            IndicatorParameterRanges.Clear();
+            foreach (IndicatorParameterRange indicatorParameterRange in ReadIndicatorParameterRanges(IndicatorParameterTemplates, AlgorithmParameters, AlgorithmIndicators))
+            {
+                IndicatorParameterRanges.Add(indicatorParameterRange);
+            }
+
+            //считываем алгоритмы из базы данных
+            Algorithms.Clear();
+            foreach (Algorithm algorithm in ReadAlgorithms(DataSourceTemplates, AlgorithmParameters, AlgorithmIndicators))
+            {
                 Algorithms.Add(algorithm);
             }
         }

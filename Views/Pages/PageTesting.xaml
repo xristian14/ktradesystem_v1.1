@@ -268,6 +268,7 @@
                         <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
                             <TextBlock Text="Значения оптимизируемых параметров выбранных индикаторов"/>
                         </StackPanel>
+                        <ComboBox x:Name="algorithmEnabledHelper" Visibility="Collapsed" IsEnabled="{Binding IsAlgorithmEnabled}"/>
                         <ListView ItemsSource="{Binding IndicatorParameterRangesView, Mode=OneWay}" SelectedItem="{Binding SelectedIndicatorParameterRangeView, Mode=TwoWay}" SelectionMode="Single" MinHeight="0" MaxHeight="213">
                             <ListView.View>
                                 <GridView>
@@ -284,7 +285,7 @@
                                     <GridViewColumn Header="Выбранный параметр" Width="{Binding ElementName=helperParRan5, Path=ActualWidth}">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <ComboBox ItemsSource="{Binding AlgorithmParametersView}" SelectedItem="{Binding SelectedAlgorithmParameterView, Mode=TwoWay}" DisplayMemberPath="Name" IsEnabled="{Binding IsAlgorithmEnabled}"/>
+                                                <ComboBox ItemsSource="{Binding AlgorithmParametersView}" SelectedItem="{Binding SelectedAlgorithmParameterView, Mode=TwoWay}" DisplayMemberPath="Name" IsEnabled="{Binding ElementName=algorithmEnabledHelper, Path=IsEnabled}"/>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>

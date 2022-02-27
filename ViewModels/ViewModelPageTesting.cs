@@ -2142,7 +2142,7 @@ namespace ktradesystem.ViewModels
                 AlgorithmIndicatorView algorithmIndicatorView = new AlgorithmIndicatorView { Id = algorithmIndicator.Id, Algorithm = algorithmIndicator.Algorithm, Indicator = algorithmIndicator.Indicator, IndicatorParameterRangesView = new List<IndicatorParameterRangeView>(), Ending = algorithmIndicator.Ending };
                 foreach(IndicatorParameterRange indicatorParameterRange in algorithmIndicator.IndicatorParameterRanges)
                 {
-                    string nameAlgorithmindicator = indicatorParameterRange.IndicatorParameterTemplate.Name + "_" + indicatorParameterRange.AlgorithmIndicator.Ending;
+                    string nameAlgorithmindicator = indicatorParameterRange.AlgorithmIndicator.Indicator.Name + "_" + indicatorParameterRange.AlgorithmIndicator.Ending;
                     IndicatorParameterRangeView indicatorParameterRangeView = new IndicatorParameterRangeView { Id = indicatorParameterRange.Id, IndicatorParameterTemplate = indicatorParameterRange.IndicatorParameterTemplate, AlgorithmIndicatorView = algorithmIndicatorView, NameAlgorithmIndicator = nameAlgorithmindicator };
                     if (indicatorParameterRange.IndicatorParameterTemplate.ParameterValueType.Id == 1)
                     {
@@ -2152,6 +2152,7 @@ namespace ktradesystem.ViewModels
                     {
                         indicatorParameterRangeView.AlgorithmParametersView = AlgorithmParametersViewDouble;
                     }
+                    indicatorParameterRangeView.SelectedAlgorithmParameterView = indicatorParameterRangeView.AlgorithmParametersView.Where(j => j.Name == indicatorParameterRange.AlgorithmParameter.Name).First();
                     IndicatorParameterRangesView.Add(indicatorParameterRangeView); //добавляем параметр индикатора со значением во все параметры с выбираемым значением
                     algorithmIndicatorView.IndicatorParameterRangesView.Add(indicatorParameterRangeView); //добавляем параметр индикатора со значением в параметры конкретного индикатора алгоритма
                 }

@@ -247,7 +247,7 @@ namespace ktradesystem.Models
                     maxLengthAlgorithmIndicator = oldAlgorithm.AlgorithmIndicators.Count;
                 }
                 //проходим по всем элементам старого и нового списка, и определяем какие обновить, какие добавить, а какие удалить
-                for (int i = 0; i < maxLengthDataSourceTemplate; i++)
+                for (int i = 0; i < maxLengthAlgorithmIndicator; i++)
                 {
                     if (algorithmIndicators.Count > i && oldAlgorithm.AlgorithmIndicators.Count > i)
                     {

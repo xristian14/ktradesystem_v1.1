@@ -554,13 +554,13 @@ namespace ktradesystem.Models
                                 else //при втором проходе вставляем недостающий параметр индикатора алгоритма
                                 {
                                     _database.InsertIndicatorParameterRange(new IndicatorParameterRange { IndicatorParameterTemplate = indicatorParameterTemplate, AlgorithmParameter = indicatorParameterTemplate.ParameterValueType.Id == 1 ? algorithmParameterInt : algorithmParameterDouble, AlgorithmIndicator = algorithmIndicator });
-                                    string msg = "добавленного в индикатор: " + algorithmIndicator.Indicator.Name + "_" + algorithmIndicator.Ending + " параметра: " + indicatorParameterTemplate.Name + ", ";
+                                    string msg = "- добавленного в индикатор " + algorithmIndicator.Indicator.Name + "_" + algorithmIndicator.Ending + " параметра " + indicatorParameterTemplate.Name + ", ";
                                     msgIntParameter += indicatorParameterTemplate.ParameterValueType.Id == 1 ? msg : "";
                                     msgDoubleParameter += indicatorParameterTemplate.ParameterValueType.Id == 2 ? msg : "";
                                 }
                             }
                             //если тип шаблона параметра не соответствует типу выбранного параметра алгоритма
-                            if(algorithmIndicator.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate.Id == indicatorParameterTemplate.Id).First().AlgorithmParameter.ParameterValueType.Id != indicatorParameterTemplate.ParameterValueType.Id)
+                            else if(algorithmIndicator.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate.Id == indicatorParameterTemplate.Id).First().AlgorithmParameter.ParameterValueType.Id != indicatorParameterTemplate.ParameterValueType.Id)
                             {
                                 if (y == 1) //для первого прохода отмечаем что нужен параметр алгоритма с определенным типом
                                 {
@@ -577,7 +577,7 @@ namespace ktradesystem.Models
                                 {
                                     IndicatorParameterRange oldIndicatorParameterRange = algorithmIndicator.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate.Id == indicatorParameterTemplate.Id).First();
                                     _database.UpdateIndicatorParameterRange(new IndicatorParameterRange { Id = oldIndicatorParameterRange.Id, IndicatorParameterTemplate = oldIndicatorParameterRange.IndicatorParameterTemplate, AlgorithmParameter = indicatorParameterTemplate.ParameterValueType.Id == 1 ? algorithmParameterInt : algorithmParameterDouble, AlgorithmIndicator = oldIndicatorParameterRange.AlgorithmIndicator });
-                                    string msg = "параметра: " + indicatorParameterTemplate.Name + " индикатора: " + algorithmIndicator.Indicator.Name + "_" + algorithmIndicator.Ending + " у которого изменился тип значения, ";
+                                    string msg = "- изменившего свой тип значения параметра " + indicatorParameterTemplate.Name + " индикатора " + algorithmIndicator.Indicator.Name + "_" + algorithmIndicator.Ending + ", ";
                                     msgIntParameter += indicatorParameterTemplate.ParameterValueType.Id == 1 ? msg : "";
                                     msgDoubleParameter += indicatorParameterTemplate.ParameterValueType.Id == 2 ? msg : "";
                                 }
@@ -625,15 +625,15 @@ namespace ktradesystem.Models
                     }
                 }
                 //если были добавлены параметры алгоритма, обновляем их описание, указав в них сообщение для чего они были созданы
-                string description = "Данный параметр был создан автоматически " + DateTime.Now.ToString("G") + ", так как в используемых индикаторах изменились оптимизируемые параметры. Параметр был создан для: ";
+                string description = "Параметр создан автоматически " + DateTime.Now.ToString("G") + " для: ";
                 if (isIntParameterCreated)
                 {
-                    algorithmParameterInt.Description = description + msgIntParameter.Substring(0, msgIntParameter.Length - 2);
+                    algorithmParameterInt.Description = description + msgIntParameter.Substring(0, msgIntParameter.Length - 2) + ".";
                     _database.UpdateAlgorithmParameter(algorithmParameterInt);
                 }
                 if (isDoubleParameterCreated)
                 {
-                    algorithmParameterDouble.Description = description + msgDoubleParameter.Substring(0, msgDoubleParameter.Length - 2);
+                    algorithmParameterDouble.Description = description + msgDoubleParameter.Substring(0, msgDoubleParameter.Length - 2) + ".";
                     _database.UpdateAlgorithmParameter(algorithmParameterDouble);
                 }
             }
@@ -705,36 +705,13 @@ namespace ktradesystem.Models
             foreach (DataRow row in dataIndicatorParameterRanges.Rows)
             {
                 int idIndicatorParameterTemplate = (int)row.Field<long>("idIndicatorParameterTemplate"); //id шаблона параметра
-                IndicatorParameterTemplate indicatorParameterTemplate1 = new IndicatorParameterTemplate();
-                Indicator indicator = new Indicator();
-                foreach (IndicatorParameterTemplate indicatorParameterTemplate in indicatorParameterTemplates)
-                {
-                    if (indicatorParameterTemplate.Id == idIndicatorParameterTemplate)
-                    {
-                        indicator = indicatorParameterTemplate.Indicator;
-                        indicatorParameterTemplate1 = indicatorParameterTemplate;
-                    }
-                }
+                IndicatorParameterTemplate indicatorParameterTemplate = indicatorParameterTemplates.Where(j => j.Id == idIndicatorParameterTemplate).First();
                 int idAlgorithmParameter = (int)row.Field<long>("idAlgorithmParameter"); //id параметра алгоритма
-                AlgorithmParameter algorithmParameter = new AlgorithmParameter();
-                foreach (AlgorithmParameter algorithmParameter1 in algorithmParameters)
-                {
-                    if (algorithmParameter1.Id == idAlgorithmParameter)
-                    {
-                        algorithmParameter = algorithmParameter1;
-                    }
-                }
+                AlgorithmParameter algorithmParameter = algorithmParameters.Where(j => j.Id == idAlgorithmParameter).First();
                 int idAlgorithmIndicator = (int)row.Field<long>("idAlgorithmIndicator"); //id индикатора алгоритма
-                AlgorithmIndicator algorithmIndicator = new AlgorithmIndicator();
-                foreach (AlgorithmIndicator algorithmIndicator1 in algorithmIndicators)
-                {
-                    if (algorithmIndicator1.Id == idAlgorithmIndicator)
-                    {
-                        algorithmIndicator = algorithmIndicator1;
-                    }
-                }
+                AlgorithmIndicator algorithmIndicator = algorithmIndicators.Where(j => j.Id == idAlgorithmIndicator).First();
 
-                IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange { Id = (int)row.Field<long>("id"), IndicatorParameterTemplate = indicatorParameterTemplate1, AlgorithmParameter = algorithmParameter, AlgorithmIndicator = algorithmIndicator };
+                IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange { Id = (int)row.Field<long>("id"), IndicatorParameterTemplate = indicatorParameterTemplate, AlgorithmParameter = algorithmParameter, AlgorithmIndicator = algorithmIndicator };
                 //добавляем indicatorParameterRange в IndicatorParameterRanges algorithmIndicator-а
                 algorithmIndicator.IndicatorParameterRanges.Add(indicatorParameterRange);
 

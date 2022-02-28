@@ -344,7 +344,7 @@
                             <Button Content="Редактировать" Command="{Binding EditAlgorithmParameter_Click}" Width="95" Margin="7 0 0 0"/>
                             <Button Content="Удалить" Command="{Binding DeleteAlgorithmParameter_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView Grid.Row="2" ItemsSource="{Binding AlgorithmParametersView, Mode=OneWay}" SelectedItem="{Binding SelectedAlgorithmParameterView, Mode=TwoWay}" SelectionMode="Single" MinHeight="0" MaxHeight="116">
+                        <ListView Grid.Row="2" ItemsSource="{Binding AlgorithmParametersView, Mode=OneWay}" SelectedItem="{Binding SelectedAlgorithmParameterView, Mode=TwoWay}" SelectionMode="Single" MinHeight="0" MaxHeight="139">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="{Binding ElementName=helperAlgPar1, Path=ActualWidth}"/>

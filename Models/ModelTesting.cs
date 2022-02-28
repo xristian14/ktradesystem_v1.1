@@ -163,7 +163,7 @@ namespace ktradesystem.Models
 
                 foreach (AlgorithmIndicator algorithmIndicator in algorithmIndicators)
                 {
-                    int newAlgorithmIndicatorId = _modelData.AlgorithmIndicators.Where(j => j.Indicator == algorithmIndicator.Indicator && j.Ending == algorithmIndicator.Ending).First().Id;
+                    int newAlgorithmIndicatorId = _modelData.AlgorithmIndicators.Where(j => j.IdAlgorithm == newAlgorithmId && j.Indicator.Id == algorithmIndicator.Indicator.Id && j.Ending == algorithmIndicator.Ending).First().Id;
                     algorithmIndicator.Id = newAlgorithmIndicatorId;
 
                     foreach (IndicatorParameterRange indicatorParameterRange in algorithmIndicator.IndicatorParameterRanges)

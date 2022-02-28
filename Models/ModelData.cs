@@ -507,69 +507,136 @@ namespace ktradesystem.Models
 
         private void CheckAlgorithmIndicators() //проверяет, все ли параметры индикаторов имеются в индикаторах алгоритмов, если нет, - добавляются и добавляется параметр алгоритма для них. Так же проверяется, все ли параметры индикаторов алгоритмов имеют тот же тип значения что и выбранный параметр алгоритма, если тип значения не совпадает, - добавляется новый параметр алгоритма и выбирается для параметра индикатора. Добавлено может быть не более 2-х параметров алгоритма для одного алгоритма. Если необходимы параметры под разные нужды (сменился тип + добавился параметр индикатора), тогда в описании созданного параметра алгоритма будут указаны все его функции
         {
+            //считываем текущие алгоритмы
+            ObservableCollection<DataSourceTemplate> currentDataSourceTemplates = ReadDataSourceTemplates();
+            ObservableCollection<AlgorithmParameter> currentAlgorithmParameters = ReadAlgorithmParameters();
+            ObservableCollection<AlgorithmIndicator> currentAlgorithmIndicators = ReadAlgorithmIndicators(Indicators);
+            ObservableCollection<IndicatorParameterRange> currentIndicatorParameterRanges = ReadIndicatorParameterRanges(IndicatorParameterTemplates, currentAlgorithmParameters, currentAlgorithmIndicators);
+            ObservableCollection<Algorithm> currentAlgorithms = ReadAlgorithms(currentDataSourceTemplates, currentAlgorithmParameters, currentAlgorithmIndicators);
 
-
-
-            //проходим по алгоритмам, далее по диапазонам параметров и формируем список с шаблонами параметров соответствующих диапазонам. Далее проходимся по полученному списку шаблонов параметров и формируем список индикаторов для данного набора шаблонов параметров. Далее проходим по индикаторам, и для каждого находим полный список шаблонов параметров. Далее ищем id шаблона параметров в списке диапазонов параметров, и если не находим добавляем в список диапазонов значений которые нужно будет добавить. Далее проходимся по этому списку и выполняем операацию insert для каждого.
-            /*List<IndicatorParameterRange> indicatorParameterRangesForInsert = new List<IndicatorParameterRange>(); //список с диапазонами значений которые необходимо добавить в БД
-            foreach(Algorithm algorithm in Algorithms)
+            //проходим по алгоритмам
+            foreach(Algorithm algorithm in currentAlgorithms)
             {
-                List<IndicatorParameterTemplate> indicatorParameterTemplates = new List<IndicatorParameterTemplate>(); //список с шаблонами параметров, соответствующих диапазонам значений
-                foreach(IndicatorParameterRange indicatorParameterRange in algorithm.IndicatorParameterRanges)
+                ObservableCollection<AlgorithmParameter> newAlgorithmParameters = ReadAlgorithmParameters(); //параметры алгоритма, нужны чтобы при добавлении двух параметров алгоритма можно было подобрать уникальное имя для второго учитывая имя первого
+                AlgorithmParameter algorithmParameterInt = new AlgorithmParameter(); //созданный параметр алгоритма с типом int
+                AlgorithmParameter algorithmParameterDouble = new AlgorithmParameter(); //созданный параметр алгоритма с типом double
+                bool isIntParameterCreated = false; //был ли создан параметр алгоритма с типом int
+                bool isDoubleParameterCreated = false; //был ли создан параметр алгоритма с типом double
+                string msgIntParameter = ""; //сообщение которое будет в описании созданного параметра алгоритма с типом int, уведомляющее о том для чего был создан данный параметр алгоритма
+                string msgDoubleParameter = ""; //сообщение которое будет в описании созданного параметра алгоритма с типом double, уведомляющее о том для чего был создан данный параметр алгоритма
+                                                //проходим по всем индикаторам алгоритма
+                foreach (AlgorithmIndicator algorithmIndicator in algorithm.AlgorithmIndicators)
                 {
-                    foreach(IndicatorParameterTemplate indicatorParameterTemplate in IndicatorParameterTemplates)
+                    //проходим по всем шаблонам параметров индикатора
+                    foreach(IndicatorParameterTemplate indicatorParameterTemplate in algorithmIndicator.Indicator.IndicatorParameterTemplates)
                     {
-                        if(indicatorParameterRange.IndicatorParameterTemplate.Id == indicatorParameterTemplate.Id)
+                        bool isNeedAlgorithmParameterInt = false; //нужен ли параметр алгоритма с типом int
+                        bool isNeedAlgorithmParameterDouble = false; //нужен ли параметр алгоритма с типом double
+                        //проходим дважды по циклу: в первый раз определяем все параметры алгоритма которые нужны для данной ситуации и добавляем эти параметры если они не были добавлены, во второй раз добавляем недостающие параметры индикатора алгоритма или меняем для параметра индикатора алгоритма параметр алгоритма
+                        int y = 0;
+                        do
                         {
-                            indicatorParameterTemplates.Add(indicatorParameterTemplate);
-                        }
-                    }
-                }
-                List<Indicator> indicators = new List<Indicator>(); //список с индикаторами, которые используются в данном алгоритме
-                foreach(IndicatorParameterTemplate itemIPT in indicatorParameterTemplates)
-                {
-                    //получаем индикатор текущего шаблона параметра
-                    Indicator currentIndicator = new Indicator();
-                    foreach(Indicator itemIndicator in Indicators)
-                    {
-                        if (itemIPT.IdIndicator == itemIndicator.Id)
-                        {
-                            currentIndicator = itemIndicator;
-                        }
-                    }
-                    //проверяем, есть ли текущий индикатор в спискe с индикаторами, которые используются в данном алгоритме. Если нет - то добавляем его в этот список.
-                    if (indicators.Contains(currentIndicator) == false)
-                    {
-                        indicators.Add(currentIndicator);
-                    }
-                }
-                //проходим по индикаторам, и далее по шаблонам параметров индикатора
-                foreach(Indicator indicator in indicators)
-                {
-                    foreach(IndicatorParameterTemplate indicatorParameterTemplate in indicator.IndicatorParameterTemplates)
-                    {
-                        //ищем id текущего шаблона в диапазонах параметров
-                        bool isIdIndicatorFind = false;
-                        foreach(IndicatorParameterRange indicatorParameterRange in algorithm.IndicatorParameterRanges)
-                        {
-                            if(indicatorParameterRange.IndicatorParameterTemplate.Id == indicatorParameterTemplate.Id)
+                            y++;
+                            //если данного шаблона параметра нет в параметрах индикатора алгоритма
+                            if (algorithmIndicator.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate.Id == indicatorParameterTemplate.Id).Any() == false)
                             {
-                                isIdIndicatorFind = true;
+                                if(y == 1) //для первого прохода отмечаем что нужен параметр алгоритма с определенным типом
+                                {
+                                    if (indicatorParameterTemplate.ParameterValueType.Id == 1) //int
+                                    {
+                                        isNeedAlgorithmParameterInt = true;
+                                    }
+                                    else //double
+                                    {
+                                        isNeedAlgorithmParameterDouble = true;
+                                    }
+                                }
+                                else //при втором проходе вставляем недостающий параметр индикатора алгоритма
+                                {
+                                    _database.InsertIndicatorParameterRange(new IndicatorParameterRange { IndicatorParameterTemplate = indicatorParameterTemplate, AlgorithmParameter = indicatorParameterTemplate.ParameterValueType.Id == 1 ? algorithmParameterInt : algorithmParameterDouble, AlgorithmIndicator = algorithmIndicator });
+                                    string msg = "добавленного в индикатор: " + algorithmIndicator.Indicator.Name + "_" + algorithmIndicator.Ending + " параметра: " + indicatorParameterTemplate.Name + ", ";
+                                    msgIntParameter += indicatorParameterTemplate.ParameterValueType.Id == 1 ? msg : "";
+                                    msgDoubleParameter += indicatorParameterTemplate.ParameterValueType.Id == 2 ? msg : "";
+                                }
+                            }
+                            //если тип шаблона параметра не соответствует типу выбранного параметра алгоритма
+                            if(algorithmIndicator.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate.Id == indicatorParameterTemplate.Id).First().AlgorithmParameter.ParameterValueType.Id != indicatorParameterTemplate.ParameterValueType.Id)
+                            {
+                                if (y == 1) //для первого прохода отмечаем что нужен параметр алгоритма с определенным типом
+                                {
+                                    if (indicatorParameterTemplate.ParameterValueType.Id == 1) //int
+                                    {
+                                        isNeedAlgorithmParameterInt = true;
+                                    }
+                                    else //double
+                                    {
+                                        isNeedAlgorithmParameterDouble = true;
+                                    }
+                                }
+                                else //при втором проходе обновляем параметр индикатора алгоритма, устанавливая новый параметр алгоритма
+                                {
+                                    IndicatorParameterRange oldIndicatorParameterRange = algorithmIndicator.IndicatorParameterRanges.Where(j => j.IndicatorParameterTemplate.Id == indicatorParameterTemplate.Id).First();
+                                    _database.UpdateIndicatorParameterRange(new IndicatorParameterRange { Id = oldIndicatorParameterRange.Id, IndicatorParameterTemplate = oldIndicatorParameterRange.IndicatorParameterTemplate, AlgorithmParameter = indicatorParameterTemplate.ParameterValueType.Id == 1 ? algorithmParameterInt : algorithmParameterDouble, AlgorithmIndicator = oldIndicatorParameterRange.AlgorithmIndicator });
+                                    string msg = "параметра: " + indicatorParameterTemplate.Name + " индикатора: " + algorithmIndicator.Indicator.Name + "_" + algorithmIndicator.Ending + " у которого изменился тип значения, ";
+                                    msgIntParameter += indicatorParameterTemplate.ParameterValueType.Id == 1 ? msg : "";
+                                    msgDoubleParameter += indicatorParameterTemplate.ParameterValueType.Id == 2 ? msg : "";
+                                }
+                            }
+                            //при первом проходе добавляем в бд требуемые параметры алгоритма если они не были добавлены
+                            if(y == 1)
+                            {
+                                if (isNeedAlgorithmParameterInt)
+                                {
+                                    if(isIntParameterCreated == false)
+                                    {
+                                        //находим незанятое имя
+                                        string nameAlgPar = "autoInsert";
+                                        int u = 1;
+                                        while (newAlgorithmParameters.Where(j => j.IdAlgorithm == algorithm.Id && j.Name == nameAlgPar + u.ToString()).Any())
+                                        {
+                                            u++;
+                                        }
+                                        _database.InsertAlgorithmParameter(new AlgorithmParameter { Name = nameAlgPar + u.ToString(), MinValue = 1, MaxValue = 2, Step = 150, IsStepPercent = true, IdAlgorithm = algorithm.Id, ParameterValueType = indicatorParameterTemplate.ParameterValueType });
+                                        newAlgorithmParameters = ReadAlgorithmParameters(); //считываем добавленный параметр алгоритма из бд
+                                        algorithmParameterInt = newAlgorithmParameters.Where(j => j.IdAlgorithm == algorithm.Id && j.Name == nameAlgPar + u.ToString()).First(); //присваиваем добавленный параметр
+                                        isIntParameterCreated = true;
+                                    }
+                                }
+                                if (isNeedAlgorithmParameterDouble)
+                                {
+                                    if(isDoubleParameterCreated == false)
+                                    {
+                                        //находим незанятое имя
+                                        string nameAlgPar = "autoInsert";
+                                        int u = 1;
+                                        while (newAlgorithmParameters.Where(j => j.IdAlgorithm == algorithm.Id && j.Name == nameAlgPar + u.ToString()).Any())
+                                        {
+                                            u++;
+                                        }
+                                        _database.InsertAlgorithmParameter(new AlgorithmParameter { Name = nameAlgPar + u.ToString(), MinValue = 1, MaxValue = 2, Step = 150, IsStepPercent = true, IdAlgorithm = algorithm.Id, ParameterValueType = indicatorParameterTemplate.ParameterValueType });
+                                        newAlgorithmParameters = ReadAlgorithmParameters(); //считываем добавленный параметр алгоритма из бд
+                                        algorithmParameterDouble = newAlgorithmParameters.Where(j => j.IdAlgorithm == algorithm.Id && j.Name == nameAlgPar + u.ToString()).First(); //присваиваем добавленный параметр
+                                        isDoubleParameterCreated = true;
+                                    }
+                                }
                             }
                         }
-                        if(isIdIndicatorFind == false) //если параметр не найден, формируем IndicatorParameterRange и добавляем в список с диапазонами значений которые необходимо вставить
-                        {
-                            IndicatorParameterRange indicatorParameterRangeForInsert = new IndicatorParameterRange { IdAlgorithm = algorithm.Id, IndicatorParameterTemplate = indicatorParameterTemplate };
-                            indicatorParameterRangesForInsert.Add(indicatorParameterRangeForInsert);
-                        }
+                        while (y < 2);
                     }
                 }
+                //если были добавлены параметры алгоритма, обновляем их описание, указав в них сообщение для чего они были созданы
+                string description = "Данный параметр был создан автоматически " + DateTime.Now.ToString("G") + ", так как в используемых индикаторах изменились оптимизируемые параметры. Параметр был создан для: ";
+                if (isIntParameterCreated)
+                {
+                    algorithmParameterInt.Description = description + msgIntParameter.Substring(0, msgIntParameter.Length - 2);
+                    _database.UpdateAlgorithmParameter(algorithmParameterInt);
+                }
+                if (isDoubleParameterCreated)
+                {
+                    algorithmParameterDouble.Description = description + msgDoubleParameter.Substring(0, msgDoubleParameter.Length - 2);
+                    _database.UpdateAlgorithmParameter(algorithmParameterDouble);
+                }
             }
-            //вставляем диапазоны значений параметров
-            foreach(IndicatorParameterRange indicatorParameterRange1 in indicatorParameterRangesForInsert)
-            {
-                _database.InsertIndicatorParameterRange(indicatorParameterRange1);
-            }*/
         }
 
         public ObservableCollection<DataSourceTemplate> ReadDataSourceTemplates() //возвращает считанные шаблоны источников данных

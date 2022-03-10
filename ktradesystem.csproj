@@ -98,7 +98,6 @@
     <Compile Include="Models\DepositCurrency.cs" />
     <Compile Include="Models\EvaluationCriteriaValue.cs" />
     <Compile Include="Models\IndicatorCalculateResult.cs" />
-    <Compile Include="Models\IndicatorParameterValue.cs" />
     <Compile Include="Models\IndicatorValues.cs" />
     <Compile Include="Models\ModelFunctions.cs" />
     <Compile Include="Models\Order.cs" />

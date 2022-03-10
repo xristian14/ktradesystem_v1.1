@@ -13,7 +13,6 @@ namespace ktradesystem.Models
         public Account Account { get; set; }
         public DateTime StartPeriod { get; set; }
         public DateTime EndPeriod { get; set; }
-        public List<IndicatorParameterValue> IndicatorParameterValues { get; set; }
         public List<AlgorithmParameterValue> AlgorithmParameterValues { get; set; }
         public List<EvaluationCriteriaValue> EvaluationCriteriaValues { get; set; }
         public List<string> DealsDeviation { get; set; }

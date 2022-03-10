@@ -32,7 +32,7 @@
                     <Button Content="Редактировать" Command="{Binding IndicatorsEdit_Click}" Width="95" Margin="7 0 0 0"/>
                     <Button Content="Удалить" Command="{Binding IndicatorsDelete_Click}" Width="60" Margin="7 0 0 0"/>
                 </StackPanel>
-                <ListView ItemsSource="{Binding Indicators}" SelectedItem="{Binding SelectedIndicator, Mode=TwoWay}" SelectionMode="Single" Height="116">
+                <ListView IsEnabled="{Binding IsIndicatorReadOnly}" ItemsSource="{Binding Indicators}" SelectedItem="{Binding SelectedIndicator, Mode=TwoWay}" SelectionMode="Single" Height="116">
                     <ListView.View>
                         <GridView>
                             <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="{Binding ElementName=helperInd1, Path=ActualWidth}"/>
@@ -40,7 +40,7 @@
                             <GridViewColumn Header="Описание" Width="{Binding ElementName=helperInd3, Path=ActualWidth}">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBox Text="{Binding Description}" TextWrapping="Wrap" MaxLines="2" IsReadOnly="True"/>
+                                        <TextBox Text="{Binding Description}" TextWrapping="Wrap" MaxLines="1" IsReadOnly="True"/>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
@@ -189,7 +189,7 @@
                     <Button Content="Редактировать" Command="{Binding AlgorithmsEdit_Click}" Width="95" Margin="7 0 0 0"/>
                     <Button Content="Удалить" Command="{Binding AlgorithmsDelete_Click}" Width="60" Margin="7 0 0 0"/>
                 </StackPanel>
-                <ListView ItemsSource="{Binding Algorithms}" SelectedItem="{Binding SelectedAlgorithm, Mode=TwoWay}" SelectionMode="Single" Height="116">
+                <ListView IsEnabled="{Binding IsAlgorithmReadOnly}" ItemsSource="{Binding Algorithms}" SelectedItem="{Binding SelectedAlgorithm, Mode=TwoWay}" SelectionMode="Single" Height="116">
                     <ListView.View>
                         <GridView>
                             <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="{Binding ElementName=helperAlg1, Path=ActualWidth}"/>
@@ -197,7 +197,7 @@
                             <GridViewColumn Header="Описание" Width="{Binding ElementName=helperAlg3, Path=ActualWidth}">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBox Text="{Binding Description}" TextWrapping="Wrap" MaxLines="2" IsReadOnly="True"/>
+                                        <TextBox Text="{Binding Description}" TextWrapping="Wrap" MaxLines="1" IsReadOnly="True"/>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
@@ -451,6 +451,7 @@
                                             <Button Content="Выбранный параметр алгоритма" Command="{Binding AlgorithmPasteAlgorithmParameter_Click}" Width="190"/>
                                             <Button Content="Условие if()" Command="{Binding AlgorithmPasteCondition_Click}" Width="90"/>
                                             <Button Content="Цикл while()" Command="{Binding AlgorithmPasteWhile_Click}" Width="90"/>
+                                            <Button Content="Сравнение дат" Command="{Binding AlgorithmPasteDateTimeCompare_Click}" Width="90"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </GroupBox>

@@ -596,7 +596,7 @@ namespace ktradesystem.Models
                                         {
                                             u++;
                                         }
-                                        _database.InsertAlgorithmParameter(new AlgorithmParameter { Name = nameAlgPar + u.ToString(), MinValue = 1, MaxValue = 2, Step = 150, IsStepPercent = true, IdAlgorithm = algorithm.Id, ParameterValueType = indicatorParameterTemplate.ParameterValueType });
+                                        _database.InsertAlgorithmParameter(new AlgorithmParameter { Name = nameAlgPar + u.ToString(), MinValue = 1, MaxValue = 2, Step = 500, IsStepPercent = true, IdAlgorithm = algorithm.Id, ParameterValueType = indicatorParameterTemplate.ParameterValueType });
                                         newAlgorithmParameters = ReadAlgorithmParameters(); //считываем добавленный параметр алгоритма из бд
                                         algorithmParameterInt = newAlgorithmParameters.Where(j => j.IdAlgorithm == algorithm.Id && j.Name == nameAlgPar + u.ToString()).First(); //присваиваем добавленный параметр
                                         isIntParameterCreated = true;
@@ -613,7 +613,7 @@ namespace ktradesystem.Models
                                         {
                                             u++;
                                         }
-                                        _database.InsertAlgorithmParameter(new AlgorithmParameter { Name = nameAlgPar + u.ToString(), MinValue = 1, MaxValue = 2, Step = 150, IsStepPercent = true, IdAlgorithm = algorithm.Id, ParameterValueType = indicatorParameterTemplate.ParameterValueType });
+                                        _database.InsertAlgorithmParameter(new AlgorithmParameter { Name = nameAlgPar + u.ToString(), MinValue = 1, MaxValue = 2, Step = 500, IsStepPercent = true, IdAlgorithm = algorithm.Id, ParameterValueType = indicatorParameterTemplate.ParameterValueType });
                                         newAlgorithmParameters = ReadAlgorithmParameters(); //считываем добавленный параметр алгоритма из бд
                                         algorithmParameterDouble = newAlgorithmParameters.Where(j => j.IdAlgorithm == algorithm.Id && j.Name == nameAlgPar + u.ToString()).First(); //присваиваем добавленный параметр
                                         isDoubleParameterCreated = true;

@@ -945,7 +945,6 @@ namespace ktradesystem.ViewModels
             {
                 _algorithms = value;
                 OnPropertyChanged();
-                SelectLatestAlgorithm(); //выбирает алгоритм который был последним выбранным
             }
         }
 
@@ -963,26 +962,6 @@ namespace ktradesystem.ViewModels
                 _selectedAlgorithm = value;
                 OnPropertyChanged();
                 SelectedAlgorithmChanged(); //помещяет в переменные редактора значения выбранного алгоритма для просмотра данного алгоритма
-            }
-        }
-
-        private void SelectLatestAlgorithm() //выбирает алгоритм который был последним выбранным
-        {
-            bool isFindLastAlgorithm = false; //был ли найден последний алгоритм. Если нет - значит был добавлен новый
-            foreach(Algorithm algorithm in Algorithms)
-            {
-                if(algorithm.Id == _algorithmId)
-                {
-                    SelectedAlgorithm = algorithm;
-                    isFindLastAlgorithm = true;
-                }
-            }
-            if (isFindLastAlgorithm == false) //выбираем добавленный алгоритм
-            {
-                if(Algorithms.Count > 0)
-                {
-                    SelectedAlgorithm = Algorithms.Last();
-                }
             }
         }
 
@@ -1451,6 +1430,16 @@ namespace ktradesystem.ViewModels
                 }, (obj) => IsAddOrEditAlgorithm());
             }
         }
+        public ICommand AlgorithmPasteDateTimeCompare_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "DateTime.Compare(дата1, дата2) > 0");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
 
         public ICommand AlgorithmPasteLogicMore_Click
         {
@@ -1708,10 +1697,16 @@ namespace ktradesystem.ViewModels
                     if (IsAlgorithmAdded)
                     {
                         _modelTesting.AlgorithmInsertUpdate(AlgorithmName, AlgorithmDescription, dataSourceTemplates, algorithmIndicators, algorithmParameters, AlgorithmScript);
+
+                        //выбираем добавленный алгоритм
+                        SelectedAlgorithm = Algorithms.Last();
                     }
                     else if (IsAlgorithmEdited)
                     {
                         _modelTesting.AlgorithmInsertUpdate(AlgorithmName, AlgorithmDescription, dataSourceTemplates, algorithmIndicators, algorithmParameters, AlgorithmScript, _algorithmId);
+
+                        //выбираем измененный алгоритм
+                        SelectedAlgorithm = Algorithms.Where(j => j.Id == _algorithmId).First();
                     }
 
                     IsAlgorithmAdded = false;

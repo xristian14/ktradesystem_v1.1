@@ -37,8 +37,8 @@ namespace ktradesystem.Models
         private dynamic[] CompiledEvaluationCriterias { get; set; } //объекты, содержащие метод, выполняющий расчет критерия оценки тестового прогона
         public List<DataSourceCandles> DataSourcesCandles { get; set; } //список с массивами свечек (для файлов) для источников данных (от сюда же будут браться данные для отображения графиков)
         private int TopModelEvaluationCriteriaIndex { get; set; } //индекс критерия оценки топ-модели
-        private List<int>[] IndicatorsParametersAllIntValues { get; set; }
-        private List<double>[] IndicatorsParametersAllDoubleValues { get; set; }
+        //private List<int>[] IndicatorsParametersAllIntValues { get; set; }
+        //private List<double>[] IndicatorsParametersAllDoubleValues { get; set; }
         private List<int>[] AlgorithmParametersAllIntValues { get; set; }
         private List<double>[] AlgorithmParametersAllDoubleValues { get; set; }
 
@@ -56,63 +56,15 @@ namespace ktradesystem.Models
         public void LaunchTesting()
         {
             TestBatches = new List<TestBatch>();
-            /*
+
             //находим индекс критерия оценки топ-модели
             TopModelEvaluationCriteriaIndex = _modelData.EvaluationCriterias.IndexOf(TopModelCriteria.EvaluationCriteria);
 
             //определяем списки со значениями параметров
-            IndicatorsParametersAllIntValues = new List<int>[Algorithm.IndicatorParameterRanges.Count]; //массив со всеми возможными целочисленными значениями параметров индикаторов
-            IndicatorsParametersAllDoubleValues = new List<double>[Algorithm.IndicatorParameterRanges.Count]; //массив со всеми возможными дробными значениями параметров индикаторов
-
             AlgorithmParametersAllIntValues = new List<int>[Algorithm.AlgorithmParameters.Count]; //массив со всеми возможными целочисленными значениями параметров алгоритма
             AlgorithmParametersAllDoubleValues = new List<double>[Algorithm.AlgorithmParameters.Count]; //массив со всеми возможными дробными значениями параметров алгоритма
 
             //параметры будут передаваться в индикаторы и алгоритм в качестве параметров методов, при описании методов индикатора или алгоритма я укажу тип принимаемого параметра int или double в зависимости от типа в шаблоне параметра, и после проверки типа параметра, решу из какого списка передавать, со значениями double, или со значениями int
-            
-            //генерируем все значения параметров индикаторов
-            for (int i = 0; i < Algorithm.IndicatorParameterRanges.Count; i++)
-            {
-                IndicatorsParametersAllIntValues[i] = new List<int>();
-                IndicatorsParametersAllDoubleValues[i] = new List<double>();
-                //определяем, какой список формировать, целых или дробных чисел
-                bool isIntValueType = (Algorithm.IndicatorParameterRanges[i].IndicatorParameterTemplate.ParameterValueType.Id == 1)? true : false;
-                //определяем шаг
-                double step = Algorithm.IndicatorParameterRanges[i].Step;
-                if (Algorithm.IndicatorParameterRanges[i].IsStepPercent)
-                {
-                    step = (Algorithm.IndicatorParameterRanges[i].MaxValue - Algorithm.IndicatorParameterRanges[i].MinValue) * (Algorithm.IndicatorParameterRanges[i].Step / 100);
-                }
-
-                double currentValue = Algorithm.IndicatorParameterRanges[i].MinValue; //текущее значение
-
-                if (isIntValueType)
-                {
-                    IndicatorsParametersAllIntValues[i].Add((int)Math.Round(currentValue));
-                }
-                else
-                {
-                    IndicatorsParametersAllDoubleValues[i].Add(currentValue);
-                }
-                currentValue += step;
-
-                while (currentValue <= Algorithm.IndicatorParameterRanges[i].MaxValue)
-                {
-                    if (isIntValueType)
-                    {
-                        int intCurrentValue = (int)Math.Round(currentValue);
-                        if(intCurrentValue != IndicatorsParametersAllIntValues[i].Last()) //если текущее значение отличается от предыдущего, добавляем его в целочисленные значения
-                        {
-                            IndicatorsParametersAllIntValues[i].Add(intCurrentValue);
-                        }
-                    }
-                    else
-                    {
-                        IndicatorsParametersAllDoubleValues[i].Add(currentValue);
-                    }
-
-                    currentValue += step;
-                }
-            }
 
             //генерируем все значения параметров алгоритма
             for (int i = 0; i < Algorithm.AlgorithmParameters.Count; i++)
@@ -161,49 +113,6 @@ namespace ktradesystem.Models
 
             //формируем список со всеми комбинациями параметров
             List<int[]> allCombinations = new List<int[]>();
-            //сначала проходим по параметрам индикаторов
-            for (int ind = 0; ind < Algorithm.IndicatorParameterRanges.Count; ind++)
-            {
-                bool isIndicatorParameterIntValueType = (Algorithm.IndicatorParameterRanges[ind].IndicatorParameterTemplate.ParameterValueType.Id == 1) ? true : false;
-
-                if (allCombinations.Count == 0) //формируем начальный список всех комбинаций при первом прохождении
-                {
-                    if (isIndicatorParameterIntValueType)
-                    {
-                        for (int indValIndex = 0; indValIndex < IndicatorsParametersAllIntValues[ind].Count; indValIndex++)
-                        {
-                            allCombinations.Add(new int[1] { indValIndex });
-                        }
-                    }
-                    else
-                    {
-                        for (int indValIndex = 0; indValIndex < IndicatorsParametersAllDoubleValues[ind].Count; indValIndex++)
-                        {
-                            allCombinations.Add(new int[1] { indValIndex });
-                        }
-                    }
-                }
-                else
-                {
-                    List<int> indexes = new List<int>();
-                    if (isIndicatorParameterIntValueType)
-                    {
-                        for (int indValIndex = 0; indValIndex < IndicatorsParametersAllIntValues[ind].Count; indValIndex++)
-                        {
-                            indexes.Add(indValIndex);
-                        }
-                    }
-                    else
-                    {
-                        for (int indValIndex = 0; indValIndex < IndicatorsParametersAllDoubleValues[ind].Count; indValIndex++)
-                        {
-                            indexes.Add(indValIndex);
-                        }
-                    }
-                    allCombinations = CreateCombinations(allCombinations, indexes);
-                }
-            }
-            //теперь проходим по параметрам алгоритма
             for (int alg = 0; alg < Algorithm.AlgorithmParameters.Count; alg++)
             {
                 bool isAlgorithmParameterIntValueType = (Algorithm.AlgorithmParameters[alg].ParameterValueType.Id == 1) ? true : false;
@@ -374,23 +283,6 @@ namespace ktradesystem.Models
                             depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
 
                             Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = DefaultCurrency, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges };
-                            //формируем список со значениями параметров индикаторов
-                            List<IndicatorParameterValue> indicatorParameterValues = new List<IndicatorParameterValue>();
-                            int ind = 0;
-                            while(ind < Algorithm.IndicatorParameterRanges.Count)
-                            {
-                                IndicatorParameterValue indicatorParameterValue = new IndicatorParameterValue { IndicatorParameterTemplate = Algorithm.IndicatorParameterRanges[ind].IndicatorParameterTemplate };
-                                if(Algorithm.IndicatorParameterRanges[ind].IndicatorParameterTemplate.ParameterValueType.Id == 1)
-                                {
-                                    indicatorParameterValue.IntValue = IndicatorsParametersAllIntValues[ind][allCombinations[i][ind]];
-                                }
-                                else
-                                {
-                                    indicatorParameterValue.DoubleValue = IndicatorsParametersAllDoubleValues[ind][allCombinations[i][ind]];
-                                }
-                                indicatorParameterValues.Add(indicatorParameterValue);
-                                ind++;
-                            }
                             //формируем список со значениями параметров алгоритма
                             List<AlgorithmParameterValue> algorithmParameterValues = new List<AlgorithmParameterValue>();
                             int alg = 0;
@@ -399,16 +291,16 @@ namespace ktradesystem.Models
                                 AlgorithmParameterValue algorithmParameterValue = new AlgorithmParameterValue { AlgorithmParameter = Algorithm.AlgorithmParameters[alg] };
                                 if (Algorithm.AlgorithmParameters[alg].ParameterValueType.Id == 1)
                                 {
-                                    algorithmParameterValue.IntValue = AlgorithmParametersAllIntValues[alg][allCombinations[i][ind + alg]];
+                                    algorithmParameterValue.IntValue = AlgorithmParametersAllIntValues[alg][allCombinations[i][alg]];
                                 }
                                 else
                                 {
-                                    algorithmParameterValue.DoubleValue = AlgorithmParametersAllDoubleValues[alg][allCombinations[i][ind + alg]];
+                                    algorithmParameterValue.DoubleValue = AlgorithmParametersAllDoubleValues[alg][allCombinations[i][alg]];
                                 }
                                 algorithmParameterValues.Add(algorithmParameterValue);
                                 alg++;
                             }
-                            TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = optimizationStartDate, EndPeriod = optimizationEndDate, IndicatorParameterValues = indicatorParameterValues, AlgorithmParameterValues = algorithmParameterValues, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
+                            TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = optimizationStartDate, EndPeriod = optimizationEndDate, AlgorithmParameterValues = algorithmParameterValues, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
                             optimizationTestRuns.Add(testRun);
                         }
                         testBatch.OptimizationTestRuns = optimizationTestRuns;
@@ -483,33 +375,32 @@ namespace ktradesystem.Models
             //создаем классы индикаторов
             //определяем список используемых индикаторов
             List<Indicator> indicators = new List<Indicator>();
-            for (int i = 0; i < Algorithm.IndicatorParameterRanges.Count; i++)
+            for (int i = 0; i < Algorithm.AlgorithmIndicators.Count; i++)
             {
-                if(indicators.Contains(Algorithm.IndicatorParameterRanges[i].Indicator) == false)
+                if(indicators.Contains(Algorithm.AlgorithmIndicators[i].Indicator) == false)
                 {
-                    indicators.Add(Algorithm.IndicatorParameterRanges[i].Indicator);
+                    indicators.Add(Algorithm.AlgorithmIndicators[i].Indicator);
                 }
             }
 
-            CompiledIndicators = new dynamic[indicators.Count];
-            for(int i = 0; i < indicators.Count; i++)
+            CompiledIndicators = new dynamic[Algorithm.AlgorithmIndicators.Count];
+            //новая версия. Как компилировать индикаторы с разными параметрами
+            int algIndNumber = 0; //номер индикктора алгоритма
+            foreach (AlgorithmIndicator algorithmIndicator in Algorithm.AlgorithmIndicators)
             {
                 string variablesParameters = ""; //инициализация и присвоение значений переменным, в которых хранятся значения параметров индикатора
                 int currentIndicatorParameterIndex = -1; //номер параметра для текущего индикатора (это число используется как индекс в массиве параметров который принимает скомпилированный индикатор)
-                for(int k = 0; k < Algorithm.IndicatorParameterRanges.Count; k++)
+                foreach(IndicatorParameterRange indicatorParameterRange in algorithmIndicator.IndicatorParameterRanges)
                 {
-                    if(Algorithm.IndicatorParameterRanges[k].Indicator == indicators[i])
-                    {
-                        currentIndicatorParameterIndex++;
-                        variablesParameters += Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? "int " : "double ";
-                        variablesParameters += "Parameter_" + Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.Name;
-                        variablesParameters += Algorithm.IndicatorParameterRanges[k].IndicatorParameterTemplate.ParameterValueType.Id == 1 ? " = indicatorParametersIntValues[" + currentIndicatorParameterIndex + "]; " : " = indicatorParametersDoubleValues[" + currentIndicatorParameterIndex + "]; ";
-                    }
+                    currentIndicatorParameterIndex++;
+                    variablesParameters += indicatorParameterRange.IndicatorParameterTemplate.ParameterValueType.Id == 1 ? "int " : "double ";
+                    variablesParameters += "Parameter_" + indicatorParameterRange.IndicatorParameterTemplate.Name;
+                    variablesParameters += indicatorParameterRange.IndicatorParameterTemplate.ParameterValueType.Id == 1 ? " = indicatorParametersIntValues[" + currentIndicatorParameterIndex + "]; " : " = indicatorParametersDoubleValues[" + currentIndicatorParameterIndex + "]; ";
                 }
 
                 //добавляем в текст скрипта приведение к double переменных и чисел в операциях деления и умножения (т.к. при делении типов int на int получится тип int и дробная часть потеряется), а так же возвращаемого значения
                 //удаляем дублирующиеся пробелы
-                StringBuilder script = RemoveDuplicateSpaces(indicators[i].Script);
+                StringBuilder script = RemoveDuplicateSpaces(algorithmIndicator.Indicator.Script);
                 //добавляем приведение к double правой части операции деления, чтобы результат int/int был с дробной частью
                 script.Replace("/", "/(double)");
                 //удаляем пробел между Candles и [
@@ -526,15 +417,15 @@ namespace ktradesystem.Models
                     }
                 }
                 //проходим по всем indexesCandles с конца к началу, и заменяем все закрывающие квадратные скобки которые закрывают Candles[ на круглые, при этом внутренние квадратные скобки будет игнорироваться, и заменена будет только закрывающая Candles[
-                for(int k = indexesCandles.Count - 1; k >= 0; k--)
+                for (int k = indexesCandles.Count - 1; k >= 0; k--)
                 {
                     int countOpen = 1; //количество найденных открывающих скобок на текущий момент
                     int countClose = 0; //количество найденных закрывающих скобок на текущий момент
                     int currentIndex = indexesCandles[k] + 8; //индекс текущего символа
                     //пока количество открывающи не будет равно количеству закрывающих, или пока не превысим длину строки
-                    while(countOpen != countClose && currentIndex < scriptIndicatorString.Length)
+                    while (countOpen != countClose && currentIndex < scriptIndicatorString.Length)
                     {
-                        if(scriptIndicatorString[currentIndex] == '[')
+                        if (scriptIndicatorString[currentIndex] == '[')
                         {
                             countOpen++;
                         }
@@ -544,10 +435,10 @@ namespace ktradesystem.Models
                         }
                         currentIndex++;
                     }
-                    if(countOpen != countClose) //не найдена закрывающия скобка, выводим сообщение
+                    if (countOpen != countClose) //не найдена закрывающия скобка, выводим сообщение
                     {
                         isErrorCompile = true;
-                        _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Ошибка в скрипте индикатора: отсутствует закрывающая скобка \"]\" при обращении к массиву Candles."); }));
+                        _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Ошибка в скрипте индикатора " + algorithmIndicator.Indicator.Name + ": отсутствует закрывающая скобка \"]\" при обращении к массиву Candles."); }));
                     }
                     //заменяем закрывающую квадратную скобку на круглую
                     scriptIndicatorString = scriptIndicatorString.Remove(currentIndex - 1, 1);
@@ -570,7 +461,7 @@ namespace ktradesystem.Models
                     @"
                     using System;
                     using ktradesystem.Models;
-                    public class CompiledIndicator_" + indicators[i].Name +
+                    public class CompiledIndicator_" + algIndNumber.ToString() +
                     @"{
                         public int MaxOverIndex;
                         public Candle[] Candles;
@@ -600,15 +491,15 @@ namespace ktradesystem.Models
                             }
                             return result;
                         }
-                        public CompiledIndicator_" + indicators[i].Name + @" Clone()
+                        public CompiledIndicator_" + algIndNumber.ToString() + @" Clone()
                         {
-                            return new CompiledIndicator_" + indicators[i].Name + @"();
+                            return new CompiledIndicator_" + algIndNumber.ToString() + @"();
                         }
                     }" //MaxOverIndex - максимальное превышение индекса массива со свечками; GetCandle() создает и возвращает новый объект Candle для того чтобы в скрипте нельзя было переопределить значения свечки
                 });
                 if (compiled.Errors.Count == 0)
                 {
-                    CompiledIndicators[i] = compiled.CompiledAssembly.CreateInstance("CompiledIndicator_" + indicators[i].Name);
+                    CompiledIndicators[algIndNumber] = compiled.CompiledAssembly.CreateInstance("CompiledIndicator_" + algIndNumber.ToString());
                 }
                 else
                 {
@@ -616,9 +507,10 @@ namespace ktradesystem.Models
                     //отправляем пользователю сообщения об ошибке
                     for (int r = 0; r < compiled.Errors.Count; r++)
                     {
-                        _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Ошибка при компиляции индикатора " + indicators[i].Name + ": " + compiled.Errors[0].ErrorText); }));
+                        _modelData.DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Ошибка при компиляции индикатора " + algorithmIndicator.Indicator.Name + ": " + compiled.Errors[0].ErrorText); }));
                     }
                 }
+                algIndNumber++;
             }
 
             //создаем класс алгоритма
@@ -639,9 +531,9 @@ namespace ktradesystem.Models
             //формируем параметры индикаторов для источников данных
             for(int i = 0; i < Algorithm.DataSourceTemplates.Count; i++)
             {
-                for (int k = 0; k < indicators.Count; k++)
+                for (int k = 0; k < Algorithm.AlgorithmIndicators.Count; k++)
                 {
-                    algorithmVariables += "double " + dsVariablesNames[i] + "_Indicator_" + indicators[k].Name + " = dataSourcesForCalculate[" + i + "].IndicatorsValues[" + k + "]; ";
+                    algorithmVariables += "double " + dsVariablesNames[i] + "_Indicator_" + Algorithm.AlgorithmIndicators[k].Indicator.Name + "_" + Algorithm.AlgorithmIndicators[k].Ending + " = dataSourcesForCalculate[" + i + "].IndicatorsValues[" + k + "]; ";
                 }
             }
             //формируем параметры алгоритма
@@ -1072,7 +964,7 @@ namespace ktradesystem.Models
                             }
 
                             TestRun testRun = TestBatches[testBatchIndx].OptimizationTestRuns[testRunIndx];
-                            Task task = Task.Run(() => TestRunExecute(testRun, indicators, cancellationToken));
+                            Task task = Task.Run(() => TestRunExecute(testRun, Algorithm.AlgorithmIndicators, cancellationToken));
                             tasks[n] = task;
                             tasksExecutingTestRuns[n] = new int[2] { testBatchIndx, testRunIndx }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом n)
                             testRunsStatus[testBatchIndx][testRunIndx] = 1; //отмечаем что testRun имеет статус запущен
@@ -1256,7 +1148,7 @@ namespace ktradesystem.Models
                                     //если нашли не запущенный тест, запускаем его в текущей задаче
                                     if (isTestFind)
                                     {
-                                        Task task = Task.Run(() => TestRunExecute(testRun, indicators, cancellationToken));
+                                        Task task = Task.Run(() => TestRunExecute(testRun, Algorithm.AlgorithmIndicators, cancellationToken));
                                         tasks[indexTask] = task;
                                         tasksExecutingTestRuns[indexTask] = new int[2] { tBatchIndex, tRunIndex }; //запоминаем индексы testBatch и testRun, который выполняется в текущей задачи (в элементе массива tasks с индексом indexTask)
                                         testRunsStatus[tBatchIndex][tRunIndex] = 1; //отмечаем что testRun имеет статус запущен
@@ -1291,7 +1183,7 @@ namespace ktradesystem.Models
             else //если были ошибки при компиляции, завершаем тестирование
             {
                 TestingEnding(false);
-            }*/
+            }
         }
 
         private List<int[]> CreateCombinations(List<int[]> combination, List<int> indexes) //принимает 2 списка, 1-й - содержит массив с комбинации индексов параметров: {[0,0],[0,1],[1,0],[1,1]}, второй только индексы: {0,1}, функция перебирает все комбинации элементов обоих списков и возвращает новый список в котором индексы 2-го списка добавлены в комбинацию 1-го: {[0,0,0],[0,0,1],[0,1,0]..}
@@ -1425,28 +1317,21 @@ namespace ktradesystem.Models
             stopwatchIndicator.Stop();*/
         }
 
-        private void TestRunExecute(TestRun testRun, List<Indicator> indicators, CancellationToken cancellationToken)
+        private void TestRunExecute(TestRun testRun, List<AlgorithmIndicator> algorithmIndicators, CancellationToken cancellationToken)
         {
             Thread.CurrentThread.Priority = ThreadPriority.Highest;
             //формируем массивы с int и double значениями параметров для каждого индикатора
-            int[][] indicatorParametersIntValues = new int[indicators.Count][];
-            double[][] indicatorParametersDoubleValues = new double[indicators.Count][];
-            for (int i = 0; i < indicators.Count; i++)
+            int[][] indicatorParametersIntValues = new int[algorithmIndicators.Count][];
+            double[][] indicatorParametersDoubleValues = new double[algorithmIndicators.Count][];
+            //новая версия
+            for(int i = 0; i < algorithmIndicators.Count; i++)
             {
-                List<int> indexesThisIndicatorInIndicatorParameterValues = new List<int>(); //список с индексами параметров, которые относятся к текущему индикатору
-                for(int k = 0; k < testRun.IndicatorParameterValues.Count; k++)
+                indicatorParametersIntValues[i] = new int[algorithmIndicators[i].IndicatorParameterRanges.Count];
+                indicatorParametersDoubleValues[i] = new double[algorithmIndicators[i].IndicatorParameterRanges.Count];
+                for(int k = 0; k < algorithmIndicators[i].IndicatorParameterRanges.Count; k++)
                 {
-                    if(testRun.IndicatorParameterValues[k].IndicatorParameterTemplate.Indicator == indicators[i]) //если индикатор параметра совпадает с текущим
-                    {
-                        indexesThisIndicatorInIndicatorParameterValues.Add(k); //добавляем индекс этого параметра в список параметров текущего индикатора
-                    }
-                }
-                indicatorParametersIntValues[i] = new int[indexesThisIndicatorInIndicatorParameterValues.Count];
-                indicatorParametersDoubleValues[i] = new double[indexesThisIndicatorInIndicatorParameterValues.Count];
-                for(int y = 0; y < indexesThisIndicatorInIndicatorParameterValues.Count; y++)
-                {
-                    indicatorParametersIntValues[i][y] = testRun.IndicatorParameterValues[indexesThisIndicatorInIndicatorParameterValues[y]].IntValue;
-                    indicatorParametersDoubleValues[i][y] = testRun.IndicatorParameterValues[indexesThisIndicatorInIndicatorParameterValues[y]].DoubleValue;
+                    indicatorParametersIntValues[i][k] = testRun.AlgorithmParameterValues.Where(j => j.AlgorithmParameter.Id == algorithmIndicators[i].IndicatorParameterRanges[k].AlgorithmParameter.Id).First().IntValue;
+                    indicatorParametersDoubleValues[i][k] = testRun.AlgorithmParameterValues.Where(j => j.AlgorithmParameter.Id == algorithmIndicators[i].IndicatorParameterRanges[k].AlgorithmParameter.Id).First().DoubleValue;
                 }
             }
 
@@ -1572,7 +1457,7 @@ namespace ktradesystem.Models
                     for(int i = 0; i < dataSourceCandles.Length; i++)
                     {
                         //вычисляем значения всех индикаторов
-                        indicatorsValues[i] = new double[indicators.Count];
+                        indicatorsValues[i] = new double[algorithmIndicators.Count];
                         for (int k = 0; k < indicatorsValues.Length; k++)
                         {
                             //копируем объект скомпилированного индикатора, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
@@ -1788,10 +1673,10 @@ namespace ktradesystem.Models
             //рассчитываем критерии оценки для данного testRun
             for (int i = 0; i < _modelData.EvaluationCriterias.Count; i++)
             {
-                /*if (cancellationToken.IsCancellationRequested)
+                if (cancellationToken.IsCancellationRequested)
                 {
                     break; //если был запрос на отмену тестирования, завершаем цикл
-                }*/
+                }
                 //определяем индекс источника данных, с наибольшей идеальной прибылью
                 /*int index = 0;
                 for(int k = 1; k < dataSourceCandles.Length; k++)
@@ -2097,23 +1982,15 @@ namespace ktradesystem.Models
 
         private void TestBatchTopModelDetermining(TestBatch testBatch) //определение топ-модели среди оптимизационных тестов тестовой связки
         {
-            /*if (IndicatorsParametersAllIntValues.Length + AlgorithmParametersAllIntValues.Length == 0) //если параметров нет - оптимизационный тест всего один, топ модель - testBatch.OptimizationTestRuns[0]
+            if (AlgorithmParametersAllIntValues.Length == 0) //если параметров нет - оптимизационный тест всего один, топ модель - testBatch.OptimizationTestRuns[0]
             {
                 testBatch.TopModelTestRun = testBatch.OptimizationTestRuns[0];
             }
             else if (IsConsiderNeighbours) //если поиск топ-модели учитывает соседей, то для двух и более параметров - определяем оси двумерной плоскости поиска топ-модели с соседями и размер осей группы и определяем список с лучшими группами в порядке убывания и ищем топ-модель в группе, а для одного параметра - определяем размер группы и определяем список с лучшими группами в порядке убывания и ищем топ-модель (если из-за фильтров не найдена модель, ищем топ-модель в следующей лучшей группе, пока не кончатся группы)
             {
-                if (IndicatorsParametersAllIntValues.Length + AlgorithmParametersAllIntValues.Length == 1) //если параметр всего один
+                if (AlgorithmParametersAllIntValues.Length == 1) //если параметр всего один
                 {
-                    int xAxisCountParameterValue = 0; //количество значений параметра
-                    if (testBatch.OptimizationTestRuns[0].IndicatorParameterValues.Count > 0) //параметр - параметр индикатора
-                    {
-                        xAxisCountParameterValue = IndicatorsParametersAllIntValues.Length > 0 ? IndicatorsParametersAllIntValues.Length : IndicatorsParametersAllDoubleValues.Length;
-                    }
-                    else //параметр - параметр алгоритма
-                    {
-                        xAxisCountParameterValue = AlgorithmParametersAllIntValues.Length > 0 ? AlgorithmParametersAllIntValues.Length : AlgorithmParametersAllDoubleValues.Length;
-                    }
+                    int xAxisCountParameterValue = AlgorithmParametersAllIntValues.Length > 0 ? AlgorithmParametersAllIntValues.Length : AlgorithmParametersAllDoubleValues.Length; //количество значений параметра
                     int xAxisGroupSize = (int)Math.Round(xAxisCountParameterValue * (SizeNeighboursGroupPercent / 100));
                     xAxisGroupSize = xAxisGroupSize < 2 ? 2 : xAxisGroupSize; //если меньше 2-х, устанавливаем как 2
                     xAxisGroupSize = xAxisCountParameterValue < 2 ? 1 : xAxisGroupSize; //если количество значений параметра меньше 2-х, устанавливаем как 1
@@ -2226,7 +2103,7 @@ namespace ktradesystem.Models
                     else //если оси не указаны, находим оси двумерной плоскости поиска топ-модели с соседями, для которых волатильность критерия оценки максимальная
                     {
                         //формируем список со всеми параметрами
-                        List<int[]> indicatorsAndAlgorithmParameters = new List<int[]>(); //список с параметрами (0-й элемент массива - тип параметра: 1-индикатор, 2-алгоритм, 1-й элемент массива - индекс параметра)
+                        /*List<int[]> indicatorsAndAlgorithmParameters = new List<int[]>(); //список с параметрами (0-й элемент массива - тип параметра: 1-индикатор, 2-алгоритм, 1-й элемент массива - индекс параметра)
                         for (int i = 0; i < IndicatorsParametersAllIntValues.Length; i++)
                         {
                             indicatorsAndAlgorithmParameters.Add(new int[2] { 1, i }); //запоминаем что параметр индикатор с индексом i
@@ -2234,35 +2111,22 @@ namespace ktradesystem.Models
                         for (int i = 0; i < AlgorithmParametersAllIntValues.Length; i++)
                         {
                             indicatorsAndAlgorithmParameters.Add(new int[2] { 2, i }); //запоминаем что параметр индикатор с индексом i
-                        }
+                        }*/
                         //находим максимальную площадь плоскости
                         int maxArea = 0;
                         int axisX = 0; //одна ось плоскости
                         int axisY = 0; //вторая ось плоскости
-                        for (int i = 0; i < indicatorsAndAlgorithmParameters.Count; i++)
+                        //новое
+                        for (int i = 0; i < AlgorithmParametersAllIntValues.Length; i++)
                         {
-                            for (int k = 0; k < indicatorsAndAlgorithmParameters.Count; k++)
+                            for (int k = 0; k < AlgorithmParametersAllIntValues.Length; k++)
                             {
                                 if (i != k)
                                 {
                                     int iCount = 0; //количество элементов в параметре с индексом i
-                                    if (indicatorsAndAlgorithmParameters[i][0] == 1) //если параметр индикатор
-                                    {
-                                        iCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
-                                    }
-                                    else //если параметр алгоритм
-                                    {
-                                        iCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
-                                    }
+                                    iCount = AlgorithmParametersAllIntValues[i].Count > 0 ? AlgorithmParametersAllIntValues[i].Count : AlgorithmParametersAllDoubleValues[i].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
                                     int kCount = 0; //количество элементов в параметре с индексом k
-                                    if (indicatorsAndAlgorithmParameters[k][0] == 1) //если параметр индикатор
-                                    {
-                                        kCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
-                                    }
-                                    else //если параметр алгоритм
-                                    {
-                                        kCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
-                                    }
+                                    kCount = AlgorithmParametersAllIntValues[i].Count > 0 ? AlgorithmParametersAllIntValues[i].Count : AlgorithmParametersAllDoubleValues[i].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
                                     if (iCount * kCount > maxArea) //если площадь данной комбинации больше максимальной, запоминаем площадь плоскости и её оси
                                     {
                                         maxArea = iCount * kCount;
@@ -2275,30 +2139,17 @@ namespace ktradesystem.Models
                         //формируем список с комбинациями параметров, которые имеют минимально допустимую площадь плоскости
                         double minMaxArea = 0.6; //минимально допустимая площадь плоскости от максимального. Чтобы исключить выбор осей с небольшой площадью но большой средней волатильностью
                         List<int[]> parametersCombination = new List<int[]>(); //комбинации из 2-х параметров, площадь которых в пределах допустимой
-                        for (int i = 0; i < indicatorsAndAlgorithmParameters.Count; i++)
+                        //новое
+                        for (int i = 0; i < AlgorithmParametersAllIntValues.Length; i++)
                         {
-                            for (int k = 0; k < indicatorsAndAlgorithmParameters.Count; k++)
+                            for (int k = 0; k < AlgorithmParametersAllIntValues.Length; k++)
                             {
                                 if (i != k)
                                 {
                                     int iCount = 0; //количество элементов в параметре с индексом i
-                                    if (indicatorsAndAlgorithmParameters[i][0] == 1) //если параметр индикатор
-                                    {
-                                        iCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                    }
-                                    else //если параметр алгоритм
-                                    {
-                                        iCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[i][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[i][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                    }
+                                    iCount = AlgorithmParametersAllIntValues[i].Count > 0 ? AlgorithmParametersAllIntValues[i].Count : AlgorithmParametersAllDoubleValues[i].Count; //если количество элементов в int values больше нуля, присваивае
                                     int kCount = 0; //количество элементов в параметре с индексом k
-                                    if (indicatorsAndAlgorithmParameters[k][0] == 1) //если параметр индикатор
-                                    {
-                                        kCount = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                    }
-                                    else //если параметр алгоритм
-                                    {
-                                        kCount = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count > 0 ? AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[k][1]].Count : AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[k][1]].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                    }
+                                    kCount = AlgorithmParametersAllIntValues[i].Count > 0 ? AlgorithmParametersAllIntValues[i].Count : AlgorithmParametersAllDoubleValues[i].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
                                     if (iCount * kCount >= maxArea * minMaxArea) //если площадь данной комбинации в пределах минимальной, сохраняем комбинацию
                                     {
                                         //проверяем есть ли уже такая комбинация, чтобы не записать одну и ту же несколько раз
@@ -2316,68 +2167,32 @@ namespace ktradesystem.Models
                         List<double> averageVolatilityParametersCombination = new List<double>(); //средняя волатильность на еденицу параметра (суммарная волатильность/количество элементов) для комбинаций параметров
                         for (int i = 0; i < parametersCombination.Count; i++)
                         {
-                            //parametersCombination[i][0] - индекс первого параметра (в indicatorsAndAlgorithmParameters) комбинации
-                            //parametersCombination[i][1] - индекс второго параметра (в indicatorsAndAlgorithmParameters) комбинации
+                            //parametersCombination[i][0] - индекс первого параметра комбинации
+                            //parametersCombination[i][1] - индекс второго параметра комбинации
                             bool xParameterIsInt = false; //параметр типа int, true - int, false - double
                             bool yParameterIsInt = false; //параметр типа int, true - int, false - double
-                            bool xParameterIsIndicator = false; //true - параметр индикатора, false - алгоритма
-                            bool yParameterIsIndicator = false; //true - параметр индикатора, false - алгоритма
                             int xParameterCountValues = 0; //количество элементов в параметре X
-                            if (indicatorsAndAlgorithmParameters[parametersCombination[i][0]][0] == 1) //если параметр индикатор
+                                                           //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                            if (AlgorithmParametersAllIntValues[parametersCombination[i][0]].Count > 0)
                             {
-                                //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                if (IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count > 0)
-                                {
-                                    xParameterCountValues = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
-                                    xParameterIsInt = true;
-                                }
-                                else
-                                {
-                                    xParameterCountValues = IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
-                                }
-                                xParameterIsIndicator = true;
+                                xParameterCountValues = AlgorithmParametersAllIntValues[parametersCombination[i][0]].Count;
+                                xParameterIsInt = true;
                             }
-                            else //если параметр алгоритм
+                            else
                             {
-                                //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count > 0)
-                                {
-                                    xParameterCountValues = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
-                                    xParameterIsInt = true;
-                                }
-                                else
-                                {
-                                    xParameterCountValues = AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]].Count;
-                                }
+                                xParameterCountValues = AlgorithmParametersAllDoubleValues[parametersCombination[i][0]].Count;
                             }
 
                             int yParameterCountValues = 0; //количество элементов в параметре Y
-                            if (indicatorsAndAlgorithmParameters[parametersCombination[i][1]][0] == 1) //если параметр индикатор
+                                                           //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
+                            if (AlgorithmParametersAllIntValues[parametersCombination[i][1]].Count > 0)
                             {
-                                //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                if (IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count > 0)
-                                {
-                                    yParameterCountValues = IndicatorsParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
-                                    yParameterIsInt = true;
-                                }
-                                else
-                                {
-                                    yParameterCountValues = IndicatorsParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
-                                }
-                                yParameterIsIndicator = true;
+                                yParameterCountValues = AlgorithmParametersAllIntValues[parametersCombination[i][1]].Count;
+                                yParameterIsInt = true;
                             }
-                            else //если параметр алгоритм
+                            else
                             {
-                                //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                if (AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count > 0)
-                                {
-                                    yParameterCountValues = AlgorithmParametersAllIntValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
-                                    yParameterIsInt = true;
-                                }
-                                else
-                                {
-                                    yParameterCountValues = AlgorithmParametersAllDoubleValues[indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]].Count;
-                                }
+                                yParameterCountValues = AlgorithmParametersAllDoubleValues[parametersCombination[i][1]].Count;
                             }
 
                             double amountVolatility = 0; //суммарная волатильность
@@ -2388,128 +2203,38 @@ namespace ktradesystem.Models
                                 for (int y = 1; y < yParameterCountValues; y++)
                                 {
                                     //находим testRun-ы со значениями параметров x и y - 1, а так же x и y
-                                    int indexXParameter = indicatorsAndAlgorithmParameters[parametersCombination[i][0]][1]; //индекс 1-го параметра комбинации (в параметрах индикаторов или алгоритма)
-                                    int indexYParameter = indicatorsAndAlgorithmParameters[parametersCombination[i][1]][1]; //индекс 2-го параметра комбинации (в параметрах индикаторов или алгоритма)
-                                                                                                                            //значение параметра X текущей комбинации параметров
-                                    int xParameterValueInt = 0;
-                                    double xParameterValueDouble = 0;
-                                    if (xParameterIsIndicator)
-                                    {
-                                        xParameterValueInt = xParameterIsInt ? IndicatorsParametersAllIntValues[indexXParameter][x] : 0;
-                                        xParameterValueDouble = xParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexXParameter][x];
-                                    }
-                                    else
-                                    {
-                                        xParameterValueInt = xParameterIsInt ? AlgorithmParametersAllIntValues[indexXParameter][x] : 0;
-                                        xParameterValueDouble = xParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexXParameter][x];
-                                    }
+                                    int indexXParameter = parametersCombination[i][0]; //индекс 1-го параметра комбинации (в параметрах алгоритма)
+                                    int indexYParameter = parametersCombination[i][1]; //индекс 2-го параметра комбинации (в параметрах алгоритма)
+                                    //значение параметра X текущей комбинации параметров
+                                    int xParameterValueInt = xParameterIsInt ? AlgorithmParametersAllIntValues[indexXParameter][x] : 0;
+                                    double xParameterValueDouble = xParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexXParameter][x];
                                     //значение параметра Y текущей комбинации параметров
-                                    int yParameterValueInt = 0;
-                                    double yParameterValueDouble = 0;
-                                    if (yParameterIsIndicator)
-                                    {
-                                        yParameterValueInt = yParameterIsInt ? IndicatorsParametersAllIntValues[indexYParameter][y] : 0;
-                                        yParameterValueDouble = yParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexYParameter][y];
-                                    }
-                                    else
-                                    {
-                                        yParameterValueInt = yParameterIsInt ? AlgorithmParametersAllIntValues[indexYParameter][y] : 0;
-                                        yParameterValueDouble = yParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexYParameter][y];
-                                    }
+                                    int yParameterValueInt = yParameterIsInt ? AlgorithmParametersAllIntValues[indexYParameter][y] : 0;
+                                    double yParameterValueDouble = yParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexYParameter][y];
                                     //значение параметра Y - 1 текущей комбинации параметров
-                                    int yDecrementParameterValueInt = 0;
-                                    double yDecrementParameterValueDouble = 0;
-                                    if (yParameterIsIndicator)
-                                    {
-                                        yDecrementParameterValueInt = yParameterIsInt ? IndicatorsParametersAllIntValues[indexYParameter][y - 1] : 0;
-                                        yDecrementParameterValueDouble = yParameterIsInt ? 0 : IndicatorsParametersAllDoubleValues[indexYParameter][y - 1];
-                                    }
-                                    else
-                                    {
-                                        yDecrementParameterValueInt = yParameterIsInt ? AlgorithmParametersAllIntValues[indexYParameter][y - 1] : 0;
-                                        yDecrementParameterValueDouble = yParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexYParameter][y - 1];
-                                    }
+                                    int yDecrementParameterValueInt = yParameterIsInt ? AlgorithmParametersAllIntValues[indexYParameter][y - 1] : 0;
+                                    double yDecrementParameterValueDouble = yParameterIsInt ? 0 : AlgorithmParametersAllDoubleValues[indexYParameter][y - 1];
 
                                     List<TestRun> previousTestRuns = new List<TestRun>(); //список с testRun-ми, у которых имеются значения параметров x и y - 1
                                     List<TestRun> nextTestRuns = new List<TestRun>(); //список с testRun-ми, у которых имеются значения параметров x и y
-                                                                                      //далее поиск с помощью where() testRun-ов с комбинациями значений параметров x и y - 1, x и y, исходя из того в каком списке находится каждый из параметров комбинации и какого типа
-                                    if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == true)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                    }
-                                    if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == false)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                    }
-                                    if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == true)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                    }
-                                    if (xParameterIsIndicator == true && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == false)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                    }
-                                    if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == true)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                    }
-                                    if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == false)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                    }
-                                    if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == true)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                    }
-                                    if (xParameterIsIndicator == true && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == false)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.IndicatorParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                    }
-
-                                    if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == true)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                    }
-                                    if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == true && yParameterIsInt == false)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                    }
-                                    if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == true)
+                                    //далее поиск с помощью where() testRun-ов с комбинациями значений параметров x и y - 1, x и y, исходя из того в каком списке находится каждый из параметров комбинации и какого типа
+                                    //новое
+                                    if(xParameterIsInt == true && yParameterIsInt == true)
                                     {
                                         previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
                                         nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
                                     }
-                                    if (xParameterIsIndicator == false && xParameterIsInt == true && yParameterIsIndicator == false && yParameterIsInt == false)
+                                    if(xParameterIsInt == true && yParameterIsInt == false)
                                     {
                                         previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
                                         nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
                                     }
-                                    if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == true)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                    }
-                                    if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == true && yParameterIsInt == false)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.IndicatorParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                    }
-                                    if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == true)
+                                    if(xParameterIsInt == false && yParameterIsInt == true)
                                     {
                                         previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
                                         nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
                                     }
-                                    if (xParameterIsIndicator == false && xParameterIsInt == false && yParameterIsIndicator == false && yParameterIsInt == false)
+                                    if(xParameterIsInt == false && yParameterIsInt == false)
                                     {
                                         previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
                                         nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
@@ -2785,7 +2510,7 @@ namespace ktradesystem.Models
                     */
                     //формируем группы с комбинациями параметров плоскости поиска топ-модели
                     //проходим по оси X столько раз, сколько помещается размер стороны группы по оси X
-                    /*for (int x = 0; x < xAxisCountParameterValue - (xAxisSize - 1); x++)
+                    for (int x = 0; x < xAxisCountParameterValue - (xAxisSize - 1); x++)
                     {
                         //проходим по оси Y столько раз, сколько помещается размер стороны группы по оси Y
                         for (int y = 0; y < yAxisCountParameterValue - (yAxisSize - 1); y++)
@@ -3159,7 +2884,7 @@ namespace ktradesystem.Models
                     testBatch.ForwardTestRunDepositTrading.IndicatorParameterValues = testBatch.TopModelTestRun.IndicatorParameterValues;
                     testBatch.ForwardTestRunDepositTrading.AlgorithmParameterValues = testBatch.TopModelTestRun.AlgorithmParameterValues;
                 }
-            }*/
+            }
         }
     }
 }

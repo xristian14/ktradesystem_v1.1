@@ -34,7 +34,7 @@ namespace ktradesystem.ViewModels
 
             _dataSource = new Views.Pages.PageDataSource();
             _testing = new Views.Pages.PageTestingNavigation();
-            CurrentPage = _dataSource;
+            CurrentPage = _testing;
         }
 
         public static ViewmodelData getInstance()

@@ -10,7 +10,7 @@ namespace ktradesystem.ViewModels
     class AxesParameterSelectView //класс для выбора осей при определении параметров тестирования
     {
         public string Axis { get; set; }
-        public List<string> NamesParameters { get; set; }
-        public string SelectedNameParameter { get; set; }
+        public List<AlgorithmParameterView> AlgorithmParametersView { get; set; }
+        public AlgorithmParameterView SelectedAlgorithmParameterView { get; set; }
     }
 }

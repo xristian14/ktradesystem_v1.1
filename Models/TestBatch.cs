@@ -16,6 +16,12 @@ namespace ktradesystem.Models
         public TestRun ForwardTestRun { get; set; }
         public TestRun ForwardTestRunDepositTrading { get; set; }
         public List<string[]> StatisticalSignificance { get; set; }
-        public bool IsTopModelDetermining { get; set; } //определена ли топ-модель для данной тестовой связки
+        public bool IsTopModelDetermining { get; set; } //определена топ-модель для данной тестовой связки
+        public bool IsTopModelWasFind { get; set; } //была ли найдена топ-модель (из-за фильтров может не быть топ-модели)
+        public void SetTopModel(TestRun testRun)
+        {
+            TopModelTestRun = testRun;
+            IsTopModelWasFind = true; //отмечаем что была найдена топ-модель
+        }
     }
 }

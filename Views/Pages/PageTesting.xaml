@@ -451,7 +451,7 @@
                                             <Button Content="Выбранный параметр алгоритма" Command="{Binding AlgorithmPasteAlgorithmParameter_Click}" Width="190"/>
                                             <Button Content="Условие if()" Command="{Binding AlgorithmPasteCondition_Click}" Width="90"/>
                                             <Button Content="Цикл while()" Command="{Binding AlgorithmPasteWhile_Click}" Width="90"/>
-                                            <Button Content="Сравнение дат" Command="{Binding AlgorithmPasteDateTimeCompare_Click}" Width="90"/>
+                                            <Button Content="Сравнение двух дат" Command="{Binding AlgorithmPasteDateTimeCompare_Click}" Width="134"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </GroupBox>
@@ -630,7 +630,7 @@
                                 <GridViewColumn Header="Параметр" Width="{Binding ElementName=helperAxes2, Path=ActualWidth}">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
-                                            <ComboBox ItemsSource="{Binding NamesParameters}" SelectedItem="{Binding SelectedNameParameter, Mode=TwoWay}"/>
+                                            <ComboBox ItemsSource="{Binding AlgorithmParametersView}" SelectedItem="{Binding SelectedAlgorithmParameterView, Mode=TwoWay}" DisplayMemberPath="Name"/>
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>

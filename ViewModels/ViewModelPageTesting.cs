@@ -363,7 +363,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "int i = 1;" + Environment.NewLine + "while (  ) {" + Environment.NewLine + Environment.NewLine + "i++;" + Environment.NewLine + "}");
+                    IndicatorScript = IndicatorScript.Insert(IndicatorScriptTextBox.CaretIndex, "int i = 0;" + Environment.NewLine + "while (  ) {" + Environment.NewLine + Environment.NewLine + "i++;" + Environment.NewLine + "}");
                 }, (obj) => IsAddOrEditIndicator());
             }
         }
@@ -1426,7 +1426,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "int i = 1;" + Environment.NewLine + "while (  ) {" + Environment.NewLine + Environment.NewLine + "i++;" + Environment.NewLine + "}");
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "int i = 0;" + Environment.NewLine + "while (  ) {" + Environment.NewLine + Environment.NewLine + "i++;" + Environment.NewLine + "}");
                 }, (obj) => IsAddOrEditAlgorithm());
             }
         }
@@ -3428,18 +3428,14 @@ namespace ktradesystem.ViewModels
             AxesParametersSelectView.Clear();
             if (IsAxesParametersSpecified)
             {
-                List<string> namesParameters = new List<string>();
-                foreach(IndicatorParameterRangeView indicatorParameterRangeView in IndicatorParameterRangesView)
-                {
-                    namesParameters.Add("Индикатор " + indicatorParameterRangeView.NameAlgorithmIndicator +  " – " + indicatorParameterRangeView.IndicatorParameterTemplate.Name);
-                }
+                List<AlgorithmParameterView> algorithmParametersView = new List<AlgorithmParameterView>();
                 foreach(AlgorithmParameterView algorithmParameterView in AlgorithmParametersView)
                 {
-                    namesParameters.Add("Алгоритм – " + algorithmParameterView.Name);
+                    algorithmParametersView.Add(algorithmParameterView);
                 }
 
-                AxesParametersSelectView.Add(new AxesParameterSelectView { Axis = "X", NamesParameters = namesParameters });
-                AxesParametersSelectView.Add(new AxesParameterSelectView { Axis = "Y", NamesParameters = namesParameters });
+                AxesParametersSelectView.Add(new AxesParameterSelectView { Axis = "X", AlgorithmParametersView = algorithmParametersView });
+                AxesParametersSelectView.Add(new AxesParameterSelectView { Axis = "Y", AlgorithmParametersView = algorithmParametersView });
             }
         }
 
@@ -4180,12 +4176,12 @@ namespace ktradesystem.ViewModels
             {
                 if(AxesParametersSelectView.Count > 0)
                 {
-                    if(AxesParametersSelectView[0].SelectedNameParameter == null || AxesParametersSelectView[1].SelectedNameParameter == null)
+                    if(AxesParametersSelectView[0].SelectedAlgorithmParameterView == null || AxesParametersSelectView[1].SelectedAlgorithmParameterView == null)
                     {
                         result = false;
                         TooltipLaunchTesting.Add("Не выбраны оси двумерной плоскости поиска топ-модели с соседями.");
                     }
-                    else if(AxesParametersSelectView[0].SelectedNameParameter == AxesParametersSelectView[1].SelectedNameParameter)
+                    else if(AxesParametersSelectView[0].SelectedAlgorithmParameterView == AxesParametersSelectView[1].SelectedAlgorithmParameterView)
                     {
                         result = false;
                         TooltipLaunchTesting.Add("Выбраны одинаковые параметры для осей двумерной плоскости поиска топ-модели с соседями.");
@@ -4507,39 +4503,7 @@ namespace ktradesystem.ViewModels
                     List<AxesParameter> axesTopModelSearchPlane = new List<AxesParameter>();
                     foreach(AxesParameterSelectView axesParameterSelectView in AxesParametersSelectView)
                     {
-                        string[] arr = axesParameterSelectView.SelectedNameParameter.Split(' ');
-                        if(arr[0] == "Индикатор")
-                        {
-                            Indicator indicator = new Indicator();
-                            foreach (Indicator indicatorItem in Indicators)
-                            {
-                                if(indicatorItem.Name == arr[1])
-                                {
-                                    indicator = indicatorItem;
-                                }
-                            }
-                            IndicatorParameterTemplate indicatorParameterTemplate = new IndicatorParameterTemplate();
-                            foreach (IndicatorParameterTemplate indicatorParameterTemplateItem in indicator.IndicatorParameterTemplates)
-                            {
-                                if(indicatorParameterTemplateItem.Name == arr[3])
-                                {
-                                    indicatorParameterTemplate = indicatorParameterTemplateItem;
-                                }
-                            }
-                            axesTopModelSearchPlane.Add(new AxesParameter { IndicatorParameterTemplate = indicatorParameterTemplate });
-                        }
-                        else
-                        {
-                            AlgorithmParameter algorithmParameter = new AlgorithmParameter();
-                            foreach (AlgorithmParameter algorithmParameterItem in SelectedAlgorithm.AlgorithmParameters)
-                            {
-                                if(algorithmParameterItem.Name == arr[2])
-                                {
-                                    algorithmParameter = algorithmParameterItem;
-                                }
-                            }
-                            axesTopModelSearchPlane.Add(new AxesParameter { AlgorithmParameter = algorithmParameter });
-                        }
+                        axesTopModelSearchPlane.Add(new AxesParameter { AlgorithmParameter = SelectedAlgorithm.AlgorithmParameters.Where(j => j.Name == axesParameterSelectView.SelectedAlgorithmParameterView.Name).First() });
                     }
 
                     //ForwardDepositCurrencies

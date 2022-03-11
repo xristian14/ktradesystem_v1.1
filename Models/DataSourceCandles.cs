@@ -12,7 +12,7 @@ namespace ktradesystem.Models
     {
         public DataSource DataSource { get; set; }
         public Candle[][] Candles { get; set; } //массив со свечками на каждый файл источника данных
-        public IndicatorValues[] IndicatorsValues { get; set; } //массив содержит значения индикаторов
+        public AlgorithmIndicatorValues[] AlgorithmIndicatorsValues { get; set; } //массив содержит значения индикаторов
         public double PerfectProfit { get; set; } //идеальная прибыль. Сумма разности цен закрытия всех последовательных по датам свечек (при переходе на следующий файл доходит до даты которая позже текущей, а разница между свечками разных файлов не высчитывается), взятая по модулю, поделенная на шаг цены и умноженная на стоимость пункта цены
     }
 }

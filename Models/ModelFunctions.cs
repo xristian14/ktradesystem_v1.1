@@ -44,5 +44,22 @@ namespace ktradesystem.Models
             Array.Reverse(charArray);
             return new string(charArray);
         }
+        public static StringBuilder RemoveDuplicateSpaces(string str) //удаляет дублирующиеся пробелы в строке, и возвращает объект StringBuilder
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.Append(str[0]); //добавляем первый символ, т.к. stringBuilder[stringBuilder.Length-1] в цикле будет обращаться к -1 индексу
+            for (int k = 1; k < str.Length; k++)
+            {
+                if ((stringBuilder[stringBuilder.Length - 1] == ' ' && str[k] == ' ') == false) //если последний символ в stringBuilder = пробел и добавляемый = пробел, пропускаем, если же это ложно то добавляем символ в stringBuilder
+                {
+                    stringBuilder.Append(str[k]);
+                }
+            }
+            return stringBuilder;
+        }
+        public static double RoundToIncrement(double x, double m) //функция округляет число до определенного множителя, например, RoundToIncrement(3.14, 0.2) вернет 3.2
+        {
+            return Math.Round(x / m) * m;
+        }
     }
 }

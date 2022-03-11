@@ -28,11 +28,13 @@ namespace ktradesystem.Models
             _modelData = ModelData.getInstance();
             _database = Database.getInstance();
             _mainCommunicationChannel = MainCommunicationChannel.getInstance();
+            _modelSimulation = ModelSimulation.getInstance();
         }
 
         private ModelData _modelData;
         private Database _database;
         private MainCommunicationChannel _mainCommunicationChannel;
+        private ModelSimulation _modelSimulation;
 
         public CancellationTokenSource CancellationTokenTesting; //токен отмены тестирования
         public void CancellationTokenTestingCancel()
@@ -424,7 +426,7 @@ namespace ktradesystem.Models
             }
             CancellationTokenTesting = new CancellationTokenSource();
             DispatcherInvoke((Action)(() => { _mainCommunicationChannel.TestingProgress.Clear(); }));
-            testing.LaunchTesting();
+            _modelSimulation.TestingSimulation(testing);
         }
     }
 }

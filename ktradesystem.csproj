@@ -98,8 +98,9 @@
     <Compile Include="Models\DepositCurrency.cs" />
     <Compile Include="Models\EvaluationCriteriaValue.cs" />
     <Compile Include="Models\IndicatorCalculateResult.cs" />
-    <Compile Include="Models\IndicatorValues.cs" />
+    <Compile Include="Models\AlgorithmIndicatorValues.cs" />
     <Compile Include="Models\ModelFunctions.cs" />
+    <Compile Include="Models\ModelSimulation.cs" />
     <Compile Include="Models\Order.cs" />
     <Compile Include="Models\TestBatch.cs" />
     <Compile Include="Models\TestRun.cs" />
@@ -129,7 +130,6 @@
     <Compile Include="ViewModels\FilterTopModelView.cs" />
     <Compile Include="ViewModels\IndicatorParameterRangeView.cs" />
     <Compile Include="ViewModels\IndicatorParameterTemplateView.cs" />
-    <Compile Include="ViewModels\TestingView.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\ViewModelData.cs" />
     <Compile Include="ViewModels\ViewModelPageDataSource.cs" />

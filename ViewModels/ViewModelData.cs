@@ -336,13 +336,13 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private string _statusBarTestingHeader;
-        public string StatusBarTestingHeader //заголовок выполняемого действия
+        private string _statusBarTestingStepDescription;
+        public string StatusBarTestingStepDescription //шаг выполнения тестирования
         {
-            get { return _statusBarTestingHeader; }
+            get { return _statusBarTestingStepDescription; }
             private set
             {
-                _statusBarTestingHeader = value;
+                _statusBarTestingStepDescription = value;
                 OnPropertyChanged();
             }
         }
@@ -354,6 +354,17 @@ namespace ktradesystem.ViewModels
             private set
             {
                 _statusBarTestingDoneText = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _statusBarTestingTotalTime;
+        public string StatusBarTestingTotalTime //прошло времени с начала тестирования
+        {
+            get { return _statusBarTestingTotalTime; }
+            private set
+            {
+                _statusBarTestingTotalTime = value;
                 OnPropertyChanged();
             }
         }
@@ -424,8 +435,9 @@ namespace ktradesystem.ViewModels
                     IsPagesAndMainMenuButtonsEnabled = true;
                     _mainCommunicationChannel.TestingProgress.Clear();
                     //очищаем поля
-                    StatusBarTestingHeader = "";
+                    StatusBarTestingStepDescription = "";
                     StatusBarTestingDoneText = "";
+                    StatusBarTestingTotalTime = "";
                     StatusBarTestingRemainingTime = "";
                     StatusBarTestingProgressMaxValue = 0;
                     StatusBarTestingProgressValue = 0;
@@ -434,9 +446,9 @@ namespace ktradesystem.ViewModels
                 else
                 {
                     //обновляем значения полей statusBarTesting
-                    StatusBarTestingHeader = TestingProgress[0].Header;
-                    StatusBarTestingDoneText = TestingProgress[0].CompletedTasksCount.ToString() + "/" + TestingProgress[0].TasksCount.ToString();
-                    int totalRemainingSeconds = (int)((TestingProgress[0].ElapsedTime.TotalSeconds / ((double)(TestingProgress[0].CompletedTasksCount) / (double)(TestingProgress[0].TasksCount))) - TestingProgress[0].ElapsedTime.TotalSeconds); //делим пройденное время на завершенную часть от целого и получаем общее время, необходимое для выполнения всей работы, и вычитаем из него пройденное время
+                    StatusBarTestingStepDescription = TestingProgress[0].StepDescription;
+                    StatusBarTestingDoneText = TestingProgress[0].CompletedStepTasksCount.ToString() + "/" + TestingProgress[0].StepTasksCount.ToString();
+                    int totalRemainingSeconds = (int)((TestingProgress[0].StepElapsedTime.TotalSeconds / ((double)(TestingProgress[0].CompletedStepTasksCount) / (double)(TestingProgress[0].StepTasksCount))) - TestingProgress[0].StepElapsedTime.TotalSeconds); //делим пройденное время на завершенную часть от целого и получаем общее время, необходимое для выполнения всей работы, и вычитаем из него пройденное время
                     TimeSpan timeSpan = TimeSpan.FromSeconds(totalRemainingSeconds);
                     string timeRemaining = timeSpan.Hours.ToString();
                     if(timeRemaining.Length == 1)
@@ -458,9 +470,30 @@ namespace ktradesystem.ViewModels
                         timeRemaining = timeRemaining.Insert(0, timeSpan.Days.ToString() + " дней ");
                     }
 
+                    string timeTotal = TestingProgress[0].TotalElapsedTime.Hours.ToString();
+                    if(timeTotal.Length == 1)
+                    {
+                        timeTotal = timeTotal.Insert(0, "0");
+                    }
+                    timeTotal += ":" + TestingProgress[0].TotalElapsedTime.Minutes.ToString();
+                    if (timeTotal.Length == 4)
+                    {
+                        timeTotal = timeTotal.Insert(3, "0");
+                    }
+                    timeTotal += ":" + TestingProgress[0].TotalElapsedTime.Seconds.ToString();
+                    if (timeTotal.Length == 7)
+                    {
+                        timeTotal = timeTotal.Insert(6, "0");
+                    }
+                    if (TestingProgress[0].TotalElapsedTime.Days > 0)
+                    {
+                        timeTotal = timeTotal.Insert(0, TestingProgress[0].TotalElapsedTime.Days.ToString() + " дней ");
+                    }
+
+                    StatusBarTestingTotalTime = timeTotal;
                     StatusBarTestingRemainingTime = timeRemaining;
-                    StatusBarTestingProgressMaxValue = TestingProgress[0].TasksCount;
-                    StatusBarTestingProgressValue = TestingProgress[0].CompletedTasksCount;
+                    StatusBarTestingProgressMaxValue = TestingProgress[0].StepTasksCount;
+                    StatusBarTestingProgressValue = TestingProgress[0].CompletedStepTasksCount;
                     StatusBarTestingCancelPossibility = TestingProgress[0].CancelPossibility;
                 }
             }

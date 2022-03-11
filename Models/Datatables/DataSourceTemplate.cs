@@ -13,10 +13,5 @@ namespace ktradesystem.Models.Datatables
         public string Name { get; set; }
         public string Description { get; set; }
         public int IdAlgorithm { get; set; }
-        public DataSourceTemplate Clone()
-        {
-            DataSourceTemplate dataSourceTemplate = new DataSourceTemplate { Id = Id, Name = Name, Description = Description, IdAlgorithm = IdAlgorithm };
-            return dataSourceTemplate;
-        }
     }
 }

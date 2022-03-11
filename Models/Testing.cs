@@ -35,7 +35,7 @@ namespace ktradesystem.Models
         public dynamic[] CompiledIndicators { get; set; } //объекты, содержащие метод, выполняющий расчет индикатора
         public dynamic CompiledAlgorithm { get; set; } //объект, содержащий метод, вычисляющий работу алгоритма
         public dynamic[] CompiledEvaluationCriterias { get; set; } //объекты, содержащие метод, выполняющий расчет критерия оценки тестового прогона
-        public List<DataSourceCandles> DataSourcesCandles { get; set; } //список с массивами свечек (для файлов) для источников данных (от сюда же будут браться данные для отображения графиков)
+        public DataSourceCandles[] DataSourcesCandles { get; set; } //список с массивами свечек (для файлов) для источников данных (от сюда же будут браться данные для отображения графиков)
         public int TopModelEvaluationCriteriaIndex { get; set; } //индекс критерия оценки топ-модели
         public List<int>[] AlgorithmParametersAllIntValues { get; set; }
         public List<double>[] AlgorithmParametersAllDoubleValues { get; set; }

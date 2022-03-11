@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace ktradesystem.Models
 {
+    [Serializable]
     public class Order
     {
         public Order(int idTypeOrder, bool direction, DataSourceForCalculate dataSourceForCalculate, double price, decimal count)

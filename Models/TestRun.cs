@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models
 {
-    [Serializable]
     public class TestRun
     {
         public TestBatch TestBatch { get; set; }

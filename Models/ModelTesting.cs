@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using ktradesystem.Models.Datatables;
 using ktradesystem.CommunicationChannel;
 
@@ -44,6 +45,8 @@ namespace ktradesystem.Models
                 CancellationTokenTesting.Cancel();
             }
         }
+
+        public Stopwatch StopwatchTesting { get; set; } //определяет общее время затраченное на тестирование
 
         public void IndicatorInsertUpdate(string name, string description, List<IndicatorParameterTemplate> indicatorParameterTemplates, string script, int id = -1) //если прислан id, отправляет запрос update, иначе insert
         {
@@ -425,6 +428,8 @@ namespace ktradesystem.Models
                 CancellationTokenTesting.Dispose();
             }
             CancellationTokenTesting = new CancellationTokenSource();
+            StopwatchTesting = new Stopwatch();
+            StopwatchTesting.Start();
             DispatcherInvoke((Action)(() => { _mainCommunicationChannel.TestingProgress.Clear(); }));
             _modelSimulation.TestingSimulation(testing);
         }

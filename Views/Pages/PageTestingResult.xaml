@@ -39,7 +39,7 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" Margin="54 3 0 0">
             </StackPanel>
-            <TabControl Margin="0 3 0 0">
+            <TabControl Margin="0 0 0 0">
                 <TabItem>
                     <TabItem.Header>Таблицы</TabItem.Header>
                     <TabItem.Content>

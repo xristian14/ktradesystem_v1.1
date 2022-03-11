@@ -16,10 +16,5 @@ namespace ktradesystem.Models.Datatables
         public List<AlgorithmParameter> AlgorithmParameters { get; set; }
         public List<AlgorithmIndicator> AlgorithmIndicators { get; set; }
         public string Script { get; set; }
-        public Algorithm Clone()
-        {
-            Algorithm algorithm = new Algorithm();
-            return algorithm;
-        }
     }
 }

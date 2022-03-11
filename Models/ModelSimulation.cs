@@ -820,10 +820,6 @@ namespace ktradesystem.Models
                 int countTestRunWithForward = countTestRuns;
                 countTestRunWithForward += testing.IsForwardTesting ? testing.TestBatches.Count : 0;
                 countTestRunWithForward += testing.IsForwardTesting && testing.IsForwardDepositTrading ? testing.TestBatches.Count : 0;
-                DispatcherInvoke((Action)(() => {
-                    _mainCommunicationChannel.TestingProgress.Clear();
-                    _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { Header = "", TasksCount = countTestRunWithForward, CompletedTasksCount = 0, ElapsedTime = TimeSpan.FromSeconds(0.1), CancelPossibility = true, IsFinish = false });
-                }));
 
                 if (countTestRuns > 0) //если количество тестов больше нуля, переходим на создание задач и выполнение тестов
                 {
@@ -833,66 +829,88 @@ namespace ktradesystem.Models
                     NumberFormatInfo nfiDot = (NumberFormatInfo)nfiComma.Clone();
                     nfiDot.NumberDecimalSeparator = nfiDot.CurrencyDecimalSeparator = nfiDot.PercentDecimalSeparator = "."; //эту переменнную нужно указать в методе double.Parse(string, nfiDot), чтобы преобразовался формат строки с разделителем дробной части в виде точки а не запятой
 
-                    //считываем свечки всех источников данных
-                    testing.DataSourcesCandles = new List<DataSourceCandles>(); //инициализируем массив со всеми свечками источников данных
+                    //определяем количество уникальных источников данных во всех группах источников данных
+                    List<DataSource> dataSources = new List<DataSource>();
                     foreach (DataSourceGroup dataSourceGroup in testing.DataSourceGroups)
                     {
-                        for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
+                        foreach (DataSourceAccordance dataSourceAccordance in dataSourceGroup.DataSourceAccordances)
                         {
-                            //если такого источника данных еще нет в DataSourcesCandles, считываем его файлы
-                            if (testing.DataSourcesCandles.Where(j => j.DataSource == dataSourceGroup.DataSourceAccordances[i].DataSource).Any() == false)
+                            if(dataSources.Contains(dataSourceAccordance.DataSource) == false)
                             {
-                                testing.DataSourcesCandles.Add(new DataSourceCandles { DataSource = dataSourceGroup.DataSourceAccordances[i].DataSource, Candles = new Candle[dataSourceGroup.DataSourceAccordances[i].DataSource.DataSourceFiles.Count][], AlgorithmIndicatorsValues = new AlgorithmIndicatorValues[testing.Algorithm.AlgorithmIndicators.Count] });
-                                //проходим по всем файлам источника данных
-                                for (int k = 0; k < dataSourceGroup.DataSourceAccordances[i].DataSource.DataSourceFiles.Count; k++)
-                                {
-                                    string fileName = dataSourceGroup.DataSourceAccordances[i].DataSource.DataSourceFiles[k].Path;
-                                    //определяем размер массива (исходя из количества строк в файле)
-                                    FileStream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-                                    StreamReader streamReader = new StreamReader(fileStream);
-                                    string line = streamReader.ReadLine(); //пропускаем шапку файла
-                                    line = streamReader.ReadLine();
-                                    int count = 0;
-                                    while (line != null)
-                                    {
-                                        count++;
-                                        line = streamReader.ReadLine();
-                                    }
-                                    streamReader.Close();
-                                    fileStream.Close();
-
-                                    //создаем массив
-                                    Candle[] candles = new Candle[count];
-                                    //заполняем массив
-                                    fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-                                    streamReader = new StreamReader(fileStream);
-                                    line = streamReader.ReadLine(); //пропускаем шапку файла
-                                    line = streamReader.ReadLine(); //счиытваем 1-ю строку с данными
-                                    int r = 0;
-                                    while (line != null)
-                                    {
-                                        string[] lineArr = line.Split(',');
-                                        string dateTimeFormated = lineArr[2].Insert(6, "-").Insert(4, "-") + " " + lineArr[3].Insert(4, ":").Insert(2, ":");
-                                        candles[r] = new Candle { DateTime = DateTime.Parse(dateTimeFormated), O = double.Parse(lineArr[4], nfiDot), H = double.Parse(lineArr[5], nfiDot), L = double.Parse(lineArr[6], nfiDot), C = double.Parse(lineArr[7], nfiDot), V = double.Parse(lineArr[8], nfiDot) };
-                                        line = streamReader.ReadLine();
-                                        r++;
-                                    }
-                                    streamReader.Close();
-                                    fileStream.Close();
-
-                                    testing.DataSourcesCandles.Last().Candles[k] = candles;
-                                }
+                                dataSources.Add(dataSourceAccordance.DataSource);
                             }
-
                         }
                     }
+                    //считываем свечки всех источников данных
+                    int filesCount = 0; //всего файлов с свечками
+                    foreach(DataSource dataSource in dataSources)
+                    {
+                        filesCount += dataSource.DataSourceFiles.Count;
+                    }
+                    int readFilesCount = 0; //считано файлов с свечками
+                    Stopwatch stopwatchReadDataSources = new Stopwatch();
+                    stopwatchReadDataSources.Start();
+                    DispatcherInvoke((Action)(() => {
+                        _mainCommunicationChannel.TestingProgress.Clear();
+                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 1/3: Считывание файлов источников данных", StepTasksCount = filesCount, CompletedStepTasksCount = readFilesCount, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchReadDataSources.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
+                    }));
+                    testing.DataSourcesCandles = new DataSourceCandles[dataSources.Count]; //инициализируем массив со всеми свечками источников данных
+                    for(int i = 0; i < dataSources.Count; i++)
+                    {
+                        testing.DataSourcesCandles[i] = new DataSourceCandles { DataSource = dataSources[i], Candles = new Candle[dataSources[i].DataSourceFiles.Count][], AlgorithmIndicatorsValues = new AlgorithmIndicatorValues[testing.Algorithm.AlgorithmIndicators.Count] };
+                        //проходим по всем файлам источника данных
+                        for (int k = 0; k < dataSources[i].DataSourceFiles.Count; k++)
+                        {
+                            string fileName = dataSources[i].DataSourceFiles[k].Path;
+                            //определяем размер массива (исходя из количества строк в файле)
+                            FileStream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+                            StreamReader streamReader = new StreamReader(fileStream);
+                            string line = streamReader.ReadLine(); //пропускаем шапку файла
+                            line = streamReader.ReadLine();
+                            int count = 0;
+                            while (line != null)
+                            {
+                                count++;
+                                line = streamReader.ReadLine();
+                            }
+                            streamReader.Close();
+                            fileStream.Close();
 
+                            //создаем массив
+                            Candle[] candles = new Candle[count];
+                            //заполняем массив
+                            fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+                            streamReader = new StreamReader(fileStream);
+                            line = streamReader.ReadLine(); //пропускаем шапку файла
+                            line = streamReader.ReadLine(); //счиытваем 1-ю строку с данными
+                            int r = 0;
+                            while (line != null)
+                            {
+                                string[] lineArr = line.Split(',');
+                                string dateTimeFormated = lineArr[2].Insert(6, "-").Insert(4, "-") + " " + lineArr[3].Insert(4, ":").Insert(2, ":");
+                                candles[r] = new Candle { DateTime = DateTime.Parse(dateTimeFormated), O = double.Parse(lineArr[4], nfiDot), H = double.Parse(lineArr[5], nfiDot), L = double.Parse(lineArr[6], nfiDot), C = double.Parse(lineArr[7], nfiDot), V = double.Parse(lineArr[8], nfiDot) };
+                                line = streamReader.ReadLine();
+                                r++;
+                            }
+                            streamReader.Close();
+                            fileStream.Close();
+
+                            testing.DataSourcesCandles[i].Candles[k] = candles;
+
+                            readFilesCount++;
+                            DispatcherInvoke((Action)(() => {
+                                _mainCommunicationChannel.TestingProgress.Clear();
+                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 1/3: Считывание файлов источников данных", StepTasksCount = filesCount, CompletedStepTasksCount = readFilesCount, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchReadDataSources.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
+                            }));
+                        }
+                    }
+                    stopwatchReadDataSources.Stop();
                     //заполняем элементы массива IndicatorsValues объектами IndicatorValues, указываем размерность Values исходя из количества файлов. Размер массива со значениями для файла будет определен при заполнении значений в потоке.
-                    for (int i = 0; i < testing.DataSourcesCandles.Count; i++)
+                    for (int i = 0; i < testing.DataSourcesCandles.Length; i++)
                     {
                         for (int k = 0; k < testing.DataSourcesCandles[i].AlgorithmIndicatorsValues.Length; k++)
                         {
-                            testing.DataSourcesCandles[i].AlgorithmIndicatorsValues[k] = new AlgorithmIndicatorValues { AlgorithmIndicator = testing.Algorithm.AlgorithmIndicators[i], Values = new double[testing.DataSourcesCandles[i].Candles.Length][] };
+                            testing.DataSourcesCandles[i].AlgorithmIndicatorsValues[k] = new AlgorithmIndicatorValues { AlgorithmIndicator = testing.Algorithm.AlgorithmIndicators[k], Values = new double[testing.DataSourcesCandles[i].Candles.Length][] };
                         }
                     }
 
@@ -951,8 +969,8 @@ namespace ktradesystem.Models
                     }
                     //processorCount = 1;
                     Task[] tasks = new Task[processorCount]; //задачи
-                    Stopwatch stopwatch = new Stopwatch();
-                    stopwatch.Start();
+                    Stopwatch stopwatchTestRunsExecution = new Stopwatch();
+                    stopwatchTestRunsExecution.Start();
                     int[][] tasksExecutingTestRuns = new int[processorCount][]; //массив, в котором хранится индекс testBatch-а (в 0-м индексе) и testRuna (из OptimizationTestRuns) (в 1-м индексе), который выполняется в задаче с таким же индексом в массиве задач (если это форвардный тест, в 1-м элементе будет OptimizationTestRuns.Count, если это форвардный тест с торговлей депозитом в 1-м элементе будет OptimizationTestRuns.Count + 1)
                     int[][] testRunsStatus = new int[testing.TestBatches.Count][]; //статусы выполненности testRun-ов в testBatch-ах. Первый индекс - индекс testBatch-а, второй - индекс testRun-a. У невыполненного значение 0, у запущенного 1, а у выполненного 2. При форвардном тестировании, в список со статусами выполненности оптимизационных тестов в конец добавляется еще один элемент - статус форвардного теста, при форвардном тестировании с торговлей депозитом - 2 элемента, статус форвардного теста и статус форвардного теста с торговлей депозитом
                     int[][] testRunsStatus2 = new int[testing.TestBatches.Count][]; //индексы потока в tasks в котором выполнялся testRun
@@ -969,6 +987,10 @@ namespace ktradesystem.Models
                     bool isAllTestRunsComplete = false; //выполнены ли все testRun-ы
                     int completedCount = 0; //количество выполненных testRun-ов
                     int n = 0; //номер задачи, нужен для начального заполнения массива tasks
+                    DispatcherInvoke((Action)(() => {
+                        _mainCommunicationChannel.TestingProgress.Clear();
+                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/3: Симуляция тестов", StepTasksCount = countTestRunWithForward, CompletedStepTasksCount = completedCount, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchTestRunsExecution.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
+                    }));
                     while (isAllTestRunsComplete == false)
                     {
                         if (tasks[tasks.Length - 1] == null) //если пока еще не заполнен массив с задачами, заполняем его
@@ -1050,7 +1072,7 @@ namespace ktradesystem.Models
                             }
                             DispatcherInvoke((Action)(() => {
                                 _mainCommunicationChannel.TestingProgress.Clear();
-                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { Header = "", TasksCount = countTestRunWithForward, CompletedTasksCount = completedCount, ElapsedTime = stopwatch.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
+                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/3: Симуляция тестов", StepTasksCount = countTestRunWithForward, CompletedStepTasksCount = completedCount, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchTestRunsExecution.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
                             }));
 
                             //обрабатываем выполненные testRun-ы
@@ -1211,6 +1233,7 @@ namespace ktradesystem.Models
                             }
                         }
                     }
+                    stopwatchTestRunsExecution.Stop();
                     TestingEnding(true, testing);
                 }
                 else //если количество testRun-ов == 0, оповещаем пользователя и завершаем тестирование
@@ -2594,12 +2617,12 @@ namespace ktradesystem.Models
 
         private void TestingEnding(bool isSuccess, Testing testing) //оповещение представления о том что тестирование закончено, isSucces - флаг того что тестирование выполнено успешно.
         {
-            TestingProgress testingProgress = new TestingProgress { Header = "", TasksCount = 1, CompletedTasksCount = 1, ElapsedTime = TimeSpan.FromSeconds(1), CancelPossibility = false, IsFinish = true, IsSuccess = isSuccess };
+            TestingProgress testingProgress = new TestingProgress { StepTasksCount = 1, CompletedStepTasksCount = 1, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = TimeSpan.FromSeconds(1), CancelPossibility = false, IsFinish = true, IsSuccess = isSuccess };
             if (isSuccess)
             {
                 testingProgress.Testing = testing;
             }
-            _modelData.DispatcherInvoke((Action)(() => {
+            DispatcherInvoke((Action)(() => {
                 _mainCommunicationChannel.TestingProgress.Clear();
                 _mainCommunicationChannel.TestingProgress.Add(testingProgress);
             }));

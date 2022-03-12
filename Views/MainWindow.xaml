@@ -35,11 +35,11 @@
             <StackPanel Visibility="{Binding StatusBarTestingVisibility}" Orientation="Horizontal" Margin="0 3 0 0">
                 <TextBlock Text="Выполнение тестирования:" Height="18" Margin="10 0 0 0"/>
                 <TextBlock Text="{Binding StatusBarTestingStepDescription}" Height="18" Margin="7 0 0 0"/>
-                <TextBlock Text="{Binding StatusBarTestingDoneText}" MinWidth="54" Height="18" Margin="5 0 0 0"/>
+                <TextBlock Text="{Binding StatusBarTestingDoneText}" MinWidth="54" Height="18" Margin="6 0 0 0"/>
                 <TextBlock Text="Прошло:" Height="18" Margin="7 0 0 0"/>
-                <TextBlock Text="{Binding StatusBarTestingTotalTime}" MinWidth="50" Height="18" Margin="5 0 0 0"/>
+                <TextBlock Text="{Binding StatusBarTestingTotalTime}" MinWidth="50" Height="18" Margin="6 0 0 0"/>
                 <TextBlock Text="Осталось:" Height="18" Margin="7 0 0 0"/>
-                <TextBlock Text="{Binding StatusBarTestingRemainingTime}" MinWidth="50" Height="18" Margin="5 0 0 0"/>
+                <TextBlock Text="{Binding StatusBarTestingRemainingTime}" MinWidth="50" Height="18" Margin="6 0 0 0"/>
                 <ProgressBar Value="{Binding StatusBarTestingProgressValue, Mode=OneWay}" Minimum="{Binding StatusBarTestingProgressMinValue}" Maximum="{Binding StatusBarTestingProgressMaxValue}" Height="18" Width="130" Margin="7 0 0 0"/>
                 <Button Content="Отменить" Command="{Binding StatusBarTestingCancel_Click}" IsEnabled="{Binding StatusBarTestingCancelPossibility}" Height="20" Width="68" Margin="7 0 0 0" Padding="1,0"/>
             </StackPanel>

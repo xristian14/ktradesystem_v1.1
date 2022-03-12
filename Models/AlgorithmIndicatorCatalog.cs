@@ -11,6 +11,7 @@ namespace ktradesystem.Models
     public class AlgorithmIndicatorCatalog
     {
         public AlgorithmIndicator AlgorithmIndicator { get; set; }
+        public string AlgorithmIndicatorFolderName { get; set; } //имя папки с значениями индикатора алгоритма
         public List<AlgorithmIndicatorCatalogElement> AlgorithmIndicatorCatalogElements { get; set; }
     }
 }

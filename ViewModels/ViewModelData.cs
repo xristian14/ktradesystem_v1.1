@@ -432,7 +432,7 @@ namespace ktradesystem.ViewModels
             {
                 if(TestingProgress[0].IsFinishSimulation && TestingProgress[0].IsSuccessSimulation) //если симуляция тестирования закончена успешно, переходим на запись результатов
                 {
-                    _modelTestingResult.WriteTestingResult(TestingProgress[0].Testing); //вызываем метод записи результатов тестирования
+                    Task.Run(() => _modelTestingResult.WriteTestingResult(TestingProgress[0].Testing)); //вызываем метод записи результатов тестирования. Запускаем в отдельном потоке чтобы форма обновлялась
                 }
                 if (TestingProgress[0].IsFinish) //если тестирование завершено
                 {

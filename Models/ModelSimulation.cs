@@ -2636,5 +2636,35 @@ namespace ktradesystem.Models
                 _mainCommunicationChannel.TestingProgress.Add(testingProgress);
             }));
         }
+
+        public AlgorithmIndicatorValues AlgorithmIndicatorCalculate(Testing testing, DataSourceCandles dataSourceCandles, AlgorithmIndicator algorithmIndicator, List<AlgorithmParameterValue> algorithmParameterValues) //возвращает вычисленные значения индикатора алгоритма для свечек из dataSourceCandles
+        {
+            AlgorithmIndicatorValues algorithmIndicatorValues = new AlgorithmIndicatorValues { AlgorithmIndicator = algorithmIndicator, Values = new double[dataSourceCandles.Candles.Length][] };
+            int algorithmIndicatorIndex = testing.Algorithm.AlgorithmIndicators.IndexOf(algorithmIndicator); //индекс индикатора алгоритма
+            for (int i = 0; i < dataSourceCandles.Candles.Length; i++)
+            {
+                algorithmIndicatorValues.Values[i] = new double[dataSourceCandles.Candles[i].Length]; //определяем количество значений индикатора в файле
+                for(int k = 0; k < dataSourceCandles.Candles[i].Length; k++)
+                {
+                    int[] indicatorParametersIntValues = new int[algorithmIndicator.IndicatorParameterRanges.Count];
+                    double[] indicatorParametersDoubleValues = new double[algorithmIndicator.IndicatorParameterRanges.Count];
+                    for(int u = 0; u < algorithmIndicator.IndicatorParameterRanges.Count; u++)
+                    {
+                        indicatorParametersIntValues[u] = algorithmParameterValues.Where(j => j.AlgorithmParameter.Id == algorithmIndicator.IndicatorParameterRanges[u].AlgorithmParameter.Id).First().IntValue;
+                        indicatorParametersDoubleValues[u] = algorithmParameterValues.Where(j => j.AlgorithmParameter.Id == algorithmIndicator.IndicatorParameterRanges[u].AlgorithmParameter.Id).First().DoubleValue;
+                    }
+                    //копируем объект скомпилированного индикатора, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
+                    dynamic compiledIndicatorCopy = testing.CompiledIndicators[algorithmIndicatorIndex].Clone();
+                    //вычисляем значение индикатора
+                    IndicatorCalculateResult indicatorCalculateResult = compiledIndicatorCopy.Calculate(dataSourceCandles.Candles[i], k, indicatorParametersIntValues, indicatorParametersDoubleValues);
+                    if(indicatorCalculateResult.OverIndex == 0)
+                    {
+                        algorithmIndicatorValues.Values[i][k] = indicatorCalculateResult.Value;
+                    }
+                }
+            }
+
+            return algorithmIndicatorValues;
+        }
     }
 }

@@ -95,7 +95,7 @@ namespace ktradesystem.Models
                 //проходим по всем индикаторам алгоритма
                 foreach(AlgorithmIndicator algorithmIndicator in testing.Algorithm.AlgorithmIndicators)
                 {
-                    AlgorithmIndicatorCatalog algorithmIndicatorCatalog = new AlgorithmIndicatorCatalog { AlgorithmIndicator = algorithmIndicator, AlgorithmIndicatorCatalogElements = new List<AlgorithmIndicatorCatalogElement>() };
+                    AlgorithmIndicatorCatalog algorithmIndicatorCatalog = new AlgorithmIndicatorCatalog { AlgorithmIndicator = algorithmIndicator, AlgorithmIndicatorFolderName = algorithmIndicator.Indicator.Name + "_" + algorithmIndicator.Ending + "_values", AlgorithmIndicatorCatalogElements = new List<AlgorithmIndicatorCatalogElement>() };
 
                     //получаем список параметров алгоритмов, используемых в индикаторе алгоритма
                     List<AlgorithmParameter> algorithmParameters = new List<AlgorithmParameter>();
@@ -186,9 +186,14 @@ namespace ktradesystem.Models
                 //вычисляем и записываем значения всех индикаторов алгоритмов со всеми комбинациями параметров
                 foreach(AlgorithmIndicatorCatalog algorithmIndicatorCatalog1 in testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs)
                 {
-                    foreach(AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement in algorithmIndicatorCatalog1.AlgorithmIndicatorCatalogElements)
+                    string algorithmIndicatorPath = dataSourcesCandlesPath + "\\" + algorithmIndicatorCatalog1.AlgorithmIndicatorFolderName; //путь к папке с значениями данного индикатора алгоритма
+                    Directory.CreateDirectory(algorithmIndicatorPath); //создаем папку для значений индикатора алгоритма
+                    foreach (AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement in algorithmIndicatorCatalog1.AlgorithmIndicatorCatalogElements)
                     {
-
+                        //вычисляем значения индикатора алгоритма
+                        AlgorithmIndicatorValues algorithmIndicatorValues = _modelSimulation.AlgorithmIndicatorCalculate(testing, testing.DataSourcesCandles[i], algorithmIndicatorCatalog1.AlgorithmIndicator, algorithmIndicatorCatalogElement.AlgorithmParameterValues);
+                        string jsonAlgorithmIndicatorValues = JsonSerializer.Serialize(algorithmIndicatorValues); //сериализуем
+                        File.WriteAllText(algorithmIndicatorPath + "\\" + algorithmIndicatorCatalogElement.FileName, jsonAlgorithmIndicatorValues); //записываем в файл
                     }
                 }
             }

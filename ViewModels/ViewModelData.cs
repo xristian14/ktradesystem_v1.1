@@ -25,6 +25,7 @@ namespace ktradesystem.ViewModels
             _modelDataSource = ModelDataSource.getInstance();
             _modelDataSource.PropertyChanged += Model_PropertyChanged;
             _modelTesting = ModelTesting.getInstance();
+            _modelTestingResult = ModelTestingResult.getInstance();
 
             _mainCommunicationChannel = MainCommunicationChannel.getInstance();
             _mainCommunicationChannel.PropertyChanged += Model_PropertyChanged;
@@ -50,6 +51,7 @@ namespace ktradesystem.ViewModels
         private MainCommunicationChannel _mainCommunicationChannel;
         private ModelDataSource _modelDataSource;
         private ModelTesting _modelTesting;
+        private ModelTestingResult _modelTestingResult;
 
         private Page _dataSource;
         private Page _testing;
@@ -428,9 +430,13 @@ namespace ktradesystem.ViewModels
         {
             if(TestingProgress.Count != 0)
             {
-                if (TestingProgress[0].IsFinish)
+                if(TestingProgress[0].IsFinishSimulation && TestingProgress[0].IsSuccessSimulation) //если симуляция тестирования закончена успешно, переходим на запись результатов
                 {
-                    //закрываем statusBarTesting, делаем форму активной
+                    _modelTestingResult.WriteTestingResult(TestingProgress[0].Testing); //вызываем метод записи результатов тестирования
+                }
+                if (TestingProgress[0].IsFinish) //если тестирование завершено
+                {
+                    //иначе закрываем statusBarTesting, делаем форму активной
                     StatusBarTestingHide();
                     IsPagesAndMainMenuButtonsEnabled = true;
                     _mainCommunicationChannel.TestingProgress.Clear();

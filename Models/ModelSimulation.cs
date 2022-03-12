@@ -852,7 +852,7 @@ namespace ktradesystem.Models
                     stopwatchReadDataSources.Start();
                     DispatcherInvoke((Action)(() => {
                         _mainCommunicationChannel.TestingProgress.Clear();
-                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 1/3: Считывание файлов источников данных", StepTasksCount = filesCount, CompletedStepTasksCount = readFilesCount, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchReadDataSources.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
+                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 1/3: Считывание файлов источников данных", StepTasksCount = filesCount, CompletedStepTasksCount = readFilesCount, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchReadDataSources.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                     }));
                     testing.DataSourcesCandles = new DataSourceCandles[dataSources.Count]; //инициализируем массив со всеми свечками источников данных
                     for(int i = 0; i < dataSources.Count; i++)
@@ -900,7 +900,7 @@ namespace ktradesystem.Models
                             readFilesCount++;
                             DispatcherInvoke((Action)(() => {
                                 _mainCommunicationChannel.TestingProgress.Clear();
-                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 1/3: Считывание файлов источников данных", StepTasksCount = filesCount, CompletedStepTasksCount = readFilesCount, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchReadDataSources.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
+                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 1/3: Считывание файлов источников данных", StepTasksCount = filesCount, CompletedStepTasksCount = readFilesCount, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchReadDataSources.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                             }));
                         }
                     }
@@ -989,7 +989,7 @@ namespace ktradesystem.Models
                     int n = 0; //номер задачи, нужен для начального заполнения массива tasks
                     DispatcherInvoke((Action)(() => {
                         _mainCommunicationChannel.TestingProgress.Clear();
-                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/3: Симуляция тестов", StepTasksCount = countTestRunWithForward, CompletedStepTasksCount = completedCount, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchTestRunsExecution.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
+                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/3: Симуляция тестов", StepTasksCount = countTestRunWithForward, CompletedStepTasksCount = completedCount, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchTestRunsExecution.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                     }));
                     while (isAllTestRunsComplete == false)
                     {
@@ -1072,7 +1072,7 @@ namespace ktradesystem.Models
                             }
                             DispatcherInvoke((Action)(() => {
                                 _mainCommunicationChannel.TestingProgress.Clear();
-                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/3: Симуляция тестов", StepTasksCount = countTestRunWithForward, CompletedStepTasksCount = completedCount, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchTestRunsExecution.Elapsed, CancelPossibility = true, IsFinish = false, IsSuccess = false });
+                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/3: Симуляция тестов", StepTasksCount = countTestRunWithForward, CompletedStepTasksCount = completedCount, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchTestRunsExecution.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                             }));
 
                             //обрабатываем выполненные testRun-ы
@@ -2625,9 +2625,10 @@ namespace ktradesystem.Models
 
         private void TestingEnding(bool isSuccess, Testing testing) //оповещение представления о том что тестирование закончено, isSucces - флаг того что тестирование выполнено успешно.
         {
-            TestingProgress testingProgress = new TestingProgress { StepTasksCount = 1, CompletedStepTasksCount = 1, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = TimeSpan.FromSeconds(1), CancelPossibility = false, IsFinish = true, IsSuccess = isSuccess };
+            TestingProgress testingProgress = new TestingProgress { StepTasksCount = 1, CompletedStepTasksCount = 1, TotalElapsedTime = _modelTesting.StopwatchTesting.Elapsed, StepElapsedTime = TimeSpan.FromSeconds(1), CancelPossibility = false, IsFinishSimulation = true, IsSuccessSimulation = isSuccess, IsFinish = false };
             if (isSuccess)
             {
+                testing.DateTimeSimulationEnding = DateTime.Now; //записываем дату и время завершения выполнения симуляции тестирования
                 testingProgress.Testing = testing;
             }
             DispatcherInvoke((Action)(() => {

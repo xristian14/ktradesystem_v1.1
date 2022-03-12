@@ -44,6 +44,7 @@ namespace ktradesystem.Models
         public int TopModelEvaluationCriteriaIndex { get; set; } //индекс критерия оценки топ-модели
         public List<int>[] AlgorithmParametersAllIntValues { get; set; }
         public List<double>[] AlgorithmParametersAllDoubleValues { get; set; }
+        public DateTime DateTimeSimulationEnding { get; set; } //дата и время завершения выполнения тестирования
         [JsonIgnore]
         public string testingResultDirectoryPath { get; set; } //путь к папке с результатам тестирования
     }

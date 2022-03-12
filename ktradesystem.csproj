@@ -114,6 +114,8 @@
     <Compile Include="Models\Account.cs" />
     <Compile Include="Models\AccountForCalculate.cs" />
     <Compile Include="Models\AlgorithmCalculateResult.cs" />
+    <Compile Include="Models\AlgorithmIndicatorCatalog.cs" />
+    <Compile Include="Models\AlgorithmIndicatorCatalogElement.cs" />
     <Compile Include="Models\AlgorithmParameterValue.cs" />
     <Compile Include="Models\AxesParameter.cs" />
     <Compile Include="Models\CompareSign.cs" />

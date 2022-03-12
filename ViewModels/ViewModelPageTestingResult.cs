@@ -56,11 +56,6 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        public void WriteTesting(Testing testing) //создает папку для данного тестирования, сериализует созданный объект и сохраняет в файл, вычисляет значения индикаторов для каждого тестового прогона, сериализует их и сохраняет в файлы
-        {
-
-        }
-
         private string _testText;
         public string TestText
         {

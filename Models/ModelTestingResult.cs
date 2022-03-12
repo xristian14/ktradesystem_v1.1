@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using ktradesystem.Models.Datatables;
 using System.IO;
 using ktradesystem.CommunicationChannel;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ktradesystem.Models
 {
@@ -67,21 +69,44 @@ namespace ktradesystem.Models
         {
             CheckFileStructure(); //проверяем существование нужных папок
             string historyPath = Directory.GetCurrentDirectory() + "\\applicationFiles\\testResults\\history"; //путь к папке с историей результатов тестирования
-            DateTime dateTime = DateTime.Now;
+            DateTime dateTime = testing.DateTimeSimulationEnding; //получаем дату и время завершения выполнения симуляции тестирования
             string day = dateTime.Day.ToString().Length == 2 ? dateTime.Day.ToString() : "0" + dateTime.Day.ToString();
             string month = dateTime.Month.ToString().Length == 2 ? dateTime.Month.ToString() : "0" + dateTime.Month.ToString();
             string hour = dateTime.Hour.ToString().Length == 2 ? dateTime.Hour.ToString() : "0" + dateTime.Hour.ToString();
             string minute = dateTime.Minute.ToString().Length == 2 ? dateTime.Minute.ToString() : "0" + dateTime.Minute.ToString();
             string second = dateTime.Second.ToString().Length == 2 ? dateTime.Second.ToString() : "0" + dateTime.Second.ToString();
-            string timeStr = day + "." + month + "." + dateTime.Year.ToString() + " " + hour + ":" + minute + ":" + second;
-            string space = " ";
+            string timeStr = day + "." + month + "." + dateTime.Year.ToString() + "  " + hour + "ч " + minute + "м " + second + "с";
+            string space = "  ";
             while(Directory.Exists(historyPath + "\\" + timeStr + space + testing.Algorithm.Name)) //пока имя папки не будет уникально, прибавляем пробел между датой и временем и названием алгоритма
             {
                 space += " ";
             }
             string testingDirectoryPath = historyPath + "\\" + timeStr + space + testing.Algorithm.Name; //путь к папке с текущим тестированием
             Directory.CreateDirectory(testingDirectoryPath); //создаем папку с текущим тестированием
+            string jsonTesting = JsonSerializer.Serialize(testing); //сериализуем объект тестирования
+            File.WriteAllText(testingDirectoryPath + "\\testing.json", jsonTesting); //записываем в файл
 
+            //записываем DataSourcesCandles
+            Directory.CreateDirectory(testingDirectoryPath + "\\dataSourcesCandles");
+            for(int i = 0; i < testing.DataSourcesCandles.Length; i++)
+            {
+                //определяем каталоги индикаторов алгоритмов
+                testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs = new List<AlgorithmIndicatorCatalog>();
+                //проходим по всем индикаторам алгоритма
+                foreach(AlgorithmIndicator algorithmIndicator in testing.Algorithm.AlgorithmIndicators)
+                {
+                    AlgorithmIndicatorCatalog algorithmIndicatorCatalog = new AlgorithmIndicatorCatalog { AlgorithmIndicator = algorithmIndicator, AlgorithmIndicatorCatalogElements = new List<AlgorithmIndicatorCatalogElement>() };
+
+                }
+
+                string dataSourcesCandlesPath = testingDirectoryPath + "\\dataSourcesCandles\\" + testing.DataSourcesCandles[i].DataSource.Id.ToString(); //путь к папке с текущим DataSourceCandles
+                Directory.CreateDirectory(dataSourcesCandlesPath); //создаем папку с текущим DataSourceCandles
+                string jsonDataSourceCandles = JsonSerializer.Serialize(testing.DataSourcesCandles[i]); //сериализуем
+                File.WriteAllText(dataSourcesCandlesPath + "\\dataSourceCandles.json", jsonDataSourceCandles); //записываем в файл
+
+                //вычисляем и записываем значения всех индикаторов алгоритмов со всеми комбинациями параметров
+
+            }
         }
     }
 }

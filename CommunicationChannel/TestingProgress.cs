@@ -15,8 +15,9 @@ namespace ktradesystem.CommunicationChannel
         public TimeSpan StepElapsedTime { get; set; } //затраченное время на выполненние задач текущего шага выполнения тестирования
         public TimeSpan TotalElapsedTime { get; set; } //общее затраченное время на выполнение тестирования
         public bool CancelPossibility { get; set; } //возможность отмены операции
-        public bool IsFinish { get; set; } //завершен процесс или нет
-        public bool IsSuccess { get; set; } //успешно ли завершено тестирование. Нужно ли переходить на запись результатов
+        public bool IsFinishSimulation { get; set; } //завершена ли симуляция тестирования
+        public bool IsSuccessSimulation { get; set; } //успешно ли завершена симуляция тестирования. Нужно ли переходить на запись результатов
+        public bool IsFinish { get; set; } //завершен процесс тестирования или нет
         public Testing Testing { get; set; } //выполненное тестирование
     }
 }

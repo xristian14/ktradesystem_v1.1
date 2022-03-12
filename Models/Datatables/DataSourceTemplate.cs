@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models.Datatables
 {
-    [Serializable]
     public class DataSourceTemplate
     {
         public int Id { get; set; }

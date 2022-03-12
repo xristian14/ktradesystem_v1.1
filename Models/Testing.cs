@@ -10,6 +10,7 @@ using System.Reflection;
 using ktradesystem.CommunicationChannel;
 using System.IO;
 using System.Globalization;
+using System.Text.Json.Serialization;
 
 namespace ktradesystem.Models
 {
@@ -32,12 +33,18 @@ namespace ktradesystem.Models
         public DateTimeDuration OptimizationTestSpacing { get; set; } //временной промежуток между оптимизационными тестами
         public DateTimeDuration DurationForwardTest { get; set; } //длительность форвардного тестирования
         public List<TestBatch> TestBatches { get; set; } //тестовые связки (серия оптимизационных тестов за период + форвардный тест)
+        [JsonIgnore]
         public dynamic[] CompiledIndicators { get; set; } //объекты, содержащие метод, выполняющий расчет индикатора
+        [JsonIgnore]
         public dynamic CompiledAlgorithm { get; set; } //объект, содержащий метод, вычисляющий работу алгоритма
+        [JsonIgnore]
         public dynamic[] CompiledEvaluationCriterias { get; set; } //объекты, содержащие метод, выполняющий расчет критерия оценки тестового прогона
+        [JsonIgnore]
         public DataSourceCandles[] DataSourcesCandles { get; set; } //список с массивами свечек (для файлов) для источников данных (от сюда же будут браться данные для отображения графиков)
         public int TopModelEvaluationCriteriaIndex { get; set; } //индекс критерия оценки топ-модели
         public List<int>[] AlgorithmParametersAllIntValues { get; set; }
         public List<double>[] AlgorithmParametersAllDoubleValues { get; set; }
+        [JsonIgnore]
+        public string testingResultDirectoryPath { get; set; } //путь к папке с результатам тестирования
     }
 }

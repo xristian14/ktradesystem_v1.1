@@ -690,7 +690,7 @@ namespace ktradesystem.Models
                         indicator = indicator1;
                     }
                 }
-                AlgorithmIndicator algorithmIndicator = new AlgorithmIndicator { Id = (int)row.Field<long>("id"), IdAlgorithm = (int)row.Field<long>("idAlgorithm"), Indicator = indicator, IndicatorParameterRanges = new List<IndicatorParameterRange>(), Ending = row.Field<string>("ending") };
+                AlgorithmIndicator algorithmIndicator = new AlgorithmIndicator { Id = (int)row.Field<long>("id"), IdAlgorithm = (int)row.Field<long>("idAlgorithm"), IdIndicator = (int)row.Field<long>("idIndicator"), Indicator = indicator, IndicatorParameterRanges = new List<IndicatorParameterRange>(), Ending = row.Field<string>("ending") };
                 algorithmIndicators.Add(algorithmIndicator);
             }
 
@@ -711,7 +711,7 @@ namespace ktradesystem.Models
                 int idAlgorithmIndicator = (int)row.Field<long>("idAlgorithmIndicator"); //id индикатора алгоритма
                 AlgorithmIndicator algorithmIndicator = algorithmIndicators.Where(j => j.Id == idAlgorithmIndicator).First();
 
-                IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange { Id = (int)row.Field<long>("id"), IndicatorParameterTemplate = indicatorParameterTemplate, AlgorithmParameter = algorithmParameter, AlgorithmIndicator = algorithmIndicator };
+                IndicatorParameterRange indicatorParameterRange = new IndicatorParameterRange { Id = (int)row.Field<long>("id"), IdAlgorithmIndicator = idAlgorithmIndicator, IndicatorParameterTemplate = indicatorParameterTemplate, AlgorithmParameter = algorithmParameter, AlgorithmIndicator = algorithmIndicator };
                 //добавляем indicatorParameterRange в IndicatorParameterRanges algorithmIndicator-а
                 algorithmIndicator.IndicatorParameterRanges.Add(indicatorParameterRange);
 

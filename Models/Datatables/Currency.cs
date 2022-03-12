@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models.Datatables
 {
-    [Serializable]
     public class Currency
     {
         public int Id { get; set; }

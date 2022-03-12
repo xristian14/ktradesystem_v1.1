@@ -7,7 +7,6 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
-    [Serializable]
     public class DepositCurrency
     {
         public Currency Currency { get; set; }

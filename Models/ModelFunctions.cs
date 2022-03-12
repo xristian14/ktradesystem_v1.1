@@ -11,8 +11,12 @@ namespace ktradesystem.Models
         public static string SplitDigitsInt(int value) //разделяет целые разряды числа пробелами
         {
             string str = value.ToString();
-              str = StringReverse(str);
-            string result = str.Substring(0, 3);
+            str = StringReverse(str);
+            string result = str;
+            if (str.Length >= 3)
+            {
+                result = str.Substring(0, 3);
+            }
             for (int i = 3; i < str.Length; i++)
             {
                 if(i % 3 == 0)

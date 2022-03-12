@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace ktradesystem.Models
 {
-    [Serializable]
     public class DateTimeDuration
     {
         public int Years { get; set; }

@@ -1601,6 +1601,14 @@ namespace ktradesystem.Models
                     }
                 }
             }
+            //устанавливаем номера связанных заявок для заявок, имеющих связанные заявки
+            foreach(Order order3 in testRun.Account.AllOrders)
+            {
+                if(order3.LinkedOrder != null)
+                {
+                    order3.LinkedOrderNumber = order3.LinkedOrder.Number;
+                }
+            }
             //рассчитываем критерии оценки для данного testRun
             for (int i = 0; i < _modelData.EvaluationCriterias.Count; i++)
             {
@@ -1819,8 +1827,8 @@ namespace ktradesystem.Models
                     order.LinkedOrder.Count = order.Count;
                 }
                 //записываем сделку
-                account.AllDeals.Add(new Deal { Number = account.AllDeals.Count, DataSource = order.DataSource, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime });
-                Deal currentDeal = new Deal { Number = account.AllDeals.Count, DataSource = order.DataSource, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime };
+                account.AllDeals.Add(new Deal { Number = account.AllDeals.Count, IdDataSource = order.DataSource.Id, DataSource = order.DataSource, OrderNumber = order.Number, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime });
+                Deal currentDeal = new Deal { Number = account.AllDeals.Count, IdDataSource = order.DataSource.Id, DataSource = order.DataSource, OrderNumber = order.Number, Order = order, Price = price, Count = dealLotsCount, DateTime = dateTime };
                 account.CurrentPosition.Add(currentDeal);
                 isMakeADeal = true; //запоминаем что была совершена сделка
                 //вычитаем комиссию на сделку из свободных средств

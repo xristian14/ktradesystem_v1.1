@@ -12,7 +12,7 @@
         <StackPanel Orientation="Vertical" Margin="10">
             <StackPanel Orientation="Horizontal" Margin="10 0 0 0">
                 <TextBlock Text="Результат тестирования:" Width="144"/>
-                <ComboBox Width="103" ItemsSource="{Binding ResultTestingMenu}" SelectedItem="{Binding SelectedResultTestingMenu, Mode=TwoWay}"/>
+                <ComboBox ItemsSource="{Binding ResultTestingMenu}" SelectedItem="{Binding SelectedResultTestingMenu, Mode=TwoWay}"/>
                 <StackPanel Orientation="Vertical" Margin="7 0 0 0">
                     <ComboBox Visibility="{Binding TestingHistoryVisibility}" ItemsSource="{Binding TestingHistory}" SelectedItem="{Binding SelectedTestingHistory, Mode=TwoWay}" DisplayMemberPath="TestingResultName" MaxWidth="{Binding ElementName=helperResTestSelect1, Path=ActualWidth}"/>
                     <ComboBox Visibility="{Binding TestingSavesVisibility}" ItemsSource="{Binding TestingSaves}" SelectedItem="{Binding SelectedTestingSaves, Mode=TwoWay}" DisplayMemberPath="TestingResultName" MaxWidth="{Binding ElementName=helperResTestSelect1, Path=ActualWidth}"/>
@@ -22,7 +22,7 @@
             </StackPanel>
             <Grid Visibility="Visible">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="263"/>
+                    <ColumnDefinition Width="270"/>
                     <ColumnDefinition Width="1*"/>
                     <ColumnDefinition Width="134"/>
                 </Grid.ColumnDefinitions>
@@ -33,9 +33,9 @@
             <StackPanel Orientation="Horizontal" Margin="10 17 0 0" Height="42">
                 <TextBlock Text="Источники данных:" Width="114" Height="22" VerticalAlignment="Top"/>
                 <ComboBox Width="130" Height="22" VerticalAlignment="Top"/>
-                <TextBlock Text="Тестовая связка:" Width="97" Margin="11 0 0 0" Height="22" VerticalAlignment="Center"/>
+                <TextBlock Text="Тестовая связка:" Width="97" Margin="13 0 0 0" Height="22" VerticalAlignment="Center"/>
                 <ComboBox Width="130" Height="22" VerticalAlignment="Center"/>
-                <TextBlock Text="Тестовый прогон:" Width="105" Margin="11 0 0 0" Height="22" VerticalAlignment="Bottom"/>
+                <TextBlock Text="Тестовый прогон:" Width="105" Margin="13 0 0 0" Height="22" VerticalAlignment="Bottom"/>
                 <ComboBox Height="22" VerticalAlignment="Bottom"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal">

@@ -29,6 +29,9 @@ namespace ktradesystem.ViewModels
             _modelTestingResult.TestingHistoryForSubscribers.CollectionChanged += ModelTestingResult_TestingHistoryCollectionChanged;
             _modelTestingResult.TestingSavesForSubscribers.CollectionChanged += ModelTestingResult_TestingSavesCollectionChanged;
 
+            TestingHistory = _modelTestingResult.TestingHistoryForSubscribers;
+            TestingSaves = _modelTestingResult.TestingSavesForSubscribers;
+
             SelectedResultTestingMenu = ResultTestingMenu[0]; //выбираем пункт меню История
         }
 

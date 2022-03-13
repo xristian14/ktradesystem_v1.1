@@ -13,9 +13,12 @@
             <StackPanel Orientation="Horizontal" Margin="10 0 0 0">
                 <TextBlock Text="Результат тестирования:" Width="144"/>
                 <ComboBox Width="103" ItemsSource="{Binding ResultTestingMenu}" SelectedItem="{Binding SelectedResultTestingMenu, Mode=TwoWay}"/>
-                <ComboBox MaxWidth="{Binding ElementName=helperResTestSelect1, Path=ActualWidth}" Margin="7 0 0 0"/>
-                <Button Content="Сохранить" Command="{Binding ButtonTest_Click}" Width="68" Margin="7 0 0 0"/>
-                <Button Content="Удалить" Command="{Binding ButtonTest_Click}" Width="54" Margin="5 0 0 0"/>
+                <StackPanel Orientation="Vertical" Margin="7 0 0 0">
+                    <ComboBox Visibility="{Binding TestingHistoryVisibility}" ItemsSource="{Binding TestingHistory}" SelectedItem="{Binding SelectedTestingHistory, Mode=TwoWay}" DisplayMemberPath="TestingResultName" MaxWidth="{Binding ElementName=helperResTestSelect1, Path=ActualWidth}"/>
+                    <ComboBox Visibility="{Binding TestingSavesVisibility}" ItemsSource="{Binding TestingSaves}" SelectedItem="{Binding SelectedTestingSaves, Mode=TwoWay}" DisplayMemberPath="TestingResultName" MaxWidth="{Binding ElementName=helperResTestSelect1, Path=ActualWidth}"/>
+                </StackPanel>
+                <Button Content="Сохранить" Command="{Binding ButtonTest_Click}" Width="72" Margin="7 0 0 0"/>
+                <Button Content="Удалить" Command="{Binding ButtonTest_Click}" Width="56" Margin="5 0 0 0"/>
             </StackPanel>
             <Grid Visibility="Visible">
                 <Grid.ColumnDefinitions>

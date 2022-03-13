@@ -42,6 +42,11 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        public void MoveTestingResult() //перейти на вкладку результатов тестирования
+        {
+            CurrentPage = _testingResult;
+        }
+
         public ICommand NavigationCreateTesting_Click
         {
             get
@@ -59,7 +64,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    CurrentPage = _testingResult;
+                    MoveTestingResult();
                 }, (obj) => true);
             }
         }

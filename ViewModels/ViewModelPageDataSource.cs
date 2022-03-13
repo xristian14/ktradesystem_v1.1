@@ -535,7 +535,7 @@ namespace ktradesystem.ViewModels
             AddDataSourceFolder = null; //сбрасываем название папки
             FilesUnselected.Clear(); //очищаем список файлы
             FilesSelected.Clear();
-            if (_viewmodelData.StatusBarDataSourceVisibility == Visibility.Visible) //окно было закрыто по нажатию кнопки добавить или по отмене
+            if (ViewmodelData.StatusBarDataSourceVisibility == Visibility.Visible) //окно было закрыто по нажатию кнопки добавить или по отмене
             {
                 ViewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
             }

@@ -126,7 +126,6 @@ namespace ktradesystem.ViewModels
                 {
                     CreateStatusBarDataSourceContent();
                 }));
-                //CreateStatusBarDataSourceContent();
             }
         }
 
@@ -436,7 +435,15 @@ namespace ktradesystem.ViewModels
                 }
                 if (TestingProgress[0].IsFinish) //если тестирование завершено
                 {
-                    //иначе закрываем statusBarTesting, делаем форму активной
+                    if (TestingProgress[0].IsSuccessSimulation) //если симуляция была завершена успешно, переходим на вкладку результаты тестирования
+                    {
+                        ViewModelPageTestingNavigation.getInstance().MoveTestingResult(); //переходим на вкладку результатов тестирования
+                        ViewModelPageTestingResult viewModelPageTestingResult = ViewModelPageTestingResult.getInstance();
+                        viewModelPageTestingResult.SetMenuHistory(); //выбираем меню результатов тестирования: История
+                        viewModelPageTestingResult.SetLastHistoryTestingResult(); //выбираем последний результат тестирования в истории
+                        //выбираем последнее тестирование, первый источник данных, первую тестовую связку и первый тестовый прогон
+                    }
+                    //закрываем statusBarTesting, делаем форму активной
                     StatusBarTestingHide();
                     IsPagesAndMainMenuButtonsEnabled = true;
                     _mainCommunicationChannel.TestingProgress.Clear();

@@ -27,9 +27,9 @@ namespace ktradesystem.ViewModels
             _modelTestingResult = ModelTestingResult.getInstance();
 
             _modelTestingResult.TestingHistoryForSubscribers.CollectionChanged += ModelTestingResult_TestingHistoryCollectionChanged;
-            _modelTestingResult.TestingSavesForSubscribers.CollectionChanged += ModelTestingResult_TestingSavesCollectionChanged;
-
             TestingHistory = _modelTestingResult.TestingHistoryForSubscribers;
+
+            _modelTestingResult.TestingSavesForSubscribers.CollectionChanged += ModelTestingResult_TestingSavesCollectionChanged;
             TestingSaves = _modelTestingResult.TestingSavesForSubscribers;
 
             SelectedResultTestingMenu = ResultTestingMenu[0]; //выбираем пункт меню История
@@ -80,8 +80,8 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        private ObservableCollection<TestingResultHeader> _testingHistory = new ObservableCollection<TestingResultHeader>();
-        public ObservableCollection<TestingResultHeader> TestingHistory //история результатов тестирования
+        private ObservableCollection<TestingHeader> _testingHistory = new ObservableCollection<TestingHeader>();
+        public ObservableCollection<TestingHeader> TestingHistory //история результатов тестирования
         {
             get { return _testingHistory; }
             private set
@@ -92,16 +92,17 @@ namespace ktradesystem.ViewModels
         }
         private void ModelTestingResult_TestingHistoryCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            TestingHistory = (ObservableCollection<TestingResultHeader>)sender;
+            TestingHistory = (ObservableCollection<TestingHeader>)sender;
         }
-        private TestingResultHeader _selectedTestingHistory;
-        public TestingResultHeader SelectedTestingHistory //выбранный результат тестирования из истории
+        private TestingHeader _selectedTestingHistory;
+        public TestingHeader SelectedTestingHistory //выбранный результат тестирования из истории
         {
             get { return _selectedTestingHistory; }
             set
             {
                 _selectedTestingHistory = value;
                 OnPropertyChanged();
+                LoadSelectedTestingResult(); //вызываем загрузку выбраного тестирования
             }
         }
 
@@ -116,8 +117,8 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        private ObservableCollection<TestingResultHeader> _testingSaves = new ObservableCollection<TestingResultHeader>();
-        public ObservableCollection<TestingResultHeader> TestingSaves //сохраненные результаты тестирования
+        private ObservableCollection<TestingHeader> _testingSaves = new ObservableCollection<TestingHeader>();
+        public ObservableCollection<TestingHeader> TestingSaves //сохраненные результаты тестирования
         {
             get { return _testingSaves; }
             private set
@@ -128,16 +129,17 @@ namespace ktradesystem.ViewModels
         }
         private void ModelTestingResult_TestingSavesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            TestingSaves = (ObservableCollection<TestingResultHeader>)sender;
+            TestingSaves = (ObservableCollection<TestingHeader>)sender;
         }
-        private TestingResultHeader _selectedTestingSaves;
-        public TestingResultHeader SelectedTestingSaves //выбранный сохраненный результат тестирования
+        private TestingHeader _selectedTestingSaves;
+        public TestingHeader SelectedTestingSaves //выбранный сохраненный результат тестирования
         {
             get { return _selectedTestingSaves; }
             set
             {
                 _selectedTestingSaves = value;
                 OnPropertyChanged();
+                LoadSelectedTestingResult(); //вызываем загрузку выбраного тестирования
             }
         }
 
@@ -165,6 +167,49 @@ namespace ktradesystem.ViewModels
             if(TestingHistory.Count > 0)
             {
                 SelectedTestingHistory = TestingHistory.Last();
+            }
+        }
+
+        private Testing _testingResult;
+        public Testing TestingResult //результат тестирования
+        {
+            get { return _testingResult; }
+            private set
+            {
+                _testingResult = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public void ResetTestingResult() //обнуляет объект тестирования и очищает поля
+        {
+            TestingResult = null;
+        }
+
+        private void LoadSelectedTestingResult() //загружает выбранный результат тестирования
+        {
+            ResetTestingResult(); //обнуляем объект тестирования и очищаем поля
+            bool isSelectMenuHistory = SelectedResultTestingMenu == ResultTestingMenu[0] ? true : false; //выбрана история или нет, выбрано сохраненные
+            bool isSelectedTesting = false; //выбран ли результат тестирования
+            TestingHeader testingHeader = null; //выбранный результат тестирования
+            if (isSelectMenuHistory) //для списка с историей
+            {
+                isSelectedTesting = SelectedTestingHistory != null ? true : false;
+                testingHeader = SelectedTestingHistory;
+            }
+            else //для списка с сохраненными
+            {
+                isSelectedTesting = SelectedTestingSaves != null ? true : false;
+                testingHeader = SelectedTestingSaves;
+            }
+            //если тестирование выбрано, считываем его
+            if (isSelectedTesting)
+            {
+                Testing testing = _modelTestingResult.LoadTesting(testingHeader);
+                if(testing != null) //если тестирование успешно считано, записываем его и заносим в поля занчения
+                {
+                    TestingResult = testing;
+                }
             }
         }
 

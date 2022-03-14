@@ -33,6 +33,8 @@ namespace ktradesystem.ViewModels
             _mainCommunicationChannel.DataSourceAddingProgress.CollectionChanged += MainCommunicationChannel_DataSourceAddingProgressCollectionChanged;
             _mainCommunicationChannel.TestingProgress.CollectionChanged += MainCommunicationChannel_TestingProgressCollectionChanged;
 
+            MainMessages = _mainCommunicationChannel.MainMessages;
+
             _dataSource = new Views.Pages.PageDataSource();
             _testing = new Views.Pages.PageTestingNavigation();
             CurrentPage = _testing;

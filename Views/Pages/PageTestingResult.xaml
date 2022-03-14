@@ -14,8 +14,8 @@
                 <TextBlock Text="Результат тестирования:" Width="144"/>
                 <ComboBox ItemsSource="{Binding ResultTestingMenu}" SelectedItem="{Binding SelectedResultTestingMenu, Mode=TwoWay}"/>
                 <StackPanel Orientation="Vertical" Margin="7 0 0 0">
-                    <ComboBox Visibility="{Binding TestingHistoryVisibility}" ItemsSource="{Binding TestingHistory}" SelectedItem="{Binding SelectedTestingHistory, Mode=TwoWay}" DisplayMemberPath="TestingResultName" MaxWidth="{Binding ElementName=helperResTestSelect1, Path=ActualWidth}"/>
-                    <ComboBox Visibility="{Binding TestingSavesVisibility}" ItemsSource="{Binding TestingSaves}" SelectedItem="{Binding SelectedTestingSaves, Mode=TwoWay}" DisplayMemberPath="TestingResultName" MaxWidth="{Binding ElementName=helperResTestSelect1, Path=ActualWidth}"/>
+                    <ComboBox Visibility="{Binding TestingHistoryVisibility}" ItemsSource="{Binding TestingHistory}" SelectedItem="{Binding SelectedTestingHistory, Mode=TwoWay}" DisplayMemberPath="TestingName" MaxWidth="{Binding ElementName=helperResTestSelect1, Path=ActualWidth}"/>
+                    <ComboBox Visibility="{Binding TestingSavesVisibility}" ItemsSource="{Binding TestingSaves}" SelectedItem="{Binding SelectedTestingSaves, Mode=TwoWay}" DisplayMemberPath="TestingName" MaxWidth="{Binding ElementName=helperResTestSelect1, Path=ActualWidth}"/>
                 </StackPanel>
                 <Button Content="Сохранить" Command="{Binding ButtonTest_Click}" Width="72" Margin="7 0 0 0"/>
                 <Button Content="Удалить" Command="{Binding ButtonTest_Click}" Width="56" Margin="5 0 0 0"/>
@@ -30,7 +30,7 @@
                 <Grid Grid.Column="1" x:Name="helperResTestSelect1"/>
                 <Grid Grid.Column="2" x:Name="helperResTestSelect2"/>
             </Grid>
-            <StackPanel Orientation="Horizontal" Margin="10 17 0 0" Height="42">
+            <StackPanel Orientation="Horizontal" Margin="10 17 0 0" Height="48">
                 <TextBlock Text="Источники данных:" Width="114" Height="22" VerticalAlignment="Top"/>
                 <ComboBox Width="130" Height="22" VerticalAlignment="Top"/>
                 <TextBlock Text="Тестовая связка:" Width="97" Margin="13 0 0 0" Height="22" VerticalAlignment="Center"/>

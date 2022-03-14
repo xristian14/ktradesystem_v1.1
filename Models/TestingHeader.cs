@@ -7,9 +7,10 @@ using System.Threading.Tasks;
 namespace ktradesystem.Models
 {
     //класс содержит название результата тестирование и дату выполнения тестирования
-    public class TestingResultHeader
+    public class TestingHeader
     {
-        public string TestingResultName { get; set; }
+        public bool IsHistory { get; set; } //результат тестирования из истории или из сохраненных
+        public string TestingName { get; set; }
         public DateTime DateTimeSimulationEnding { get; set; }
     }
 }

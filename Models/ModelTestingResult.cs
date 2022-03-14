@@ -50,9 +50,12 @@ namespace ktradesystem.Models
             }
         }
 
-        private ObservableCollection<TestingResultHeader> _testingHistory = new ObservableCollection<TestingResultHeader>(); //история результатов тестирования
-        private ObservableCollection<TestingResultHeader> _testingHistoryForSubscribers = new ObservableCollection<TestingResultHeader>(); //история результатов тестирования для подписчиков (т.к. при подписке на основной будет ошибка изменения UI компонентов вне основного потока UI)
-        public ObservableCollection<TestingResultHeader> TestingHistoryForSubscribers
+        private string _historyRealivePath = "\\applicationFiles\\testingResults\\history"; //относительный путь к истории результатов
+        private string _savesRealivePath = "\\applicationFiles\\testingResults\\saves"; //относительный путь к сохраненным результатам
+
+        private ObservableCollection<TestingHeader> _testingHistory = new ObservableCollection<TestingHeader>(); //история результатов тестирования
+        private ObservableCollection<TestingHeader> _testingHistoryForSubscribers = new ObservableCollection<TestingHeader>(); //история результатов тестирования для подписчиков (т.к. при подписке на основной будет ошибка изменения UI компонентов вне основного потока UI)
+        public ObservableCollection<TestingHeader> TestingHistoryForSubscribers
         {
             get { return _testingHistoryForSubscribers; }
             private set
@@ -64,15 +67,15 @@ namespace ktradesystem.Models
         public void NotifyTestingHistorySubscribers() //выполняет обновление TestingHistoryForSubscribers, вследствии чего UI обновится на новые данные
         {
             TestingHistoryForSubscribers.Clear();
-            foreach (TestingResultHeader testing in _testingHistory)
+            foreach (TestingHeader testing in _testingHistory)
             {
                 TestingHistoryForSubscribers.Add(testing);
             }
         }
 
-        private ObservableCollection<TestingResultHeader> _testingSaves = new ObservableCollection<TestingResultHeader>(); //история результатов тестирования
-        private ObservableCollection<TestingResultHeader> _testingSavesForSubscribers = new ObservableCollection<TestingResultHeader>(); //история результатов тестирования для подписчиков (т.к. при подписке на основной будет ошибка изменения UI компонентов вне основного потока UI)
-        public ObservableCollection<TestingResultHeader> TestingSavesForSubscribers
+        private ObservableCollection<TestingHeader> _testingSaves = new ObservableCollection<TestingHeader>(); //история результатов тестирования
+        private ObservableCollection<TestingHeader> _testingSavesForSubscribers = new ObservableCollection<TestingHeader>(); //история результатов тестирования для подписчиков (т.к. при подписке на основной будет ошибка изменения UI компонентов вне основного потока UI)
+        public ObservableCollection<TestingHeader> TestingSavesForSubscribers
         {
             get { return _testingSavesForSubscribers; }
             private set
@@ -84,7 +87,7 @@ namespace ktradesystem.Models
         public void NotifyTestingSavesSubscribers() //выполняет обновление _testingSavesForSubscribers, вследствии чего UI обновится на новые данные
         {
             TestingSavesForSubscribers.Clear();
-            foreach (TestingResultHeader testing in _testingSaves)
+            foreach (TestingHeader testing in _testingSaves)
             {
                 TestingSavesForSubscribers.Add(testing);
             }
@@ -101,20 +104,20 @@ namespace ktradesystem.Models
             {
                 Directory.CreateDirectory(currentDirectory + "\\applicationFiles\\testingResults");
             }
-            if(Directory.Exists(currentDirectory + "\\applicationFiles\\testingResults\\history") == false)
+            if(Directory.Exists(currentDirectory + _historyRealivePath) == false)
             {
-                Directory.CreateDirectory(currentDirectory + "\\applicationFiles\\testingResults\\history");
+                Directory.CreateDirectory(currentDirectory + _historyRealivePath);
             }
-            if(Directory.Exists(currentDirectory + "\\applicationFiles\\testingResults\\saves") == false)
+            if(Directory.Exists(currentDirectory + _savesRealivePath) == false)
             {
-                Directory.CreateDirectory(currentDirectory + "\\applicationFiles\\testingResults\\saves");
+                Directory.CreateDirectory(currentDirectory + _savesRealivePath);
             }
         }
 
         public void WriteTestingResult(Testing testing) //записывает результат тестирования в папку с историей результатов тестирования
         {
             CheckFileStructure(); //проверяем существование нужных папок
-            string historyPath = Directory.GetCurrentDirectory() + "\\applicationFiles\\testingResults\\history"; //путь к папке с историей результатов тестирования
+            string historyPath = Directory.GetCurrentDirectory() + _historyRealivePath; //путь к папке с историей результатов тестирования
             DateTime dateTime = testing.DateTimeSimulationEnding; //получаем дату и время завершения выполнения симуляции тестирования
             string day = dateTime.Day.ToString().Length == 2 ? dateTime.Day.ToString() : "0" + dateTime.Day.ToString();
             string month = dateTime.Month.ToString().Length == 2 ? dateTime.Month.ToString() : "0" + dateTime.Month.ToString();
@@ -128,10 +131,10 @@ namespace ktradesystem.Models
                 space += " ";
             }
             string testingDirectoryPath = historyPath + "\\" + timeStr + space + testing.Algorithm.Name; //путь к папке с текущим тестированием
-            testing.TestingResultName = timeStr + space + testing.Algorithm.Name; //название результата тестирования
+            testing.TestingName = timeStr + space + testing.Algorithm.Name; //название результата тестирования
             Directory.CreateDirectory(testingDirectoryPath); //создаем папку с текущим тестированием
-            TestingResultHeader testingResultHeader = new TestingResultHeader { TestingResultName = testing.TestingResultName, DateTimeSimulationEnding = testing.DateTimeSimulationEnding }; //создаем файл с заголовком тестирования, который будет считываться в список результатов тестирования
-            string jsonTestingHeader = JsonSerializer.Serialize(testingResultHeader); //сериализуем
+            TestingHeader testingHeader = new TestingHeader { IsHistory = true, TestingName = testing.TestingName, DateTimeSimulationEnding = testing.DateTimeSimulationEnding }; //создаем файл с заголовком тестирования, который будет считываться в список результатов тестирования
+            string jsonTestingHeader = JsonSerializer.Serialize(testingHeader); //сериализуем
             File.WriteAllText(testingDirectoryPath + "\\testingHeader.json", jsonTestingHeader); //записываем в файл
             string jsonTesting = JsonSerializer.Serialize(testing); //сериализуем объект тестирования
             File.WriteAllText(testingDirectoryPath + "\\testing.json", jsonTesting); //записываем в файл
@@ -305,20 +308,20 @@ namespace ktradesystem.Models
             do
             {
                 iteration++;
-                string testingResultsPath = iteration == 1 ? Directory.GetCurrentDirectory() + "\\applicationFiles\\testingResults\\history" : Directory.GetCurrentDirectory() + "\\applicationFiles\\testingResults\\saves"; //путь к папке с результатами тестирования
+                string testingResultsPath = iteration == 1 ? Directory.GetCurrentDirectory() + _historyRealivePath : Directory.GetCurrentDirectory() + _savesRealivePath; //путь к папке с результатами тестирования
                 string[] testingResultsDirectories = Directory.GetDirectories(testingResultsPath); //получаем массив с каталогами результатов тестирования
                 //проходим по каждому каталогу и пытаемся считать тестирование из него
                 for (int i = 0; i < testingResultsDirectories.Length; i++)
                 {
                     bool isBroken = false; //испорчено ли данное тестирование, нельзя ли его считать
-                    TestingResultHeader testingHeader = new TestingResultHeader();
+                    TestingHeader testingHeader = new TestingHeader();
                     if (File.Exists(testingResultsDirectories[i] + "\\testingHeader.json")) //если файл с сохраненным тестированием существует
                     {
                         //пробуем считать и десериализовать тестирование
                         try
                         {
                             string jsonTestingHeader = File.ReadAllText(testingResultsDirectories[i] + "\\testingHeader.json");
-                            testingHeader = JsonSerializer.Deserialize<TestingResultHeader>(jsonTestingHeader);
+                            testingHeader = JsonSerializer.Deserialize<TestingHeader>(jsonTestingHeader);
                         }
                         catch
                         {
@@ -371,24 +374,12 @@ namespace ktradesystem.Models
             bool isWasDelete = false; //было ли удаление
             TimeSpan timeSpanLife = TimeSpan.FromHours(_modelData.Settings.Where(j => j.Id == 5).First().DoubleValue); //время хранения результатов тестирования
             DateTime dateTimeNow = DateTime.Now; //текущая дата и время
-            foreach(TestingResultHeader testingHeader in _testingHistory)
+            foreach(TestingHeader testingHeader in _testingHistory)
             {
                 if(DateTime.Compare(testingHeader.DateTimeSimulationEnding.Add(timeSpanLife), dateTimeNow) < 0) //если дата звершения симуляции тестирования + срок хранения меньше текущей, значит срок вышел и нужно удалить данный результат тестирования
                 {
-                    //пытаемся удалить данный результат тестирования
-                    bool isDeleteException = false;
-                    try
-                    {
-                        Directory.Delete(Directory.GetCurrentDirectory() + "\\applicationFiles\\testingResults\\history\\" + testingHeader.TestingResultName, true);
-                    }
-                    catch
-                    {
-                        isDeleteException = true;
-                    }
-                    if (isDeleteException == true) //если возникло исключение
-                    {
-                        DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("При попытке удалить результат тестирования " + testingHeader.TestingResultName + " у которого истек срок хранения, возникло исключение."); }));
-                    }
+                    //удаляем данный результат тестирования
+                    DeleteTestingResult(testingHeader);
                     isWasDelete = true;
                 }
             }
@@ -411,6 +402,53 @@ namespace ktradesystem.Models
                 NotifyTestingHistorySubscribers();
                 NotifyTestingSavesSubscribers();
             }));
+        }
+
+        public bool DeleteTestingResult(TestingHeader testingHeader) //удаляет результат тестирования, и возвращает true в случае успешного удаления, и false в случае возникновения исключения
+        {
+            bool isDeleteException = false;
+            try
+            {
+                string testingDirectory = testingHeader.IsHistory ? _historyRealivePath : _savesRealivePath;
+                Directory.Delete(Directory.GetCurrentDirectory() + testingDirectory + "\\" + testingHeader.TestingName, true);
+            }
+            catch
+            {
+                isDeleteException = true;
+            }
+            if (isDeleteException == true) //если возникло исключение
+            {
+                DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("При попытке удалить результат тестирования " + testingHeader.TestingName + " возникло исключение."); }));
+            }
+            return !isDeleteException;
+        }
+
+        public Testing LoadTesting(TestingHeader testingHeader) //считывает и возвращает testing в случе успешного считывания, и null в случае ошибки
+        {
+            string testingDirectory = Directory.GetCurrentDirectory(); //папка с тестированием
+            testingDirectory += testingHeader.IsHistory ? _historyRealivePath : _savesRealivePath;
+            testingDirectory += "\\" + testingHeader.TestingName;
+            Testing testing = null;
+            bool isException = false; //было ли исключение при считывании
+            try
+            {
+                string jsonTesting = File.ReadAllText(testingDirectory + "\\testing.json");
+                testing = JsonSerializer.Deserialize<Testing>(jsonTesting);
+            }
+            catch
+            {
+                isException = true;
+            }
+            if (isException == false) //если считывание прошло успешно
+            {
+                return testing;
+            }
+            else //если было исключение при считывании, удаляем результат тестирования
+            {
+                DeleteTestingResult(testingHeader);
+                ReadAndCheckTestingResults(); //обновляем списки с результатами тестирования
+                return null;
+            }
         }
     }
 }

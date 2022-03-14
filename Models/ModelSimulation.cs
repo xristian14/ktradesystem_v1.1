@@ -226,8 +226,8 @@ namespace ktradesystem.Models
                 scriptAlgorithm.Replace(str + " (", str + "("); //удаляем пробел перед открывающейся скобкой
                 scriptAlgorithm.Replace(str + "( ", str + "("); //удаляем пробел после открывающейся скобки
             }
-            //заменяем ключевые слова на создание заявок, на функцию добавления объекта типа Order в список orders
-            string[] orderCorrectLetters = new string[] { "orders.Add(new Order(1, false,", "orders.Add(new Order(1, true,", "orders.Add(new Order(3, false,", "orders.Add(new Order(3, true,", "orders.Add(new Order(2, false,", "orders.Add(new Order(2, true,", "orders.AddRange(GetStopTake(true,", "orders.AddRange(GetStopTake(false," };
+            //заменяем ключевые слова на создание заявок, на функцию по созданию заявки и добавление её в коллекцию заявок orders
+            string[] orderCorrectLetters = new string[] { "orders.Add(GetOrder(1, false,", "orders.Add(GetOrder(1, true,", "orders.Add(GetOrder(3, false,", "orders.Add(GetOrder(3, true,", "orders.Add(GetOrder(2, false,", "orders.Add(GetOrder(2, true,", "orders.AddRange(GetStopTake(true,", "orders.AddRange(GetStopTake(false," };
             for (int k = 0; k < orderLetters.Length; k++)
             {
                 scriptAlgorithm.Replace(orderLetters[k] + "(", orderCorrectLetters[k]);
@@ -317,6 +317,8 @@ namespace ktradesystem.Models
             Microsoft.CSharp.CSharpCodeProvider providerAlgorithm = new Microsoft.CSharp.CSharpCodeProvider();
             System.CodeDom.Compiler.CompilerParameters paramAlgorithm = new System.CodeDom.Compiler.CompilerParameters();
             paramAlgorithm.ReferencedAssemblies.Add(Assembly.GetExecutingAssembly().Location);
+            paramAlgorithm.ReferencedAssemblies.Add("System.dll");
+            paramAlgorithm.ReferencedAssemblies.Add("System.Core.dll");
             paramAlgorithm.GenerateExecutable = false;
             paramAlgorithm.GenerateInMemory = true;
 
@@ -325,6 +327,8 @@ namespace ktradesystem.Models
                 @"
                 using System;
                 using System.Collections.Generic;
+                using System.Collections.ObjectModel;
+                using System.Linq;
                 using ktradesystem.Models;
                 public class CompiledAlgorithm
                 {
@@ -355,11 +359,25 @@ namespace ktradesystem.Models
                     }
                     public List<Order> GetStopTake(bool direction, DataSourceForCalculate dataSourceForCalculate, double stopPrice, double takePrice, decimal count)
                     {
-                        Order stopOrder = new Order(3, direction, dataSourceForCalculate, stopPrice, count);
-                        Order takeOrder = new Order(1, direction, dataSourceForCalculate, takePrice, count);
+                        Order stopOrder = GetOrder(3, direction, dataSourceForCalculate, stopPrice, count);
+                        Order takeOrder = GetOrder(1, direction, dataSourceForCalculate, takePrice, count);
                         stopOrder.LinkedOrder = takeOrder;
                         takeOrder.LinkedOrder = stopOrder;
                         return new List<Order> { stopOrder, takeOrder };
+                    }
+                    public Order GetOrder(int idTypeOrder, bool direction, DataSourceForCalculate dataSourceForCalculate, double price, decimal count)
+                    {
+                        ModelData modelData = ModelData.getInstance();
+                        Order order = new Order();
+                        order.TypeOrder = modelData.TypeOrders.Where(i => i.Id == idTypeOrder).First();
+                        order.Direction = direction;
+                        order.DataSource = modelData.DataSources.Where(j => j.Id == dataSourceForCalculate.idDataSource).First();
+                        order.IdDataSource = order.DataSource.Id;
+                        order.Price = price;
+                        order.Count = count;
+                        order.StartCount = count;
+
+                        return order;
                     }
                     public CompiledAlgorithm Clone()
                     {
@@ -2603,9 +2621,9 @@ namespace ktradesystem.Models
                 }
             }
             //записываем статистическую значимость
-            string[] totalTests = new string[3] { (lossCount + profitCount).ToString(), "100.0%", (lossMoney + profitMoney).ToString() + testing.DefaultCurrency.Name };
-            string[] lossTests = new string[3] { lossCount.ToString(), Math.Round((double)lossCount / (lossCount + profitCount) * 100, 1).ToString() + "%", lossMoney.ToString() + testing.DefaultCurrency.Name };
-            string[] profitTests = new string[3] { profitCount.ToString(), Math.Round((double)profitCount / (lossCount + profitCount) * 100, 1).ToString() + "%", profitMoney.ToString() + testing.DefaultCurrency.Name };
+            string[] totalTests = new string[3] { ModelFunctions.SplitDigitsInt(lossCount + profitCount), "100.0%", ModelFunctions.SplitDigitsDouble(lossMoney + profitMoney) + " " + testing.DefaultCurrency.Name };
+            string[] lossTests = new string[3] { ModelFunctions.SplitDigitsInt(lossCount), Math.Round((double)lossCount / (lossCount + profitCount) * 100, 1).ToString() + "%", ModelFunctions.SplitDigitsDouble(lossMoney) + " " + testing.DefaultCurrency.Name };
+            string[] profitTests = new string[3] { ModelFunctions.SplitDigitsInt(profitCount), Math.Round((double)profitCount / (lossCount + profitCount) * 100, 1).ToString() + "%", ModelFunctions.SplitDigitsDouble(profitMoney) + " " + testing.DefaultCurrency.Name };
 
             testBatch.StatisticalSignificance.Add(totalTests);
             testBatch.StatisticalSignificance.Add(lossTests);

@@ -10,7 +10,7 @@ using ktradesystem.Models.Datatables;
 namespace ktradesystem.Models
 {
     //хранит таблицы БД, реализует методы работы с БД
-    class ModelData : ModelBase
+    public class ModelData : ModelBase
     {
         private static ModelData _instance;
 

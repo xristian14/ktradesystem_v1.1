@@ -7,7 +7,7 @@ namespace ktradesystem.Models
 {
     public class Order
     {
-        public Order(int idTypeOrder, bool direction, DataSourceForCalculate dataSourceForCalculate, double price, decimal count)
+        /*public Order(int idTypeOrder, bool direction, DataSourceForCalculate dataSourceForCalculate, double price, decimal count)
         {
             _modelData = ModelData.getInstance();
 
@@ -20,7 +20,7 @@ namespace ktradesystem.Models
             StartCount = count;
         }
         [JsonIgnore]
-        private ModelData _modelData;
+        private ModelData _modelData;*/
         public int Number { get; set; } //номер заявки
         public int IdDataSource { get; set; }
         [JsonIgnore]

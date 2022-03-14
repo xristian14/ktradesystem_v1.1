@@ -9,7 +9,7 @@ using System.Windows.Threading;
 
 namespace ktradesystem.Models
 {
-    class ModelBase : INotifyPropertyChanged
+    public class ModelBase : INotifyPropertyChanged
     {
         public ModelBase()
         {

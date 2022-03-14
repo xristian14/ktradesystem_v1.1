@@ -45,6 +45,6 @@ namespace ktradesystem.Models
         public List<int>[] AlgorithmParametersAllIntValues { get; set; }
         public List<double>[] AlgorithmParametersAllDoubleValues { get; set; }
         public DateTime DateTimeSimulationEnding { get; set; } //дата и время завершения выполнения тестирования
-        public string TestingResultName { get; set; } //название результата тестирования
+        public string TestingName { get; set; } //название результата тестирования
     }
 }

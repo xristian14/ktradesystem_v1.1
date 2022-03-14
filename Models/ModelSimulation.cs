@@ -684,6 +684,8 @@ namespace ktradesystem.Models
                         //создаем testBatch
                         TestBatch testBatch = new TestBatch { DataSourceGroup = dataSourceGroup, StatisticalSignificance = new List<string[]>(), IsTopModelDetermining = false, IsTopModelWasFind = false };
 
+                        int testRunNumber = 1; //номер тестового прогона
+
                         //формируем оптимизационные тесты
                         List<TestRun> optimizationTestRuns = new List<TestRun>();
                         for (int i = 0; i < allCombinations.Count; i++)
@@ -722,7 +724,8 @@ namespace ktradesystem.Models
                                 algorithmParameterValues.Add(algorithmParameterValue);
                                 alg++;
                             }
-                            TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = optimizationStartDate, EndPeriod = optimizationEndDate, AlgorithmParameterValues = algorithmParameterValues, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
+                            TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, Account = account, StartPeriod = optimizationStartDate, EndPeriod = optimizationEndDate, AlgorithmParameterValues = algorithmParameterValues, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
+                            testRunNumber++;
                             optimizationTestRuns.Add(testRun);
                         }
                         testBatch.OptimizationTestRuns = optimizationTestRuns;
@@ -747,7 +750,8 @@ namespace ktradesystem.Models
                             depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
 
                             Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = false, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges };
-                            TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
+                            TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
+                            testRunNumber++;
                             //добавляем форвардный тест в testBatch
                             testBatch.ForwardTestRun = testRun;
                         }
@@ -771,7 +775,8 @@ namespace ktradesystem.Models
                             depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
 
                             Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = true, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges };
-                            TestRun testRun = new TestRun { TestBatch = testBatch, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
+                            TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
+                            testRunNumber++;
                             //добавляем форвардный тест с торговлей депозитом в testBatch
                             testBatch.ForwardTestRunDepositTrading = testRun;
                         }

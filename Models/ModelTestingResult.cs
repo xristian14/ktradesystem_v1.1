@@ -346,23 +346,7 @@ namespace ktradesystem.Models
                     }
                     else //иначе удаляем директорию с данным результатом тестирования и сообщаем об этом пользователю
                     {
-                        bool isDeleteException = false;
-                        try
-                        {
-                            Directory.Delete(testingResultsDirectories[i], true);
-                        }
-                        catch
-                        {
-                            isDeleteException = true;
-                        }
-                        if (isDeleteException == false) //если директория успешно удалена
-                        {
-                            DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Результат тестирования: " + testingResultsDirectories[i] + " - поврежден, и был удален."); }));
-                        }
-                        else //если возникло исключение
-                        {
-                            DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Результат тестирования: " + testingResultsDirectories[i] + " - поврежден, и при попытке удалить его возникло исключение."); }));
-                        }
+                        DeleteTestingResultDirectory(testingResultsDirectories[i], true, "Заголовок результата тестирования: " + testingResultsDirectories[i] + " - поврежден, и результат тестирования был удален.", "Заголовок результата тестирования: " + testingResultsDirectories[i] + " - поврежден, и при попытке удалить результат тестирования возникло исключение.");
                     }
                 }
             }
@@ -379,7 +363,10 @@ namespace ktradesystem.Models
                 if(DateTime.Compare(testingHeader.DateTimeSimulationEnding.Add(timeSpanLife), dateTimeNow) < 0) //если дата звершения симуляции тестирования + срок хранения меньше текущей, значит срок вышел и нужно удалить данный результат тестирования
                 {
                     //удаляем данный результат тестирования
-                    DeleteTestingResult(testingHeader);
+                    string testingDirectory = Directory.GetCurrentDirectory(); //папка с тестированием
+                    testingDirectory += testingHeader.IsHistory ? _historyRealivePath : _savesRealivePath;
+                    testingDirectory += "\\" + testingHeader.TestingName;
+                    DeleteTestingResultDirectory(testingDirectory, false, "", "У результата тестирования: " + testingHeader.TestingName + " - истек срок хранения, и при попытке его удалить возникло исключение.");
                     isWasDelete = true;
                 }
             }
@@ -404,26 +391,32 @@ namespace ktradesystem.Models
             }));
         }
 
-        public bool DeleteTestingResult(TestingHeader testingHeader) //удаляет результат тестирования, и возвращает true в случае успешного удаления, и false в случае возникновения исключения
+        public bool DeleteTestingResultDirectory(string directoryPath, bool isSuccessDeleteMessage, string successMessage, string exceptionMessage) //удаляет результат тестирования, и возвращает true в случае успешного удаления, и false в случае возникновения исключения
         {
             bool isDeleteException = false;
             try
             {
-                string testingDirectory = testingHeader.IsHistory ? _historyRealivePath : _savesRealivePath;
-                Directory.Delete(Directory.GetCurrentDirectory() + testingDirectory + "\\" + testingHeader.TestingName, true);
+                Directory.Delete(directoryPath, true);
             }
             catch
             {
                 isDeleteException = true;
             }
-            if (isDeleteException == true) //если возникло исключение
+            if (isDeleteException == false) //если успешно удалено
             {
-                DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("При попытке удалить результат тестирования " + testingHeader.TestingName + " возникло исключение."); }));
+                if (isSuccessDeleteMessage)
+                {
+                    DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage(successMessage); }));
+                }
+            }
+            else //если возникло исключение
+            {
+                DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage(exceptionMessage); }));
             }
             return !isDeleteException;
         }
 
-        public Testing LoadTesting(TestingHeader testingHeader) //считывает и возвращает testing в случе успешного считывания, и null в случае ошибки
+        public Testing LoadTesting(TestingHeader testingHeader) //считывает и возвращает testing в случае успешного считывания, и null в случае ошибки
         {
             string testingDirectory = Directory.GetCurrentDirectory(); //папка с тестированием
             testingDirectory += testingHeader.IsHistory ? _historyRealivePath : _savesRealivePath;
@@ -445,7 +438,7 @@ namespace ktradesystem.Models
             }
             else //если было исключение при считывании, удаляем результат тестирования
             {
-                DeleteTestingResult(testingHeader);
+                DeleteTestingResultDirectory(testingDirectory, true, "Результат тестирования: " + testingHeader.TestingName + " - поврежден, и был удален.", "Результат тестирования: " + testingHeader.TestingName + " - поврежден, и при попытке его удалить возникло исключение.");
                 ReadAndCheckTestingResults(); //обновляем списки с результатами тестирования
                 return null;
             }

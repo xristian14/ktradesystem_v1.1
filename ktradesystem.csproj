@@ -154,6 +154,7 @@
     <Compile Include="ViewModels\AlgorithmParameterView.cs" />
     <Compile Include="ViewModels\AxesParameterSelectView.cs" />
     <Compile Include="ViewModels\DataSourceAccordanceView.cs" />
+    <Compile Include="ViewModels\DataSourceGroupTestingResultCombobox.cs" />
     <Compile Include="ViewModels\DataSourceGroupView.cs" />
     <Compile Include="ViewModels\DataSourcesForAddingDsGroupView.cs" />
     <Compile Include="ViewModels\DataSourceView.cs" />
@@ -162,6 +163,8 @@
     <Compile Include="ViewModels\FilterTopModelView.cs" />
     <Compile Include="ViewModels\IndicatorParameterRangeView.cs" />
     <Compile Include="ViewModels\IndicatorParameterTemplateView.cs" />
+    <Compile Include="ViewModels\TestBatchTestingResultCombobox.cs" />
+    <Compile Include="ViewModels\TestRunTestingResultCombobox.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\ViewModelData.cs" />
     <Compile Include="ViewModels\ViewModelPageDataSource.cs" />

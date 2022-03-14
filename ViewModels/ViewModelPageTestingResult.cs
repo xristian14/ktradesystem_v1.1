@@ -66,6 +66,7 @@ namespace ktradesystem.ViewModels
                 _selectedResultTestingMenu = value;
                 OnPropertyChanged();
                 UpdateTestingComboboxesVisibility();
+                LoadSelectedTestingResult(); //вызываем загрузку выбранного тестирования, т.к. после смены источника (история, сохраненные) нужно обновить форму
             }
         }
 
@@ -181,14 +182,93 @@ namespace ktradesystem.ViewModels
             }
         }
 
+
+        private ObservableCollection<DataSourceGroupTestingResultCombobox> _dataSourceGroupsTestingResultCombobox = new ObservableCollection<DataSourceGroupTestingResultCombobox>();
+        public ObservableCollection<DataSourceGroupTestingResultCombobox> DataSourceGroupsTestingResultCombobox //список с группами источников данных выбранного результата тестирования
+        {
+            get { return _dataSourceGroupsTestingResultCombobox; }
+            private set
+            {
+                _dataSourceGroupsTestingResultCombobox = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private DataSourceGroupTestingResultCombobox _selectedDataSourceGroupTestingResultCombobox;
+        public DataSourceGroupTestingResultCombobox SelectedDataSourceGroupTestingResultCombobox //выбранная группа источников данных выбранного результата тестирования
+        {
+            get { return _selectedDataSourceGroupTestingResultCombobox; }
+            set
+            {
+                _selectedDataSourceGroupTestingResultCombobox = value;
+                OnPropertyChanged();
+                //создаем список тестовых связок выбранной группы источников данных на основе загруженного результата тестирования
+                CreateTestBatchesTestingResultCombobox();
+                if(TestBatchesTestingResultCombobox.Count > 0)
+                {
+                    SelectedTestBatchTestingResultCombobox = TestBatchesTestingResultCombobox.First(); //выбираем первую тестовую связку
+                }
+            }
+        }
+
+        private ObservableCollection<TestBatchTestingResultCombobox> _testBatchesTestingResultCombobox = new ObservableCollection<TestBatchTestingResultCombobox>();
+        public ObservableCollection<TestBatchTestingResultCombobox> TestBatchesTestingResultCombobox //список с тестовыми связками выбранного результата тестирования
+        {
+            get { return _testBatchesTestingResultCombobox; }
+            private set
+            {
+                _testBatchesTestingResultCombobox = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private TestBatchTestingResultCombobox _selectedTestBatchTestingResultCombobox;
+        public TestBatchTestingResultCombobox SelectedTestBatchTestingResultCombobox //выбранная тестовая связка выбранного результата тестирования
+        {
+            get { return _selectedTestBatchTestingResultCombobox; }
+            set
+            {
+                _selectedTestBatchTestingResultCombobox = value;
+                OnPropertyChanged();
+                //создаем список тестовых прогонов выбранной тестовой связки на основе загруженного результата тестирования
+                CreateTestRunsTestingResultCombobox();
+                if(TestRunsTestingResultCombobox.Count > 0)
+                {
+                    SelectedTestRunTestingResultCombobox = TestRunsTestingResultCombobox.First(); //выбираем первый тестовый прогон
+                }
+            }
+        }
+
+        private ObservableCollection<TestRunTestingResultCombobox> _testRunsTestingResultCombobox = new ObservableCollection<TestRunTestingResultCombobox>();
+        public ObservableCollection<TestRunTestingResultCombobox> TestRunsTestingResultCombobox //список с тестовыми прогонами выбранного результата тестирования
+        {
+            get { return _testRunsTestingResultCombobox; }
+            private set
+            {
+                _testRunsTestingResultCombobox = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private TestRunTestingResultCombobox _selectedTestRunTestingResultCombobox;
+        public TestRunTestingResultCombobox SelectedTestRunTestingResultCombobox //выбранный тестовый прогон выбранного результата тестирования
+        {
+            get { return _selectedTestRunTestingResultCombobox; }
+            set
+            {
+                _selectedTestRunTestingResultCombobox = value;
+                OnPropertyChanged();
+            }
+        }
+
         public void ResetTestingResult() //обнуляет объект тестирования и очищает поля
         {
             TestingResult = null;
+            CreateDataSourceGroupsTestingResultCombobox();
         }
 
         private void LoadSelectedTestingResult() //загружает выбранный результат тестирования
         {
-            ResetTestingResult(); //обнуляем объект тестирования и очищаем поля
             bool isSelectMenuHistory = SelectedResultTestingMenu == ResultTestingMenu[0] ? true : false; //выбрана история или нет, выбрано сохраненные
             bool isSelectedTesting = false; //выбран ли результат тестирования
             TestingHeader testingHeader = null; //выбранный результат тестирования
@@ -209,6 +289,104 @@ namespace ktradesystem.ViewModels
                 if(testing != null) //если тестирование успешно считано, записываем его и заносим в поля занчения
                 {
                     TestingResult = testing;
+                    //формируем список с группами источников данных
+                    CreateDataSourceGroupsTestingResultCombobox();
+                    SelectedDataSourceGroupTestingResultCombobox = DataSourceGroupsTestingResultCombobox.First(); //выбираем первую группу источников данных
+                }
+            }
+            else //если результат тестирования не выбран
+            {
+                ResetTestingResult(); //обнуляем объект тестирования и очищаем поля
+            }
+        }
+
+        private void CreateDataSourceGroupsTestingResultCombobox() //создает группы источников данных на основе загруженного результата тестирования
+        {
+            DataSourceGroupsTestingResultCombobox.Clear();
+            if(TestingResult != null)
+            {
+                foreach (DataSourceGroup dataSourceGroup in TestingResult.DataSourceGroups)
+                {
+                    string nameDataSourceGroup = "";
+                    foreach (DataSourceAccordance dataSourceAccordance in dataSourceGroup.DataSourceAccordances)
+                    {
+                        nameDataSourceGroup += nameDataSourceGroup.Length != 0 ? ", " : "";
+                        nameDataSourceGroup += dataSourceAccordance.DataSource.Name;
+                    }
+                    DataSourceGroupsTestingResultCombobox.Add(new DataSourceGroupTestingResultCombobox { DataSourceGroup = dataSourceGroup, NameDataSourceGroup = nameDataSourceGroup });
+                }
+            }
+        }
+
+        private void CreateTestBatchesTestingResultCombobox() //создает список тестовых связок выбранной группы источников данных на основе загруженного результата тестирования
+        {
+            TestBatchesTestingResultCombobox.Clear();
+            if(SelectedDataSourceGroupTestingResultCombobox != null)
+            {
+                foreach (TestBatch testBatch in TestingResult.TestBatches)
+                {
+                    //проверяем совпадение группы истоников данных тествой связки и выбранной группы источников данных
+                    bool isEqual = true;
+                    foreach (DataSourceAccordance dataSourceAccordance in testBatch.DataSourceGroup.DataSourceAccordances)
+                    {
+                        if (SelectedDataSourceGroupTestingResultCombobox.DataSourceGroup.DataSourceAccordances.Where(j => j.DataSource.Id == dataSourceAccordance.DataSource.Id).Any() == false)
+                        {
+                            isEqual = false;
+                        }
+                    }
+                    if (isEqual) //тестовая связка имеет группу источников данных как выбранная группа источников данных
+                    {
+                        DateTime dateTimeStart = testBatch.OptimizationTestRuns[0].StartPeriod; //начало периода тестирования в тестовой связке
+                        DateTime dateTimeEnd = testBatch.ForwardTestRun == null ? testBatch.OptimizationTestRuns[0].EndPeriod : testBatch.ForwardTestRun.EndPeriod; //окончание периода тестирования в тестовой связке (если есть форвардное тестирование, то окончание возьмется из него)
+                        string dateTimeStartStr = dateTimeStart.Day.ToString().Length == 1 ? "0" + dateTimeStart.Day.ToString() : dateTimeStart.Day.ToString();
+                        dateTimeStartStr += dateTimeStart.Month.ToString().Length == 1 ? ".0" + dateTimeStart.Month.ToString() : "." + dateTimeStart.Month.ToString();
+                        dateTimeStartStr += "." + dateTimeStart.Year.ToString();
+
+                        string dateTimeEndStr = dateTimeEnd.Day.ToString().Length == 1 ? "0" + dateTimeEnd.Day.ToString() : dateTimeEnd.Day.ToString();
+                        dateTimeEndStr += dateTimeEnd.Month.ToString().Length == 1 ? ".0" + dateTimeEnd.Month.ToString() : "." + dateTimeEnd.Month.ToString();
+                        dateTimeEndStr += "." + dateTimeEnd.Year.ToString();
+
+                        TestBatchesTestingResultCombobox.Add(new TestBatchTestingResultCombobox { TestBatch = testBatch, NameTestBatch = dateTimeStartStr + " - " + dateTimeEndStr });
+                    }
+                }
+            }
+        }
+
+        private void CreateTestRunsTestingResultCombobox() //создает список тестовых прогонов выбранной тестовой связки на основе загруженного результата тестирования
+        {
+            TestRunsTestingResultCombobox.Clear();
+            if(SelectedTestBatchTestingResultCombobox != null)
+            {
+                //добавляем топ-модель если она есть
+                if (SelectedTestBatchTestingResultCombobox.TestBatch.IsTopModelWasFind)
+                {
+                    TestRunsTestingResultCombobox.Add(new TestRunTestingResultCombobox { TestRun = SelectedTestBatchTestingResultCombobox.TestBatch.TopModelTestRun, NameTestRun = SelectedTestBatchTestingResultCombobox.TestBatch.TopModelTestRun.Number.ToString() + " - топ-модель" });
+                }
+                //добавляем форвардное тестирование
+                if (SelectedTestBatchTestingResultCombobox.TestBatch.ForwardTestRun != null && SelectedTestBatchTestingResultCombobox.TestBatch.IsTopModelWasFind) //если форвардный тест есть, и топ-модель была найдена
+                {
+                    TestRunsTestingResultCombobox.Add(new TestRunTestingResultCombobox { TestRun = SelectedTestBatchTestingResultCombobox.TestBatch.ForwardTestRun, NameTestRun = SelectedTestBatchTestingResultCombobox.TestBatch.ForwardTestRun.Number.ToString() + " - форвардный" });
+                }
+                //добавляем форвардное тестирование с торговлей депозитом
+                if (SelectedTestBatchTestingResultCombobox.TestBatch.ForwardTestRunDepositTrading != null && SelectedTestBatchTestingResultCombobox.TestBatch.IsTopModelWasFind) //если форвардный тест есть, и топ-модель была найдена
+                {
+                    TestRunsTestingResultCombobox.Add(new TestRunTestingResultCombobox { TestRun = SelectedTestBatchTestingResultCombobox.TestBatch.ForwardTestRunDepositTrading, NameTestRun = SelectedTestBatchTestingResultCombobox.TestBatch.ForwardTestRunDepositTrading.Number.ToString() + " - форвардный с торговлей депозитом" });
+                }
+                //добавляем оптимизационные тесты кроме топ-модели
+                foreach (TestRun testRun in SelectedTestBatchTestingResultCombobox.TestBatch.OptimizationTestRuns)
+                {
+                    bool isNotTopModel = true;
+                    if (SelectedTestBatchTestingResultCombobox.TestBatch.IsTopModelWasFind) //если топ-модель была найдена, проверяем не является ли данный testRun топ-моделью
+                    {
+                        if (testRun.Number == SelectedTestBatchTestingResultCombobox.TestBatch.TopModelTestRun.Number)
+                        {
+                            isNotTopModel = false;
+                        }
+                    }
+                    if (isNotTopModel) //если данный testRun не является топ-моделью, добавляем его
+                    {
+                        TestRunsTestingResultCombobox.Add(new TestRunTestingResultCombobox { TestRun = testRun, NameTestRun = testRun.Number.ToString() });
+                    }
                 }
             }
         }

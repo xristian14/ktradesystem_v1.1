@@ -11,6 +11,7 @@ namespace ktradesystem.Models
     {
         [JsonIgnore]
         public TestBatch TestBatch { get; set; }
+        public int Number { get; set; } //номер тестового прогона
         public Account Account { get; set; }
         public DateTime StartPeriod { get; set; }
         public DateTime EndPeriod { get; set; }

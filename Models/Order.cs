@@ -7,20 +7,6 @@ namespace ktradesystem.Models
 {
     public class Order
     {
-        /*public Order(int idTypeOrder, bool direction, DataSourceForCalculate dataSourceForCalculate, double price, decimal count)
-        {
-            _modelData = ModelData.getInstance();
-
-            TypeOrder = _modelData.TypeOrders.Where(i => i.Id == idTypeOrder).First();
-            Direction = direction;
-            DataSource = _modelData.DataSources.Where(j => j.Id == dataSourceForCalculate.idDataSource).First();
-            IdDataSource = DataSource.Id;
-            Price = price;
-            Count = count;
-            StartCount = count;
-        }
-        [JsonIgnore]
-        private ModelData _modelData;*/
         public int Number { get; set; } //номер заявки
         public int IdDataSource { get; set; }
         [JsonIgnore]

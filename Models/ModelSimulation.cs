@@ -332,10 +332,12 @@ namespace ktradesystem.Models
                 using ktradesystem.Models;
                 public class CompiledAlgorithm
                 {
+                    ModelData _modelData;
                     " + dataSourcesForCalculateVariables + @"
                     int MaxOverIndex;
                     public AlgorithmCalculateResult Calculate(AccountForCalculate account, DataSourceForCalculate[] dataSourcesForCalculate, int[] algorithmParametersIntValues, double[] algorithmParametersDoubleValues)
                     {
+                        _modelData = ModelData.getInstance();
                         " + algorithmVariables + @"
                         MaxOverIndex = 0;
                         List<Order> orders = new List<Order>();
@@ -367,11 +369,10 @@ namespace ktradesystem.Models
                     }
                     public Order GetOrder(int idTypeOrder, bool direction, DataSourceForCalculate dataSourceForCalculate, double price, decimal count)
                     {
-                        ModelData modelData = ModelData.getInstance();
                         Order order = new Order();
-                        order.TypeOrder = modelData.TypeOrders.Where(i => i.Id == idTypeOrder).First();
+                        order.TypeOrder = _modelData.TypeOrders.Where(i => i.Id == idTypeOrder).First();
                         order.Direction = direction;
-                        order.DataSource = modelData.DataSources.Where(j => j.Id == dataSourceForCalculate.idDataSource).First();
+                        order.DataSource = _modelData.DataSources.Where(j => j.Id == dataSourceForCalculate.idDataSource).First();
                         order.IdDataSource = order.DataSource.Id;
                         order.Price = price;
                         order.Count = count;

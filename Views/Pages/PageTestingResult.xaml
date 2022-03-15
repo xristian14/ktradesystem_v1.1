@@ -17,7 +17,7 @@
                     <ComboBox Visibility="{Binding TestingHistoryVisibility}" ItemsSource="{Binding TestingHistory}" SelectedItem="{Binding SelectedTestingHistory, Mode=TwoWay}" DisplayMemberPath="TestingName" MaxWidth="{Binding ElementName=helperResTestSelect1, Path=ActualWidth}"/>
                     <ComboBox Visibility="{Binding TestingSavesVisibility}" ItemsSource="{Binding TestingSaves}" SelectedItem="{Binding SelectedTestingSaves, Mode=TwoWay}" DisplayMemberPath="TestingName" MaxWidth="{Binding ElementName=helperResTestSelect1, Path=ActualWidth}"/>
                 </StackPanel>
-                <Button Content="Сохранить" Command="{Binding ButtonTest_Click}" Width="72" Margin="7 0 0 0"/>
+                <Button Content="Сохранить" Command="{Binding ButtonTest_Click}" Width="70" Margin="7 0 0 0"/>
                 <Button Content="Удалить" Command="{Binding ButtonTest_Click}" Width="56" Margin="5 0 0 0"/>
             </StackPanel>
             <Grid Visibility="Visible">

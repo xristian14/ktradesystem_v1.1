@@ -65,5 +65,41 @@ namespace ktradesystem.Models
         {
             return Math.Round(x / m) * m;
         }
+
+        public static double MarginCalculate(TestRun testRun) //возвращает среднее значение маржи. Суммирует значение маржи для каждой сделки, увеличивающей позицию, и делит это значение на количество таких сделок. Сделки, увеличивающие позицию вычисляются по списку сделок. Для каждого источника данных ведется свое значение купленных/проданных для определения того увеличивает данная сделка позицию или уменьшает.
+        {
+            double totalMargin = 0; //суммарное значение маржи для всех сделок, увеличивающих позицию
+            int countDeals = 0; //количество сделок, увеличивающих позицию
+
+            decimal[] lotsCount = new decimal[testRun.TestBatch.DataSourceGroup.DataSourceAccordances.Count]; //количество лотов в открытой позиции для каждого источника данных
+            int[] lotsCountDataSourceId = new int[lotsCount.Length]; //id источников данных, которые соответствуют элементу в lotsCount
+            for(int i = 0; i < lotsCount.Length; i++)
+            {
+                lotsCount[i] = 0; //ставим значение открытой позиции
+                lotsCountDataSourceId[i] = testRun.TestBatch.DataSourceGroup.DataSourceAccordances[i].DataSource.Id; //ставим id источника данных которому соответствует данная открытая позиция
+            }
+            //проходим по всем сделкам
+            foreach (Deal deal in testRun.Account.AllDeals)
+            {
+                //определяем индекс в lotsCountDataSourceId в котором находится id источника данных таое же как в текущей сделке
+                int index = 0;
+                while(lotsCountDataSourceId[index] != deal.IdDataSource)
+                {
+                    index++;
+                }
+                decimal lastLotsCount = lotsCount[index]; //прошлое количество лотов в открытой позиции
+                lotsCount[index] += deal.Order.Direction ? deal.Count : -deal.Count; //если сделка на покупку, добавляем количество лотов, если на продажу вычитаем из открытой позиции
+                if(Math.Abs(lastLotsCount) < Math.Abs(lotsCount[index])) //если прошлый модуль количества лотов меньше текущего, значит текущая сделка увеличила позицию
+                {
+                    //определяем маржу
+                    double dealMargin = deal.DataSource.Instrument.Id == 2 ? deal.DataSource.Cost : deal.Price; //если это фьючерс, устанавливаем стоимость фьючерса, иначе цену с графика
+                    totalMargin += dealMargin;
+                    countDeals++;
+                }
+            }
+
+            double margin = countDeals > 0 ? totalMargin / countDeals : 1; //если количество сделок, увеличивающих позицию больше 0, устанавливаем среднее значение маржи, иначе - 1 (не 0, т.к. будет деление на 0)
+            return margin;
+        }
     }
 }

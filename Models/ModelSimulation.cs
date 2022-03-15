@@ -1484,6 +1484,12 @@ namespace ktradesystem.Models
                         dynamic CompiledAlgorithmCopy = testing.CompiledAlgorithm.Clone();
                         AlgorithmCalculateResult algorithmCalculateResult = CompiledAlgorithmCopy.Calculate(accountForCalculate, dataSourcesForCalculate, algorithmParametersIntValues, algorithmParametersDoubleValues);
                         maxOverIndex = algorithmCalculateResult.OverIndex > maxOverIndex ? algorithmCalculateResult.OverIndex : maxOverIndex; //если првышение индекса больше максимального, обновляем его максимальное значение
+
+                        if(currentDateTime.Hour == 12 && currentDateTime.Minute == 11)
+                        {
+                            int y = 0;
+                        }
+
                         if (maxOverIndex == 0) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
                         {
                             //если это не форвардное тестирование с торговлей депозитом, устанавливаем размер заявок в 1 лот, а так же устанавливаем DateTimeSubmit для заявок
@@ -1497,82 +1503,92 @@ namespace ktradesystem.Models
                                 order.DateTimeSubmit = currentDateTime;
                             }
                             //приводим заявки к виду который прислал пользователь в алгоритме
-                            List<Order> newAccountOrders = new List<Order>(); //новый список с текущими заявками
-                                                                              //проходим по заявкам пользователя, и для каждой ищем совпадение в текущих заявках. Если находим, то добавляем эту заявку в newAccountOrders, и удаляем из заявок пользователя и текущих заявок
-                            List<Order> algorithmCalculateResultOrdersToRemove = new List<Order>(); //заявки пользователя которые нужно удалить
-                            List<Order> testRunOrdersToRemove = new List<Order>(); //текущие заявки которые нужно удалить
-                            for (int i = algorithmCalculateResult.Orders.Count - 1; i >= 0; i--)
+                            //самое самое новое
+                            List<Order> accountOrders = new List<Order>(); //список с текущими выставленными заявками
+                            accountOrders.AddRange(testRun.Account.Orders);
+
+                            List<Order> userOrders = new List<Order>(); //список с заявками пользователя
+                            userOrders.AddRange(algorithmCalculateResult.Orders);
+
+                            List<Order> newOrders = new List<Order>(); //список с новыми выствленными заявками
+                            newOrders.AddRange(algorithmCalculateResult.Orders);
+
+                            //обрабатываем все заявки в accountOrders
+                            int countAccountOrders = accountOrders.Count;
+                            while (countAccountOrders > 0)
                             {
-                                bool isFindInOrders = false;
-                                int orderIndex = 0;
-                                //проходим по всем текущим заявкам
-                                while (isFindInOrders == false && orderIndex < testRun.Account.Orders.Count)
+                                Order accountOrder = accountOrders[0]; //текущая заявка из accountOrders
+                                Order userOrder = null; //совпадающая с accountOrder заявка из userOrders
+                                //ищем в userOrders совпадающую с accountOrder заявку
+                                int userOrderIndex = 0;
+                                while (userOrderIndex < userOrders.Count && userOrder == null)
                                 {
-                                    //если заявка пользователя соответствует заявке из текущих заявок
-                                    bool isEqual = testRun.Account.Orders[orderIndex].DataSource == algorithmCalculateResult.Orders[i].DataSource && testRun.Account.Orders[orderIndex].TypeOrder == algorithmCalculateResult.Orders[i].TypeOrder && testRun.Account.Orders[orderIndex].Direction == algorithmCalculateResult.Orders[i].Direction && testRun.Account.Orders[orderIndex].Price == algorithmCalculateResult.Orders[i].Price && testRun.Account.Orders[orderIndex].Count == algorithmCalculateResult.Orders[i].Count; //проверка на соответстве источника данных, типа заявки, направления, цены, количества
-                                    isEqual = isEqual && ((testRun.Account.Orders[orderIndex].LinkedOrder != null && algorithmCalculateResult.Orders[i].LinkedOrder != null) || (testRun.Account.Orders[orderIndex].LinkedOrder == null && algorithmCalculateResult.Orders[i].LinkedOrder == null)); //проверка на соответствие наличия/отсутствия связаной заявки
+                                    bool isEqual = accountOrder.DataSource == userOrders[userOrderIndex].DataSource && accountOrder.TypeOrder == userOrders[userOrderIndex].TypeOrder && accountOrder.Direction == userOrders[userOrderIndex].Direction && accountOrder.Price == userOrders[userOrderIndex].Price && accountOrder.Count == userOrders[userOrderIndex].Count; //проверка на соответстве источника данных, типа заявки, направления, цены, количества
+                                    isEqual = isEqual && ((accountOrder.LinkedOrder != null && userOrders[userOrderIndex].LinkedOrder != null) || (accountOrder.LinkedOrder == null && userOrders[userOrderIndex].LinkedOrder == null)); //проверка на соответствие наличия/отсутствия связаной заявки
                                     if (isEqual)
                                     {
-                                        isFindInOrders = true;
+                                        userOrder = userOrders[userOrderIndex]; //запоминаем совпадающую с accountOrder заявку
                                     }
                                     else
                                     {
-                                        orderIndex++;
+                                        userOrderIndex++; //увеличиваем индекс заявок пользователя
                                     }
                                 }
-                                //если такая же заявка найдена в текущих, добавляем её в newAccountOrders, и удаляем из заявок пользователя и текущих заявок
-                                if (isFindInOrders)
+                                //если в userOrders есть совпадающая, удаляем совпадающую из userOrders и newOrders, и вставляем в newOrders из accountOrders
+                                if(userOrder != null)
                                 {
-                                    newAccountOrders.Add(testRun.Account.Orders[orderIndex]); //добавляем заявку из текущих в новые текущие заявки
-                                    if (testRun.Account.Orders[orderIndex].LinkedOrder != null)
+                                    userOrders.Remove(userOrder);
+                                    newOrders.Remove(userOrder);
+                                    newOrders.Add(accountOrder);
+                                    //если у accountOrder есть связанная заявка, сравниваем accountOrder.LinkedOrder и userOrder.LinkedOrder
+                                    if (accountOrder.LinkedOrder != null)
                                     {
-                                        newAccountOrders.Add(testRun.Account.Orders[orderIndex].LinkedOrder); //добавляем связанную заявку из текущих в новые текущие
-                                        if (algorithmCalculateResultOrdersToRemove.IndexOf(algorithmCalculateResult.Orders[i].LinkedOrder) == -1) //если такой заявки нет в заявках пользователя для удаления
+                                        bool isEqual = accountOrder.LinkedOrder.DataSource == userOrder.LinkedOrder.DataSource && accountOrder.LinkedOrder.TypeOrder == userOrder.LinkedOrder.TypeOrder && accountOrder.LinkedOrder.Direction == userOrder.LinkedOrder.Direction && accountOrder.LinkedOrder.Price == userOrder.LinkedOrder.Price && accountOrder.LinkedOrder.Count == userOrder.LinkedOrder.Count; //проверка на соответстве источника данных, типа заявки, направления, цены, количества
+                                        if (isEqual)
                                         {
-                                            algorithmCalculateResultOrdersToRemove.Add(algorithmCalculateResult.Orders[i].LinkedOrder); //отмечаем что нужно удалить эту заявку из заявок пользователя
+                                            //если совпадают удаляем из userOrders и newOrders userOrder.LinkedOrder, вставляем в newOrders accountOrder.LinkedOrder, удаляем из accountOrders accountOrder.LinkedOrder
+                                            userOrders.Remove(userOrder.LinkedOrder);
+                                            newOrders.Remove(userOrder.LinkedOrder);
+                                            newOrders.Add(accountOrder.LinkedOrder);
+                                            accountOrders.Remove(accountOrder.LinkedOrder);
                                         }
-                                        if (testRunOrdersToRemove.IndexOf(testRun.Account.Orders[orderIndex].LinkedOrder) == -1) //если такой заявки нет в текущих заявках для удаления
+                                        else
                                         {
-                                            testRunOrdersToRemove.Add(testRun.Account.Orders[orderIndex].LinkedOrder); //отмечаем что нужно удалить эту заявку из текущих заявок
+                                            //если не совпадают, значит свзяанная с accountOrder будет взята из userOrder, и нужно проставить связи между ними (т.к. userOrder.LinkedOrder уже имеется, а accountOrder только что добавлена)
+                                            accountOrder.LinkedOrder.DateTimeRemove = currentDateTime; //т.к. accountOrder.LinkedOrder не совпадает с userOrder.LinkedOrder, accountOrder.LinkedOrder снята, и нужно установить дату снятия
+                                            accountOrder.LinkedOrder = userOrder.LinkedOrder;
+                                            accountOrder.LinkedOrder.LinkedOrder = accountOrder;
                                         }
-                                    }
-                                    //отмечаем что нужно удалить эту заявку из заявок пользователя и из текущих заявок
-                                    if (algorithmCalculateResultOrdersToRemove.IndexOf(algorithmCalculateResult.Orders[i]) == -1) //если такой заявки нет в заявках пользователя для удаления
-                                    {
-                                        algorithmCalculateResultOrdersToRemove.Add(algorithmCalculateResult.Orders[i]); //отмечаем что нужно удалить эту заявку из заявок пользователя
-                                    }
-                                    if (testRunOrdersToRemove.IndexOf(testRun.Account.Orders[orderIndex].LinkedOrder) == -1) //если такой заявки нет в текущих заявках для удаления
-                                    {
-                                        testRunOrdersToRemove.Add(testRun.Account.Orders[orderIndex].LinkedOrder); //отмечаем что нужно удалить эту заявку из текущих заявок
                                     }
                                 }
+                                else
+                                {
+                                    //т.к. в userOrders не была найдена такая заявка, она снята, и нужно установить дату снятия
+                                    accountOrder.DateTimeRemove = currentDateTime;
+                                }
+                                //удаляем из accountOrders accountOrder, т.к. мы её обработали
+                                accountOrders.Remove(accountOrder);
+                                countAccountOrders = accountOrders.Count;
                             }
-                            //удаляем заявки из заявок пользователя
-                            foreach (Order order1 in algorithmCalculateResultOrdersToRemove)
-                            {
-                                algorithmCalculateResult.Orders.Remove(order1);
-                            }
-                            //удаляем заявки из текущих заявок
-                            foreach (Order order1 in testRunOrdersToRemove)
-                            {
-                                testRun.Account.Orders.Remove(order1);
-                            }
-                            //устанавливаем дату снятия заявок для текущих которые не соответствуют заявкам пользователя
-                            foreach (Order order in testRun.Account.Orders)
-                            {
-                                order.DateTimeRemove = currentDateTime;
-                            }
-                            //добавляем новые заявки во все заявки, а так же добавляем номер (оставшиеся заявки пользователя)
+
+                            //проставляем номера новым заявкам и добавляем их в testRun.Account.AllOrders
                             int lastNumber = testRun.Account.AllOrders.Count == 0 ? 0 : testRun.Account.AllOrders.Last().Number; //номер последней заявки
-                            foreach (Order order2 in algorithmCalculateResult.Orders)
+                            foreach (Order order in newOrders)
                             {
-                                testRun.Account.AllOrders.Add(order2);
-                                lastNumber++;
-                                order2.Number = lastNumber;
+                                if(order.Number == 0) //если номер заявки равен 0, значит она новая
+                                {
+                                    lastNumber++;
+                                    order.Number = lastNumber;
+                                    testRun.Account.AllOrders.Add(order);
+                                }
                             }
-                            //добавляем оставшиеся заявки пользователя к новым текущим
-                            newAccountOrders.AddRange(algorithmCalculateResult.Orders);
-                            testRun.Account.Orders = newAccountOrders; //обновляем текущие заявки
+                            //устанавливаем текущие выставленные заявки в newOrders
+                            testRun.Account.Orders = newOrders;
+                            
+                            if(testRun.Account.Orders.Count > 2)
+                            {
+                                int y = 0;
+                            }
 
                             //если на текущей свечке были совершены сделки, проверяем стоп-заявки на исполнение (чтобы если на текущей свечке была открыта позиция, после выставления стоп-заявки проверить её на исполнение на текущей свечке)
                             if (isWereDeals && iteration == 1)
@@ -1626,13 +1642,13 @@ namespace ktradesystem.Models
                 }
             }
             //устанавливаем номера связанных заявок для заявок, имеющих связанные заявки
-            foreach(Order order3 in testRun.Account.AllOrders)
+            /*foreach(Order order3 in testRun.Account.AllOrders)
             {
                 if(order3.LinkedOrder != null)
                 {
                     order3.LinkedOrderNumber = order3.LinkedOrder.Number;
                 }
-            }
+            }*/
             //рассчитываем критерии оценки для данного testRun
             for (int i = 0; i < _modelData.EvaluationCriterias.Count; i++)
             {
@@ -1656,42 +1672,42 @@ namespace ktradesystem.Models
                     " + script + @"
                     return new EvaluationCriteriaValue { DoubleValue = ResultDoubleValue, StringValue = ResultStringValue };
                 }*/
-/*int countWin = 0;
-double totalWin = 0;
-int countLoss = 0;
-double totalLoss = 0;
-double lastDeposit = 0;
-int iteration = 1;
-foreach (List<DepositCurrency> depositCurrencies in testRun.Account.DepositCurrenciesChanges)
-{
-    if (iteration > 1)
-    {
-        double currentDeposit = depositCurrencies.Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit;
-        if (currentDeposit > lastDeposit)
-        {
-            countWin++;
-            totalWin += currentDeposit - lastDeposit;
-        }
-        else
-        {
-            countLoss++;
-            totalLoss += currentDeposit - lastDeposit;
-        }
-    }
-    lastDeposit = depositCurrencies.Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit;
-    iteration++;
-}
-double averageWin = countWin > 0 ? totalWin / countWin : 0;
-double averageLoss = countLoss > 0 ? totalLoss / countLoss : 0;
-ResultDoubleValue = ((averageWin * (countWin - Math.Sqrt(countWin)) - averageLoss * (countLoss + Math.Sqrt(countLoss))) / ModelFunctions.MarginCalculate(testRun)) * 100;
-ResultStringValue = Math.Round(ResultDoubleValue, 1) + " %";
+                /*int countWin = 0;
+                double totalWin = 0;
+                int countLoss = 0;
+                double totalLoss = 0;
+                double lastDeposit = 0;
+                int iteration = 1;
+                foreach (List<DepositCurrency> depositCurrencies in testRun.Account.DepositCurrenciesChanges)
+                {
+                    if (iteration > 1)
+                    {
+                        double currentDeposit = depositCurrencies.Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit;
+                        if (currentDeposit > lastDeposit)
+                        {
+                            countWin++;
+                            totalWin += currentDeposit - lastDeposit;
+                        }
+                        else
+                        {
+                            countLoss++;
+                            totalLoss += currentDeposit - lastDeposit;
+                        }
+                    }
+                    lastDeposit = depositCurrencies.Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit;
+                    iteration++;
+                }
+                double averageWin = countWin > 0 ? totalWin / countWin : 0;
+                double averageLoss = countLoss > 0 ? totalLoss / countLoss : 0;
+                ResultDoubleValue = ((averageWin * (countWin - Math.Sqrt(countWin)) - averageLoss * (countLoss + Math.Sqrt(countLoss))) / ModelFunctions.MarginCalculate(testRun)) * 100;
+                ResultStringValue = Math.Round(ResultDoubleValue, 1) + " %";
 
 
-ResultDoubleValue = (testRun.Account.DepositCurrenciesChanges.Last().Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit - testRun.Account.DepositCurrenciesChanges[0].Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit) / ModelFunctions.MarginCalculate(testRun);
-ResultStringValue = Math.Round(ResultDoubleValue, 1) + " %";*/
+                ResultDoubleValue = (testRun.Account.DepositCurrenciesChanges.Last().Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit - testRun.Account.DepositCurrenciesChanges[0].Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit) / ModelFunctions.MarginCalculate(testRun);
+                ResultStringValue = Math.Round(ResultDoubleValue, 1) + " %";*/
 
 
-
+                ModelFunctions.TestEvaluationCriteria(testRun);
                 //копируем объект скомпилированного критерия оценки, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
                 dynamic CompiledEvaluationCriteriaCopy = testing.CompiledEvaluationCriterias[i].Clone();
                 EvaluationCriteriaValue evaluationCriteriaValue = CompiledEvaluationCriteriaCopy.Calculate(dataSourceCandles, testRun, _modelData.Settings);

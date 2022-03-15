@@ -101,5 +101,38 @@ namespace ktradesystem.Models
             double margin = countDeals > 0 ? totalMargin / countDeals : 1; //если количество сделок, увеличивающих позицию больше 0, устанавливаем среднее значение маржи, иначе - 1 (не 0, т.к. будет деление на 0)
             return margin;
         }
+
+        public static void TestEvaluationCriteria(TestRun testRun)
+        {
+            int countWin = 0;
+            double totalWin = 0;
+            int countLoss = 0;
+            double totalLoss = 0;
+            double lastDeposit = 0;
+            int iteration = 1;
+            foreach (List<DepositCurrency> depositCurrencies in testRun.Account.DepositCurrenciesChanges)
+            {
+                if (iteration > 1)
+                {
+                    double currentDeposit = depositCurrencies.Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit;
+                    if (currentDeposit > lastDeposit)
+                    {
+                        countWin++;
+                        totalWin += currentDeposit - lastDeposit;
+                    }
+                    else
+                    {
+                        countLoss++;
+                        totalLoss += currentDeposit - lastDeposit;
+                    }
+                }
+                lastDeposit = depositCurrencies.Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit;
+                iteration++;
+            }
+            double averageWin = countWin > 0 ? totalWin / countWin : 0;
+            double averageLoss = countLoss > 0 ? totalLoss / countLoss : 0;
+            double ResultDoubleValue = ((averageWin * (countWin - Math.Sqrt(countWin)) - averageLoss * (countLoss + Math.Sqrt(countLoss))) / ModelFunctions.MarginCalculate(testRun)) * 100;
+            string ResultStringValue = Math.Round(ResultDoubleValue, 1) + " %";
+        }
     }
 }

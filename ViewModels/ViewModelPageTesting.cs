@@ -1190,6 +1190,16 @@ namespace ktradesystem.ViewModels
                 }, (obj) => IsAddOrEditAlgorithm());
             }
         }
+        public ICommand AlgorithmPasteAccountIsForwardDepositTrading_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.IsForwardDepositTrading");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
         public ICommand AlgorithmPasteOrderMarketSell_Click
         {
             get

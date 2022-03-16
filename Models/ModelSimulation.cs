@@ -261,6 +261,8 @@ namespace ktradesystem.Models
                 //отправляем пользователю сообщения об ошибке
                 DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Синтаксическая ошибка в скрипте алгоритма: не найдена \";\" после добавления заявки."); }));
             }
+            //сортируем индексы точки с запятой, закрывающей оператор добавления заявки
+            indexesSemicolon.Sort();
             //вставляем закрывающую скобку
             for (int k = indexesSemicolon.Count - 1; k >= 0; k--)
             {
@@ -375,8 +377,14 @@ namespace ktradesystem.Models
                         order.DataSource = _modelData.DataSources.Where(j => j.Id == dataSourceForCalculate.idDataSource).First();
                         order.IdDataSource = order.DataSource.Id;
                         order.Price = price;
-                        order.Count = count;
-                        order.StartCount = count;
+
+                        decimal orderCount = count;
+                        if(order.DataSource.Instrument.Id != 3)
+                        {
+                            orderCount = Math.Truncate(orderCount);
+                        }
+                        order.Count = orderCount;
+                        order.StartCount = orderCount;
 
                         return order;
                     }
@@ -1479,7 +1487,7 @@ namespace ktradesystem.Models
                             dataSourcesForCalculate[i].CurrentCandleIndex = candleIndexes[i];
                         }
 
-                        AccountForCalculate accountForCalculate = new AccountForCalculate { FreeRubleMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, FreeDollarMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit, TakenRubleMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, TakenDollarMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit };
+                        AccountForCalculate accountForCalculate = new AccountForCalculate { FreeRubleMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, FreeDollarMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit, TakenRubleMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, TakenDollarMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit, IsForwardDepositTrading = testRun.Account.IsForwardDepositTrading };
                         //копируем объект скомпилированного алгоритма, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
                         dynamic CompiledAlgorithmCopy = testing.CompiledAlgorithm.Clone();
                         AlgorithmCalculateResult algorithmCalculateResult = CompiledAlgorithmCopy.Calculate(accountForCalculate, dataSourcesForCalculate, algorithmParametersIntValues, algorithmParametersDoubleValues);
@@ -1492,6 +1500,14 @@ namespace ktradesystem.Models
 
                         if (maxOverIndex == 0) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
                         {
+                            //удаляем заявки, количество лотов в которых равно 0
+                            for(int i = algorithmCalculateResult.Orders.Count - 1; i >= 0; i--)
+                            {
+                                if(algorithmCalculateResult.Orders[i].Count == 0)
+                                {
+                                    algorithmCalculateResult.Orders.RemoveAt(i);
+                                }
+                            }
                             //если это не форвардное тестирование с торговлей депозитом, устанавливаем размер заявок в 1 лот, а так же устанавливаем DateTimeSubmit для заявок
                             foreach (Order order in algorithmCalculateResult.Orders)
                             {

@@ -991,7 +991,7 @@ namespace ktradesystem.Models
                     {
                         processorCount = 1;
                     }
-                    processorCount = 1;
+                    //processorCount = 1; //эту строку я использую если нужно проследить выполнение тестового прогона, чтобы не переключаться между другими потоками
                     Task[] tasks = new Task[processorCount]; //задачи
                     Stopwatch stopwatchTestRunsExecution = new Stopwatch();
                     stopwatchTestRunsExecution.Start();
@@ -1649,6 +1649,8 @@ namespace ktradesystem.Models
                     order3.LinkedOrderNumber = order3.LinkedOrder.Number;
                 }
             }*/
+            //устанавливаем значение маржи
+            testRun.Account.Margin = ModelFunctions.MarginCalculate(testRun);
             //рассчитываем критерии оценки для данного testRun
             for (int i = 0; i < _modelData.EvaluationCriterias.Count; i++)
             {
@@ -1672,42 +1674,10 @@ namespace ktradesystem.Models
                     " + script + @"
                     return new EvaluationCriteriaValue { DoubleValue = ResultDoubleValue, StringValue = ResultStringValue };
                 }*/
-                /*int countWin = 0;
-                double totalWin = 0;
-                int countLoss = 0;
-                double totalLoss = 0;
-                double lastDeposit = 0;
-                int iteration = 1;
-                foreach (List<DepositCurrency> depositCurrencies in testRun.Account.DepositCurrenciesChanges)
-                {
-                    if (iteration > 1)
-                    {
-                        double currentDeposit = depositCurrencies.Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit;
-                        if (currentDeposit > lastDeposit)
-                        {
-                            countWin++;
-                            totalWin += currentDeposit - lastDeposit;
-                        }
-                        else
-                        {
-                            countLoss++;
-                            totalLoss += currentDeposit - lastDeposit;
-                        }
-                    }
-                    lastDeposit = depositCurrencies.Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit;
-                    iteration++;
-                }
-                double averageWin = countWin > 0 ? totalWin / countWin : 0;
-                double averageLoss = countLoss > 0 ? totalLoss / countLoss : 0;
-                ResultDoubleValue = ((averageWin * (countWin - Math.Sqrt(countWin)) - averageLoss * (countLoss + Math.Sqrt(countLoss))) / ModelFunctions.MarginCalculate(testRun)) * 100;
-                ResultStringValue = Math.Round(ResultDoubleValue, 1) + " %";
 
 
-                ResultDoubleValue = (testRun.Account.DepositCurrenciesChanges.Last().Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit - testRun.Account.DepositCurrenciesChanges[0].Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit) / ModelFunctions.MarginCalculate(testRun);
-                ResultStringValue = Math.Round(ResultDoubleValue, 1) + " %";*/
+                //ModelFunctions.TestEvaluationCriteria(testRun); //так я отлаживаю критерии оценки
 
-
-                ModelFunctions.TestEvaluationCriteria(testRun);
                 //копируем объект скомпилированного критерия оценки, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
                 dynamic CompiledEvaluationCriteriaCopy = testing.CompiledEvaluationCriterias[i].Clone();
                 EvaluationCriteriaValue evaluationCriteriaValue = CompiledEvaluationCriteriaCopy.Calculate(dataSourceCandles, testRun, _modelData.Settings);

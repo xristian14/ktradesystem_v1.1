@@ -102,7 +102,7 @@ namespace ktradesystem.Models
             return margin;
         }
 
-        public static void TestEvaluationCriteria(TestRun testRun)
+        public static void TestEvaluationCriteria(TestRun testRun) //здесь я отлаживаю скрипты критериев оценки
         {
             int countWin = 0;
             double totalWin = 0;

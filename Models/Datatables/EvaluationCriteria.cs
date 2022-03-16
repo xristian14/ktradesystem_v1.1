@@ -9,6 +9,8 @@ namespace ktradesystem.Models.Datatables
     public class EvaluationCriteria //критерий оценки тестирвоания
     {
         public int Id { get; set; }
+        public int OrderCalculate { get; set; } //порядок вычисления
+        public int OrderView { get; set; } //порядок отображения пользователю
         public string Name { get; set; }
         public string Description { get; set; }
         public string Script { get; set; }

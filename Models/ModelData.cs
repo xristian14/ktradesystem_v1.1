@@ -72,12 +72,14 @@ namespace ktradesystem.Models
             }
 
             //считываем критерии оценки тестирвоания
-            DataTable dataEvaluationCriterias = _database.QuerySelect("SELECT * FROM EvaluationCriterias ORDER BY \"order\"");
+            DataTable dataEvaluationCriterias = _database.QuerySelect("SELECT * FROM EvaluationCriterias ORDER BY \"orderCalculate\"");
             foreach (DataRow row in dataEvaluationCriterias.Rows)
             {
                 EvaluationCriteria evaluationCriteria = new EvaluationCriteria
                 {
                     Id = (int)row.Field<long>("id"),
+                    OrderCalculate = (int)row.Field<long>("orderCalculate"),
+                    OrderView = (int)row.Field<long>("orderView"),
                     Name = row.Field<string>("name"),
                     Description = row.Field<string>("description"),
                     Script = row.Field<string>("script"),

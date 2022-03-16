@@ -1982,7 +1982,7 @@ namespace ktradesystem.ViewModels
 
             //проверка на уникальность названия
             bool isUnique = true;
-            foreach (DataSourceTemplate item in DataSourceTemplates)
+            foreach (DataSourceTemplate item in DataSourceTemplatesView)
             {
                 if (SelectedDataSourceTemplateView != null) //без этой проверки ошибка на обращение null полю, после сохранения
                 {

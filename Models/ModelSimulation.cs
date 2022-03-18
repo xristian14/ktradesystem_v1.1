@@ -1657,14 +1657,6 @@ namespace ktradesystem.Models
                     }
                 }
             }
-            //устанавливаем номера связанных заявок для заявок, имеющих связанные заявки
-            /*foreach(Order order3 in testRun.Account.AllOrders)
-            {
-                if(order3.LinkedOrder != null)
-                {
-                    order3.LinkedOrderNumber = order3.LinkedOrder.Number;
-                }
-            }*/
             //устанавливаем значение маржи
             testRun.Account.Margin = ModelFunctions.MarginCalculate(testRun);
             //рассчитываем критерии оценки для данного testRun

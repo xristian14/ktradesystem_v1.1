@@ -391,6 +391,17 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        private ObservableCollection<TabControlTestingResultItem> _tabControlTestingResultItems = new ObservableCollection<TabControlTestingResultItem>();
+        public ObservableCollection<TabControlTestingResultItem> TabControlTestingResultItems //вкладки
+        {
+            get { return _tabControlTestingResultItems; }
+            private set
+            {
+                _tabControlTestingResultItems = value;
+                OnPropertyChanged();
+            }
+        }
+
         private string _testText;
         public string TestText
         {
@@ -407,7 +418,12 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-
+                    TabControlTestingResultItem tabControlTestingResultItem2 = new TabControlTestingResultItem { Header = "Тестовый прогон", HorizontalStackPanels = new List<StackPanelTestingResult>(), VerticalStackPanels = new List<StackPanelTestingResult>() };
+                    StackPanelTestingResult stackPanelTestingResult1 = new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.PageDataSource() }, new PageItem { Page = new Views.Pages.PageTesting() } } };
+                    StackPanelTestingResult stackPanelTestingResult2 = new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.PageTesting() }, new PageItem { Page = new Views.Pages.PageDataSource() } } };
+                    tabControlTestingResultItem2.VerticalStackPanels.Add(stackPanelTestingResult1);
+                    tabControlTestingResultItem2.VerticalStackPanels.Add(stackPanelTestingResult2);
+                    TabControlTestingResultItems.Add(tabControlTestingResultItem2);
                 }, (obj) => true);
             }
         }

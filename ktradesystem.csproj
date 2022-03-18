@@ -163,6 +163,9 @@
     <Compile Include="ViewModels\FilterTopModelView.cs" />
     <Compile Include="ViewModels\IndicatorParameterRangeView.cs" />
     <Compile Include="ViewModels\IndicatorParameterTemplateView.cs" />
+    <Compile Include="ViewModels\PageItem.cs" />
+    <Compile Include="ViewModels\StackPanelTestingResult.cs" />
+    <Compile Include="ViewModels\TabControlTestingResultItem.cs" />
     <Compile Include="ViewModels\TestBatchTestingResultCombobox.cs" />
     <Compile Include="ViewModels\TestRunTestingResultCombobox.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />

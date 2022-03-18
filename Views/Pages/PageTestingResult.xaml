@@ -5,10 +5,18 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:ktradesystem.Views.Pages"
       mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
+      d:DesignHeight="710" d:DesignWidth="800"
       Title="PageTestingResult" Background="White">
 
     <Grid>
+        <Grid Visibility="Visible">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="108"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0"/>
+            <Grid Grid.Row="1" x:Name="helperTabControlHeight"/>
+        </Grid>
         <StackPanel Orientation="Vertical" Margin="10">
             <StackPanel Orientation="Horizontal" Margin="10 0 0 0">
                 <TextBlock Text="Результат тестирования:" Width="144"/>
@@ -37,6 +45,8 @@
                 <ComboBox ItemsSource="{Binding TestBatchesTestingResultCombobox}" SelectedItem="{Binding SelectedTestBatchTestingResultCombobox, Mode=TwoWay}" DisplayMemberPath="NameTestBatch" Height="22" VerticalAlignment="Center"/>
                 <TextBlock Text="Тестовый прогон:" Width="105" Margin="13 0 0 0" Height="22" VerticalAlignment="Bottom"/>
                 <ComboBox ItemsSource="{Binding TestRunsTestingResultCombobox}" SelectedItem="{Binding SelectedTestRunTestingResultCombobox, Mode=TwoWay}" DisplayMemberPath="NameTestRun" MaxWidth="{Binding ElementName=helperResTestCombobox1, Path=ActualWidth}" Height="22" VerticalAlignment="Bottom"/>
+                <Button Content="Button test" Command="{Binding ButtonTest_Click}" Width="65" Height="22" Margin="10 0 0 0"/>
+                <TextBlock Text="{Binding TestText}"/>
             </StackPanel>
             <Grid Visibility="Visible">
                 <Grid.ColumnDefinitions>
@@ -48,22 +58,70 @@
                 <Grid Grid.Column="1" x:Name="helperResTestCombobox1"/>
                 <Grid Grid.Column="2"/>
             </Grid>
-            <TabControl Margin="0 0 0 0">
-                <TabItem>
-                    <TabItem.Header>Таблицы</TabItem.Header>
-                    <TabItem.Content>
-                        <StackPanel Orientation="Vertical">
-                            <Button Content="Button test" Command="{Binding ButtonTest_Click}" Width="100"/>
-                            <TextBlock Text="{Binding TestText}"/>
-                        </StackPanel>
-                    </TabItem.Content>
-                </TabItem>
-                <TabItem>
-                    <TabItem.Header>Графики</TabItem.Header>
-                    <TabItem.Content>
-                        <StackPanel Orientation="Vertical"></StackPanel>
-                    </TabItem.Content>
-                </TabItem>
+            <TabControl Height="{Binding ElementName=helperTabControlHeight, Path=ActualHeight}" ItemsSource="{Binding TabControlTestingResultItems}">
+                <TabControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Header}"/>
+                    </DataTemplate>
+                </TabControl.ItemTemplate>
+                <TabControl.ContentTemplate>
+                    <DataTemplate>
+                        <ScrollViewer Height="auto" Width="auto" HorizontalAlignment="Left" HorizontalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <!-- Ряды со страницами -->
+                                <ItemsControl ItemsSource="{Binding HorizontalStackPanels}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Vertical"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <ItemsControl ItemsSource="{Binding PageItems}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Frame Content="{Binding Page}" NavigationUIVisibility="Hidden" BorderBrush="#FF00D6EC" BorderThickness="0,0,1.5,1.5"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <!-- /Ряды со страницами -->
+                                <!-- Колонки со страницами -->
+                                <ItemsControl ItemsSource="{Binding VerticalStackPanels}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <ItemsControl ItemsSource="{Binding PageItems}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Vertical"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Frame Content="{Binding Page}" NavigationUIVisibility="Hidden" BorderBrush="#FF00D6EC" BorderThickness="0,0,1.5,1.5"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <!-- /Колонки со страницами -->
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
             </TabControl>
         </StackPanel>
     </Grid>

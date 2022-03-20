@@ -85,7 +85,7 @@
                                                 </ItemsControl.ItemsPanel>
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Frame Content="{Binding Page}" NavigationUIVisibility="Hidden" BorderBrush="#FF00D6EC" BorderThickness="0,0,1.5,1.5"/>
+                                                        <Frame Content="{Binding Page}" NavigationUIVisibility="Hidden"/>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
@@ -110,7 +110,7 @@
                                                 </ItemsControl.ItemsPanel>
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Frame Content="{Binding Page}" NavigationUIVisibility="Hidden" BorderBrush="#FF00D6EC" BorderThickness="0,0,1.5,1.5"/>
+                                                        <Frame Content="{Binding Page}" NavigationUIVisibility="Hidden"/>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>

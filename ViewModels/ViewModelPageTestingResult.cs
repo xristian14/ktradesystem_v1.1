@@ -32,7 +32,9 @@ namespace ktradesystem.ViewModels
             _modelTestingResult.TestingSavesForSubscribers.CollectionChanged += ModelTestingResult_TestingSavesCollectionChanged;
             TestingSaves = _modelTestingResult.TestingSavesForSubscribers;
 
-            SelectedResultTestingMenu = ResultTestingMenu[0]; //выбираем пункт меню История
+            SetMenuHistory(); //выбираем пункт меню История
+
+            CreateTabControlTestingResultItems(); //создаем вкладки со страницами графиков и таблиц
         }
 
         public static ViewModelPageTestingResult getInstance()
@@ -202,6 +204,7 @@ namespace ktradesystem.ViewModels
             {
                 _selectedDataSourceGroupTestingResultCombobox = value;
                 OnPropertyChanged();
+                DataSourceGroupsUpdatePages?.Invoke(); //вызываем методы, обновляющие страницы, отображающие информацию о тестовых связках в рамках определенного источника данных
                 //создаем список тестовых связок выбранной группы источников данных на основе загруженного результата тестирования
                 CreateTestBatchesTestingResultCombobox();
                 if(TestBatchesTestingResultCombobox.Count > 0)
@@ -230,6 +233,7 @@ namespace ktradesystem.ViewModels
             {
                 _selectedTestBatchTestingResultCombobox = value;
                 OnPropertyChanged();
+                TestBatchesUpdatePages?.Invoke(); //вызываем методы, обновляющие страницы, отображающие информацию о конкретной тестовой связке. Обновление 3d графика находится здесь
                 //создаем список тестовых прогонов выбранной тестовой связки на основе загруженного результата тестирования
                 CreateTestRunsTestingResultCombobox();
                 if(TestRunsTestingResultCombobox.Count > 0)
@@ -258,13 +262,14 @@ namespace ktradesystem.ViewModels
             {
                 _selectedTestRunTestingResultCombobox = value;
                 OnPropertyChanged();
+                TestRunsUpdatePages?.Invoke(); //вызываем методы, обновляющие страницы, отображающие информацию о конкретном тестовом прогоне
             }
         }
 
         public void ResetTestingResult() //обнуляет объект тестирования и очищает поля
         {
             TestingResult = null;
-            CreateDataSourceGroupsTestingResultCombobox();
+            CreateDataSourceGroupsTestingResultCombobox(); //создаем группы источников данных на основе загруженного результата тестирования
         }
 
         private void LoadSelectedTestingResult() //загружает выбранный результат тестирования
@@ -289,8 +294,10 @@ namespace ktradesystem.ViewModels
                 if(testing != null) //если тестирование успешно считано, записываем его и заносим в поля занчения
                 {
                     TestingResult = testing;
+
+                    TestingResultUpdatePages?.Invoke(); //вызываем методы, обновляющие страницы, отображающие информацию о тестировании в целом
                     //формируем список с группами источников данных
-                    CreateDataSourceGroupsTestingResultCombobox();
+                    CreateDataSourceGroupsTestingResultCombobox(); //создаем группы источников данных на основе загруженного результата тестирования
                     SelectedDataSourceGroupTestingResultCombobox = DataSourceGroupsTestingResultCombobox.First(); //выбираем первую группу источников данных
                 }
             }
@@ -401,6 +408,21 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        private void CreateTabControlTestingResultItems()
+        {
+            TabControlTestingResultItem tabControlTestingResultItem1 = new TabControlTestingResultItem { Header = "Тестовая связка", HorizontalStackPanels = new List<StackPanelTestingResult>(), VerticalStackPanels = new List<StackPanelTestingResult>() };
+            tabControlTestingResultItem1.HorizontalStackPanels.Add(new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.TestingResultPages.PageTheeDimensionChart() } } });
+            TabControlTestingResultItems.Add(tabControlTestingResultItem1);
+        }
+
+        //делегаты, которые содержат методы страниц или ViewModel страниц которые обновляют информацию или график на странице в соответствии с новым выбранным элементом (TestingResult, или DataSourceGroup, или TestBatch, или TestRun
+        public delegate void UpdatePages();
+
+        public static UpdatePages TestingResultUpdatePages; //методы, обновляющие страницы, отображающие информацию о тестировании в целом
+        public static UpdatePages DataSourceGroupsUpdatePages; //методы, обновляющие страницы, отображающие информацию о тестовых связках в рамках определенного источника данных
+        public static UpdatePages TestBatchesUpdatePages; //методы, обновляющие страницы, отображающие информацию о конкретной тестовой связке. Обновление 3d графика находится здесь
+        public static UpdatePages TestRunsUpdatePages; //методы, обновляющие страницы, отображающие информацию о конкретном тестовом прогоне
 
         private string _testText;
         public string TestText

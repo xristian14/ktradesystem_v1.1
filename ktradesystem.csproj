@@ -202,6 +202,9 @@
     <Compile Include="Views\Pages\PageTestingResult.xaml.cs">
       <DependentUpon>PageTestingResult.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\Pages\TestingResultPages\PageTheeDimensionChart.xaml.cs">
+      <DependentUpon>PageTheeDimensionChart.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ViewAddAlgorithmIndicator.xaml.cs">
       <DependentUpon>ViewAddAlgorithmIndicator.xaml</DependentUpon>
     </Compile>
@@ -305,6 +308,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Pages\PageTestingResult.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Pages\TestingResultPages\PageTheeDimensionChart.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

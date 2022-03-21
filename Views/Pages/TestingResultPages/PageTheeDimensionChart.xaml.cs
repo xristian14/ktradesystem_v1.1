@@ -24,12 +24,8 @@ namespace ktradesystem.Views.Pages.TestingResultPages
         public PageTheeDimensionChart()
         {
             InitializeComponent();
-            ViewModelPageTestingResult.TestBatchesUpdatePages += UpdatePage;
-        }
-
-        public void UpdatePage() //обновляет страницу
-        {
-            
+            ViewModelPageTheeDimensionChart viewModelPageTheeDimensionChart = new ViewModelPageTheeDimensionChart();
+            DataContext = viewModelPageTheeDimensionChart;
         }
     }
 }

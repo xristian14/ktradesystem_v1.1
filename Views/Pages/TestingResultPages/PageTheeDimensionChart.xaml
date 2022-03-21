@@ -7,6 +7,7 @@
       mc:Ignorable="d" 
       d:DesignHeight="610" d:DesignWidth="610"
       Title="PageTheeDimensionChart" Background="White">
+    <!-- Ресурс, который убирает отступ слева для элементов выпадающего меню -->
     <Page.Resources>
         <SolidColorBrush x:Key="MenuItem.Highlight.Background" Color="#3D26A0DA"/>
         <SolidColorBrush x:Key="MenuItem.Highlight.Border" Color="#FF26A0DA"/>
@@ -283,7 +284,7 @@
             </Style.Triggers>
         </Style>
     </Page.Resources>
-    <Grid Width="580" Height="580" Background="#FFF9F9F9">
+    <Grid Width="600" Height="600" Background="#FFF9F9F9">
         <Grid Margin="5" Background="White">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
@@ -291,18 +292,29 @@
             </Grid.RowDefinitions>
             <StackPanel Orientation="Vertical" Grid.Row="0" Background="White">
                 <StackPanel Orientation="Vertical" Background="#FFEFEFEF">
-                    <TextBlock Text="График оптимизационных тестов" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Диаграмма оптимизационных тестов" FontWeight="Bold" HorizontalAlignment="Center"/>
                 </StackPanel>
                 <StackPanel Margin="0 5 0 0" Orientation="Horizontal">
                     <Button Content="Сбросить вращение" Width="125"/>
-                    <Menu Width="123" Margin="5 0 0 0">
+                    <Menu Width="124" Margin="5 0 0 0">
                         <MenuItem Header="Критерии оценки ⯆" Style="{DynamicResource MenuItemStyle1}">
                             <Button Content="Сбросить"/>
                             <CheckBox Content="Чистая прибыль и убытки"/>
                             <CheckBox Content="Доходность на маржу"/>
                         </MenuItem>
                     </Menu>
-                    <Menu Width="170" Margin="5 0 0 0">
+                    <Menu Width="148" Margin="5 0 0 0">
+                        <MenuItem Header="Уровни на диаграмме ⯆" Style="{DynamicResource MenuItemStyle1}">
+                            <Button Content="Добавить"/>
+                            <ComboBox/>
+                            <ComboBox/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="20" Margin="5 0 0 0"/>
+                                <Button Content="Удалить" Margin="5 0 0 0"/>
+                            </StackPanel>
+                        </MenuItem>
+                    </Menu>
+                    <Menu Width="171" Margin="5 0 0 0">
                         <MenuItem Header="Оси поисковой плоскости ⯆" Style="{DynamicResource MenuItemStyle1}">
                             <Button Content="Сбросить"/>
                             <ComboBox/>
@@ -310,10 +322,13 @@
                         </MenuItem>
                     </Menu>
                 </StackPanel>
+                <StackPanel Margin="0 5 0 0" Orientation="Horizontal">
+                    <CheckBox Content="Выделить плоскости поиска"/>
+                </StackPanel>
             </StackPanel>
             <Viewport3D Grid.Row="1">
                 <Viewport3D.Camera>
-                    <PerspectiveCamera Position="0.5,0.5,3.5" LookDirection="0,0,-3.5"  />
+                    <OrthographicCamera Position="1,1,100" LookDirection="0,0,-100" />
                 </Viewport3D.Camera>
                 <Viewport3D.Children>
                     <ModelVisual3D>
@@ -321,21 +336,37 @@
                             <DirectionalLight Color="White" Direction="-1,-1,-2" />
                         </ModelVisual3D.Content>
                     </ModelVisual3D>
+                    <ModelVisual3D Content="{Binding ModelVisual3D}"></ModelVisual3D>
                     <ModelVisual3D>
                         <ModelVisual3D.Content>
-                            <GeometryModel3D>
-                                <GeometryModel3D.Geometry>
-                                    <MeshGeometry3D Positions="0,0,0 1,0,0 0,1,0 1,1,0 
+                            <Model3DGroup>
+                                <GeometryModel3D>
+                                    <GeometryModel3D.Geometry>
+                                        <MeshGeometry3D Positions="0.3,0.3,0.3 1.3,0.3,0.3 0.3,1.3,0.3 1.3,1.3,0.3 
+                      0.3,0.3,1.3 1.3,0.3,1.3 0.3,1.3,1.3 1.3,1.3,1.3"
+ TriangleIndices="0,2,1 1,2,3 0,4,2 2,4,6 
+                  0,1,4 1,5,4 1,7,5 1,3,7
+                  4,5,6 7,6,5 2,6,3 3,6,7" Normals="0,1,0 0,1,0 1,0,0 1,0,0
+                 0,1,0 0,1,0 1,0,0 1,0,0"/>
+                                    </GeometryModel3D.Geometry>
+                                    <GeometryModel3D.Material>
+                                        <DiffuseMaterial Brush="#295F5FFF"/>
+                                    </GeometryModel3D.Material>
+                                </GeometryModel3D>
+                                <GeometryModel3D>
+                                    <GeometryModel3D.Geometry>
+                                        <MeshGeometry3D Positions="0,0,0 1,0,0 0,1,0 1,1,0 
                       0,0,1 1,0,1 0,1,1 1,1,1"
  TriangleIndices="0,2,1 1,2,3 0,4,2 2,4,6 
                   0,1,4 1,5,4 1,7,5 1,3,7
                   4,5,6 7,6,5 2,6,3 3,6,7" Normals="0,1,0 0,1,0 1,0,0 1,0,0
                  0,1,0 0,1,0 1,0,0 1,0,0"/>
-                                </GeometryModel3D.Geometry>
-                                <GeometryModel3D.Material>
-                                    <DiffuseMaterial Brush="Blue" />
-                                </GeometryModel3D.Material>
-                            </GeometryModel3D>
+                                    </GeometryModel3D.Geometry>
+                                    <GeometryModel3D.Material>
+                                        <DiffuseMaterial Brush="#295F5FFF"/>
+                                    </GeometryModel3D.Material>
+                                </GeometryModel3D>
+                            </Model3DGroup>
                         </ModelVisual3D.Content>
                         <ModelVisual3D.Transform>
                             <RotateTransform3D>

@@ -3298,12 +3298,15 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private void CreateEvaluationCriteriasView()
+        private void CreateEvaluationCriteriasView() //создает критерии оценки для представления. Добавляет только те, которые имеют числовое значение
         {
             EvaluationCriteriasView.Clear();
             foreach (EvaluationCriteria evaluationCriteria in EvaluationCriterias)
             {
-                EvaluationCriteriasView.Add(new EvaluationCriteriaView { EvaluationCriteria = evaluationCriteria, Name = evaluationCriteria.Name });
+                if (evaluationCriteria.IsDoubleValue)
+                {
+                    EvaluationCriteriasView.Add(new EvaluationCriteriaView { EvaluationCriteria = evaluationCriteria, Name = evaluationCriteria.Name });
+                }
             }
             SelectedCompareSignsEvaluationCriteria = CompareSignsEvaluationCriteria[0];
         }

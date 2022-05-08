@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Threading;
-using System.Threading;
 
 namespace ktradesystem.ViewModels
 {

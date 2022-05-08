@@ -10,6 +10,8 @@ using System.Collections.ObjectModel;
 using System.Windows.Media.Media3D;
 using ktradesystem.Models;
 using ktradesystem.Models.Datatables;
+using System.Collections.Specialized;
+using System.ComponentModel;
 
 namespace ktradesystem.ViewModels
 {
@@ -18,6 +20,8 @@ namespace ktradesystem.ViewModels
         public ViewModelPageTheeDimensionChart()
         {
             ViewModelPageTestingResult.TestBatchesUpdatePages += UpdatePage;
+            CreateEvaluationCriteriasPageThreeDimensionChart(); //создаем критерии оценки для меню выбора критериев оценки
+            CreateLevelsPageThreeDimensionChart(); //создаем кнопку добавить для меню уровней
         }
 
         private TestBatch _testBatch; //тестовая связка, на основании которой будет строиться график
@@ -162,6 +166,46 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        private ObservableCollection<LevelPageThreeDimensionChart> _levelsPageThreeDimensionChart = new ObservableCollection<LevelPageThreeDimensionChart>(); //уровни на графике
+        public ObservableCollection<LevelPageThreeDimensionChart> LevelsPageThreeDimensionChart
+        {
+            get { return _levelsPageThreeDimensionChart; }
+            private set
+            {
+                _levelsPageThreeDimensionChart = value;
+                OnPropertyChanged();
+            }
+        }
+        public void CreateLevelsPageThreeDimensionChart() //создает уровни. В данном случае только один - кнопку добавить уровень.
+        {
+            LevelsPageThreeDimensionChart.Clear();
+            LevelsPageThreeDimensionChart.Add(LevelPageThreeDimensionChart.CreateButtonAddLevel(LevelPageThreeDimensionChart_PropertyChanged));
+        }
+
+        public void LevelPageThreeDimensionChart_PropertyChanged(LevelPageThreeDimensionChart levelPageThreeDimensionChart, string propertyName, string propertyValue)
+        {
+            if(propertyName == "IsButtonAddLevelChecked") //если была переключена кнопка: Добавить уровень
+            {
+                if(propertyValue == "True") //если кнопка в состоянии true, добавляем уровень
+                {
+                    LevelsPageThreeDimensionChart.Add(LevelPageThreeDimensionChart.CreateLevel(LevelPageThreeDimensionChart_PropertyChanged, -50, 50, 0));
+                    levelPageThreeDimensionChart.IsButtonAddLevelChecked = false;
+                }
+            }
+            if(propertyName == "IsDeleteChecked") //если была переключена кнопка: Удалить, удаляем уровень
+            {
+                LevelsPageThreeDimensionChart.Remove(levelPageThreeDimensionChart);
+            }
+        }
+
+
+
+
+
+
+
+
+
         public void UpdatePage() //обновляет страницу
         {
             if(ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox != null)
@@ -170,6 +214,16 @@ namespace ktradesystem.ViewModels
             }
         }
         public ICommand ResetCamera_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    CreateEvaluationCriteriasPageThreeDimensionChart();
+                }, (obj) => true);
+            }
+        }
+        public ICommand ResetEvaluationCriterias_Click
         {
             get
             {

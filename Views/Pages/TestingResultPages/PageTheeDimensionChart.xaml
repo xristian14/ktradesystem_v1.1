@@ -296,11 +296,11 @@
                 </StackPanel>
                 <StackPanel Margin="0 5 0 0" Orientation="Horizontal">
                     <Menu Width="124">
-                        <MenuItem ItemsSource="{Binding EvaluationCriteriasPageThreeDimensionChart}" Header="Критерии оценки ⯆" Style="{DynamicResource MenuItemStyle1}">
+                        <MenuItem ItemsSource="{Binding EvaluationCriteriasPageThreeDimensionChart}" Header="Критерии оценки ⯆" Style="{DynamicResource MenuItemStyle1}" StaysOpenOnClick="True">
                             <MenuItem.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Vertical">
-                                        <Button Content="Сбросить критерии оценки" Width="200" Command="{Binding ResetCamera_Click}" Visibility="{Binding ButtonResetVisibility}" HorizontalAlignment="Left"/>
+                                        <Button Content="Сбросить критерии оценки" Width="200" Command="{Binding ResetEvaluationCriterias_Click}" Visibility="{Binding ButtonResetVisibility}" HorizontalAlignment="Left"/>
                                         <CheckBox Content="{Binding EvaluationCriteria.Name}" IsChecked="{Binding IsChecked, Mode=TwoWay}" Visibility="{Binding CheckBoxVisibility}"/>
                                     </StackPanel>
                                 </DataTemplate>
@@ -308,18 +308,29 @@
                         </MenuItem>
                     </Menu>
                     <Menu Width="148" Margin="5 0 0 0">
-                        <MenuItem Header="Уровни на диаграмме ⯆" Style="{DynamicResource MenuItemStyle1}">
-                            <Button Content="Добавить"/>
-                            <ComboBox/>
-                            <ComboBox/>
+                        <MenuItem ItemsSource="{Binding LevelsPageThreeDimensionChart}" Header="Уровни на диаграмме ⯆" Style="{DynamicResource MenuItemStyle1}" StaysOpenOnClick="True">
+                            <MenuItem.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical">
+                                        <ToggleButton Content="Добавить" IsChecked="{Binding IsButtonAddLevelChecked, Mode=TwoWay}" Visibility="{Binding ButtonAddLevelVisibility}" HorizontalAlignment="Left"/>
+                                        <StackPanel Orientation="Horizontal" Visibility="{Binding DataLevelVisibility}" HorizontalAlignment="Left">
+                                            <Slider Minimum="{Binding MinValue, Mode=TwoWay}" Maximum="{Binding MaxValue, Mode=TwoWay}" Value="{Binding Value, Mode=TwoWay}" Width="200"/>
+                                            <TextBlock Text="{Binding Value, Mode=OneWay}" Margin="5 0 0 0"/>
+                                            <ToggleButton Content="Удалить" IsChecked="{Binding IsDeleteChecked, Mode=TwoWay}" Margin="5 0 0 0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </MenuItem.ItemTemplate>
+                            <!--<Button Content="Добавить"/>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="20" Margin="5 0 0 0"/>
-                                <Button Content="Удалить" Margin="5 0 0 0"/>
-                            </StackPanel>
+                                <Slider Minimum="{Binding MinValue, Mode=TwoWay}" Maximum="{Binding MaxValue, Mode=TwoWay}" Value="{Binding Value, Mode=TwoWay}" Width="140"/>
+                                <TextBlock Text="{Binding Value, Mode=OneWay}" Margin="5 0 0 0"/>
+                                <ToggleButton Content="Удалить" IsChecked="{Binding IsChecked, Mode=TwoWay}" Margin="5 0 0 0"/>
+                            </StackPanel>-->
                         </MenuItem>
                     </Menu>
                     <Menu Width="171" Margin="5 0 0 0">
-                        <MenuItem Header="Оси поисковой плоскости ⯆" Style="{DynamicResource MenuItemStyle1}">
+                        <MenuItem Header="Оси поисковой плоскости ⯆" Style="{DynamicResource MenuItemStyle1}" StaysOpenOnClick="True">
                             <Button Content="Сбросить"/>
                             <ComboBox/>
                             <ComboBox/>
@@ -328,7 +339,7 @@
                 </StackPanel>
                 <StackPanel Margin="0 5 0 0" Orientation="Horizontal">
                     <Button Content="Сбросить вращение" Command="{Binding ResetCamera_Click}" Width="122"/>
-                    <CheckBox Content="Выделить плоскости поиска" Margin="5 0 0 0"/>
+                    <CheckBox Content="Выделить плоскости поиска" IsChecked="{Binding ButtonAddLevelIsChecked, Mode=TwoWay}" Margin="5 0 0 0"/>
                 </StackPanel>
             </StackPanel>
             <Viewport3D Grid.Row="1">

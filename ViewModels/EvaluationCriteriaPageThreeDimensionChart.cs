@@ -8,7 +8,7 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.ViewModels
 {
-    //класс соедржит критерий оценки и выбран ли он. Используется в трехмерном графике для определяния выбранных для отображения критериев оценки на графике
+    //класс содержит критерий оценки и выбран ли он. Используется в трехмерном графике для определяния выбранных для отображения критериев оценки на графике
     public class EvaluationCriteriaPageThreeDimensionChart
     {
         public Visibility ButtonResetVisibility { get; set; } //видимость кнопки сбросить критерии оценки

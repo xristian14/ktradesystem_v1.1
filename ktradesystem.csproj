@@ -164,6 +164,7 @@
     <Compile Include="ViewModels\FilterTopModelView.cs" />
     <Compile Include="ViewModels\IndicatorParameterRangeView.cs" />
     <Compile Include="ViewModels\IndicatorParameterTemplateView.cs" />
+    <Compile Include="ViewModels\LevelPageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\PageItem.cs" />
     <Compile Include="ViewModels\StackPanelTestingResult.cs" />
     <Compile Include="ViewModels\TabControlTestingResultItem.cs" />

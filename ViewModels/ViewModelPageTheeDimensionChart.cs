@@ -20,9 +20,6 @@ namespace ktradesystem.ViewModels
         public ViewModelPageTheeDimensionChart()
         {
             ViewModelPageTestingResult.TestBatchesUpdatePages += UpdatePage;
-            CreateEvaluationCriteriasPageThreeDimensionChart(); //создаем критерии оценки для меню выбора критериев оценки
-            LevelsPageThreeDimensionChart.Clear();
-            LevelsPageThreeDimensionChart.Add(LevelPageThreeDimensionChart.CreateButtonAddLevel(LevelPageThreeDimensionChart_PropertyChanged)); //создаем кнопку добавить для меню уровней
         }
 
         private TestBatch _testBatch; //тестовая связка, на основании которой будет строиться график
@@ -218,17 +215,31 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
+        public void EvaluationCriteriasPageThreeDimensionChart_PropertyChanged(EvaluationCriteriaPageThreeDimensionChart evaluationCriteriaPageThreeDimensionChart, string propertyName) //обработчик изменения свойств у объектов в EvaluationCriteriasPageThreeDimensionChart
+        {
+            if(propertyName == "IsButtonResetChecked") //если была переключена кнопка: Сбросить критерии оценки
+            {
+                if (evaluationCriteriaPageThreeDimensionChart.IsButtonResetChecked)
+                {
+                    evaluationCriteriaPageThreeDimensionChart.IsButtonResetChecked = false;
+                }
+            }
+            if(propertyName == "IsChecked") //если был переключен чекбокс
+            {
+                
+            }
+        }
         private void CreateEvaluationCriteriasPageThreeDimensionChart() //создает критерии оценки для представления. Добавляет только те, которые имеют числовое значение
         {
             EvaluationCriteriasPageThreeDimensionChart.Clear();
-            EvaluationCriteriasPageThreeDimensionChart.Add(new EvaluationCriteriaPageThreeDimensionChart { ButtonResetVisibility = Visibility.Visible, CheckBoxVisibility=Visibility.Collapsed }); //добавляем кнопку сбросить критерии оценки
+            EvaluationCriteriasPageThreeDimensionChart.Add(EvaluationCriteriaPageThreeDimensionChart.CreateButtonReset(EvaluationCriteriasPageThreeDimensionChart_PropertyChanged)); //добавляем кнопку сбросить критерии оценки
 
             //добавляем критерии оценки
             foreach (EvaluationCriteria evaluationCriteria in ViewModelPageTesting.getInstance().EvaluationCriterias)
             {
                 if (evaluationCriteria.IsDoubleValue)
                 {
-                    EvaluationCriteriasPageThreeDimensionChart.Add(new EvaluationCriteriaPageThreeDimensionChart { EvaluationCriteria = evaluationCriteria, IsChecked = false, ButtonResetVisibility = Visibility.Collapsed, CheckBoxVisibility = Visibility.Visible });
+                    EvaluationCriteriasPageThreeDimensionChart.Add(EvaluationCriteriaPageThreeDimensionChart.CreateEvaluationCriteria(EvaluationCriteriasPageThreeDimensionChart_PropertyChanged, evaluationCriteria));
                 }
             }
         }
@@ -243,8 +254,7 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-
-        public void LevelPageThreeDimensionChart_PropertyChanged(LevelPageThreeDimensionChart levelPageThreeDimensionChart, string propertyName)
+        public void LevelPageThreeDimensionChart_PropertyChanged(LevelPageThreeDimensionChart levelPageThreeDimensionChart, string propertyName)//обработчик изменения свойств у объектов в LevelsPageThreeDimensionChart
         {
             if(propertyName == "IsButtonAddLevelChecked") //если была переключена кнопка: Добавить уровень
             {
@@ -260,6 +270,58 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        private ObservableCollection<AxisSearchPlanePageThreeDimensionChart> _axesSearchPlanePageThreeDimensionChart = new ObservableCollection<AxisSearchPlanePageThreeDimensionChart>(); //оси плоскости поиска топ-модели
+        public ObservableCollection<AxisSearchPlanePageThreeDimensionChart> AxesSearchPlanePageThreeDimensionChart
+        {
+            get { return _axesSearchPlanePageThreeDimensionChart; }
+            private set
+            {
+                _axesSearchPlanePageThreeDimensionChart = value;
+                OnPropertyChanged();
+            }
+        }
+        public void AxesSearchPlanePageThreeDimensionChart_PropertyChanged(AxisSearchPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart, string propertyName) //обработчик изменения свойств у объектов в AxesSearchPlanePageThreeDimensionChart
+        {
+            if (propertyName == "IsButtonResetChecked") //если была переключена кнопка: Сбросить критерии оценки
+            {
+                if (axisSearchPlanePageThreeDimensionChart.IsButtonResetChecked)
+                {
+                    axisSearchPlanePageThreeDimensionChart.IsButtonResetChecked = false;
+                }
+            }
+            if (propertyName == "SelectedAlgorithmParameter") //если был переключен чекбокс
+            {
+
+            }
+        }
+        private void CreateAxesSearchPlanePageThreeDimensionChart() //создает элементы для меню выбора осей плоскости поиска топ-модели
+        {
+            AxesSearchPlanePageThreeDimensionChart.Clear();
+            AxesSearchPlanePageThreeDimensionChart.Add(AxisSearchPlanePageThreeDimensionChart.CreateButtonReset(AxesSearchPlanePageThreeDimensionChart_PropertyChanged)); //добавляем кнопку сбросить
+
+            //добавляем чекбоксы для осей
+            List<AlgorithmParameter> algorithmParametersFirst = new List<AlgorithmParameter>();
+            List<AlgorithmParameter> algorithmParametersSecond = new List<AlgorithmParameter>();
+            foreach (AlgorithmParameterValue algorithmParameterValue in _testBatch.OptimizationTestRuns[0].AlgorithmParameterValues)
+            {
+                algorithmParametersFirst.Add(algorithmParameterValue.AlgorithmParameter);
+                algorithmParametersSecond.Add(algorithmParameterValue.AlgorithmParameter);
+            }
+
+            if(_testBatch.OptimizationTestRuns[0].AlgorithmParameterValues.Count == 1) //если параметр алгоритма только один
+            {
+                AxesSearchPlanePageThreeDimensionChart.Add(AxisSearchPlanePageThreeDimensionChart.CreateAxisSearchPlane(AxesSearchPlanePageThreeDimensionChart_PropertyChanged, algorithmParametersFirst, 0));
+            }
+            else //иначе их два или более
+            {
+                //определяем индекс первого параметра оси плоскости поиска
+                int indexFirstParameter = algorithmParametersFirst.IndexOf(algorithmParametersFirst.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter.Id).First());
+                AxesSearchPlanePageThreeDimensionChart.Add(AxisSearchPlanePageThreeDimensionChart.CreateAxisSearchPlane(AxesSearchPlanePageThreeDimensionChart_PropertyChanged, algorithmParametersFirst, indexFirstParameter)); //добавляем чекбокс первой оси в меню выбора осей плоскости поиска
+                //определяем индекс второго параметра оси плоскости поиска
+                int indexSecondParameter = algorithmParametersSecond.IndexOf(algorithmParametersSecond.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter.Id).First());
+                AxesSearchPlanePageThreeDimensionChart.Add(AxisSearchPlanePageThreeDimensionChart.CreateAxisSearchPlane(AxesSearchPlanePageThreeDimensionChart_PropertyChanged, algorithmParametersSecond, indexSecondParameter)); //добавляем чекбокс второй оси в меню выбора осей плоскости поиска
+            }
+        }
 
 
 
@@ -273,6 +335,10 @@ namespace ktradesystem.ViewModels
             if(ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox != null)
             {
                 _testBatch = ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox.TestBatch;
+                CreateEvaluationCriteriasPageThreeDimensionChart(); //создаем критерии оценки для меню выбора критериев оценки
+                LevelsPageThreeDimensionChart.Clear();
+                LevelsPageThreeDimensionChart.Add(LevelPageThreeDimensionChart.CreateButtonAddLevel(LevelPageThreeDimensionChart_PropertyChanged)); //создаем кнопку добавить для меню уровней
+                CreateAxesSearchPlanePageThreeDimensionChart(); //создаем элементы для меню выбора осей плоскости поиска топ-модели
             }
         }
         public ICommand ResetCamera_Click

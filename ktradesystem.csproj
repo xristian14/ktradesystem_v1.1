@@ -153,6 +153,7 @@
     <Compile Include="ViewModels\AlgorithmIndicatorView.cs" />
     <Compile Include="ViewModels\AlgorithmParameterView.cs" />
     <Compile Include="ViewModels\AxesParameterSelectView.cs" />
+    <Compile Include="ViewModels\AxisSearchPlanePageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\DataSourceAccordanceView.cs" />
     <Compile Include="ViewModels\DataSourceGroupTestingResultCombobox.cs" />
     <Compile Include="ViewModels\DataSourceGroupView.cs" />

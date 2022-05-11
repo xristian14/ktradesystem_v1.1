@@ -39,16 +39,7 @@ namespace ktradesystem.ViewModels
         }
         public delegate void PropertyChanged(LevelPageThreeDimensionChart levelPageThreeDimensionChart, string propertyName);
         public PropertyChanged UpdateProperty; //метод, вызывающийся при обновлении свойства
-        private Visibility _buttonAddLevelVisibility;
-        public Visibility ButtonAddLevelVisibility //видимость кнопки добавить уровень
-        {
-            get { return _buttonAddLevelVisibility; }
-            set
-            {
-                _buttonAddLevelVisibility = value;
-                UpdateProperty?.Invoke(this, "ButtonAddLevelVisibility"); //вызываем метод, который должен вызываться при обновлении свойства
-            }
-        }
+        public Visibility ButtonAddLevelVisibility { get; set; } //видимость кнопки добавить уровень
         private bool _isButtonAddLevelChecked;
         public bool IsButtonAddLevelChecked //нажата ли кнопка добавить уровень
         {
@@ -59,16 +50,7 @@ namespace ktradesystem.ViewModels
                 UpdateProperty?.Invoke(this, "IsButtonAddLevelChecked"); //вызываем метод, который должен вызываться при обновлении свойства
             }
         }
-        private Visibility _dataLevelVisibility;
-        public Visibility DataLevelVisibility //видимость данных уровня
-        {
-            get { return _dataLevelVisibility; }
-            set
-            {
-                _dataLevelVisibility = value;
-                UpdateProperty?.Invoke(this, "DataLevelVisibility"); //вызываем метод, который должен вызываться при обновлении свойства
-            }
-        }
+        public Visibility DataLevelVisibility { get; set; } //видимость данных уровня
         private double _minValue;
         public double MinValue //миниальное значение уровня
         {

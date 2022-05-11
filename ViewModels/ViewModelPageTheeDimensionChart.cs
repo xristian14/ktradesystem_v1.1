@@ -21,16 +21,31 @@ namespace ktradesystem.ViewModels
         {
             ViewModelPageTestingResult.TestBatchesUpdatePages += UpdatePage;
             CreateEvaluationCriteriasPageThreeDimensionChart(); //создаем критерии оценки для меню выбора критериев оценки
-            CreateLevelsPageThreeDimensionChart(); //создаем кнопку добавить для меню уровней
+            LevelsPageThreeDimensionChart.Clear();
+            LevelsPageThreeDimensionChart.Add(LevelPageThreeDimensionChart.CreateButtonAddLevel(LevelPageThreeDimensionChart_PropertyChanged)); //создаем кнопку добавить для меню уровней
         }
 
         private TestBatch _testBatch; //тестовая связка, на основании которой будет строиться график
+        private List<AlgorithmParameter> _leftAxisParameters; //параметры алгоритма, которые будут на левой стороне квадрата
+        private List<AlgorithmParameter> _topAxisParameters; //параметры алгоритма, которые будут на верхней стороне квадрата. В каждой клетке квадрата будет комбинация из параметров, в этой клетке должен находится тестовый прогон с данной комбинацией параметров
+        private TestRun[][] testRunsMatrix; //двумерный массив с тестовыми прогонами. График будет строиться по этому массиву
         private double _sizeChartSide = 1; //размер стороны куба, в который вписывается график
+        private float _cameraDistance = 1; //растояние от центра куба до камеры
         private int _countScaleValues = 7; //количество отрезков на шкале значений по оси критерия оценки. К этому значению будет стремиться количество отрезков
-        private double _scaleValuesPlaneOffset = 0.002; //величина смещения плоскости от размера стороны _sizeChartSide. Плоскость будет смещена на _sizeChartSide*_scaleValuesPlaneOffset относительно линий на шкале значений
-        private double _averageOpacity = 1; //средняя прозрачность для поверхностей графика, плоскостей уровней и выделения плоскостей поиска
+        private double _scaleValuesPlaneOffset = 0.005; //величина смещения плоскости от размера стороны _sizeChartSide. Плоскость будет смещена на _sizeChartSide*_scaleValuesPlaneOffset относительно линий на шкале значений
+        private double _levelsTotalOpacity = 0.3; //суммарная прозрачность для уровней
+        private double _searchPlanesTotalOpacity = 0.3; //суммарная прозрачность для плоскостей поиска
 
-        private float _cameraDistance; //расстояние камеры до центра вращения
+        private ModelVisual3D _chartModel;
+        public ModelVisual3D ChartModel //модель графика
+        {
+            get { return _chartModel; }
+            private set
+            {
+                _chartModel = value;
+                OnPropertyChanged();
+            }
+        }
 
         private Model3DGroup _chartScaleValuesFront;
         public Model3DGroup ChartScaleValuesFront //шкала со значениями спереди
@@ -118,11 +133,63 @@ namespace ktradesystem.ViewModels
             return mesh;
         }
 
-        public void CreateChartScalesValues() //создает шкалы значений
+        private void UpdateSearchPlanes() //обновляет поисковые плоскости на выбранные, формирует двумерный массив с тестовыми прогонами на основе выбранных осей поисковой плоскости
+        {
+
+        }
+
+        public void BuildChart() //строит график
         {
             if(_testBatch != null)
             {
+                Model3DGroup chartModelGroup = new Model3DGroup(); //группа с моделями графика
+                
+                //определяем минимальное и максимальное значение на графике
+                double min = _testBatch.OptimizationTestRuns.First().EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == EvaluationCriteriasPageThreeDimensionChart.Where(jj => jj.IsChecked == true).First().EvaluationCriteria.Id).First().DoubleValue; //получили значение первого выбранного критерия оценки для первого тестового прогона
+                double max = min;
+                //проходим по всем выбранным критериям оценки
+                foreach(EvaluationCriteriaPageThreeDimensionChart evaluationCriteriaPageThreeDimensionChart in EvaluationCriteriasPageThreeDimensionChart.Where(j => j.IsChecked == true))
+                {
+                    //определяем индекс текущего критерия оценки
+                    int evaluationCriteriaIndex = -1;
+                    int i = 0;
+                    while(i < _testBatch.OptimizationTestRuns.First().EvaluationCriteriaValues.Count && evaluationCriteriaIndex == -1)
+                    {
+                        if(evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id == _testBatch.OptimizationTestRuns.First().EvaluationCriteriaValues[i].EvaluationCriteria.Id)
+                        {
+                            evaluationCriteriaIndex = i;
+                        }
+                        i++;
+                    }
+                    //проходим по всем тестовым прогонам данной тестовой связки, и ищем в них минимальное и максимальное значения критерия оценки
+                    foreach (TestRun testRun in _testBatch.OptimizationTestRuns)
+                    {
+                        if(testRun.EvaluationCriteriaValues[evaluationCriteriaIndex].DoubleValue < min)
+                        {
+                            min = testRun.EvaluationCriteriaValues[evaluationCriteriaIndex].DoubleValue;
+                        }
+                        if(testRun.EvaluationCriteriaValues[evaluationCriteriaIndex].DoubleValue > max)
+                        {
+                            max = testRun.EvaluationCriteriaValues[evaluationCriteriaIndex].DoubleValue;
+                        }
+                    }
+                }
+                
+                //формируем двумерный массив с тестовыми прогонами, на основе выбранных осей поисковой плоскости
+                //определяем значения оптимизируемых переменных для вертикальной и горизонтальной оси двумерного массива, на персечении комбинации должен находится тестовый прогон с данной комбинацией параметров
+
                 //определяем значения на шкале по оси критерия оценки
+
+
+
+
+
+                ChartModel.Content = chartModelGroup;
+
+
+
+
+
 
                 //создаем переднюю шкалу со значениями
                 ChartScaleValuesFront = new Model3DGroup();
@@ -176,23 +243,18 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        public void CreateLevelsPageThreeDimensionChart() //создает уровни. В данном случае только один - кнопку добавить уровень.
-        {
-            LevelsPageThreeDimensionChart.Clear();
-            LevelsPageThreeDimensionChart.Add(LevelPageThreeDimensionChart.CreateButtonAddLevel(LevelPageThreeDimensionChart_PropertyChanged));
-        }
 
-        public void LevelPageThreeDimensionChart_PropertyChanged(LevelPageThreeDimensionChart levelPageThreeDimensionChart, string propertyName, string propertyValue)
+        public void LevelPageThreeDimensionChart_PropertyChanged(LevelPageThreeDimensionChart levelPageThreeDimensionChart, string propertyName)
         {
             if(propertyName == "IsButtonAddLevelChecked") //если была переключена кнопка: Добавить уровень
             {
-                if(propertyValue == "True") //если кнопка в состоянии true, добавляем уровень
+                if(levelPageThreeDimensionChart.IsButtonAddLevelChecked) //если кнопка в состоянии true, - добавляем уровень
                 {
                     LevelsPageThreeDimensionChart.Add(LevelPageThreeDimensionChart.CreateLevel(LevelPageThreeDimensionChart_PropertyChanged, -50, 50, 0));
                     levelPageThreeDimensionChart.IsButtonAddLevelChecked = false;
                 }
             }
-            if(propertyName == "IsDeleteChecked") //если была переключена кнопка: Удалить, удаляем уровень
+            if(propertyName == "IsDeleteChecked") //если была переключена кнопка: Удалить, - удаляем уровень
             {
                 LevelsPageThreeDimensionChart.Remove(levelPageThreeDimensionChart);
             }
@@ -219,7 +281,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    CreateEvaluationCriteriasPageThreeDimensionChart();
+                    BuildChart();
                 }, (obj) => true);
             }
         }
@@ -229,7 +291,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    CreateEvaluationCriteriasPageThreeDimensionChart();
+                    
                 }, (obj) => true);
             }
         }

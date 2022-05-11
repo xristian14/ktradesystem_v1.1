@@ -37,7 +37,7 @@ namespace ktradesystem.ViewModels
             levelPageThreeDimensionChart.UpdateProperty += propertyChanged;
             return levelPageThreeDimensionChart;
         }
-        public delegate void PropertyChanged(LevelPageThreeDimensionChart levelPageThreeDimensionChart, string propertyName, string propertyValue);
+        public delegate void PropertyChanged(LevelPageThreeDimensionChart levelPageThreeDimensionChart, string propertyName);
         public PropertyChanged UpdateProperty; //метод, вызывающийся при обновлении свойства
         private Visibility _buttonAddLevelVisibility;
         public Visibility ButtonAddLevelVisibility //видимость кнопки добавить уровень
@@ -46,7 +46,7 @@ namespace ktradesystem.ViewModels
             set
             {
                 _buttonAddLevelVisibility = value;
-                UpdateProperty?.Invoke(this, "ButtonAddLevelVisibility", value.ToString()); //вызываем метод, который должен вызываться при обновлении свойства
+                UpdateProperty?.Invoke(this, "ButtonAddLevelVisibility"); //вызываем метод, который должен вызываться при обновлении свойства
             }
         }
         private bool _isButtonAddLevelChecked;
@@ -56,7 +56,7 @@ namespace ktradesystem.ViewModels
             set
             {
                 _isButtonAddLevelChecked = value;
-                UpdateProperty?.Invoke(this, "IsButtonAddLevelChecked", value.ToString()); //вызываем метод, который должен вызываться при обновлении свойства
+                UpdateProperty?.Invoke(this, "IsButtonAddLevelChecked"); //вызываем метод, который должен вызываться при обновлении свойства
             }
         }
         private Visibility _dataLevelVisibility;
@@ -66,7 +66,7 @@ namespace ktradesystem.ViewModels
             set
             {
                 _dataLevelVisibility = value;
-                UpdateProperty?.Invoke(this, "DataLevelVisibility", value.ToString()); //вызываем метод, который должен вызываться при обновлении свойства
+                UpdateProperty?.Invoke(this, "DataLevelVisibility"); //вызываем метод, который должен вызываться при обновлении свойства
             }
         }
         private double _minValue;
@@ -76,7 +76,7 @@ namespace ktradesystem.ViewModels
             set
             {
                 _minValue = value;
-                UpdateProperty?.Invoke(this, "MinValue", value.ToString()); //вызываем метод, который должен вызываться при обновлении свойства
+                UpdateProperty?.Invoke(this, "MinValue"); //вызываем метод, который должен вызываться при обновлении свойства
             }
         }
         public double _maxValue;
@@ -86,7 +86,7 @@ namespace ktradesystem.ViewModels
             set
             {
                 _maxValue = value;
-                UpdateProperty?.Invoke(this, "MaxValue", value.ToString()); //вызываем метод, который должен вызываться при обновлении свойства
+                UpdateProperty?.Invoke(this, "MaxValue"); //вызываем метод, который должен вызываться при обновлении свойства
             }
         }
         private double _value;
@@ -95,8 +95,8 @@ namespace ktradesystem.ViewModels
             get { return _value; }
             set
             {
-                _value = value;
-                UpdateProperty?.Invoke(this, "Value", value.ToString()); //вызываем метод, который должен вызываться при обновлении свойства
+                _value = Math.Round(value, 2); //округляем до 2-х знаков после запятой
+                UpdateProperty?.Invoke(this, "Value"); //вызываем метод, который должен вызываться при обновлении свойства
             }
         }
         private bool _isDeleteChecked;
@@ -106,7 +106,7 @@ namespace ktradesystem.ViewModels
             set
             {
                 _isDeleteChecked = value;
-                UpdateProperty?.Invoke(this, "IsDeleteChecked", value.ToString()); //вызываем метод, который должен вызываться при обновлении свойства
+                UpdateProperty?.Invoke(this, "IsDeleteChecked"); //вызываем метод, который должен вызываться при обновлении свойства
             }
         }
     }

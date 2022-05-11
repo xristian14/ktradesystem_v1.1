@@ -321,12 +321,6 @@
                                     </StackPanel>
                                 </DataTemplate>
                             </MenuItem.ItemTemplate>
-                            <!--<Button Content="Добавить"/>
-                            <StackPanel Orientation="Horizontal">
-                                <Slider Minimum="{Binding MinValue, Mode=TwoWay}" Maximum="{Binding MaxValue, Mode=TwoWay}" Value="{Binding Value, Mode=TwoWay}" Width="140"/>
-                                <TextBlock Text="{Binding Value, Mode=OneWay}" Margin="5 0 0 0"/>
-                                <ToggleButton Content="Удалить" IsChecked="{Binding IsChecked, Mode=TwoWay}" Margin="5 0 0 0"/>
-                            </StackPanel>-->
                         </MenuItem>
                     </Menu>
                     <Menu Width="171" Margin="5 0 0 0">
@@ -339,7 +333,7 @@
                 </StackPanel>
                 <StackPanel Margin="0 5 0 0" Orientation="Horizontal">
                     <Button Content="Сбросить вращение" Command="{Binding ResetCamera_Click}" Width="122"/>
-                    <CheckBox Content="Выделить плоскости поиска" IsChecked="{Binding ButtonAddLevelIsChecked, Mode=TwoWay}" Margin="5 0 0 0"/>
+                    <CheckBox Content="Выделить плоскости поиска" IsChecked="True" Margin="5 0 0 0"/>
                 </StackPanel>
             </StackPanel>
             <Viewport3D Grid.Row="1">
@@ -352,7 +346,7 @@
                             <DirectionalLight Color="White" Direction="-1,-1,-1" />
                         </ModelVisual3D.Content>
                     </ModelVisual3D>
-                    <ModelVisual3D Content="{Binding ModelVisual3D}"></ModelVisual3D>
+                    <!--<ModelVisual3D Content="{Binding ChartModel}"></ModelVisual3D>-->
                     <ModelVisual3D>
                         <ModelVisual3D.Content>
                             <Model3DGroup>

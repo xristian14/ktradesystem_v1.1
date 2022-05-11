@@ -487,7 +487,7 @@
                 </ScrollViewer>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Проверить на ошибки" Command="{Binding AlgorithmCheckScript_Click}" Width="134" Margin="0 0 7 0"/>
+                <Button Content="Проверить на ошибки" Width="134" Margin="0 0 7 0"/>
                 <Button Content="Сохранить" Command="{Binding AlgorithmSave_Click}" Width="110" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000" Margin="0 0 7 0">
                     <Button.ToolTip>
                         <ToolTip>

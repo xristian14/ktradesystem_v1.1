@@ -9,22 +9,22 @@ using ktradesystem.Models.Datatables;
 namespace ktradesystem.ViewModels
 {
     //класс содержит описание объекта: отображаемого уровня, на графике
-    class LevelPageThreeDimensionChart
+    class LevelPageThreeDimensionChart : ViewModelBase
     {
         private LevelPageThreeDimensionChart()
         {
 
         }
-        public static LevelPageThreeDimensionChart CreateButtonAddLevel(PropertyChanged propertyChanged) //возвращает объект, содержащий кнопку: добавить уровень
+        public static LevelPageThreeDimensionChart CreateButtonAddLevel(PropertyChangedAction propertyChangedAction) //возвращает объект, содержащий кнопку: добавить уровень
         {
             LevelPageThreeDimensionChart levelPageThreeDimensionChart = new LevelPageThreeDimensionChart();
             levelPageThreeDimensionChart.ButtonAddLevelVisibility = Visibility.Visible;
             levelPageThreeDimensionChart.DataLevelVisibility = Visibility.Collapsed;
             levelPageThreeDimensionChart.IsButtonAddLevelChecked = false;
-            levelPageThreeDimensionChart.UpdateProperty += propertyChanged;
+            levelPageThreeDimensionChart.UpdatePropertyAction += propertyChangedAction;
             return levelPageThreeDimensionChart;
         }
-        public static LevelPageThreeDimensionChart CreateLevel(PropertyChanged propertyChanged, double minValue, double maxValue, double value) //возвращает объект: уровень
+        public static LevelPageThreeDimensionChart CreateLevel(PropertyChangedAction propertyChangedAction, double minValue, double maxValue, double value) //возвращает объект: уровень
         {
             LevelPageThreeDimensionChart levelPageThreeDimensionChart = new LevelPageThreeDimensionChart();
             levelPageThreeDimensionChart.ButtonAddLevelVisibility = Visibility.Collapsed;
@@ -34,11 +34,11 @@ namespace ktradesystem.ViewModels
             levelPageThreeDimensionChart.MaxValue = maxValue;
             levelPageThreeDimensionChart.Value = value;
             levelPageThreeDimensionChart.IsDeleteChecked = false;
-            levelPageThreeDimensionChart.UpdateProperty += propertyChanged;
+            levelPageThreeDimensionChart.UpdatePropertyAction += propertyChangedAction;
             return levelPageThreeDimensionChart;
         }
-        public delegate void PropertyChanged(LevelPageThreeDimensionChart levelPageThreeDimensionChart, string propertyName);
-        public PropertyChanged UpdateProperty; //метод, вызывающийся при обновлении свойства
+        public delegate void PropertyChangedAction(LevelPageThreeDimensionChart levelPageThreeDimensionChart, string propertyName);
+        public PropertyChangedAction UpdatePropertyAction; //метод, обрабатывающий обновления в свойствах объекта
         public Visibility ButtonAddLevelVisibility { get; set; } //видимость кнопки добавить уровень
         private bool _isButtonAddLevelChecked;
         public bool IsButtonAddLevelChecked //нажата ли кнопка добавить уровень
@@ -47,7 +47,8 @@ namespace ktradesystem.ViewModels
             set
             {
                 _isButtonAddLevelChecked = value;
-                UpdateProperty?.Invoke(this, "IsButtonAddLevelChecked"); //вызываем метод, который должен вызываться при обновлении свойства
+                OnPropertyChanged();
+                UpdatePropertyAction?.Invoke(this, "IsButtonAddLevelChecked"); //вызываем метод, обрабатывающий обновления в свойствах объекта
             }
         }
         public Visibility DataLevelVisibility { get; set; } //видимость данных уровня
@@ -58,7 +59,8 @@ namespace ktradesystem.ViewModels
             set
             {
                 _minValue = value;
-                UpdateProperty?.Invoke(this, "MinValue"); //вызываем метод, который должен вызываться при обновлении свойства
+                OnPropertyChanged();
+                UpdatePropertyAction?.Invoke(this, "MinValue"); //вызываем метод, обрабатывающий обновления в свойствах объекта
             }
         }
         public double _maxValue;
@@ -68,7 +70,8 @@ namespace ktradesystem.ViewModels
             set
             {
                 _maxValue = value;
-                UpdateProperty?.Invoke(this, "MaxValue"); //вызываем метод, который должен вызываться при обновлении свойства
+                OnPropertyChanged();
+                UpdatePropertyAction?.Invoke(this, "MaxValue"); //вызываем метод, обрабатывающий обновления в свойствах объекта
             }
         }
         private double _value;
@@ -78,7 +81,8 @@ namespace ktradesystem.ViewModels
             set
             {
                 _value = Math.Round(value, 2); //округляем до 2-х знаков после запятой
-                UpdateProperty?.Invoke(this, "Value"); //вызываем метод, который должен вызываться при обновлении свойства
+                OnPropertyChanged();
+                UpdatePropertyAction?.Invoke(this, "Value"); //вызываем метод, обрабатывающий обновления в свойствах объекта
             }
         }
         private bool _isDeleteChecked;
@@ -88,7 +92,8 @@ namespace ktradesystem.ViewModels
             set
             {
                 _isDeleteChecked = value;
-                UpdateProperty?.Invoke(this, "IsDeleteChecked"); //вызываем метод, который должен вызываться при обновлении свойства
+                OnPropertyChanged();
+                UpdatePropertyAction?.Invoke(this, "IsDeleteChecked"); //вызываем метод, обрабатывающий обновления в свойствах объекта
             }
         }
     }

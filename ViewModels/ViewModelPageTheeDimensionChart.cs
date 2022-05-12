@@ -20,8 +20,10 @@ namespace ktradesystem.ViewModels
         public ViewModelPageTheeDimensionChart()
         {
             ViewModelPageTestingResult.TestBatchesUpdatePages += UpdatePage;
+            CreateEvaluationCriteriasPageThreeDimensionChart();
         }
 
+        private Testing _testing; //результат тестирования
         private TestBatch _testBatch; //тестовая связка, на основании которой будет строиться график
         private List<AlgorithmParameter> _leftAxisParameters; //параметры алгоритма, которые будут на левой стороне квадрата
         private List<AlgorithmParameter> _topAxisParameters; //параметры алгоритма, которые будут на верхней стороне квадрата. В каждой клетке квадрата будет комбинация из параметров, в этой клетке должен находится тестовый прогон с данной комбинацией параметров
@@ -205,8 +207,8 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private ObservableCollection<EvaluationCriteriaPageThreeDimensionChart> _evaluationCriteriasPageThreeDimensionChart = new ObservableCollection<EvaluationCriteriaPageThreeDimensionChart>(); //критерии оценки для checkbox
-        public ObservableCollection<EvaluationCriteriaPageThreeDimensionChart> EvaluationCriteriasPageThreeDimensionChart
+        private ObservableCollectionWithItemNotify<EvaluationCriteriaPageThreeDimensionChart> _evaluationCriteriasPageThreeDimensionChart = new ObservableCollectionWithItemNotify<EvaluationCriteriaPageThreeDimensionChart>(); //критерии оценки для checkbox
+        public ObservableCollectionWithItemNotify<EvaluationCriteriaPageThreeDimensionChart> EvaluationCriteriasPageThreeDimensionChart
         {
             get { return _evaluationCriteriasPageThreeDimensionChart; }
             private set
@@ -221,6 +223,7 @@ namespace ktradesystem.ViewModels
             {
                 if (evaluationCriteriaPageThreeDimensionChart.IsButtonResetChecked)
                 {
+                    ResetEvaluationCriteriasPageThreeDimensionChart(); //сбрасываем выбранные критерии оценки на тот что используется для определения топ-модели
                     evaluationCriteriaPageThreeDimensionChart.IsButtonResetChecked = false;
                 }
             }
@@ -244,8 +247,26 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private ObservableCollection<LevelPageThreeDimensionChart> _levelsPageThreeDimensionChart = new ObservableCollection<LevelPageThreeDimensionChart>(); //уровни на графике
-        public ObservableCollection<LevelPageThreeDimensionChart> LevelsPageThreeDimensionChart
+        private void ResetEvaluationCriteriasPageThreeDimensionChart() //сбрасывает выбранные критерии оценки на тот что используется для определения топ-модели
+        {
+            for(int i = 1; i < EvaluationCriteriasPageThreeDimensionChart.Count; i++)
+            {
+                if (EvaluationCriteriasPageThreeDimensionChart[i].EvaluationCriteria.Id == _testing.TopModelCriteria.EvaluationCriteria.Id) //если это критерий оценки для оределения топ-модели
+                {
+                    if(EvaluationCriteriasPageThreeDimensionChart[i].IsChecked == false) //если он не выбран, выбираем его
+                    {
+                        EvaluationCriteriasPageThreeDimensionChart[i].IsChecked = true;
+                    }
+                }
+                else if (EvaluationCriteriasPageThreeDimensionChart[i].IsChecked) //иначе, это не критерий оценки топ-модели, и если он выбран, снимаем выбор
+                {
+                    EvaluationCriteriasPageThreeDimensionChart[i].IsChecked = false;
+                }
+            }
+        }
+
+        private ObservableCollectionWithItemNotify<LevelPageThreeDimensionChart> _levelsPageThreeDimensionChart = new ObservableCollectionWithItemNotify<LevelPageThreeDimensionChart>(); //уровни на графике
+        public ObservableCollectionWithItemNotify<LevelPageThreeDimensionChart> LevelsPageThreeDimensionChart
         {
             get { return _levelsPageThreeDimensionChart; }
             private set
@@ -270,8 +291,8 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private ObservableCollection<AxisSearchPlanePageThreeDimensionChart> _axesSearchPlanePageThreeDimensionChart = new ObservableCollection<AxisSearchPlanePageThreeDimensionChart>(); //оси плоскости поиска топ-модели
-        public ObservableCollection<AxisSearchPlanePageThreeDimensionChart> AxesSearchPlanePageThreeDimensionChart
+        private ObservableCollectionWithItemNotify<AxisSearchPlanePageThreeDimensionChart> _axesSearchPlanePageThreeDimensionChart = new ObservableCollectionWithItemNotify<AxisSearchPlanePageThreeDimensionChart>(); //оси плоскости поиска топ-модели
+        public ObservableCollectionWithItemNotify<AxisSearchPlanePageThreeDimensionChart> AxesSearchPlanePageThreeDimensionChart
         {
             get { return _axesSearchPlanePageThreeDimensionChart; }
             private set
@@ -334,8 +355,9 @@ namespace ktradesystem.ViewModels
         {
             if(ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox != null)
             {
+                _testing = ViewModelPageTestingResult.getInstance().TestingResult;
                 _testBatch = ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox.TestBatch;
-                CreateEvaluationCriteriasPageThreeDimensionChart(); //создаем критерии оценки для меню выбора критериев оценки
+                ResetEvaluationCriteriasPageThreeDimensionChart(); //сбрасываем выбранные критерии оценки на тот что используется для определения топ-модели
                 LevelsPageThreeDimensionChart.Clear();
                 LevelsPageThreeDimensionChart.Add(LevelPageThreeDimensionChart.CreateButtonAddLevel(LevelPageThreeDimensionChart_PropertyChanged)); //создаем кнопку добавить для меню уровней
                 CreateAxesSearchPlanePageThreeDimensionChart(); //создаем элементы для меню выбора осей плоскости поиска топ-модели
@@ -347,7 +369,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    BuildChart();
+                    
                 }, (obj) => true);
             }
         }
@@ -359,6 +381,19 @@ namespace ktradesystem.ViewModels
                 {
                     
                 }, (obj) => true);
+            }
+        }
+
+
+
+        private double _value;
+        public double Value //текущее значение уровня
+        {
+            get { return _value; }
+            set
+            {
+                _value = Math.Round(value, 2); //округляем до 2-х знаков после запятой
+                OnPropertyChanged();
             }
         }
     }

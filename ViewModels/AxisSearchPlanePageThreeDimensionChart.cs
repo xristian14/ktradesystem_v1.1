@@ -9,33 +9,33 @@ using ktradesystem.Models.Datatables;
 namespace ktradesystem.ViewModels
 {
     //класс содержит оси плоскости поиска топ-модели. Используется в трехмерном графике для определяния осей полскости поиска топ-модели
-    public class AxisSearchPlanePageThreeDimensionChart
+    class AxisSearchPlanePageThreeDimensionChart : ViewModelBase
     {
         private AxisSearchPlanePageThreeDimensionChart()
         {
 
         }
-        public static AxisSearchPlanePageThreeDimensionChart CreateButtonReset(PropertyChanged propertyChanged) //возвращает объект, содержащий кнопку: сбросить оси плоскоти поиска топ-модели
+        public static AxisSearchPlanePageThreeDimensionChart CreateButtonReset(PropertyChangedAction propertyChangedAction) //возвращает объект, содержащий кнопку: сбросить оси плоскоти поиска топ-модели
         {
             AxisSearchPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart = new AxisSearchPlanePageThreeDimensionChart();
             axisSearchPlanePageThreeDimensionChart.ButtonResetVisibility = Visibility.Visible;
             axisSearchPlanePageThreeDimensionChart.DataAxesSearchPlaneVisibility = Visibility.Visible;
             axisSearchPlanePageThreeDimensionChart.IsButtonResetChecked = false;
-            axisSearchPlanePageThreeDimensionChart.UpdateProperty += propertyChanged;
+            axisSearchPlanePageThreeDimensionChart.UpdatePropertyAction += propertyChangedAction;
             return axisSearchPlanePageThreeDimensionChart;
         }
-        public static AxisSearchPlanePageThreeDimensionChart CreateAxisSearchPlane(PropertyChanged propertyChanged, List<AlgorithmParameter> algorithmParameters, int indexSelectedAlgorithmParameter) //возвращает объект: ось плоскости поиска топ-модели
+        public static AxisSearchPlanePageThreeDimensionChart CreateAxisSearchPlane(PropertyChangedAction propertyChangedAction, List<AlgorithmParameter> algorithmParameters, int indexSelectedAlgorithmParameter) //возвращает объект: ось плоскости поиска топ-модели
         {
             AxisSearchPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart = new AxisSearchPlanePageThreeDimensionChart();
             axisSearchPlanePageThreeDimensionChart.ButtonResetVisibility = Visibility.Collapsed;
             axisSearchPlanePageThreeDimensionChart.DataAxesSearchPlaneVisibility = Visibility.Visible;
             axisSearchPlanePageThreeDimensionChart.AlgorithmParameters = algorithmParameters;
             axisSearchPlanePageThreeDimensionChart.SelectedAlgorithmParameter = algorithmParameters[indexSelectedAlgorithmParameter];
-            axisSearchPlanePageThreeDimensionChart.UpdateProperty += propertyChanged;
+            axisSearchPlanePageThreeDimensionChart.UpdatePropertyAction += propertyChangedAction;
             return axisSearchPlanePageThreeDimensionChart;
         }
-        public delegate void PropertyChanged(AxisSearchPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart, string propertyName);
-        public PropertyChanged UpdateProperty; //метод, вызывающийся при обновлении свойства
+        public delegate void PropertyChangedAction(AxisSearchPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart, string propertyName);
+        public PropertyChangedAction UpdatePropertyAction; //метод, обрабатывающий обновления в свойствах объекта
         public Visibility ButtonResetVisibility { get; set; } //видимость кнопки сбросить критерии оценки
         private bool _isButtonResetChecked;
         public bool IsButtonResetChecked //нажата ли кнопка сбросить критерии оценки
@@ -44,7 +44,8 @@ namespace ktradesystem.ViewModels
             set
             {
                 _isButtonResetChecked = value;
-                UpdateProperty?.Invoke(this, "IsButtonResetChecked"); //вызываем метод, который должен вызываться при обновлении свойства
+                OnPropertyChanged();
+                UpdatePropertyAction?.Invoke(this, "IsButtonResetChecked"); //вызываем метод, обрабатывающий обновления в свойствах объекта
             }
         }
         public Visibility DataAxesSearchPlaneVisibility { get; set; } //видимость комбобоксов с выбранным параметром для оси
@@ -56,7 +57,8 @@ namespace ktradesystem.ViewModels
             set
             {
                 _selectedAlgorithmParameter = value;
-                UpdateProperty?.Invoke(this, "SelectedAlgorithmParameter"); //вызываем метод, который должен вызываться при обновлении свойства
+                OnPropertyChanged();
+                UpdatePropertyAction?.Invoke(this, "SelectedAlgorithmParameter"); //вызываем метод, обрабатывающий обновления в свойствах объекта
             }
         }
     }

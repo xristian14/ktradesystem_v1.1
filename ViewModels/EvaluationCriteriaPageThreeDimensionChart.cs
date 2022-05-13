@@ -61,5 +61,16 @@ namespace ktradesystem.ViewModels
                 UpdatePropertyAction?.Invoke(this, "IsChecked"); //вызываем метод, обрабатывающий обновления в свойствах объекта
             }
         }
+        private int _opacityValue;
+        public int OpacityValue
+        {
+            get { return _opacityValue; }
+            set
+            {
+                _opacityValue = value;
+                OnPropertyChanged();
+                UpdatePropertyAction?.Invoke(this, "OpacityValue"); //вызываем метод, обрабатывающий обновления в свойствах объекта
+            }
+        }
     }
 }

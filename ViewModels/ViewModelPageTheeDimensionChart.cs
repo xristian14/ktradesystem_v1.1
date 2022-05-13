@@ -207,8 +207,8 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private ObservableCollectionWithItemNotify<EvaluationCriteriaPageThreeDimensionChart> _evaluationCriteriasPageThreeDimensionChart = new ObservableCollectionWithItemNotify<EvaluationCriteriaPageThreeDimensionChart>(); //критерии оценки для checkbox
-        public ObservableCollectionWithItemNotify<EvaluationCriteriaPageThreeDimensionChart> EvaluationCriteriasPageThreeDimensionChart
+        private ObservableCollection<EvaluationCriteriaPageThreeDimensionChart> _evaluationCriteriasPageThreeDimensionChart = new ObservableCollection<EvaluationCriteriaPageThreeDimensionChart>(); //критерии оценки для checkbox
+        public ObservableCollection<EvaluationCriteriaPageThreeDimensionChart> EvaluationCriteriasPageThreeDimensionChart
         {
             get { return _evaluationCriteriasPageThreeDimensionChart; }
             private set
@@ -265,8 +265,8 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private ObservableCollectionWithItemNotify<LevelPageThreeDimensionChart> _levelsPageThreeDimensionChart = new ObservableCollectionWithItemNotify<LevelPageThreeDimensionChart>(); //уровни на графике
-        public ObservableCollectionWithItemNotify<LevelPageThreeDimensionChart> LevelsPageThreeDimensionChart
+        private ObservableCollection<LevelPageThreeDimensionChart> _levelsPageThreeDimensionChart = new ObservableCollection<LevelPageThreeDimensionChart>(); //уровни на графике
+        public ObservableCollection<LevelPageThreeDimensionChart> LevelsPageThreeDimensionChart
         {
             get { return _levelsPageThreeDimensionChart; }
             private set
@@ -283,6 +283,11 @@ namespace ktradesystem.ViewModels
                 {
                     LevelsPageThreeDimensionChart.Add(LevelPageThreeDimensionChart.CreateLevel(LevelPageThreeDimensionChart_PropertyChanged, -50, 50, 0));
                     levelPageThreeDimensionChart.IsButtonAddLevelChecked = false;
+
+                    for(int i = 1; i < LevelsPageThreeDimensionChart.Count; i++)
+                    {
+                        LevelsPageThreeDimensionChart[i].Value = 1.5;
+                    }
                 }
             }
             if(propertyName == "IsDeleteChecked") //если была переключена кнопка: Удалить, - удаляем уровень
@@ -291,8 +296,8 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private ObservableCollectionWithItemNotify<AxisSearchPlanePageThreeDimensionChart> _axesSearchPlanePageThreeDimensionChart = new ObservableCollectionWithItemNotify<AxisSearchPlanePageThreeDimensionChart>(); //оси плоскости поиска топ-модели
-        public ObservableCollectionWithItemNotify<AxisSearchPlanePageThreeDimensionChart> AxesSearchPlanePageThreeDimensionChart
+        private ObservableCollection<AxisSearchPlanePageThreeDimensionChart> _axesSearchPlanePageThreeDimensionChart = new ObservableCollection<AxisSearchPlanePageThreeDimensionChart>(); //оси плоскости поиска топ-модели
+        public ObservableCollection<AxisSearchPlanePageThreeDimensionChart> AxesSearchPlanePageThreeDimensionChart
         {
             get { return _axesSearchPlanePageThreeDimensionChart; }
             private set
@@ -381,19 +386,6 @@ namespace ktradesystem.ViewModels
                 {
                     
                 }, (obj) => true);
-            }
-        }
-
-
-
-        private double _value;
-        public double Value //текущее значение уровня
-        {
-            get { return _value; }
-            set
-            {
-                _value = Math.Round(value, 2); //округляем до 2-х знаков после запятой
-                OnPropertyChanged();
             }
         }
     }

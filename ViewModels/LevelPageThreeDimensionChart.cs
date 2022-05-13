@@ -85,6 +85,17 @@ namespace ktradesystem.ViewModels
                 UpdatePropertyAction?.Invoke(this, "Value"); //вызываем метод, обрабатывающий обновления в свойствах объекта
             }
         }
+        private int _opacityValue;
+        public int OpacityValue
+        {
+            get { return _opacityValue; }
+            set
+            {
+                _opacityValue = value;
+                OnPropertyChanged();
+                UpdatePropertyAction?.Invoke(this, "OpacityValue"); //вызываем метод, обрабатывающий обновления в свойствах объекта
+            }
+        }
         private bool _isDeleteChecked;
         public bool IsDeleteChecked //нажата ли кнопка удалить
         {

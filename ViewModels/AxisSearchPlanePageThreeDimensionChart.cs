@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using ktradesystem.Models.Datatables;
+using System.Collections.ObjectModel;
 
 namespace ktradesystem.ViewModels
 {
@@ -24,7 +25,7 @@ namespace ktradesystem.ViewModels
             axisSearchPlanePageThreeDimensionChart.UpdatePropertyAction += propertyChangedAction;
             return axisSearchPlanePageThreeDimensionChart;
         }
-        public static AxisSearchPlanePageThreeDimensionChart CreateAxisSearchPlane(PropertyChangedAction propertyChangedAction, List<AlgorithmParameter> algorithmParameters, int indexSelectedAlgorithmParameter) //возвращает объект: ось плоскости поиска топ-модели
+        public static AxisSearchPlanePageThreeDimensionChart CreateAxisSearchPlane(PropertyChangedAction propertyChangedAction, ObservableCollection<AlgorithmParameter> algorithmParameters, int indexSelectedAlgorithmParameter) //возвращает объект: ось плоскости поиска топ-модели
         {
             AxisSearchPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart = new AxisSearchPlanePageThreeDimensionChart();
             axisSearchPlanePageThreeDimensionChart.ButtonResetVisibility = Visibility.Collapsed;
@@ -49,7 +50,16 @@ namespace ktradesystem.ViewModels
             }
         }
         public Visibility DataAxesSearchPlaneVisibility { get; set; } //видимость комбобоксов с выбранным параметром для оси
-        public List<AlgorithmParameter> AlgorithmParameters { get; set; } //список с параметрами для combobox
+        private ObservableCollection<AlgorithmParameter> _algorithmParameters;
+        public ObservableCollection<AlgorithmParameter> AlgorithmParameters //список с параметрами для combobox
+        {
+            get { return _algorithmParameters; }
+            set
+            {
+                _algorithmParameters = value;
+                OnPropertyChanged();
+            }
+        }
         private AlgorithmParameter _selectedAlgorithmParameter; //выбранный параметр в combobox
         public AlgorithmParameter SelectedAlgorithmParameter
         {

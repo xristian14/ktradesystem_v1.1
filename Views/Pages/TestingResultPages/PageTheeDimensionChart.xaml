@@ -361,7 +361,11 @@
                             <DirectionalLight Color="White" Direction="-1,-1,-1" />
                         </ModelVisual3D.Content>
                     </ModelVisual3D>
-                    <!--<ModelVisual3D Content="{Binding ChartModel}"></ModelVisual3D>-->
+                    <ModelVisual3D Content="{Binding ParametersPlanesModel3D}"></ModelVisual3D>
+                    <ModelVisual3D Content="{Binding ScaleValuesModel3D}"></ModelVisual3D>
+                    <ModelVisual3D Content="{Binding SurfacesModel3D}"></ModelVisual3D>
+                    <ModelVisual3D Content="{Binding LevelsModel3D}"></ModelVisual3D>
+                    <ModelVisual3D Content="{Binding SearchPlanesModel3D}"></ModelVisual3D>
                     <ModelVisual3D>
                         <ModelVisual3D.Content>
                             <Model3DGroup>

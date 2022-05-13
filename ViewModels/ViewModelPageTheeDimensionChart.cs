@@ -35,86 +35,94 @@ namespace ktradesystem.ViewModels
         private double _levelsTotalOpacity = 0.3; //суммарная прозрачность для уровней
         private double _searchPlanesTotalOpacity = 0.3; //суммарная прозрачность для плоскостей поиска
 
-        private ModelVisual3D _chartModel;
-        public ModelVisual3D ChartModel //модель графика
+        private Model3D _parametersPlanesModel3D;
+        public Model3D ParametersPlanesModel3D //плоскости, на которых отображается ось с параметрами алгоритма
         {
-            get { return _chartModel; }
+            get { return _parametersPlanesModel3D; }
             private set
             {
-                _chartModel = value;
+                _parametersPlanesModel3D = value;
                 OnPropertyChanged();
             }
         }
 
-        private Model3DGroup _chartScaleValuesFront;
-        public Model3DGroup ChartScaleValuesFront //шкала со значениями спереди
+        private Model3D _scaleValuesModel3D;
+        public Model3D ScaleValuesModel3D //плоскости, на которых отображается ось с шкалой значений
         {
-            get { return _chartScaleValuesFront; }
+            get { return _scaleValuesModel3D; }
             private set
             {
-                _chartScaleValuesFront = value;
-                OnPropertyChanged();
-            }
-        }
-        private Model3DGroup _chartScaleValuesLeft;
-        public Model3DGroup ChartScaleValuesLeft //шкала со значениями слева
-        {
-            get { return _chartScaleValuesLeft; }
-            private set
-            {
-                _chartScaleValuesLeft = value;
-                OnPropertyChanged();
-            }
-        }
-        private Model3DGroup _chartScaleValuesBack;
-        public Model3DGroup ChartScaleValuesBack //шкала со значениями сзади
-        {
-            get { return _chartScaleValuesBack; }
-            private set
-            {
-                _chartScaleValuesBack = value;
-                OnPropertyChanged();
-            }
-        }
-        private Model3DGroup _chartScaleValuesRight;
-        public Model3DGroup ChartScaleValuesRight //шкала со значениями справа
-        {
-            get { return _chartScaleValuesRight; }
-            private set
-            {
-                _chartScaleValuesRight = value;
-                OnPropertyChanged();
-            }
-        }
-        private Model3DGroup _chartScaleValuesTop;
-        public Model3DGroup ChartScaleValuesTop //шкала со значениями сверху
-        {
-            get { return _chartScaleValuesTop; }
-            private set
-            {
-                _chartScaleValuesTop = value;
-                OnPropertyChanged();
-            }
-        }
-        private Model3DGroup _chartScaleValuesBottom;
-        public Model3DGroup ChartScaleValuesBottom //шкала со значениями снизу
-        {
-            get { return _chartScaleValuesBottom; }
-            private set
-            {
-                _chartScaleValuesBottom = value;
+                _scaleValuesModel3D = value;
                 OnPropertyChanged();
             }
         }
 
-        private Model3DGroup _chartSurfaces;
-        public Model3DGroup ChartSurfaces //поверхности графика
+        private Model3D _surfacesModel3D;
+        public Model3D SurfacesModel3D //поверхности графиков
         {
-            get { return _chartSurfaces; }
+            get { return _surfacesModel3D; }
             private set
             {
-                _chartSurfaces = value;
+                _surfacesModel3D = value;
                 OnPropertyChanged();
+            }
+        }
+
+        private Model3D _levelsModel3D;
+        public Model3D LevelsModel3D //уровни
+        {
+            get { return _levelsModel3D; }
+            private set
+            {
+                _levelsModel3D = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Model3D _searchPlanesModel3D;
+        public Model3D SearchPlanesModel3D //плоскости поиска
+        {
+            get { return _searchPlanesModel3D; }
+            private set
+            {
+                _searchPlanesModel3D = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private double _min = 0; //минимальное значение на графике
+        private double _max = 0; //максимальное значение на графике
+
+        private void UpdateMinAndMaxValuesInEvaluationCriterias() //обновляет минимальное и максимальное значения у выбранных критериев оценки
+        {
+            _min = _testBatch.OptimizationTestRuns.First().EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == EvaluationCriteriasPageThreeDimensionChart.Where(jj => jj.IsChecked == true).First().EvaluationCriteria.Id).First().DoubleValue; //получили значение первого выбранного критерия оценки для первого тестового прогона
+            _max = _min;
+            //проходим по всем выбранным критериям оценки
+            foreach (EvaluationCriteriaPageThreeDimensionChart evaluationCriteriaPageThreeDimensionChart in EvaluationCriteriasPageThreeDimensionChart.Where(j => j.IsChecked == true))
+            {
+                //определяем индекс текущего критерия оценки
+                int evaluationCriteriaIndex = -1;
+                int i = 0;
+                while (i < _testBatch.OptimizationTestRuns.First().EvaluationCriteriaValues.Count && evaluationCriteriaIndex == -1)
+                {
+                    if (evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id == _testBatch.OptimizationTestRuns.First().EvaluationCriteriaValues[i].EvaluationCriteria.Id)
+                    {
+                        evaluationCriteriaIndex = i;
+                    }
+                    i++;
+                }
+                //проходим по всем тестовым прогонам данной тестовой связки, и ищем в них минимальное и максимальное значения критерия оценки
+                foreach (TestRun testRun in _testBatch.OptimizationTestRuns)
+                {
+                    if (testRun.EvaluationCriteriaValues[evaluationCriteriaIndex].DoubleValue < _min)
+                    {
+                        _min = testRun.EvaluationCriteriaValues[evaluationCriteriaIndex].DoubleValue;
+                    }
+                    if (testRun.EvaluationCriteriaValues[evaluationCriteriaIndex].DoubleValue > _max)
+                    {
+                        _max = testRun.EvaluationCriteriaValues[evaluationCriteriaIndex].DoubleValue;
+                    }
+                }
             }
         }
 
@@ -183,7 +191,7 @@ namespace ktradesystem.ViewModels
 
 
 
-                ChartModel.Content = chartModelGroup;
+                //ChartModel.Content = chartModelGroup;
 
 
 
@@ -191,7 +199,7 @@ namespace ktradesystem.ViewModels
 
 
                 //создаем переднюю шкалу со значениями
-                ChartScaleValuesFront = new Model3DGroup();
+                /*ChartScaleValuesFront = new Model3DGroup();
                 GeometryModel3D frontPlane = new GeometryModel3D(); //определяем плоскость
                 MeshGeometry3D meshGeometry3D = new MeshGeometry3D();
                 double frontPlaneZ = _sizeChartSide / 2 + _sizeChartSide * _countScaleValues;
@@ -203,7 +211,7 @@ namespace ktradesystem.ViewModels
                     GeometryModel3D frontScale = new GeometryModel3D(); //определяем плоскость, которая отобразит линию для значения шкалы
 
                     frontPlane.Geometry = CreateMeshGeometry3D(new Point3D[4] { new Point3D(-_sizeChartSide / 2, -_sizeChartSide / 2, _sizeChartSide / 2), new Point3D(-_sizeChartSide / 2, _sizeChartSide / 2, _sizeChartSide / 2), new Point3D(_sizeChartSide / 2, _sizeChartSide / 2, _sizeChartSide / 2), new Point3D(_sizeChartSide / 2, -_sizeChartSide / 2, _sizeChartSide / 2) }, new int[6] { 0, 1, 2, 3, 4, 5 });
-                }
+                }*/
             }
         }
 
@@ -308,17 +316,31 @@ namespace ktradesystem.ViewModels
         }
         public void AxesSearchPlanePageThreeDimensionChart_PropertyChanged(AxisSearchPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart, string propertyName) //обработчик изменения свойств у объектов в AxesSearchPlanePageThreeDimensionChart
         {
-            if (propertyName == "IsButtonResetChecked") //если была переключена кнопка: Сбросить критерии оценки
+            if (propertyName == "IsButtonResetChecked") //если была переключена кнопка: Сбросить
             {
                 if (axisSearchPlanePageThreeDimensionChart.IsButtonResetChecked)
                 {
                     axisSearchPlanePageThreeDimensionChart.IsButtonResetChecked = false;
                 }
             }
-            if (propertyName == "SelectedAlgorithmParameter") //если был переключен чекбокс
+            if (propertyName == "SelectedAlgorithmParameter") //если был выбран другой параметр алгоритма
             {
-
+                if(AxesSearchPlanePageThreeDimensionChart.Count > 2) //если параметров 2 и более, для того который не был переключен обновляем доступные для выбора параметры алгоритма
+                {
+                    AxisSearchPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart2 = axisSearchPlanePageThreeDimensionChart == AxesSearchPlanePageThreeDimensionChart[1] ? AxesSearchPlanePageThreeDimensionChart[2] : AxesSearchPlanePageThreeDimensionChart[1]; //получаем объект у которого не был изменен выбранный параметр
+                    axisSearchPlanePageThreeDimensionChart2.AlgorithmParameters = GetAlgorithmParameters();
+                    axisSearchPlanePageThreeDimensionChart2.AlgorithmParameters.Remove(axisSearchPlanePageThreeDimensionChart.SelectedAlgorithmParameter); //удаляем из доступных для выбора параметров, параметр который был выбран
+                }
             }
+        }
+        private ObservableCollection<AlgorithmParameter> GetAlgorithmParameters() //возвращает параметры алгоритма
+        {
+            ObservableCollection<AlgorithmParameter> algorithmParameters = new ObservableCollection<AlgorithmParameter>();
+            foreach (AlgorithmParameter algorithmParameter in _testing.Algorithm.AlgorithmParameters)
+            {
+                algorithmParameters.Add(algorithmParameter);
+            }
+            return algorithmParameters;
         }
         private void CreateAxesSearchPlanePageThreeDimensionChart() //создает элементы для меню выбора осей плоскости поиска топ-модели
         {
@@ -326,19 +348,14 @@ namespace ktradesystem.ViewModels
             AxesSearchPlanePageThreeDimensionChart.Add(AxisSearchPlanePageThreeDimensionChart.CreateButtonReset(AxesSearchPlanePageThreeDimensionChart_PropertyChanged)); //добавляем кнопку сбросить
 
             //добавляем чекбоксы для осей
-            List<AlgorithmParameter> algorithmParametersFirst = new List<AlgorithmParameter>();
-            List<AlgorithmParameter> algorithmParametersSecond = new List<AlgorithmParameter>();
-            foreach (AlgorithmParameterValue algorithmParameterValue in _testBatch.OptimizationTestRuns[0].AlgorithmParameterValues)
-            {
-                algorithmParametersFirst.Add(algorithmParameterValue.AlgorithmParameter);
-                algorithmParametersSecond.Add(algorithmParameterValue.AlgorithmParameter);
-            }
+            ObservableCollection<AlgorithmParameter> algorithmParametersFirst = GetAlgorithmParameters(); //получаем список с параметрами алгоритма в текущем результате тестирования
+            ObservableCollection<AlgorithmParameter> algorithmParametersSecond = GetAlgorithmParameters(); //получаем список с параметрами алгоритма в текущем результате тестирования
 
-            if(_testBatch.OptimizationTestRuns[0].AlgorithmParameterValues.Count == 1) //если параметр алгоритма только один
+            if (_testing.Algorithm.AlgorithmParameters.Count == 1) //если параметр алгоритма только один
             {
                 AxesSearchPlanePageThreeDimensionChart.Add(AxisSearchPlanePageThreeDimensionChart.CreateAxisSearchPlane(AxesSearchPlanePageThreeDimensionChart_PropertyChanged, algorithmParametersFirst, 0));
             }
-            else //иначе их два или более
+            else if(_testing.Algorithm.AlgorithmParameters.Count >= 2) //иначе, если их два или более
             {
                 //определяем индекс первого параметра оси плоскости поиска
                 int indexFirstParameter = algorithmParametersFirst.IndexOf(algorithmParametersFirst.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter.Id).First());
@@ -346,6 +363,10 @@ namespace ktradesystem.ViewModels
                 //определяем индекс второго параметра оси плоскости поиска
                 int indexSecondParameter = algorithmParametersSecond.IndexOf(algorithmParametersSecond.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter.Id).First());
                 AxesSearchPlanePageThreeDimensionChart.Add(AxisSearchPlanePageThreeDimensionChart.CreateAxisSearchPlane(AxesSearchPlanePageThreeDimensionChart_PropertyChanged, algorithmParametersSecond, indexSecondParameter)); //добавляем чекбокс второй оси в меню выбора осей плоскости поиска
+
+                //удаляем из списков с параметрами те что выбраны  в другом списке
+                AxesSearchPlanePageThreeDimensionChart[1].AlgorithmParameters.Remove(AxesSearchPlanePageThreeDimensionChart[2].SelectedAlgorithmParameter);
+                AxesSearchPlanePageThreeDimensionChart[2].AlgorithmParameters.Remove(AxesSearchPlanePageThreeDimensionChart[1].SelectedAlgorithmParameter);
             }
         }
 

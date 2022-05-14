@@ -27,11 +27,11 @@ namespace ktradesystem.ViewModels
         private TestBatch _testBatch; //тестовая связка, на основании которой будет строиться график
         private List<AlgorithmParameter> _leftAxisParameters; //параметры алгоритма, которые будут на левой стороне квадрата
         private List<AlgorithmParameter> _topAxisParameters; //параметры алгоритма, которые будут на верхней стороне квадрата. В каждой клетке квадрата будет комбинация из параметров, в этой клетке должен находится тестовый прогон с данной комбинацией параметров
-        private TestRun[][] testRunsMatrix; //двумерный массив с тестовыми прогонами. График будет строиться по этому массиву
-        private double _sizeChartSide = 1; //размер стороны куба, в который вписывается график
+        private TestRun[,] testRunsMatrix; //двумерный массив с тестовыми прогонами. График будет строиться по этому массиву
+        private double _cubeSideSize = 1; //размер стороны куба, в который вписывается график
         private float _cameraDistance = 1; //растояние от центра куба до камеры
-        private int _countScaleValues = 7; //количество отрезков на шкале значений по оси критерия оценки. К этому значению будет стремиться количество отрезков
-        private double _scaleValuesPlaneOffset = 0.005; //величина смещения плоскости от размера стороны _sizeChartSide. Плоскость будет смещена на _sizeChartSide*_scaleValuesPlaneOffset относительно линий на шкале значений
+        private int _countScaleValues = 5; //количество отрезков на шкале значений по оси критерия оценки
+        private double _offsetScaleValues = 0.1; //отступ от графика на котором продолжается отрисовываться линия шкалы значений/параметров алгоритма, и после которого начинают отображаться значения шаклы значений/параметров алгоритма. Значение относительно стороны куба, в который вписывается график
 
         private Model3D _parametersPlanesModel3D;
         public Model3D ParametersPlanesModel3D //плоскости, на которых отображается ось с параметрами алгоритма
@@ -121,6 +121,78 @@ namespace ktradesystem.ViewModels
                         _max = testRun.EvaluationCriteriaValues[evaluationCriteriaIndex].DoubleValue;
                     }
                 }
+            }
+        }
+
+        private void DeterminingAlgorithmParamtersAxes() //определяет параметры алгоритма для левой и верхней оси матрицы тестовых прогонов. Первые элементы в списках с параметрами являются осями поисковой плоскости
+        {
+            _leftAxisParameters.Clear();
+            _topAxisParameters.Clear();
+            if(_testing.Algorithm.AlgorithmParameters.Count == 1) //если параметр всего один
+            {
+                _leftAxisParameters.Add(AxesSearchPlanePageThreeDimensionChart[1].SelectedAlgorithmParameter);
+            }
+            else if(_testing.Algorithm.AlgorithmParameters.Count > 1) //если параметров два и более
+            {
+                _leftAxisParameters.Add(AxesSearchPlanePageThreeDimensionChart[1].SelectedAlgorithmParameter);
+                _topAxisParameters.Add(AxesSearchPlanePageThreeDimensionChart[2].SelectedAlgorithmParameter);
+                foreach(AlgorithmParameter algorithmParameter in _testing.Algorithm.AlgorithmParameters) //проходим по всем параметрам алгоритма, и добавляем в списки с параметрами осей
+                {
+                    if(_leftAxisParameters.IndexOf(algorithmParameter) == -1 && _topAxisParameters.IndexOf(algorithmParameter) == -1) //если данный параметр еще не был добавлен с списки с осями, добавляем его
+                    {
+                        if(_topAxisParameters.Count <= _leftAxisParameters.Count)
+                        {
+                            _topAxisParameters.Add(algorithmParameter);
+                        }
+                        else
+                        {
+                            _leftAxisParameters.Add(algorithmParameter);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void CreateTestRunsMatrix() //создает двумерный массив с тестовыми прогонами на основе выбранных осей плоскости поиска, на основе данного массива будет строиться график
+        {
+            int[] leftAxisCountParameterValues = new int[_leftAxisParameters.Count]; //массив, отображающий количество значений параметров
+            int leftAxisTotalCountParameterValues = 1; //произведение всех элементов массива leftAxisCountParameterValues
+            for (int i = 0; i < _leftAxisParameters.Count; i++)
+            {
+                int index = 0; //индекс текущего параметра в _testing.Algorithm.AlgorithmParameters
+                while (_testing.Algorithm.AlgorithmParameters[index].Id != _leftAxisParameters[i].Id)
+                {
+                    index++;
+                }
+                leftAxisCountParameterValues[i] = _testing.AlgorithmParametersAllIntValues[index].Count == 0 ? _testing.AlgorithmParametersAllDoubleValues[index].Count : _testing.AlgorithmParametersAllIntValues[index].Count;
+                leftAxisTotalCountParameterValues *= leftAxisCountParameterValues[i];
+            }
+            leftAxisTotalCountParameterValues = _leftAxisParameters.Count > 0 ? leftAxisTotalCountParameterValues : 1; //если нет параметров для строк, значит устанавливаем в 1, т.к. может быть параметр для столбцов
+
+            int[] topAxisCountParameterValues = new int[_topAxisParameters.Count]; //массив, отображающий количество значений параметров
+            int topAxisTotalCountParameterValues = 1; //произведение всех элементов массива topAxisCountParameterValues
+            for (int i = 0; i < _topAxisParameters.Count; i++)
+            {
+                int index = 0; //индекс текущего параметра в _testing.Algorithm.AlgorithmParameters
+                while (_testing.Algorithm.AlgorithmParameters[index].Id != _topAxisParameters[i].Id)
+                {
+                    index++;
+                }
+                topAxisCountParameterValues[i] = _testing.AlgorithmParametersAllIntValues[index].Count == 0 ? _testing.AlgorithmParametersAllDoubleValues[index].Count : _testing.AlgorithmParametersAllIntValues[index].Count;
+                topAxisTotalCountParameterValues *= topAxisCountParameterValues[i];
+            }
+            topAxisTotalCountParameterValues = _topAxisParameters.Count > 0 ? topAxisTotalCountParameterValues : 0; //если нет параметров для столбцов, значит нет параметров вообще, и строить нечего => устанавливаем количество столбцов в 0
+            int[] leftAxisCurrentParameterValues = Enumerable.Repeat(0, _leftAxisParameters.Count).ToArray(); //массив, содержащий индексы значений текущей комбинации параметров
+            int[] topAxisCurrentParameterValues = Enumerable.Repeat(0, _topAxisParameters.Count).ToArray(); //массив, содержащий индексы значений текущей комбинации параметров 
+
+            testRunsMatrix = new TestRun[topAxisTotalCountParameterValues, leftAxisTotalCountParameterValues]; //определяем размер матрицы: количество столбцов на количество строк
+            bool isEndLines = topAxisTotalCountParameterValues > 0 ? false : true; //вышли ли за количество имеющихся строк матрицы (если нет столбцов, значит нет параметров вообще и формировать матрицу не из чего)
+            while(isEndLines == false)
+            {
+                //ищем тестовый прогон с текущей комбинацией занчений параметров
+
+                //переход на следующую колонку матрицы
+                //переход на следующую строку матрицы
             }
         }
 
@@ -393,6 +465,17 @@ namespace ktradesystem.ViewModels
                 LevelsPageThreeDimensionChart.Clear();
                 LevelsPageThreeDimensionChart.Add(LevelPageThreeDimensionChart.CreateButtonAddLevel(LevelPageThreeDimensionChart_PropertyChanged)); //создаем кнопку добавить для меню уровней
                 CreateAxesSearchPlanePageThreeDimensionChart(); //создаем элементы для меню выбора осей плоскости поиска топ-модели
+
+
+                int[,] a = new int[1, 0];
+                int[,] aa = new int[1, 1];
+                int[,] aaa = new int[2, 0];
+                int[,] aaaa = new int[2, 1];
+                int[,] aaaaa = new int[2, 2];
+
+
+                DeterminingMinAndMaxValuesInEvaluationCriterias(); //определяем минимальное и максимальное значения у выбранных критериев оценки
+                DeterminingAlgorithmParamtersAxes();
             }
         }
         public ICommand ResetCamera_Click

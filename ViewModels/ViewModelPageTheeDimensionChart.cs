@@ -32,8 +32,6 @@ namespace ktradesystem.ViewModels
         private float _cameraDistance = 1; //растояние от центра куба до камеры
         private int _countScaleValues = 7; //количество отрезков на шкале значений по оси критерия оценки. К этому значению будет стремиться количество отрезков
         private double _scaleValuesPlaneOffset = 0.005; //величина смещения плоскости от размера стороны _sizeChartSide. Плоскость будет смещена на _sizeChartSide*_scaleValuesPlaneOffset относительно линий на шкале значений
-        private double _levelsTotalOpacity = 0.3; //суммарная прозрачность для уровней
-        private double _searchPlanesTotalOpacity = 0.3; //суммарная прозрачность для плоскостей поиска
 
         private Model3D _parametersPlanesModel3D;
         public Model3D ParametersPlanesModel3D //плоскости, на которых отображается ось с параметрами алгоритма
@@ -93,7 +91,7 @@ namespace ktradesystem.ViewModels
         private double _min = 0; //минимальное значение на графике
         private double _max = 0; //максимальное значение на графике
 
-        private void UpdateMinAndMaxValuesInEvaluationCriterias() //обновляет минимальное и максимальное значения у выбранных критериев оценки
+        private void DeterminingMinAndMaxValuesInEvaluationCriterias() //определяет минимальное и максимальное значения у выбранных критериев оценки
         {
             _min = _testBatch.OptimizationTestRuns.First().EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == EvaluationCriteriasPageThreeDimensionChart.Where(jj => jj.IsChecked == true).First().EvaluationCriteria.Id).First().DoubleValue; //получили значение первого выбранного критерия оценки для первого тестового прогона
             _max = _min;
@@ -321,6 +319,14 @@ namespace ktradesystem.ViewModels
                 if (axisSearchPlanePageThreeDimensionChart.IsButtonResetChecked)
                 {
                     axisSearchPlanePageThreeDimensionChart.IsButtonResetChecked = false;
+                    if(AxesSearchPlanePageThreeDimensionChart.Count > 2)
+                    {
+                        AxesSearchPlanePageThreeDimensionChart[1].AlgorithmParameters = GetAlgorithmParameters();
+                        AxesSearchPlanePageThreeDimensionChart[2].AlgorithmParameters = GetAlgorithmParameters();
+
+                        AxesSearchPlanePageThreeDimensionChart[1].SelectedAlgorithmParameter = AxesSearchPlanePageThreeDimensionChart[1].AlgorithmParameters.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter.Id).First();
+                        AxesSearchPlanePageThreeDimensionChart[2].SelectedAlgorithmParameter = AxesSearchPlanePageThreeDimensionChart[2].AlgorithmParameters.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter.Id).First();
+                    }
                 }
             }
             if (propertyName == "SelectedAlgorithmParameter") //если был выбран другой параметр алгоритма

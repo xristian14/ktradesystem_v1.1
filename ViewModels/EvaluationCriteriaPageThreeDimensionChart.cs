@@ -21,6 +21,7 @@ namespace ktradesystem.ViewModels
             evaluationCriteriaPageThreeDimensionChart.ButtonResetVisibility = Visibility.Visible;
             evaluationCriteriaPageThreeDimensionChart.CheckBoxVisibility = Visibility.Collapsed;
             evaluationCriteriaPageThreeDimensionChart.IsButtonResetChecked = false;
+            evaluationCriteriaPageThreeDimensionChart.OpacityValue = 100;
             evaluationCriteriaPageThreeDimensionChart.UpdatePropertyAction += propertyChangedAction;
             return evaluationCriteriaPageThreeDimensionChart;
         }

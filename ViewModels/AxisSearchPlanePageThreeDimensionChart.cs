@@ -22,6 +22,8 @@ namespace ktradesystem.ViewModels
             axisSearchPlanePageThreeDimensionChart.ButtonResetVisibility = Visibility.Visible;
             axisSearchPlanePageThreeDimensionChart.DataAxesSearchPlaneVisibility = Visibility.Visible;
             axisSearchPlanePageThreeDimensionChart.IsButtonResetChecked = false;
+            axisSearchPlanePageThreeDimensionChart.IsShowAxisChecked = false;
+            axisSearchPlanePageThreeDimensionChart.OpacityValue = 30;
             axisSearchPlanePageThreeDimensionChart.UpdatePropertyAction += propertyChangedAction;
             return axisSearchPlanePageThreeDimensionChart;
         }
@@ -47,6 +49,28 @@ namespace ktradesystem.ViewModels
                 _isButtonResetChecked = value;
                 OnPropertyChanged();
                 UpdatePropertyAction?.Invoke(this, "IsButtonResetChecked"); //вызываем метод, обрабатывающий обновления в свойствах объекта
+            }
+        }
+        private bool _isShowAxisChecked;
+        public bool IsShowAxisChecked //выбран ли чекбокс показать оси
+        {
+            get { return _isShowAxisChecked; }
+            set
+            {
+                _isShowAxisChecked = value;
+                OnPropertyChanged();
+                UpdatePropertyAction?.Invoke(this, "IsChecked"); //вызываем метод, обрабатывающий обновления в свойствах объекта
+            }
+        }
+        private int _opacityValue;
+        public int OpacityValue
+        {
+            get { return _opacityValue; }
+            set
+            {
+                _opacityValue = value;
+                OnPropertyChanged();
+                UpdatePropertyAction?.Invoke(this, "OpacityValue"); //вызываем метод, обрабатывающий обновления в свойствах объекта
             }
         }
         public Visibility DataAxesSearchPlaneVisibility { get; set; } //видимость комбобоксов с выбранным параметром для оси

@@ -33,6 +33,7 @@ namespace ktradesystem.ViewModels
             levelPageThreeDimensionChart.MinValue = minValue;
             levelPageThreeDimensionChart.MaxValue = maxValue;
             levelPageThreeDimensionChart.Value = value;
+            levelPageThreeDimensionChart.OpacityValue = 50;
             levelPageThreeDimensionChart.IsDeleteChecked = false;
             levelPageThreeDimensionChart.UpdatePropertyAction += propertyChangedAction;
             return levelPageThreeDimensionChart;

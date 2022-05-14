@@ -303,8 +303,8 @@
                                         <StackPanel Orientation="Horizontal" Visibility="{Binding ButtonResetVisibility}">
                                             <ToggleButton Content="Сбросить критерии оценки" IsChecked="{Binding IsButtonResetChecked, Mode=TwoWay}" Width="200" HorizontalAlignment="Left"/>
                                             <TextBlock Text="Прозрачность:" Margin="5 0 0 0"/>
-                                            <Slider Minimum="0" Maximum="100" Value="{Binding OpacityValue, Mode=TwoWay}" Width="70"/>
-                                            <TextBlock Text="{Binding OpacityValue, StringFormat={}{0}%, Mode=OneWay}" Margin="5 0 0 0"/>
+                                            <Slider Minimum="0" Maximum="100" Value="{Binding OpacityValue, Mode=TwoWay}" Margin="2 0 0 0" Width="70"/>
+                                            <TextBlock Text="{Binding OpacityValue, StringFormat={}{0}%, Mode=OneWay}" Margin="2 0 2 0"/>
                                         </StackPanel>
                                         <CheckBox Content="{Binding EvaluationCriteria.Name}" IsChecked="{Binding IsChecked, Mode=TwoWay}" Visibility="{Binding CheckBoxVisibility}"/>
                                     </StackPanel>
@@ -322,8 +322,8 @@
                                             <Slider Minimum="{Binding MinValue, Mode=TwoWay}" Maximum="{Binding MaxValue, Mode=TwoWay}" Value="{Binding Value, Mode=TwoWay}" Width="200"/>
                                             <TextBlock Text="{Binding Value, Mode=OneWay}" Margin="5 0 0 0"/>
                                             <TextBlock Text="Прозрачность:" Margin="10 0 0 0"/>
-                                            <Slider Minimum="0" Maximum="100" Value="{Binding OpacityValue, Mode=TwoWay}" Width="70"/>
-                                            <TextBlock Text="{Binding OpacityValue, StringFormat={}{0}%, Mode=OneWay}" Margin="5 0 0 0"/>
+                                            <Slider Minimum="0" Maximum="100" Value="{Binding OpacityValue, Mode=TwoWay}" Margin="2 0 0 0" Width="70"/>
+                                            <TextBlock Text="{Binding OpacityValue, StringFormat={}{0}%, Mode=OneWay}" Margin="2 0 0 0"/>
                                             <ToggleButton Content="Удалить" IsChecked="{Binding IsDeleteChecked, Mode=TwoWay}" Margin="5 0 0 0"/>
                                         </StackPanel>
                                     </StackPanel>
@@ -331,12 +331,18 @@
                             </MenuItem.ItemTemplate>
                         </MenuItem>
                     </Menu>
-                    <Menu Width="171" Margin="5 0 0 0">
-                        <MenuItem ItemsSource="{Binding AxesSearchPlanePageThreeDimensionChart}" Header="Оси поисковой плоскости ⯆" Style="{DynamicResource MenuItemStyle1}" StaysOpenOnClick="True">
+                    <Menu Width="218" Margin="5 0 0 0">
+                        <MenuItem ItemsSource="{Binding AxesSearchPlanePageThreeDimensionChart}" Header="Оси плоскости поиска топ-модели ⯆" Style="{DynamicResource MenuItemStyle1}" StaysOpenOnClick="True">
                             <MenuItem.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Vertical">
-                                        <ToggleButton Content="Сбросить" IsChecked="{Binding IsButtonResetChecked, Mode=TwoWay}" Visibility="{Binding ButtonResetVisibility}" HorizontalAlignment="Left"/>
+                                        <StackPanel Orientation="Horizontal" Visibility="{Binding ButtonResetVisibility}">
+                                            <ToggleButton Content="Сбросить выбор" IsChecked="{Binding IsButtonResetChecked, Mode=TwoWay}" HorizontalAlignment="Left"/>
+                                            <CheckBox Content="Выделить плоскости поиска" IsChecked="{Binding IsShowAxisChecked, Mode=TwoWay}" Margin="10 0 0 0"/>
+                                            <TextBlock Text="Прозрачность:" Margin="7 0 0 0"/>
+                                            <Slider Minimum="0" Maximum="100" Value="{Binding OpacityValue, Mode=TwoWay}" Margin="2 0 0 0" Width="70"/>
+                                            <TextBlock Text="{Binding OpacityValue, StringFormat={}{0}%, Mode=OneWay}" Margin="2 0 2 0"/>
+                                        </StackPanel>
                                         <StackPanel Orientation="Horizontal" Visibility="{Binding DataAxesSearchPlaneVisibility}" HorizontalAlignment="Left">
                                             <ComboBox ItemsSource="{Binding AlgorithmParameters}" SelectedItem="{Binding SelectedAlgorithmParameter, Mode=TwoWay}" DisplayMemberPath="Name" Height="20" Padding="3 1 3 3"/>
                                         </StackPanel>
@@ -348,7 +354,6 @@
                 </StackPanel>
                 <StackPanel Margin="0 5 0 0" Orientation="Horizontal">
                     <Button Content="Сбросить вращение" Command="{Binding ResetCamera_Click}" Width="122"/>
-                    <CheckBox Content="Выделить плоскости поиска" IsChecked="True" Margin="5 0 0 0"/>
                 </StackPanel>
             </StackPanel>
             <Viewport3D Grid.Row="1">

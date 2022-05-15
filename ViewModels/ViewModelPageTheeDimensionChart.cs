@@ -25,9 +25,9 @@ namespace ktradesystem.ViewModels
 
         private Testing _testing; //результат тестирования
         private TestBatch _testBatch; //тестовая связка, на основании которой будет строиться график
-        private List<AlgorithmParameter> _leftAxisParameters; //параметры алгоритма, которые будут на левой стороне квадрата
-        private List<AlgorithmParameter> _topAxisParameters; //параметры алгоритма, которые будут на верхней стороне квадрата. В каждой клетке квадрата будет комбинация из параметров, в этой клетке должен находится тестовый прогон с данной комбинацией параметров
-        private TestRun[,] testRunsMatrix; //двумерный массив с тестовыми прогонами. График будет строиться по этому массиву
+        private List<AlgorithmParameter> _leftAxisParameters = new List<AlgorithmParameter>(); //параметры алгоритма, которые будут на левой стороне квадрата
+        private List<AlgorithmParameter> _topAxisParameters = new List<AlgorithmParameter>(); //параметры алгоритма, которые будут на верхней стороне квадрата. В каждой клетке квадрата будет комбинация из параметров, в этой клетке должен находится тестовый прогон с данной комбинацией параметров
+        private TestRun[,] _testRunsMatrix; //двумерный массив с тестовыми прогонами. График будет строиться по этому массиву
         private double _cubeSideSize = 1; //размер стороны куба, в который вписывается график
         private float _cameraDistance = 1; //растояние от центра куба до камеры
         private int _countScaleValues = 5; //количество отрезков на шкале значений по оси критерия оценки
@@ -124,7 +124,7 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private void DeterminingAlgorithmParamtersAxes() //определяет параметры алгоритма для левой и верхней оси матрицы тестовых прогонов. Первые элементы в списках с параметрами являются осями поисковой плоскости
+        private void DeterminingAlgorithmParamtersAxes() //определяет параметры алгоритма для левой и верхней оси матрицы тестовых прогонов. Параметры, соответствующие осям поисковой плоскости, находятся в конце списков
         {
             _leftAxisParameters.Clear();
             _topAxisParameters.Clear();
@@ -151,6 +151,8 @@ namespace ktradesystem.ViewModels
                     }
                 }
             }
+            _leftAxisParameters.Reverse(); //переворачиваем массив чтобы параметры осей находились в конце списка
+            _topAxisParameters.Reverse(); //переворачиваем массив чтобы параметры осей находились в конце списка
         }
 
         private void CreateTestRunsMatrix() //создает двумерный массив с тестовыми прогонами на основе выбранных осей плоскости поиска, на основе данного массива будет строиться график
@@ -185,14 +187,97 @@ namespace ktradesystem.ViewModels
             int[] leftAxisCurrentParameterValues = Enumerable.Repeat(0, _leftAxisParameters.Count).ToArray(); //массив, содержащий индексы значений текущей комбинации параметров
             int[] topAxisCurrentParameterValues = Enumerable.Repeat(0, _topAxisParameters.Count).ToArray(); //массив, содержащий индексы значений текущей комбинации параметров 
 
-            testRunsMatrix = new TestRun[topAxisTotalCountParameterValues, leftAxisTotalCountParameterValues]; //определяем размер матрицы: количество столбцов на количество строк
+            _testRunsMatrix = new TestRun[leftAxisTotalCountParameterValues, topAxisTotalCountParameterValues]; //определяем размер матрицы: количество столбцов на количество строк
+            int matrixLineIndex = 0; //индекс строки матрицы
+            int matrixColumnIndex = 0; //индекс колонки матрицы
             bool isEndLines = topAxisTotalCountParameterValues > 0 ? false : true; //вышли ли за количество имеющихся строк матрицы (если нет столбцов, значит нет параметров вообще и формировать матрицу не из чего)
             while(isEndLines == false)
             {
-                //ищем тестовый прогон с текущей комбинацией занчений параметров
+                //формируем текущую комбинацию параметров
+                List<AlgorithmParameterValue> currentAlgorithmParameterValues = new List<AlgorithmParameterValue>(); //текущая комбинация значений параметров
+                for(int i = 0; i < _leftAxisParameters.Count; i++) //проходим по параметрам _leftAxisParameters
+                {
+                    int index = 0; //индекс текущего параметра в _testing.Algorithm.AlgorithmParameters
+                    while (_testing.Algorithm.AlgorithmParameters[index].Id != _leftAxisParameters[i].Id)
+                    {
+                        index++;
+                    }
+                    int valueIndex = leftAxisCurrentParameterValues[i]; //индекс значения параметра
+                    currentAlgorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = _leftAxisParameters[i], IntValue = _leftAxisParameters[i].ParameterValueType.Id == 1 ? _testing.AlgorithmParametersAllIntValues[index][valueIndex] : 0, DoubleValue = _leftAxisParameters[i].ParameterValueType.Id == 1 ? 0 : _testing.AlgorithmParametersAllDoubleValues[index][valueIndex] }); //записали значение текущего параметра
+                }
+                for(int i = 0; i < _topAxisParameters.Count; i++) //проходим по параметрам _leftAxisParameters
+                {
+                    int index = 0; //индекс текущего параметра в _testing.Algorithm.AlgorithmParameters
+                    while (_testing.Algorithm.AlgorithmParameters[index].Id != _topAxisParameters[i].Id)
+                    {
+                        index++;
+                    }
+                    int valueIndex = topAxisCurrentParameterValues[i]; //индекс значения параметра
+                    currentAlgorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = _topAxisParameters[i], IntValue = _topAxisParameters[i].ParameterValueType.Id == 1 ? _testing.AlgorithmParametersAllIntValues[index][valueIndex] : 0, DoubleValue = _topAxisParameters[i].ParameterValueType.Id == 1 ? 0 : _testing.AlgorithmParametersAllDoubleValues[index][valueIndex] }); //записали значение текущего параметра
+                }
+
+                //ищем тестовый прогон с текущей комбинацией значений параметров
+                bool isAllEqual = true; //совпадают ли все значения параметров текущего тестового прогона с текущей комбинацией значений параметров
+
+                int testRunIndex = -1; //индекс тестового прогона
+                do
+                {
+                    testRunIndex++; //увеличиваем индекс здесь, чтобы когда тестовый прогон будет найден, после выхода из цикла индекс сохранился на найденном тестовом прогоне
+                    isAllEqual = true;
+                    for (int i = 0; i < _testBatch.OptimizationTestRuns[testRunIndex].AlgorithmParameterValues.Count; i++)
+                    {
+                        if(_testBatch.OptimizationTestRuns[testRunIndex].AlgorithmParameterValues[i].AlgorithmParameter.ParameterValueType.Id == 1) //параметр типа int
+                        {
+                            isAllEqual = _testBatch.OptimizationTestRuns[testRunIndex].AlgorithmParameterValues[i].IntValue == currentAlgorithmParameterValues.Where(j => j.AlgorithmParameter.Id == _testBatch.OptimizationTestRuns[testRunIndex].AlgorithmParameterValues[i].AlgorithmParameter.Id).First().IntValue ? isAllEqual : false; //если параметры не равны, устанавливаем isAllEqual в false
+                        }
+                        else //параметр типа double
+                        {
+                            isAllEqual = _testBatch.OptimizationTestRuns[testRunIndex].AlgorithmParameterValues[i].DoubleValue == currentAlgorithmParameterValues.Where(j => j.AlgorithmParameter.Id == _testBatch.OptimizationTestRuns[testRunIndex].AlgorithmParameterValues[i].AlgorithmParameter.Id).First().DoubleValue ? isAllEqual : false; //если параметры не равны, устанавливаем isAllEqual в false
+                        }
+                    }
+                }
+                while (isAllEqual == false);
+                _testRunsMatrix[matrixLineIndex, matrixColumnIndex] = _testBatch.OptimizationTestRuns[testRunIndex]; //записываем тестовый прогон в матрицу
 
                 //переход на следующую колонку матрицы
+                matrixColumnIndex++;
+                topAxisCurrentParameterValues[topAxisCurrentParameterValues.Length - 1]++; //увеличиваем индекс значения последнего параметра в комбинации
+                for (int i = topAxisCurrentParameterValues.Length - 2; i >= 0; i--)
+                {
+                    if(topAxisCurrentParameterValues[i + 1] > topAxisCountParameterValues[i + 1] - 1) //если индекс следующего в комбинации значений параметра превышает допустимый, обнуляем индекс следующего и увеличиваем на 1 индекс текущего
+                    {
+                        topAxisCurrentParameterValues[i + 1] = 0;
+                        topAxisCurrentParameterValues[i]++;
+                    }
+                }
+
                 //переход на следующую строку матрицы
+                if(topAxisCurrentParameterValues[0] > topAxisCountParameterValues[0] - 1) //если индекс первого значения параметра, отражающего номер колонки первышает допустимый, значит нужно обнулить индексы колонок и перейти на следующую строку
+                {
+                    //обнуляем индексы колонки
+                    matrixColumnIndex = 0;
+                    for (int i = 0; i < topAxisCurrentParameterValues.Length; i++)
+                    {
+                        topAxisCurrentParameterValues[i] = 0;
+                    }
+                    //переходим на следующую строку матрицы
+                    matrixLineIndex++;
+                    leftAxisCurrentParameterValues[leftAxisCurrentParameterValues.Length - 1]++; //увеличиваем индекс значения последнего параметра, отражающего индекс строки в комбинации
+                    for (int i = leftAxisCurrentParameterValues.Length - 2; i >= 0; i--)
+                    {
+                        if (leftAxisCurrentParameterValues[i + 1] > leftAxisCountParameterValues[i + 1] - 1) //если индекс следующего в комбинации значений параметра превышает допустимый, обнуляем индекс следующего и увеличиваем на 1 индекс текущего
+                        {
+                            leftAxisCurrentParameterValues[i + 1] = 0;
+                            leftAxisCurrentParameterValues[i]++;
+                        }
+                    }
+
+                    //если индекс первого параметра в комбинации первышает допустимый, значит мы вышли за пределы матрицы, выходим из цикла
+                    if(leftAxisCurrentParameterValues[0] > leftAxisCountParameterValues[0] - 1)
+                    {
+                        isEndLines = true;
+                    }
+                }
             }
         }
 
@@ -467,15 +552,9 @@ namespace ktradesystem.ViewModels
                 CreateAxesSearchPlanePageThreeDimensionChart(); //создаем элементы для меню выбора осей плоскости поиска топ-модели
 
 
-                int[,] a = new int[1, 0];
-                int[,] aa = new int[1, 1];
-                int[,] aaa = new int[2, 0];
-                int[,] aaaa = new int[2, 1];
-                int[,] aaaaa = new int[2, 2];
-
-
                 DeterminingMinAndMaxValuesInEvaluationCriterias(); //определяем минимальное и максимальное значения у выбранных критериев оценки
-                DeterminingAlgorithmParamtersAxes();
+                DeterminingAlgorithmParamtersAxes(); //определяем параметры алгоритма для левой и верхней оси матрицы тестовых прогонов
+                CreateTestRunsMatrix(); //создаем двумерный массив с тестовыми прогонами на основе выбранных осей плоскости поиска
             }
         }
         public ICommand ResetCamera_Click

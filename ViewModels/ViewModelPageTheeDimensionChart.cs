@@ -65,7 +65,7 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-
+        
         private Model3D _levelsModel3D;
         public Model3D LevelsModel3D //уровни
         {
@@ -293,11 +293,6 @@ namespace ktradesystem.ViewModels
                 mesh.TriangleIndices.Add(triangleIndices[i]);
             }
             return mesh;
-        }
-
-        private void UpdateSearchPlanes() //обновляет поисковые плоскости на выбранные, формирует двумерный массив с тестовыми прогонами на основе выбранных осей поисковой плоскости
-        {
-
         }
 
         public void BuildChart() //строит график

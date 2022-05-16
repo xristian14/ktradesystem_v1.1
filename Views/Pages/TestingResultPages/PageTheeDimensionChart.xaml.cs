@@ -24,8 +24,25 @@ namespace ktradesystem.Views.Pages.TestingResultPages
         public PageTheeDimensionChart()
         {
             InitializeComponent();
-            ViewModelPageTheeDimensionChart viewModelPageTheeDimensionChart = new ViewModelPageTheeDimensionChart();
-            DataContext = viewModelPageTheeDimensionChart;
+            _viewModelPageTheeDimensionChart = new ViewModelPageTheeDimensionChart();
+            DataContext = _viewModelPageTheeDimensionChart;
+        }
+
+        ViewModelPageTheeDimensionChart _viewModelPageTheeDimensionChart;
+
+        private void canvasOn3D_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            _viewModelPageTheeDimensionChart.MouseDown(e.GetPosition(sender as IInputElement));
+        }
+
+        private void canvasOn3D_MouseMove(object sender, MouseEventArgs e)
+        {
+            _viewModelPageTheeDimensionChart.MouseMove(e.GetPosition(sender as IInputElement));
+        }
+
+        private void canvasOn3D_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            _viewModelPageTheeDimensionChart.MouseUp();
         }
     }
 }

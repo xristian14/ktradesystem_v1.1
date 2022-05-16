@@ -358,19 +358,22 @@
             </StackPanel>
             <Viewport3D Grid.Row="1">
                 <Viewport3D.Camera>
-                    <OrthographicCamera Position="1 1 2" LookDirection="-1 -1 -2" NearPlaneDistance="0.01" />
+                    <OrthographicCamera Position="0.5 1 2" LookDirection="-0.5 -1 -2" NearPlaneDistance="0.01" />
                 </Viewport3D.Camera>
                 <Viewport3D.Children>
                     <ModelVisual3D>
                         <ModelVisual3D.Content>
                             <Model3DGroup>
-                                <AmbientLight Color="#404040"/>
-                                <DirectionalLight Color="#aaaaaa" Direction="-3,-3,-2" />
+                                <AmbientLight Color="#808080"/>
+                                <DirectionalLight Color="#808080" Direction="-0.5,-0.5,0.5" />
+                                <DirectionalLight Color="#808080" Direction="0.5,-0.5,-0.17" />
+                                <DirectionalLight Color="#808080" Direction="-0.17,-0.5,-0.5" />
                             </Model3DGroup>
                         </ModelVisual3D.Content>
                     </ModelVisual3D>
                     <ModelVisual3D Content="{Binding ParametersPlanesModel3D}"></ModelVisual3D>
-                    <ModelVisual3D Content="{Binding ScaleValuesModel3D}"></ModelVisual3D>
+                    <ModelVisual3D Content="{Binding ScaleValuesLeftModel3D}"></ModelVisual3D>
+                    <ModelVisual3D Content="{Binding ScaleValuesRightModel3D}"></ModelVisual3D>
                     <ModelVisual3D Content="{Binding SurfacesModel3D}"></ModelVisual3D>
                     <ModelVisual3D Content="{Binding LevelsModel3D}"></ModelVisual3D>
                     <ModelVisual3D Content="{Binding SearchPlanesModel3D}"></ModelVisual3D>
@@ -413,6 +416,7 @@ TriangleIndices="
                     </ModelVisual3D>
                 </Viewport3D.Children>
             </Viewport3D>
+            <Canvas Grid.Row="1" x:Name="canvasOn3D" MouseDown="canvasOn3D_MouseDown" MouseMove="canvasOn3D_MouseMove" MouseUp="canvasOn3D_MouseUp" Background="Transparent"/>
         </Grid>
     </Grid>
 </Page>

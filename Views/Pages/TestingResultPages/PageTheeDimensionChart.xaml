@@ -358,7 +358,7 @@
             </StackPanel>
             <Viewport3D Grid.Row="1">
                 <Viewport3D.Camera>
-                    <OrthographicCamera Position="0.5 1 2" LookDirection="-0.5 -1 -2" NearPlaneDistance="0.01" />
+                    <OrthographicCamera Position="{Binding CameraPosition}" LookDirection="{Binding CameraLookDirection}" Width="{Binding CameraWidth}" NearPlaneDistance="0.01" />
                 </Viewport3D.Camera>
                 <Viewport3D.Children>
                     <ModelVisual3D>

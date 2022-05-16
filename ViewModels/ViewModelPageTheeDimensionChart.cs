@@ -35,6 +35,7 @@ namespace ktradesystem.ViewModels
 
         private bool _isMouseDown = false; //зажата ли левая клавиша мыши
         private Point _mouseDownPosition; //позиция мыши при нажатии мыши
+        private double _moveToRotateFactor = 0.01; //скольким углам вращения соответствует 1 значений движения мыши
         private double _mouseDownСameraArcRotate; //значение угла в момент нажатия левой клавиши мыши
         private double _mouseDownСameraInArcRotate; //значение угла в момент нажатия левой клавиши мыши
         private double _cameraArcRotate = 0; //угол вращения дуги на которой расположена камера, вокруг центральной оси
@@ -57,6 +58,16 @@ namespace ktradesystem.ViewModels
             private set
             {
                 _cameraLookDirection = value;
+                OnPropertyChanged();
+            }
+        }
+        private double _cameraWidth = 2;
+        public double CameraWidth
+        {
+            get { return _cameraWidth; }
+            set
+            {
+                _cameraWidth = value;
                 OnPropertyChanged();
             }
         }
@@ -138,12 +149,33 @@ namespace ktradesystem.ViewModels
         {
             if (_isMouseDown)
             {
-
+                double angleVertikal = (position.Y - _mouseDownPosition.Y) * _moveToRotateFactor;
+                double angleHorizontal = (_mouseDownPosition.X - position.X) * _moveToRotateFactor;
+                _cameraInArcRotate = _mouseDownСameraInArcRotate + angleVertikal;
+                while(Math.Abs(_cameraInArcRotate) > 360)
+                {
+                    _cameraInArcRotate += _cameraInArcRotate > 0 ? -360 : 360;
+                }
+                _cameraArcRotate = _mouseDownСameraArcRotate + angleHorizontal;
+                while(Math.Abs(_cameraArcRotate) > 360)
+                {
+                    _cameraArcRotate += _cameraArcRotate > 0 ? -360 : 360;
+                }
+                UpdateCameraPosition();
             }
         }
         public void MouseUp() //обрабатывает отпускание мыши для вращения камеры
         {
             _isMouseDown = false;
+        }
+
+        private void UpdateCameraPosition() //устанавливает позицию камеры в соответствии с выбранными углами _cameraArcRotate и _cameraInArcRotate
+        {
+            double x = _cameraDistance * Math.Cos(_cameraInArcRotate) * Math.Sin(_cameraArcRotate);
+            double y = _cameraDistance * Math.Sin(_cameraInArcRotate);
+            double z = _cameraDistance * Math.Cos(_cameraInArcRotate) * Math.Cos(_cameraArcRotate);
+            CameraPosition = new Point3D(x, y, z);
+            CameraLookDirection = new Vector3D(-x, -y, -z);
         }
 
         private double _min = 0; //минимальное значение на графике

@@ -2088,7 +2088,7 @@ namespace ktradesystem.Models
                     {
                         testBatch.AxesTopModelSearchPlane = testing.AxesTopModelSearchPlane;
                     }
-                    else //если оси не указаны, находим оси двумерной плоскости поиска топ-модели с соседями, для которых волатильность критерия оценки максимальная
+                    else //если оси не указаны, находим оси двумерной плоскости поиска топ-модели с соседями, для которых волатильность критерия оценки минимальная
                     {
                         //формируем список со всеми параметрами
                         /*List<int[]> indicatorsAndAlgorithmParameters = new List<int[]>(); //список с параметрами (0-й элемент массива - тип параметра: 1-индикатор, 2-алгоритм, 1-й элемент массива - индекс параметра)
@@ -2294,24 +2294,24 @@ namespace ktradesystem.Models
                             averageVolatilityParametersCombination.Add(amountVolatility / (countIncreaseVolatility / 2)); //записываем среднюю волатильность для данной комбинации (делим на 2, т.к. мы дважды проходились по плоскости и суммировали общую волатильность: слева-направо и вниз, а так же сверху-вниз и направо)
                         }
 
-                        //выбираем комбинацию параметров с самой высокой средней волатильностью
-                        int indexMaxAverageVolatility = 0;
-                        double maxAverageVolatility = averageVolatilityParametersCombination[0];
+                        //выбираем комбинацию параметров с самой низкой средней волатильностью
+                        int indexMinAverageVolatility = 0;
+                        double minAverageVolatility = averageVolatilityParametersCombination[0];
                         for (int i = 1; i < averageVolatilityParametersCombination.Count; i++)
                         {
-                            if (averageVolatilityParametersCombination[i] > maxAverageVolatility)
+                            if (averageVolatilityParametersCombination[i] < minAverageVolatility)
                             {
-                                indexMaxAverageVolatility = i;
-                                maxAverageVolatility = averageVolatilityParametersCombination[i];
+                                indexMinAverageVolatility = i;
+                                minAverageVolatility = averageVolatilityParametersCombination[i];
                             }
                         }
 
                         //формируем первый параметр оси
                         AxesParameter axesParameterX = new AxesParameter();
-                        axesParameterX.AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parametersCombination[indexMaxAverageVolatility][0]];
+                        axesParameterX.AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parametersCombination[indexMinAverageVolatility][0]];
                         //формируем второй параметр оси
                         AxesParameter axesParameterY = new AxesParameter();
-                        axesParameterY.AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parametersCombination[indexMaxAverageVolatility][1]];
+                        axesParameterY.AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parametersCombination[indexMinAverageVolatility][1]];
 
                         List<AxesParameter> axesTopModelSearchPlane = new List<AxesParameter>();
                         axesTopModelSearchPlane.Add(axesParameterX);

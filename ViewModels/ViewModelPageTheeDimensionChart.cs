@@ -24,6 +24,7 @@ namespace ktradesystem.ViewModels
             ResetCameraPosition();
         }
 
+        private bool isLoadingTestResultComplete = false; //загружен ли тестовый результат. Нужно чтобы не допускать посроения поверхности когда не все функции, связанные с формированием матрицы выполнены
         private Testing _testing; //результат тестирования
         private TestBatch _testBatch; //тестовая связка, на основании которой будет строиться график
         private List<AlgorithmParameter> _leftAxisParameters = new List<AlgorithmParameter>(); //параметры алгоритма, которые будут на левой стороне квадрата
@@ -438,7 +439,6 @@ namespace ktradesystem.ViewModels
                 model3DGroupLeft.Children.Add(geometryModel3D);
             }
             ScaleValuesRightModel3D = model3DGroupLeft;
-            
 
             Model3DGroup model3DGroupRight = new Model3DGroup();
             for(int i = 1; i < 7; i++)
@@ -472,6 +472,51 @@ namespace ktradesystem.ViewModels
                 model3DGroupRight.Children.Add(geometryModel3D);
             }
             ScaleValuesLeftModel3D = model3DGroupRight;
+
+            UpdateScaleValuesRotation(); //обновляем угол вращения шкал значений, чтобы они были напротив камеры
+        }
+
+        private void BuildSurfaces() //строит поверхности выбранных критериев оценки
+        {
+            Model3DGroup model3DGroup = new Model3DGroup();
+            foreach (EvaluationCriteriaPageThreeDimensionChart evaluationCriteriaPageThreeDimensionChart in EvaluationCriteriasPageThreeDimensionChart.Where(j => j.IsChecked))
+            {
+                GeometryModel3D geometryModel3D = new GeometryModel3D();
+                MeshGeometry3D meshGeometry3D = new MeshGeometry3D();
+                Point3DCollection positionsCollection = new Point3DCollection();
+                Int32Collection triangleIndicesCollection = new Int32Collection();
+                int lines = _testRunsMatrix.GetLength(0);
+                int columns = _testRunsMatrix.GetLength(1);
+                for (int x = 1; x < lines; x++)
+                {
+                    for(int y = 1; y < columns; y++)
+                    {
+                        Point3D point1 = new Point3D((x - 1) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (_testRunsMatrix[x - 1, y - 1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id).First().DoubleValue - _min) / (_max - _min) * _cubeSideSize - _cubeSideSize / 2, (y - 1) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
+                        Point3D point2 = new Point3D((x - 1) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (_testRunsMatrix[x - 1, y].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id).First().DoubleValue - _min) / (_max - _min) * _cubeSideSize - _cubeSideSize / 2, (y) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
+                        Point3D point3 = new Point3D((x) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (_testRunsMatrix[x, y - 1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id).First().DoubleValue - _min) / (_max - _min) * _cubeSideSize - _cubeSideSize / 2, (y - 1) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
+                        Point3D point4 = new Point3D((x) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (_testRunsMatrix[x, y].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id).First().DoubleValue - _min) / (_max - _min) * _cubeSideSize - _cubeSideSize / 2, (y) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
+                        positionsCollection.Add(point1);
+                        positionsCollection.Add(point2);
+                        positionsCollection.Add(point3);
+                        positionsCollection.Add(point2);
+                        positionsCollection.Add(point4);
+                        positionsCollection.Add(point3);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                    }
+                }
+                meshGeometry3D.Positions = positionsCollection;
+                meshGeometry3D.TriangleIndices = triangleIndicesCollection;
+                geometryModel3D.Geometry = meshGeometry3D;
+                geometryModel3D.Material = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(225, 225, 225)));
+                geometryModel3D.BackMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(200, 200, 200)));
+                model3DGroup.Children.Add(geometryModel3D);
+            }
+            SurfacesModel3D = model3DGroup;
         }
 
         public void BuildChart() //строит график
@@ -566,7 +611,18 @@ namespace ktradesystem.ViewModels
             }
             if(propertyName == "IsChecked") //если был переключен чекбокс
             {
-                
+                if(EvaluationCriteriasPageThreeDimensionChart.Where(j=>j.IsChecked).Any()) //если выбран хоть один критерий оценки, строим поверхности
+                {
+                    if (isLoadingTestResultComplete)
+                    {
+                        DeterminingMinAndMaxValuesInEvaluationCriterias(); //определяем минимальное и максимальное значения у выбранных критериев оценки
+                        BuildSurfaces(); //строим поверхности выбранных критериев оценки
+                    }
+                }
+                else //иначе выбираем тот что был снят чтобы всегда был выбран хотя бы один
+                {
+                    evaluationCriteriaPageThreeDimensionChart.IsChecked = true;
+                }
             }
         }
         private void CreateEvaluationCriteriasPageThreeDimensionChart() //создает критерии оценки для представления. Добавляет только те, которые имеют числовое значение
@@ -586,18 +642,25 @@ namespace ktradesystem.ViewModels
 
         private void ResetEvaluationCriteriasPageThreeDimensionChart() //сбрасывает выбранные критерии оценки на тот что используется для определения топ-модели
         {
-            for(int i = 1; i < EvaluationCriteriasPageThreeDimensionChart.Count; i++)
+            int index = 1;
+            bool isFind = false;
+            while(isFind == false)
             {
-                if (EvaluationCriteriasPageThreeDimensionChart[i].EvaluationCriteria.Id == _testing.TopModelCriteria.EvaluationCriteria.Id) //если это критерий оценки для оределения топ-модели
+                if(EvaluationCriteriasPageThreeDimensionChart[index].EvaluationCriteria.Id == _testing.TopModelCriteria.EvaluationCriteria.Id)
                 {
-                    if(EvaluationCriteriasPageThreeDimensionChart[i].IsChecked == false) //если он не выбран, выбираем его
-                    {
-                        EvaluationCriteriasPageThreeDimensionChart[i].IsChecked = true;
-                    }
+                    EvaluationCriteriasPageThreeDimensionChart[index].IsChecked = true; //выбираем критерий оценки топ-модели
+                    isFind = true;
                 }
-                else if (EvaluationCriteriasPageThreeDimensionChart[i].IsChecked) //иначе, это не критерий оценки топ-модели, и если он выбран, снимаем выбор
+                index++;
+            }
+            for (int i = 1; i < EvaluationCriteriasPageThreeDimensionChart.Count; i++)
+            {
+                if (EvaluationCriteriasPageThreeDimensionChart[i].EvaluationCriteria.Id != _testing.TopModelCriteria.EvaluationCriteria.Id) //если это не критерий оценки для оределения топ-модели, сбрасываем его
                 {
-                    EvaluationCriteriasPageThreeDimensionChart[i].IsChecked = false;
+                    if (EvaluationCriteriasPageThreeDimensionChart[i].IsChecked)
+                    {
+                        EvaluationCriteriasPageThreeDimensionChart[i].IsChecked = false;
+                    }
                 }
             }
         }
@@ -668,6 +731,9 @@ namespace ktradesystem.ViewModels
                     axisSearchPlanePageThreeDimensionChart2.AlgorithmParameters = GetAlgorithmParameters();
                     axisSearchPlanePageThreeDimensionChart2.AlgorithmParameters.Remove(axisSearchPlanePageThreeDimensionChart.SelectedAlgorithmParameter); //удаляем из доступных для выбора параметров, параметр который был выбран
                 }
+                DeterminingAlgorithmParamtersAxes(); //определяем параметры алгоритма для левой и верхней оси матрицы тестовых прогонов
+                CreateTestRunsMatrix(); //создаем двумерный массив с тестовыми прогонами на основе выбранных осей плоскости поиска
+                BuildSurfaces(); //строим поверхности выбранных критериев оценки
             }
         }
         private ObservableCollection<AlgorithmParameter> GetAlgorithmParameters() //возвращает параметры алгоритма
@@ -718,6 +784,7 @@ namespace ktradesystem.ViewModels
         {
             if(ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox != null)
             {
+                isLoadingTestResultComplete = false; //устанавливаем чтобы поверхности не строились при выборе критерия оценки пока не создана матрица тестовых прогонов
                 _testing = ViewModelPageTestingResult.getInstance().TestingResult;
                 _testBatch = ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox.TestBatch;
                 ResetEvaluationCriteriasPageThreeDimensionChart(); //сбрасываем выбранные критерии оценки на тот что используется для определения топ-модели
@@ -725,12 +792,12 @@ namespace ktradesystem.ViewModels
                 LevelsPageThreeDimensionChart.Add(LevelPageThreeDimensionChart.CreateButtonAddLevel(LevelPageThreeDimensionChart_PropertyChanged)); //создаем кнопку добавить для меню уровней
                 CreateAxesSearchPlanePageThreeDimensionChart(); //создаем элементы для меню выбора осей плоскости поиска топ-модели
 
-
                 DeterminingMinAndMaxValuesInEvaluationCriterias(); //определяем минимальное и максимальное значения у выбранных критериев оценки
                 DeterminingAlgorithmParamtersAxes(); //определяем параметры алгоритма для левой и верхней оси матрицы тестовых прогонов
                 CreateTestRunsMatrix(); //создаем двумерный массив с тестовыми прогонами на основе выбранных осей плоскости поиска
-
-                BuildScaleValues();
+                BuildScaleValues(); //строим шкалы значений
+                BuildSurfaces(); //строим поверхности выбранных критериев оценки
+                isLoadingTestResultComplete = true;
             }
         }
         public ICommand ResetEvaluationCriterias_Click

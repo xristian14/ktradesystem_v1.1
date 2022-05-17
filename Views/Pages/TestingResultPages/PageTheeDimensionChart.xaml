@@ -378,7 +378,7 @@
                     <ModelVisual3D Content="{Binding SurfacesModel3D}"></ModelVisual3D>
                     <ModelVisual3D Content="{Binding LevelsModel3D}"></ModelVisual3D>
                     <ModelVisual3D Content="{Binding SearchPlanesModel3D}"></ModelVisual3D>
-                    <ModelVisual3D>
+                    <!--<ModelVisual3D>
                         <ModelVisual3D.Content>
                             <Model3DGroup>
                                 <GeometryModel3D>
@@ -414,7 +414,7 @@ TriangleIndices="
                                 </RotateTransform3D.Rotation>
                             </RotateTransform3D>
                         </ModelVisual3D.Transform>
-                    </ModelVisual3D>
+                    </ModelVisual3D>-->
                 </Viewport3D.Children>
             </Viewport3D>
             <Canvas Grid.Row="1" x:Name="canvasOn3D" MouseDown="canvasOn3D_MouseDown" MouseMove="canvasOn3D_MouseMove" MouseUp="canvasOn3D_MouseUp" Background="Transparent"/>

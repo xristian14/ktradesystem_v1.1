@@ -21,6 +21,7 @@ namespace ktradesystem.ViewModels
         {
             ViewModelPageTestingResult.TestBatchesUpdatePages += UpdatePage;
             CreateEvaluationCriteriasPageThreeDimensionChart();
+            ResetCameraPosition();
         }
 
         private Testing _testing; //результат тестирования
@@ -35,7 +36,7 @@ namespace ktradesystem.ViewModels
 
         private bool _isMouseDown = false; //зажата ли левая клавиша мыши
         private Point _mouseDownPosition; //позиция мыши при нажатии мыши
-        private double _moveToRotateFactor = 0.01; //скольким углам вращения соответствует 1 значений движения мыши
+        private double _moveToRotateFactor = 0.01; //скольким радианам вращения соответствует 1 значение движения мыши
         private double _mouseDownСameraArcRotate; //значение угла в момент нажатия левой клавиши мыши
         private double _mouseDownСameraInArcRotate; //значение угла в момент нажатия левой клавиши мыши
         private double _cameraArcRotate = 0; //угол вращения дуги на которой расположена камера, вокруг центральной оси
@@ -152,14 +153,14 @@ namespace ktradesystem.ViewModels
                 double angleVertikal = (position.Y - _mouseDownPosition.Y) * _moveToRotateFactor;
                 double angleHorizontal = (_mouseDownPosition.X - position.X) * _moveToRotateFactor;
                 _cameraInArcRotate = _mouseDownСameraInArcRotate + angleVertikal;
-                while(Math.Abs(_cameraInArcRotate) > 360)
+                while(Math.Abs(_cameraInArcRotate) > 1.57079633) //ограничиваем вертикальное вращение до 90 градусов
                 {
-                    _cameraInArcRotate += _cameraInArcRotate > 0 ? -360 : 360;
+                    _cameraInArcRotate = _cameraInArcRotate > 0 ? 1.57079633 : -1.57079633;
                 }
                 _cameraArcRotate = _mouseDownСameraArcRotate + angleHorizontal;
-                while(Math.Abs(_cameraArcRotate) > 360)
+                while(Math.Abs(_cameraArcRotate) > 6.28318530718) //если угол поворота превышет 360 градусов, вычитаем 360 градусов, 6.28318530718 радиан = 360 градусов
                 {
-                    _cameraArcRotate += _cameraArcRotate > 0 ? -360 : 360;
+                    _cameraArcRotate += _cameraArcRotate > 0 ? -6.28318530718 : 6.28318530718;
                 }
                 UpdateCameraPosition();
             }
@@ -176,6 +177,34 @@ namespace ktradesystem.ViewModels
             double z = _cameraDistance * Math.Cos(_cameraInArcRotate) * Math.Cos(_cameraArcRotate);
             CameraPosition = new Point3D(x, y, z);
             CameraLookDirection = new Vector3D(-x, -y, -z);
+            UpdateScaleValuesRotation(); //обновляем угол вращения шкал значений, чтобы они всегда были напротив камеры
+        }
+        private void ResetCameraPosition() //сбрасывает положение камеры в значение по умолчанию
+        {
+            _cameraArcRotate = 0.52;
+            _cameraInArcRotate = 0.26;
+            UpdateCameraPosition();
+        }
+
+        private void UpdateScaleValuesRotation() //обновляет угол вращения шкал значений, чтобы они всегда были напротив камеры
+        {
+            if (ScaleValuesLeftModel3D != null)
+            {
+                double cameraArcRotatePositive = _cameraArcRotate < 0 ? _cameraArcRotate + 6.28318530718 : _cameraArcRotate; //угол в положительном значении
+                double angle = Math.Truncate(cameraArcRotatePositive / 1.57079633) * 90;
+                ScaleValuesLeftModel3D.Transform = GetRotateTransform3D(new Vector3D(0, 1, 0), angle - 90);
+                ScaleValuesRightModel3D.Transform = GetRotateTransform3D(new Vector3D(0, 1, 0), angle - 180);
+            }
+        }
+
+        private RotateTransform3D GetRotateTransform3D(Vector3D vector3D, double angle)
+        {
+            RotateTransform3D rotateTransform3D = new RotateTransform3D();
+            AxisAngleRotation3D axisAngleRotation3D = new AxisAngleRotation3D();
+            axisAngleRotation3D.Axis = vector3D;
+            axisAngleRotation3D.Angle = angle;
+            rotateTransform3D.Rotation = axisAngleRotation3D;
+            return rotateTransform3D;
         }
 
         private double _min = 0; //минимальное значение на графике
@@ -375,9 +404,8 @@ namespace ktradesystem.ViewModels
         {
             /*DiffuseMaterial secondLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(226, 239, 218)));
             DiffuseMaterial firstLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(198, 224, 180)));*/
-            DiffuseMaterial secondLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(226, 239, 218)));
-            secondLineDiffuseMaterial.Brush.Opacity = 0;
-            DiffuseMaterial firstLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(255, 255, 255)));
+            DiffuseMaterial firstLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(221, 238, 255)));
+            DiffuseMaterial secondLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(255, 255, 255)));
             Model3DGroup model3DGroupLeft = new Model3DGroup();
             for(int i = 1; i < 7; i++)
             {
@@ -391,11 +419,11 @@ namespace ktradesystem.ViewModels
                     yTop = _cubeSideSize / 2 + _offsetScaleValues * _cubeSideSize;
                 }
                 positionsCollection.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, yTop, _cubeSideSize / 2));
+                positionsCollection.Add(new Point3D(_cubeSideSize / 2, yBottom, _cubeSideSize / 2));
                 positionsCollection.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, yBottom, _cubeSideSize / 2));
-                positionsCollection.Add(new Point3D(_cubeSideSize / 2, yBottom, _cubeSideSize / 2));
                 positionsCollection.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, yTop, _cubeSideSize / 2));
-                positionsCollection.Add(new Point3D(_cubeSideSize / 2, yBottom, _cubeSideSize / 2));
                 positionsCollection.Add(new Point3D(_cubeSideSize / 2, yTop, _cubeSideSize / 2));
+                positionsCollection.Add(new Point3D(_cubeSideSize / 2, yBottom, _cubeSideSize / 2));
                 meshGeometry3D.Positions = positionsCollection;
                 Int32Collection triangleIndicesCollection = new Int32Collection();
                 triangleIndicesCollection.Add(0);
@@ -409,7 +437,8 @@ namespace ktradesystem.ViewModels
                 geometryModel3D.Material = i % 2 == 0 ? secondLineDiffuseMaterial : firstLineDiffuseMaterial;
                 model3DGroupLeft.Children.Add(geometryModel3D);
             }
-            ScaleValuesLeftModel3D = model3DGroupLeft;
+            ScaleValuesRightModel3D = model3DGroupLeft;
+            
 
             Model3DGroup model3DGroupRight = new Model3DGroup();
             for(int i = 1; i < 7; i++)
@@ -424,11 +453,11 @@ namespace ktradesystem.ViewModels
                     yTop = _cubeSideSize / 2 + _offsetScaleValues * _cubeSideSize;
                 }
                 positionsCollection.Add(new Point3D(-_cubeSideSize / 2, yTop, _cubeSideSize / 2));
+                positionsCollection.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, yBottom, _cubeSideSize / 2));
                 positionsCollection.Add(new Point3D(-_cubeSideSize / 2, yBottom, _cubeSideSize / 2));
-                positionsCollection.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, yBottom, _cubeSideSize / 2));
                 positionsCollection.Add(new Point3D(-_cubeSideSize / 2, yTop, _cubeSideSize / 2));
-                positionsCollection.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, yBottom, _cubeSideSize / 2));
                 positionsCollection.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, yTop, _cubeSideSize / 2));
+                positionsCollection.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, yBottom, _cubeSideSize / 2));
                 meshGeometry3D.Positions = positionsCollection;
                 Int32Collection triangleIndicesCollection = new Int32Collection();
                 triangleIndicesCollection.Add(0);
@@ -442,7 +471,7 @@ namespace ktradesystem.ViewModels
                 geometryModel3D.Material = i % 2 == 0 ? secondLineDiffuseMaterial : firstLineDiffuseMaterial;
                 model3DGroupRight.Children.Add(geometryModel3D);
             }
-            ScaleValuesRightModel3D = model3DGroupRight;
+            ScaleValuesLeftModel3D = model3DGroupRight;
         }
 
         public void BuildChart() //строит график
@@ -704,7 +733,7 @@ namespace ktradesystem.ViewModels
                 BuildScaleValues();
             }
         }
-        public ICommand ResetCamera_Click
+        public ICommand ResetEvaluationCriterias_Click
         {
             get
             {
@@ -714,13 +743,23 @@ namespace ktradesystem.ViewModels
                 }, (obj) => true);
             }
         }
-        public ICommand ResetEvaluationCriterias_Click
+        public ICommand ResetCamera_Click
         {
             get
             {
                 return new DelegateCommand((obj) =>
                 {
-                    
+                    ResetCameraPosition();
+                }, (obj) => true);
+            }
+        }
+        public ICommand ShowInfo_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    MessageBox.Show("_cameraArcRotate=" + _cameraArcRotate.ToString() + " angle=" + (-90 + Math.Truncate(_cameraArcRotate / 1.57079633) * 90).ToString() + "  Math.Truncate(_cameraArcRotate / 1.57079633)=" + (Math.Truncate(_cameraArcRotate / 1.57079633)).ToString());
                 }, (obj) => true);
             }
         }

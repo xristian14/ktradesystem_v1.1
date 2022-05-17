@@ -44,5 +44,11 @@ namespace ktradesystem.Views.Pages.TestingResultPages
         {
             _viewModelPageTheeDimensionChart.MouseUp();
         }
+
+        private void viewport3D_Loaded(object sender, RoutedEventArgs e)
+        {
+            _viewModelPageTheeDimensionChart.Viewport3DWidth = viewport3D.ActualWidth;
+            _viewModelPageTheeDimensionChart.Viewport3DHeight = viewport3D.ActualHeight;
+        }
     }
 }

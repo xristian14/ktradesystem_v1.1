@@ -357,7 +357,7 @@
                     <Button Content="Вывести информацию" Command="{Binding ShowInfo_Click}" Width="122" Margin="5 0 0 0"/>
                 </StackPanel>
             </StackPanel>
-            <Viewport3D Grid.Row="1">
+            <Viewport3D x:Name="viewport3D" Grid.Row="1" Loaded="viewport3D_Loaded">
                 <Viewport3D.Camera>
                     <OrthographicCamera Position="{Binding CameraPosition}" LookDirection="{Binding CameraLookDirection}" Width="{Binding CameraWidth}" NearPlaneDistance="0.01" />
                 </Viewport3D.Camera>

@@ -748,8 +748,21 @@ namespace ktradesystem.ViewModels
             foreach (EvaluationCriteriaPageThreeDimensionChart evaluationCriteriaPageThreeDimensionChart in EvaluationCriteriasPageThreeDimensionChart.Where(j => j.IsChecked))
             {
                 LinearGradientBrush linearGradientBrush = new LinearGradientBrush(); //кисть с градиентной заливкой
-                linearGradientBrush.GradientStops.Add(new GradientStop { Color = Color.FromRgb(255, 0, 0), Offset = 0 });
-                linearGradientBrush.GradientStops.Add(new GradientStop { Color = Color.FromRgb(0, 240, 0), Offset = 1 });
+                double offsetRed = 0; //координата красного цвета
+                double offsetGreen = 1; //координата зеленого цвета
+                if (evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.IsHaveBestAndWorstValue) //если указаны лучшее и худшее значения, устанавливаем координату цвета в данные значения
+                {
+                    offsetGreen = (evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.BestValue - _min) / (_max - _min);
+                    offsetRed = (evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.WorstValue - _min) / (_max - _min);
+                }
+                if(evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.IsBestPositive == false) //если лучшим считается минимальное значение, меняем цвета, чтобы минимум был зеленым, а максимум - красным
+                {
+                    double green = offsetGreen;
+                    offsetGreen = offsetRed;
+                    offsetRed = green;
+                }
+                linearGradientBrush.GradientStops.Add(new GradientStop { Color = Color.FromRgb(255, 0, 0), Offset = offsetRed });
+                linearGradientBrush.GradientStops.Add(new GradientStop { Color = Color.FromRgb(0, 240, 0), Offset = offsetGreen });
                 double range = _max - _min; //диапазон значений
                 GeometryModel3D geometryModel3D = new GeometryModel3D();
                 MeshGeometry3D meshGeometry3D = new MeshGeometry3D();

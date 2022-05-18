@@ -33,7 +33,8 @@ namespace ktradesystem.ViewModels
         private double _cubeSideSize = 1; //размер стороны куба, в который вписывается график
         private float _cameraDistance = 1; //растояние от центра куба до камеры
         private int _countScaleValues = 5; //количество отрезков на шкале значений по оси критерия оценки
-        private double _offsetScaleValues = 0.1; //отступ от графика на котором продолжается отрисовываться линия шкалы значений/параметров алгоритма, и после которого начинают отображаться значения шаклы значений/параметров алгоритма. Значение относительно стороны куба, в который вписывается график
+        private double _offsetScaleValues = 0.08; //отступ от графика на котором продолжается отрисовываться линия шкалы значений/параметров алгоритма, и после которого начинают отображаться значения шаклы значений/параметров алгоритма. Значение относительно стороны куба, в который вписывается график
+        private double _scaleValueLineWidth = 0.005; //толщина линии на шкале занчений относительно стороны куба, в который вписывается график
 
         private bool _isMouseDown = false; //зажата ли левая клавиша мыши
         private Point _mouseDownPosition; //позиция мыши при нажатии мыши
@@ -44,6 +45,8 @@ namespace ktradesystem.ViewModels
         private double _cameraInArcRotate = 0; //угол на котором камера распологается на дуге
         public double Viewport3DWidth { get; set; } //шиирна вьюпорта 3D, используется для определения двумерных координат на canvas трехмерной координаты 
         public double Viewport3DHeight { get; set; } //шиирна вьюпорта 3D, используется для определения двумерных координат на canvas трехмерной координаты
+        private List<Point3D> ScaleValuesLeftPoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать значение на шкале значений
+        private List<Point3D> ScaleValuesRightPoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать значение на шкале значений
 
         private Point3D _cameraPosition;
         public Point3D CameraPosition
@@ -407,17 +410,100 @@ namespace ktradesystem.ViewModels
         {
             /*DiffuseMaterial secondLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(226, 239, 218)));
             DiffuseMaterial firstLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(198, 224, 180)));*/
-            DiffuseMaterial firstLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(221, 238, 255)));
-            DiffuseMaterial secondLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(255, 255, 255)));
+            DiffuseMaterial lineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(55, 55, 55)));
+            DiffuseMaterial planeDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(255, 255, 255)));
             Model3DGroup model3DGroupLeft = new Model3DGroup();
-            for(int i = 1; i < 7; i++)
+            for(int i = 1; i < _countScaleValues + 2; i++)
             {
-                GeometryModel3D geometryModel3D = new GeometryModel3D();
-                MeshGeometry3D meshGeometry3D = new MeshGeometry3D();
-                Point3DCollection positionsCollection = new Point3DCollection();
-                double yBottom = -_cubeSideSize / 2 + _cubeSideSize / 5 * (i - 1);
+                GeometryModel3D geometryModel3DLines = new GeometryModel3D();
+                MeshGeometry3D meshGeometry3DLines = new MeshGeometry3D();
+                Point3DCollection positionsCollectionLines = new Point3DCollection();
+                Int32Collection triangleIndicesCollectionLines = new Int32Collection();
+                GeometryModel3D geometryModel3DPlanes = new GeometryModel3D();
+                MeshGeometry3D meshGeometry3DPlanes = new MeshGeometry3D();
+                Point3DCollection positionsCollectionPlanes = new Point3DCollection();
+                Int32Collection triangleIndicesCollectionPlanes = new Int32Collection();
+
+                double lineYBottom = -_cubeSideSize / 2 + _cubeSideSize / _countScaleValues * (i - 1) - _scaleValueLineWidth / 2; //нижняя координата Y для линии
+                double planeYTop = -_cubeSideSize / 2 + _cubeSideSize / _countScaleValues * i - _scaleValueLineWidth / 2; //верхняя координата Y для плоскости фона
+                if (i == _countScaleValues + 1)
+                {
+                    planeYTop = _cubeSideSize / 2 + _offsetScaleValues * _cubeSideSize;
+                }
+
+                //нижняя горизонтальная линия
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, lineYBottom, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, lineYBottom, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, lineYBottom, _cubeSideSize / 2));
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+
+                //левая вертикальная линия
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 - _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 - _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 - _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+
+                //правая вертикальная линия
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2, lineYBottom, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, lineYBottom, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2, lineYBottom, _cubeSideSize / 2));
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+
+                //левая плоскость
+                positionsCollectionPlanes.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, planeYTop, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(-_cubeSideSize / 2 - _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, planeYTop, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(-_cubeSideSize / 2 - _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(-_cubeSideSize / 2 - _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+
+                //правая плоскость
+                positionsCollectionPlanes.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+
+                /*double yBottom = -_cubeSideSize / 2 + _cubeSideSize / 5 * (i - 1);
                 double yTop = -_cubeSideSize / 2 + _cubeSideSize / 5 * i;
-                if (i == 6)
+                if (i == _countScaleValues + 1)
                 {
                     yTop = _cubeSideSize / 2 + _offsetScaleValues * _cubeSideSize;
                 }
@@ -427,25 +513,155 @@ namespace ktradesystem.ViewModels
                 positionsCollection.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, yTop, _cubeSideSize / 2));
                 positionsCollection.Add(new Point3D(_cubeSideSize / 2, yTop, _cubeSideSize / 2));
                 positionsCollection.Add(new Point3D(_cubeSideSize / 2, yBottom, _cubeSideSize / 2));
-                meshGeometry3D.Positions = positionsCollection;
-                Int32Collection triangleIndicesCollection = new Int32Collection();
                 triangleIndicesCollection.Add(0);
                 triangleIndicesCollection.Add(1);
                 triangleIndicesCollection.Add(2);
                 triangleIndicesCollection.Add(3);
                 triangleIndicesCollection.Add(4);
-                triangleIndicesCollection.Add(5);
-                meshGeometry3D.TriangleIndices = triangleIndicesCollection;
-                geometryModel3D.Geometry = meshGeometry3D;
-                geometryModel3D.Material = i % 2 == 0 ? secondLineDiffuseMaterial : firstLineDiffuseMaterial;
-                model3DGroupLeft.Children.Add(geometryModel3D);
+                triangleIndicesCollection.Add(5);*/
+                meshGeometry3DLines.Positions = positionsCollectionLines;
+                meshGeometry3DLines.TriangleIndices = triangleIndicesCollectionLines;
+                geometryModel3DLines.Geometry = meshGeometry3DLines;
+                geometryModel3DLines.Material = lineDiffuseMaterial;
+                model3DGroupLeft.Children.Add(geometryModel3DLines);
+                meshGeometry3DPlanes.Positions = positionsCollectionPlanes;
+                meshGeometry3DPlanes.TriangleIndices = triangleIndicesCollectionPlanes;
+                geometryModel3DPlanes.Geometry = meshGeometry3DPlanes;
+                geometryModel3DPlanes.Material = planeDiffuseMaterial;
+                model3DGroupLeft.Children.Add(geometryModel3DPlanes);
             }
             ScaleValuesRightModel3D = model3DGroupLeft;
 
             Model3DGroup model3DGroupRight = new Model3DGroup();
-            for(int i = 1; i < 7; i++)
+            for(int i = 1; i < _countScaleValues + 2; i++)
             {
-                GeometryModel3D geometryModel3D = new GeometryModel3D();
+                GeometryModel3D geometryModel3DLines = new GeometryModel3D();
+                MeshGeometry3D meshGeometry3DLines = new MeshGeometry3D();
+                Point3DCollection positionsCollectionLines = new Point3DCollection();
+                Int32Collection triangleIndicesCollectionLines = new Int32Collection();
+                GeometryModel3D geometryModel3DPlanes = new GeometryModel3D();
+                MeshGeometry3D meshGeometry3DPlanes = new MeshGeometry3D();
+                Point3DCollection positionsCollectionPlanes = new Point3DCollection();
+                Int32Collection triangleIndicesCollectionPlanes = new Int32Collection();
+
+                double lineYBottom = -_cubeSideSize / 2 + _cubeSideSize / _countScaleValues * (i - 1) - _scaleValueLineWidth / 2; //нижняя координата Y для линии
+                double planeYTop = -_cubeSideSize / 2 + _cubeSideSize / _countScaleValues * i - _scaleValueLineWidth / 2; //верхняя координата Y для плоскости фона
+                if (i == _countScaleValues + 1)
+                {
+                    planeYTop = _cubeSideSize / 2 + _offsetScaleValues * _cubeSideSize;
+                }
+
+                //нижняя горизонтальная линия
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 + _offsetScaleValues, lineYBottom, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 + _offsetScaleValues, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 + _offsetScaleValues, lineYBottom, _cubeSideSize / 2));
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+
+                //левая вертикальная линия
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2, lineYBottom, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom, _cubeSideSize / 2));
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+
+                //правая вертикальная линия
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 + _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+                triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
+
+                //левая плоскость
+                positionsCollectionPlanes.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 - _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+
+                //правая плоскость
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _offsetScaleValues, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _offsetScaleValues, planeYTop, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _offsetScaleValues, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+
+                /*
+                positionsCollection.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, yTop, _cubeSideSize / 2));
+                positionsCollection.Add(new Point3D(_cubeSideSize / 2, yBottom, _cubeSideSize / 2));
+                positionsCollection.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, yBottom, _cubeSideSize / 2));
+                positionsCollection.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, yTop, _cubeSideSize / 2));
+                positionsCollection.Add(new Point3D(_cubeSideSize / 2, yTop, _cubeSideSize / 2));
+                positionsCollection.Add(new Point3D(_cubeSideSize / 2, yBottom, _cubeSideSize / 2));*/
+
+                /*double yBottom = -_cubeSideSize / 2 + _cubeSideSize / 5 * (i - 1);
+                double yTop = -_cubeSideSize / 2 + _cubeSideSize / 5 * i;
+                if (i == _countScaleValues + 1)
+                {
+                    yTop = _cubeSideSize / 2 + _offsetScaleValues * _cubeSideSize;
+                }
+                positionsCollection.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, yTop, _cubeSideSize / 2));
+                positionsCollection.Add(new Point3D(_cubeSideSize / 2, yBottom, _cubeSideSize / 2));
+                positionsCollection.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, yBottom, _cubeSideSize / 2));
+                positionsCollection.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, yTop, _cubeSideSize / 2));
+                positionsCollection.Add(new Point3D(_cubeSideSize / 2, yTop, _cubeSideSize / 2));
+                positionsCollection.Add(new Point3D(_cubeSideSize / 2, yBottom, _cubeSideSize / 2));
+                triangleIndicesCollection.Add(0);
+                triangleIndicesCollection.Add(1);
+                triangleIndicesCollection.Add(2);
+                triangleIndicesCollection.Add(3);
+                triangleIndicesCollection.Add(4);
+                triangleIndicesCollection.Add(5);*/
+                meshGeometry3DLines.Positions = positionsCollectionLines;
+                meshGeometry3DLines.TriangleIndices = triangleIndicesCollectionLines;
+                geometryModel3DLines.Geometry = meshGeometry3DLines;
+                geometryModel3DLines.Material = lineDiffuseMaterial;
+                model3DGroupRight.Children.Add(geometryModel3DLines);
+                meshGeometry3DPlanes.Positions = positionsCollectionPlanes;
+                meshGeometry3DPlanes.TriangleIndices = triangleIndicesCollectionPlanes;
+                geometryModel3DPlanes.Geometry = meshGeometry3DPlanes;
+                geometryModel3DPlanes.Material = planeDiffuseMaterial;
+                model3DGroupRight.Children.Add(geometryModel3DPlanes);
+
+
+
+
+                /*GeometryModel3D geometryModel3D = new GeometryModel3D();
                 MeshGeometry3D meshGeometry3D = new MeshGeometry3D();
                 Point3DCollection positionsCollection = new Point3DCollection();
                 double yBottom = -_cubeSideSize / 2 + _cubeSideSize / 5 * (i - 1);
@@ -470,8 +686,8 @@ namespace ktradesystem.ViewModels
                 triangleIndicesCollection.Add(5);
                 meshGeometry3D.TriangleIndices = triangleIndicesCollection;
                 geometryModel3D.Geometry = meshGeometry3D;
-                geometryModel3D.Material = i % 2 == 0 ? secondLineDiffuseMaterial : firstLineDiffuseMaterial;
-                model3DGroupRight.Children.Add(geometryModel3D);
+                geometryModel3D.Material = planeDiffuseMaterial;
+                model3DGroupRight.Children.Add(geometryModel3D);*/
             }
             ScaleValuesLeftModel3D = model3DGroupRight;
 

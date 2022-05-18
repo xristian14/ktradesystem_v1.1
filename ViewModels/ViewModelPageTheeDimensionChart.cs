@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Collections.ObjectModel;
 using System.Windows.Media.Media3D;
+using System.Windows.Controls;
 using ktradesystem.Models;
 using ktradesystem.Models.Datatables;
 using System.Collections.Specialized;
@@ -34,7 +35,7 @@ namespace ktradesystem.ViewModels
         private float _cameraDistance = 1; //растояние от центра куба до камеры
         private int _countScaleValues = 5; //количество отрезков на шкале значений по оси критерия оценки
         private double _offsetScaleValues = 0.08; //отступ от графика на котором продолжается отрисовываться линия шкалы значений/параметров алгоритма, и после которого начинают отображаться значения шаклы значений/параметров алгоритма. Значение относительно стороны куба, в который вписывается график
-        private double _scaleValueLineWidth = 0.005; //толщина линии на шкале занчений относительно стороны куба, в который вписывается график
+        private double _scaleValueLineWidth = 0.0036; //толщина линии на шкале занчений относительно стороны куба, в который вписывается график
 
         private bool _isMouseDown = false; //зажата ли левая клавиша мыши
         private Point _mouseDownPosition; //позиция мыши при нажатии мыши
@@ -45,8 +46,10 @@ namespace ktradesystem.ViewModels
         private double _cameraInArcRotate = 0; //угол на котором камера распологается на дуге
         public double Viewport3DWidth { get; set; } //шиирна вьюпорта 3D, используется для определения двумерных координат на canvas трехмерной координаты 
         public double Viewport3DHeight { get; set; } //шиирна вьюпорта 3D, используется для определения двумерных координат на canvas трехмерной координаты
+        public Canvas CanvasOn3D { get; set; }
         private List<Point3D> ScaleValuesLeftPoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать значение на шкале значений
         private List<Point3D> ScaleValuesRightPoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать значение на шкале значений
+
 
         private Point3D _cameraPosition;
         public Point3D CameraPosition
@@ -183,6 +186,7 @@ namespace ktradesystem.ViewModels
             double z = _cameraDistance * Math.Cos(_cameraInArcRotate) * Math.Cos(_cameraArcRotate);
             CameraPosition = new Point3D(x, y, z);
             CameraLookDirection = new Vector3D(-x, -y, -z);
+            Draw2D(); //отрисовываем 2D информацию
             UpdateScaleValuesRotation(); //обновляем угол вращения шкал значений, чтобы они всегда были напротив камеры
         }
         private void ResetCameraPosition() //сбрасывает положение камеры в значение по умолчанию
@@ -408,9 +412,11 @@ namespace ktradesystem.ViewModels
 
         private void BuildScaleValues() //строит шкалы значений
         {
+            ScaleValuesRightPoints.Clear();
+            ScaleValuesLeftPoints.Clear();
             /*DiffuseMaterial secondLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(226, 239, 218)));
             DiffuseMaterial firstLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(198, 224, 180)));*/
-            DiffuseMaterial lineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(55, 55, 55)));
+            DiffuseMaterial lineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(0, 0, 0)));
             DiffuseMaterial planeDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(255, 255, 255)));
             Model3DGroup model3DGroupLeft = new Model3DGroup();
             for(int i = 1; i < _countScaleValues + 2; i++)
@@ -529,6 +535,7 @@ namespace ktradesystem.ViewModels
                 geometryModel3DPlanes.Geometry = meshGeometry3DPlanes;
                 geometryModel3DPlanes.Material = planeDiffuseMaterial;
                 model3DGroupLeft.Children.Add(geometryModel3DPlanes);
+                ScaleValuesRightPoints.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, lineYBottom + _scaleValueLineWidth / 2, _cubeSideSize / 2));
             }
             ScaleValuesRightModel3D = model3DGroupLeft;
 
@@ -553,11 +560,11 @@ namespace ktradesystem.ViewModels
 
                 //нижняя горизонтальная линия
                 positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
-                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 + _offsetScaleValues, lineYBottom, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, lineYBottom, _cubeSideSize / 2));
                 positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom, _cubeSideSize / 2));
                 positionsCollectionLines.Add(new Point3D(-_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
-                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 + _offsetScaleValues, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
-                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 + _offsetScaleValues, lineYBottom, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionLines.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, lineYBottom, _cubeSideSize / 2));
                 triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
                 triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
                 triangleIndicesCollectionLines.Add(triangleIndicesCollectionLines.Count);
@@ -609,25 +616,17 @@ namespace ktradesystem.ViewModels
 
                 //правая плоскость
                 positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
-                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _offsetScaleValues, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
                 positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _scaleValueLineWidth / 2, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
                 positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _scaleValueLineWidth / 2, planeYTop, _cubeSideSize / 2));
-                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _offsetScaleValues, planeYTop, _cubeSideSize / 2));
-                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _offsetScaleValues, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, planeYTop, _cubeSideSize / 2));
+                positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
                 triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
                 triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
                 triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
                 triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
                 triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
                 triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-
-                /*
-                positionsCollection.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, yTop, _cubeSideSize / 2));
-                positionsCollection.Add(new Point3D(_cubeSideSize / 2, yBottom, _cubeSideSize / 2));
-                positionsCollection.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, yBottom, _cubeSideSize / 2));
-                positionsCollection.Add(new Point3D(-_cubeSideSize / 2 - _cubeSideSize * _offsetScaleValues, yTop, _cubeSideSize / 2));
-                positionsCollection.Add(new Point3D(_cubeSideSize / 2, yTop, _cubeSideSize / 2));
-                positionsCollection.Add(new Point3D(_cubeSideSize / 2, yBottom, _cubeSideSize / 2));*/
 
                 /*double yBottom = -_cubeSideSize / 2 + _cubeSideSize / 5 * (i - 1);
                 double yTop = -_cubeSideSize / 2 + _cubeSideSize / 5 * i;
@@ -657,41 +656,77 @@ namespace ktradesystem.ViewModels
                 geometryModel3DPlanes.Geometry = meshGeometry3DPlanes;
                 geometryModel3DPlanes.Material = planeDiffuseMaterial;
                 model3DGroupRight.Children.Add(geometryModel3DPlanes);
-
-
-
-
-                /*GeometryModel3D geometryModel3D = new GeometryModel3D();
-                MeshGeometry3D meshGeometry3D = new MeshGeometry3D();
-                Point3DCollection positionsCollection = new Point3DCollection();
-                double yBottom = -_cubeSideSize / 2 + _cubeSideSize / 5 * (i - 1);
-                double yTop = -_cubeSideSize / 2 + _cubeSideSize / 5 * i;
-                if (i == 6)
-                {
-                    yTop = _cubeSideSize / 2 + _offsetScaleValues * _cubeSideSize;
-                }
-                positionsCollection.Add(new Point3D(-_cubeSideSize / 2, yTop, _cubeSideSize / 2));
-                positionsCollection.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, yBottom, _cubeSideSize / 2));
-                positionsCollection.Add(new Point3D(-_cubeSideSize / 2, yBottom, _cubeSideSize / 2));
-                positionsCollection.Add(new Point3D(-_cubeSideSize / 2, yTop, _cubeSideSize / 2));
-                positionsCollection.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, yTop, _cubeSideSize / 2));
-                positionsCollection.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, yBottom, _cubeSideSize / 2));
-                meshGeometry3D.Positions = positionsCollection;
-                Int32Collection triangleIndicesCollection = new Int32Collection();
-                triangleIndicesCollection.Add(0);
-                triangleIndicesCollection.Add(1);
-                triangleIndicesCollection.Add(2);
-                triangleIndicesCollection.Add(3);
-                triangleIndicesCollection.Add(4);
-                triangleIndicesCollection.Add(5);
-                meshGeometry3D.TriangleIndices = triangleIndicesCollection;
-                geometryModel3D.Geometry = meshGeometry3D;
-                geometryModel3D.Material = planeDiffuseMaterial;
-                model3DGroupRight.Children.Add(geometryModel3D);*/
+                ScaleValuesLeftPoints.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, lineYBottom + _scaleValueLineWidth / 2, _cubeSideSize / 2));
             }
             ScaleValuesLeftModel3D = model3DGroupRight;
 
             UpdateScaleValuesRotation(); //обновляем угол вращения шкал значений, чтобы они были напротив камеры
+        }
+        private Point Convert3DPointTo2D(Point3D point3D) //переводит трехмерные координаты точки в двумерные координаты на вьюпорте
+        {
+            double x2D = -point3D.Z * Math.Sin(_cameraArcRotate) + point3D.X * Math.Cos(_cameraArcRotate); //-z*sin(a)+x*cos(a)
+            double y2D = -(point3D.Z * Math.Cos(_cameraArcRotate) + point3D.X * Math.Sin(_cameraArcRotate)) * Math.Sin(_cameraInArcRotate) + point3D.Y * Math.Cos(_cameraInArcRotate); //-(z*cos(a)+x*sin(a))*sin(b)+y*Cos(b)
+            double widthOffset = CameraWidth / 2; //смещение, которое покажет значение не в системе координат где левый край находится на -CameraWidth/2, а где левый край находится на 0 и любая точка находится от 0 до CameraWidth
+            x2D = x2D + widthOffset;
+            x2D = Viewport3DWidth * (x2D / CameraWidth); //умножаем ширину вьюпорта на ту часть, которую занимает координата от ширины вьюпорта, и получаем координату в пикселях
+            double cameraHeight = Viewport3DHeight / Viewport3DWidth * CameraWidth; //получаем величину в высоту, которую покрывает камера вьюпорта
+            double heightOffset = cameraHeight / 2;
+            y2D = y2D + heightOffset;
+            y2D = Viewport3DHeight * (1 - (y2D / cameraHeight));
+            return new Point(x2D, y2D);
+        }
+
+        private void Draw2D() //отрисовывает 2D информацию
+        {
+            if (isLoadingTestResultComplete)
+            {
+                CanvasOn3D.Children.Clear();
+                //определяем количество знаков после запятой, до которых нужно округлять значение
+                double permissibleError = 0.01; //допустимая погрешность, значение будет округляться не больше чем на данную часть от диапазона значений
+                double range = _max - _min;
+                double permissibleErrorRange = range * permissibleError;
+                int digits = 0; //количество знаков после запятой, до которого нужно округлять значения шкалы значений
+                while (permissibleErrorRange * Math.Pow(10, digits) < 1)
+                {
+                    digits++;
+                }
+
+                double textHeight = 16;
+                double marginByScaleValues = 7; //отступ влево от левой шкалы и вправо от правой
+                double symbolMinusWidth = 5; //ширина сивола -
+                double symbolCommaWidth = 3; //ширина символа ,
+                double symbolDigitWidth = 6; //ширина символа цифры
+
+                //отрисовываем значения шкал значений
+                for (int i = 0; i < ScaleValuesLeftPoints.Count; i++)
+                {
+                    double value = _min + range * i / (ScaleValuesLeftPoints.Count - 1.0);
+                    TextBlock textBlock = new TextBlock();
+                    string text = Math.Round(value, digits).ToString();
+                    //определяем ширину теста
+                    double textWidth = 0;
+                    foreach(char c in text)
+                    {
+                        if(c == '-')
+                        {
+                            textWidth += symbolMinusWidth;
+                        }
+                        if(c == '.')
+                        {
+                            textWidth += symbolCommaWidth;
+                        }
+                        if ("1234567890".Contains(c))
+                        {
+                            textWidth += symbolDigitWidth;
+                        }
+                    }
+
+                    textBlock.Text = Math.Round(value, digits).ToString();
+                    Point coordinate2D = Convert3DPointTo2D(ScaleValuesLeftPoints[i]);
+                    textBlock.Margin = new Thickness(coordinate2D.X - textWidth - marginByScaleValues, coordinate2D.Y - textHeight / 2, 0, 0);
+                    CanvasOn3D.Children.Add(textBlock);
+                }
+            }
         }
 
         private void BuildSurfaces() //строит поверхности выбранных критериев оценки
@@ -730,8 +765,8 @@ namespace ktradesystem.ViewModels
                 meshGeometry3D.Positions = positionsCollection;
                 meshGeometry3D.TriangleIndices = triangleIndicesCollection;
                 geometryModel3D.Geometry = meshGeometry3D;
-                geometryModel3D.Material = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(225, 225, 225)));
-                geometryModel3D.BackMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(200, 200, 200)));
+                geometryModel3D.Material = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(255, 255, 255)));
+                geometryModel3D.BackMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(255, 255, 255)));
                 model3DGroup.Children.Add(geometryModel3D);
             }
             SurfacesModel3D = model3DGroup;
@@ -835,6 +870,7 @@ namespace ktradesystem.ViewModels
                     {
                         DeterminingMinAndMaxValuesInEvaluationCriterias(); //определяем минимальное и максимальное значения у выбранных критериев оценки
                         BuildSurfaces(); //строим поверхности выбранных критериев оценки
+                        Draw2D(); //отрисовываем 2D информацию
                     }
                 }
                 else //иначе выбираем тот что был снят чтобы всегда был выбран хотя бы один
@@ -1016,6 +1052,7 @@ namespace ktradesystem.ViewModels
                 BuildScaleValues(); //строим шкалы значений
                 BuildSurfaces(); //строим поверхности выбранных критериев оценки
                 isLoadingTestResultComplete = true;
+                Draw2D();
             }
         }
         public ICommand ResetEvaluationCriterias_Click

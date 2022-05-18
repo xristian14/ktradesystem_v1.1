@@ -365,10 +365,10 @@
                     <ModelVisual3D>
                         <ModelVisual3D.Content>
                             <Model3DGroup>
-                                <AmbientLight Color="#808080"/>
-                                <DirectionalLight Color="#808080" Direction="0.97,-1,0.26" />
-                                <DirectionalLight Color="#808080" Direction="-0.26,-1,-0.97" />
-                                <DirectionalLight Color="#808080" Direction="-0.71,-1,0.71" />
+                                <AmbientLight Color="#b0b0b0"/>
+                                <DirectionalLight Color="#383838" Direction="0.97,-1,0.26" />
+                                <DirectionalLight Color="#383838" Direction="-0.26,-1,-0.97" />
+                                <DirectionalLight Color="#383838" Direction="-0.71,-1,0.71" />
                             </Model3DGroup>
                         </ModelVisual3D.Content>
                     </ModelVisual3D>

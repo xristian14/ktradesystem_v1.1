@@ -26,6 +26,7 @@ namespace ktradesystem.Views.Pages.TestingResultPages
             InitializeComponent();
             _viewModelPageTheeDimensionChart = new ViewModelPageTheeDimensionChart();
             DataContext = _viewModelPageTheeDimensionChart;
+            _viewModelPageTheeDimensionChart.CanvasOn3D = canvasOn3D;
         }
 
         ViewModelPageTheeDimensionChart _viewModelPageTheeDimensionChart;

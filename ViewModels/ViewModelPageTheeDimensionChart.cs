@@ -186,14 +186,15 @@ namespace ktradesystem.ViewModels
             double z = _cameraDistance * Math.Cos(_cameraInArcRotate) * Math.Cos(_cameraArcRotate);
             CameraPosition = new Point3D(x, y, z);
             CameraLookDirection = new Vector3D(-x, -y, -z);
-            Draw2D(); //отрисовываем 2D информацию
             UpdateScaleValuesRotation(); //обновляем угол вращения шкал значений, чтобы они всегда были напротив камеры
+            Draw2D(); //отрисовываем 2D информацию
         }
         private void ResetCameraPosition() //сбрасывает положение камеры в значение по умолчанию
         {
             _cameraArcRotate = 0.52;
             _cameraInArcRotate = 0.26;
             UpdateCameraPosition();
+            Draw2D(); //отрисовываем 2D информацию
         }
 
         private void UpdateScaleValuesRotation() //обновляет угол вращения шкал значений, чтобы они всегда были напротив камеры
@@ -691,8 +692,8 @@ namespace ktradesystem.ViewModels
                     digits++;
                 }
 
-                double textHeight = 16;
-                double marginByScaleValues = 7; //отступ влево от левой шкалы и вправо от правой
+                double textHeight = 9;
+                double marginByScaleValues = 5; //отступ влево от левой шкалы и вправо от правой
                 double symbolMinusWidth = 5; //ширина сивола -
                 double symbolCommaWidth = 3; //ширина символа ,
                 double symbolDigitWidth = 6; //ширина символа цифры
@@ -701,7 +702,6 @@ namespace ktradesystem.ViewModels
                 for (int i = 0; i < ScaleValuesLeftPoints.Count; i++)
                 {
                     double value = _min + range * i / (ScaleValuesLeftPoints.Count - 1.0);
-                    TextBlock textBlock = new TextBlock();
                     string text = Math.Round(value, digits).ToString();
                     //определяем ширину теста
                     double textWidth = 0;
@@ -721,10 +721,23 @@ namespace ktradesystem.ViewModels
                         }
                     }
 
-                    textBlock.Text = Math.Round(value, digits).ToString();
-                    Point coordinate2D = Convert3DPointTo2D(ScaleValuesLeftPoints[i]);
-                    textBlock.Margin = new Thickness(coordinate2D.X - textWidth - marginByScaleValues, coordinate2D.Y - textHeight / 2, 0, 0);
-                    CanvasOn3D.Children.Add(textBlock);
+                    TextBlock textBlockLeft = new TextBlock();
+                    textBlockLeft.Text = Math.Round(value, digits).ToString();
+                    Transform3DGroup transform3DGroupLeft = new Transform3DGroup();
+                    transform3DGroupLeft.Children.Add(ScaleValuesLeftModel3D.Transform);
+                    Point3D point3DLeftTransformed = transform3DGroupLeft.Transform(ScaleValuesLeftPoints[i]); //поворачиваем координату в соответствии с поворотом шкалы занчений
+                    Point coordinate2DLeft = Convert3DPointTo2D(point3DLeftTransformed);
+                    textBlockLeft.Margin = new Thickness(coordinate2DLeft.X - textWidth - marginByScaleValues, coordinate2DLeft.Y - textHeight, 0, 0);
+                    CanvasOn3D.Children.Add(textBlockLeft);
+
+                    TextBlock textBlockRight = new TextBlock();
+                    textBlockRight.Text = Math.Round(value, digits).ToString();
+                    Transform3DGroup transform3DGroupRight = new Transform3DGroup();
+                    transform3DGroupRight.Children.Add(ScaleValuesRightModel3D.Transform);
+                    Point3D point3DRightTransformed = transform3DGroupRight.Transform(ScaleValuesRightPoints[i]); //поворачиваем координату в соответствии с поворотом шкалы занчений
+                    Point coordinate2DRight = Convert3DPointTo2D(point3DRightTransformed);
+                    textBlockRight.Margin = new Thickness(coordinate2DRight.X + marginByScaleValues, coordinate2DRight.Y - textHeight, 0, 0);
+                    CanvasOn3D.Children.Add(textBlockRight);
                 }
             }
         }
@@ -734,9 +747,14 @@ namespace ktradesystem.ViewModels
             Model3DGroup model3DGroup = new Model3DGroup();
             foreach (EvaluationCriteriaPageThreeDimensionChart evaluationCriteriaPageThreeDimensionChart in EvaluationCriteriasPageThreeDimensionChart.Where(j => j.IsChecked))
             {
+                LinearGradientBrush linearGradientBrush = new LinearGradientBrush(); //кисть с градиентной заливкой
+                linearGradientBrush.GradientStops.Add(new GradientStop { Color = Color.FromRgb(255, 0, 0), Offset = 0 });
+                linearGradientBrush.GradientStops.Add(new GradientStop { Color = Color.FromRgb(0, 240, 0), Offset = 1 });
+                double range = _max - _min; //диапазон значений
                 GeometryModel3D geometryModel3D = new GeometryModel3D();
                 MeshGeometry3D meshGeometry3D = new MeshGeometry3D();
                 Point3DCollection positionsCollection = new Point3DCollection();
+                PointCollection textureCoordinates = new PointCollection();
                 Int32Collection triangleIndicesCollection = new Int32Collection();
                 int lines = _testRunsMatrix.GetLength(0);
                 int columns = _testRunsMatrix.GetLength(1);
@@ -744,16 +762,33 @@ namespace ktradesystem.ViewModels
                 {
                     for(int y = 1; y < columns; y++)
                     {
-                        Point3D point1 = new Point3D((x - 1) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (_testRunsMatrix[x - 1, y - 1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id).First().DoubleValue - _min) / (_max - _min) * _cubeSideSize - _cubeSideSize / 2, (y - 1) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
-                        Point3D point2 = new Point3D((x - 1) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (_testRunsMatrix[x - 1, y].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id).First().DoubleValue - _min) / (_max - _min) * _cubeSideSize - _cubeSideSize / 2, (y) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
-                        Point3D point3 = new Point3D((x) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (_testRunsMatrix[x, y - 1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id).First().DoubleValue - _min) / (_max - _min) * _cubeSideSize - _cubeSideSize / 2, (y - 1) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
-                        Point3D point4 = new Point3D((x) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (_testRunsMatrix[x, y].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id).First().DoubleValue - _min) / (_max - _min) * _cubeSideSize - _cubeSideSize / 2, (y) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
+                        double point1Value = _testRunsMatrix[x - 1, y - 1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id).First().DoubleValue;
+                        double point2Value = _testRunsMatrix[x - 1, y].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id).First().DoubleValue;
+                        double point3Value = _testRunsMatrix[x, y - 1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id).First().DoubleValue;
+                        double point4Value = _testRunsMatrix[x, y].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id).First().DoubleValue;
+
+                        Point3D point1 = new Point3D((x - 1) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (point1Value - _min) / range * _cubeSideSize - _cubeSideSize / 2, (y - 1) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
+                        Point3D point2 = new Point3D((x - 1) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (point2Value - _min) / range * _cubeSideSize - _cubeSideSize / 2, (y) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
+                        Point3D point3 = new Point3D((x) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (point3Value - _min) / range * _cubeSideSize - _cubeSideSize / 2, (y - 1) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
+                        Point3D point4 = new Point3D((x) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (point4Value - _min) / range * _cubeSideSize - _cubeSideSize / 2, (y) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
                         positionsCollection.Add(point1);
                         positionsCollection.Add(point2);
                         positionsCollection.Add(point3);
                         positionsCollection.Add(point2);
                         positionsCollection.Add(point4);
                         positionsCollection.Add(point3);
+                        textureCoordinates.Add(new Point((point1Value - _min) / range, (point1Value - _min) / range));
+                        textureCoordinates.Add(new Point((point2Value - _min) / range, (point2Value - _min) / range));
+                        textureCoordinates.Add(new Point((point3Value - _min) / range, (point3Value - _min) / range));
+                        textureCoordinates.Add(new Point((point2Value - _min) / range, (point2Value - _min) / range));
+                        textureCoordinates.Add(new Point((point4Value - _min) / range, (point4Value - _min) / range));
+                        textureCoordinates.Add(new Point((point3Value - _min) / range, (point3Value - _min) / range));
+                        /*textureCoordinates.Add(new Point((point1Value - _min) / range, 0));
+                        textureCoordinates.Add(new Point((point2Value - _min) / range, 0));
+                        textureCoordinates.Add(new Point((point3Value - _min) / range, 0));
+                        textureCoordinates.Add(new Point((point2Value - _min) / range, 0));
+                        textureCoordinates.Add(new Point((point4Value - _min) / range, 0));
+                        textureCoordinates.Add(new Point((point3Value - _min) / range, 0));*/
                         triangleIndicesCollection.Add(triangleIndicesCollection.Count);
                         triangleIndicesCollection.Add(triangleIndicesCollection.Count);
                         triangleIndicesCollection.Add(triangleIndicesCollection.Count);
@@ -763,10 +798,11 @@ namespace ktradesystem.ViewModels
                     }
                 }
                 meshGeometry3D.Positions = positionsCollection;
+                meshGeometry3D.TextureCoordinates = textureCoordinates;
                 meshGeometry3D.TriangleIndices = triangleIndicesCollection;
                 geometryModel3D.Geometry = meshGeometry3D;
-                geometryModel3D.Material = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(255, 255, 255)));
-                geometryModel3D.BackMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(255, 255, 255)));
+                geometryModel3D.Material = new DiffuseMaterial(linearGradientBrush);
+                geometryModel3D.BackMaterial = new DiffuseMaterial(linearGradientBrush);
                 model3DGroup.Children.Add(geometryModel3D);
             }
             SurfacesModel3D = model3DGroup;
@@ -1052,7 +1088,7 @@ namespace ktradesystem.ViewModels
                 BuildScaleValues(); //строим шкалы значений
                 BuildSurfaces(); //строим поверхности выбранных критериев оценки
                 isLoadingTestResultComplete = true;
-                Draw2D();
+                Draw2D(); //отрисовываем 2D информацию
             }
         }
         public ICommand ResetEvaluationCriterias_Click

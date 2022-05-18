@@ -83,8 +83,15 @@ namespace ktradesystem.Models
                     Name = row.Field<string>("name"),
                     Description = row.Field<string>("description"),
                     Script = row.Field<string>("script"),
-                    IsDoubleValue = (int)row.Field<long>("isDoubleValue") == 1 ? true : false
+                    IsDoubleValue = (int)row.Field<long>("isDoubleValue") == 1 ? true : false,
+                    IsBestPositive = (int)row.Field<long>("isBestPositive") == 1 ? true : false,
+                    IsHaveBestAndWorstValue = (int)row.Field<long>("isHaveBestAndWorstValue") == 1 ? true : false
                 };
+                if (evaluationCriteria.IsHaveBestAndWorstValue)
+                {
+                    evaluationCriteria.BestValue = row.Field<double>("bestValue");
+                    evaluationCriteria.WorstValue = row.Field<double>("worstValue");
+                }
                 EvaluationCriterias.Add(evaluationCriteria);
             }
 

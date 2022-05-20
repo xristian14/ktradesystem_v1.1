@@ -44,8 +44,8 @@ namespace ktradesystem.ViewModels
         private double _mouseDownСameraInArcRotate; //значение угла в момент нажатия левой клавиши мыши
         private double _cameraArcRotate = 0; //угол вращения дуги на которой расположена камера, вокруг центральной оси
         private double _cameraInArcRotate = 0; //угол на котором камера распологается на дуге
-        public double Viewport3DWidth { get; set; } //шиирна вьюпорта 3D, используется для определения двумерных координат на canvas трехмерной координаты 
-        public double Viewport3DHeight { get; set; } //шиирна вьюпорта 3D, используется для определения двумерных координат на canvas трехмерной координаты
+        public double Viewport3DWidth { get; set; } //ширина вьюпорта 3D, используется для определения двумерных координат на canvas трехмерной координаты 
+        public double Viewport3DHeight { get; set; } //высота вьюпорта 3D, используется для определения двумерных координат на canvas трехмерной координаты
         public Canvas CanvasOn3D { get; set; }
         private List<Point3D> ScaleValuesLeftPoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать значение на шкале значений
         private List<Point3D> ScaleValuesRightPoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать значение на шкале значений

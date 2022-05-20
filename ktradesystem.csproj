@@ -173,6 +173,7 @@
     <Compile Include="ViewModels\TabControlTestingResultItem.cs" />
     <Compile Include="ViewModels\TestBatchTestingResultCombobox.cs" />
     <Compile Include="ViewModels\TestRunTestingResultCombobox.cs" />
+    <Compile Include="ViewModels\TradeChartAreaPageTradeChart.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\ViewModelData.cs" />
     <Compile Include="ViewModels\ViewModelPageDataSource.cs" />

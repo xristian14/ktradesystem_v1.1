@@ -154,6 +154,7 @@
     <Compile Include="ViewModels\AlgorithmParameterView.cs" />
     <Compile Include="ViewModels\AxesParameterSelectView.cs" />
     <Compile Include="ViewModels\AxisSearchPlanePageThreeDimensionChart.cs" />
+    <Compile Include="ViewModels\CandlePageTradeChart.cs" />
     <Compile Include="ViewModels\DataSourceAccordanceView.cs" />
     <Compile Include="ViewModels\DataSourceGroupTestingResultCombobox.cs" />
     <Compile Include="ViewModels\DataSourceGroupView.cs" />
@@ -183,6 +184,7 @@
     <Compile Include="ViewModels\ViewModelPageTestingNavigation.cs" />
     <Compile Include="ViewModels\ViewModelPageTestingResult.cs" />
     <Compile Include="ViewModels\ViewModelPageTheeDimensionChart.cs" />
+    <Compile Include="ViewModels\ViewModelPageTradeChart.cs" />
     <Compile Include="Views\AddAlgorithmParameter.xaml.cs">
       <DependentUpon>AddAlgorithmParameter.xaml</DependentUpon>
     </Compile>
@@ -209,6 +211,9 @@
     </Compile>
     <Compile Include="Views\Pages\TestingResultPages\PageTheeDimensionChart.xaml.cs">
       <DependentUpon>PageTheeDimensionChart.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Pages\TestingResultPages\PageTradeChart.xaml.cs">
+      <DependentUpon>PageTradeChart.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ViewAddAlgorithmIndicator.xaml.cs">
       <DependentUpon>ViewAddAlgorithmIndicator.xaml</DependentUpon>
@@ -317,6 +322,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Pages\TestingResultPages\PageTheeDimensionChart.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Pages\TestingResultPages\PageTradeChart.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

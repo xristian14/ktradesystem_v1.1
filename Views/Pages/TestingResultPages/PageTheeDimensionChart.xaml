@@ -417,7 +417,7 @@ TriangleIndices="
                     </ModelVisual3D>-->
                 </Viewport3D.Children>
             </Viewport3D>
-            <Canvas Grid.Row="1" x:Name="canvasOn3D" MouseDown="canvasOn3D_MouseDown" MouseMove="canvasOn3D_MouseMove" MouseUp="canvasOn3D_MouseUp" Background="Transparent"/>
+            <Canvas Grid.Row="1" x:Name="canvasOn3D" MouseDown="canvasOn3D_MouseDown" MouseMove="canvasOn3D_MouseMove" MouseUp="canvasOn3D_MouseUp" Background="Transparent" ClipToBounds="True"/>
         </Grid>
     </Grid>
 </Page>

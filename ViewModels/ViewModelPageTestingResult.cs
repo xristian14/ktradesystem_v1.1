@@ -412,7 +412,7 @@ namespace ktradesystem.ViewModels
         private void CreateTabControlTestingResultItems()
         {
             TabControlTestingResultItem tabControlTestingResultItem1 = new TabControlTestingResultItem { Header = "Тестовая связка", HorizontalStackPanels = new List<StackPanelTestingResult>(), VerticalStackPanels = new List<StackPanelTestingResult>() };
-            tabControlTestingResultItem1.HorizontalStackPanels.Add(new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.TestingResultPages.PageTheeDimensionChart() } } });
+            tabControlTestingResultItem1.HorizontalStackPanels.Add(new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.TestingResultPages.PageTheeDimensionChart() }, new PageItem { Page = new Views.Pages.TestingResultPages.PageTradeChart() } } });
             TabControlTestingResultItems.Add(tabControlTestingResultItem1);
         }
 

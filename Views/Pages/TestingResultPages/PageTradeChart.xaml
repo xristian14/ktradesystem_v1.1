@@ -1,0 +1,65 @@
+﻿<Page x:Class="ktradesystem.Views.Pages.TestingResultPages.PageTradeChart"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:ktradesystem.Views.Pages.TestingResultPages"
+      mc:Ignorable="d" 
+      d:DesignHeight="600" d:DesignWidth="1280"
+      Title="PageTradeChart">
+
+    <Grid Width="600" Height="600" Background="#FFF9F9F9">
+        <Grid Margin="5" Background="White">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <StackPanel Orientation="Vertical" Grid.Row="0" Background="White">
+                <StackPanel Orientation="Vertical" Background="#FFEFEFEF">
+                    <TextBlock Text="График котировок" FontWeight="Bold" HorizontalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Margin="0 5 0 0" Orientation="Horizontal">
+                    <Button Content="Кнопка" Command="{Binding Button1_Click}"/>
+                </StackPanel>
+            </StackPanel>
+            <Canvas Grid.Row="1" x:Name="canvasChart" Background="Transparent" ClipToBounds="True">
+                <ItemsControl ItemsSource="{Binding Candles}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="{Binding StickLeft}"/>
+                            <Setter Property="Canvas.Top" Value="{Binding StickTop}"/>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Rectangle Width="{Binding StickWidth}" Height="{Binding StickHeight}" Fill="Black"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <ItemsControl ItemsSource="{Binding Candles}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="{Binding BodyLeft}"/>
+                            <Setter Property="Canvas.Top" Value="{Binding BodyTop}"/>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Rectangle Width="{Binding BodyWidth}" Height="{Binding BodyHeight}" Stroke="Green" Fill="DarkGray"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Canvas>
+        </Grid>
+    </Grid>
+</Page>

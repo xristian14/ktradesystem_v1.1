@@ -162,9 +162,9 @@ namespace ktradesystem.ViewModels
                 double angleVertikal = (position.Y - _mouseDownPosition.Y) * _moveToRotateFactor;
                 double angleHorizontal = (_mouseDownPosition.X - position.X) * _moveToRotateFactor;
                 _cameraInArcRotate = _mouseDownСameraInArcRotate + angleVertikal;
-                while(Math.Abs(_cameraInArcRotate) > 1.57079633) //ограничиваем вертикальное вращение до 90 градусов
+                while(Math.Abs(_cameraInArcRotate) > 1.5707963) //ограничиваем вертикальное вращение до 90 градусов
                 {
-                    _cameraInArcRotate = _cameraInArcRotate > 0 ? 1.57079633 : -1.57079633;
+                    _cameraInArcRotate = _cameraInArcRotate > 0 ? 1.5707963 : -1.5707963;
                 }
                 _cameraArcRotate = _mouseDownСameraArcRotate + angleHorizontal;
                 while(Math.Abs(_cameraArcRotate) > 6.28318530718) //если угол поворота превышет 360 градусов, вычитаем 360 градусов, 6.28318530718 радиан = 360 градусов
@@ -418,7 +418,7 @@ namespace ktradesystem.ViewModels
             /*DiffuseMaterial secondLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(226, 239, 218)));
             DiffuseMaterial firstLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(198, 224, 180)));*/
             DiffuseMaterial lineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(0, 0, 0)));
-            DiffuseMaterial planeDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(255, 255, 255)));
+            DiffuseMaterial planeDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(72, 255, 255, 255)));
             Model3DGroup model3DGroupLeft = new Model3DGroup();
             for(int i = 1; i < _countScaleValues + 2; i++)
             {

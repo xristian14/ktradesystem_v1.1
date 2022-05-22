@@ -353,6 +353,49 @@ namespace ktradesystem.Models
             while (iteration < 2);
         }
 
+        public DataSourceCandles[] ReadDataSourceCandles(Testing testing, bool isHistory, DataSourceGroup dataSourceGroup) //считывает свечки для полученных источников данных
+        {
+            DataSourceCandles[] dataSourceCandles = new DataSourceCandles[dataSourceGroup.DataSourceAccordances.Count];
+            string dataSourceCandlesPath = isHistory ? Directory.GetCurrentDirectory() + _historyRealivePath : Directory.GetCurrentDirectory() + _savesRealivePath; //путь к папке со свечками. Если isHistory == true значит в папке с историей, иначе - в папке с сохраненными
+            dataSourceCandlesPath += testing.TestingName + "\\dataSourcesCandles";
+            for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
+            {
+                bool isBroken = false; //прозошли ли ошибки при попытки считать свечки
+                string dataSourceCandlesPathFolder = dataSourceCandlesPath + "\\" + dataSourceGroup.DataSourceAccordances[i].DataSource.Id;
+                if (Directory.Exists(dataSourceCandlesPathFolder) == true) //если существует папка со свечками для данного источника данных
+                {
+                    if(File.Exists(dataSourceCandlesPathFolder + "\\dataSourceCandles.json") == true) //если существует файл со свечками
+                    {
+                        //пробуем считать и десериализовать тестирование
+                        try
+                        {
+                            string jsonDataSourceCandles = File.ReadAllText(dataSourceCandlesPathFolder + "\\dataSourceCandles.json");
+                            dataSourceCandles[i] = JsonSerializer.Deserialize<DataSourceCandles>(jsonDataSourceCandles);
+                        }
+                        catch
+                        {
+                            isBroken = true;
+                        }
+                    }
+                    else//файла со свечками не существует
+                    {
+                        isBroken = true;
+                    }
+                }
+                else //папки не существует
+                {
+                    isBroken = true;
+                }
+
+                if (isBroken) //если не удалось считать файл, уведомляем об этом пользователя
+                {
+                    DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Файл со свечками: " + dataSourceCandlesPathFolder + "\\dataSourceCandles.json не удалось считать."); }));
+                }
+            }
+
+            return dataSourceCandles;
+        }
+
         public bool CheckAndDeleteExpiredTestingResults() //проверяет наличие результатов тестирования в истории у которых вышел срок хранения, и удаляет их. Если было удаление возвращает true, иначе - false
         {
             bool isWasDelete = false; //было ли удаление

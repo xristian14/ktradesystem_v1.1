@@ -206,6 +206,7 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
                 DataSourceGroupsUpdatePages?.Invoke(); //вызываем методы, обновляющие страницы, отображающие информацию о тестовых связках в рамках определенного источника данных
                 //создаем список тестовых связок выбранной группы источников данных на основе загруженного результата тестирования
+                ReadDataSourceCandles(); //считываем свечки источников данных, выбранной группы источников данных
                 CreateTestBatchesTestingResultCombobox();
                 if(TestBatchesTestingResultCombobox.Count > 0)
                 {
@@ -396,6 +397,14 @@ namespace ktradesystem.ViewModels
                     }
                 }
             }
+        }
+        private void ReadDataSourceCandles() //считывает свечки источников данных, выбранной группы источников данных
+        {
+            if (TestingResult != null)
+            {
+                TestingResult.DataSourcesCandles = _modelTestingResult.ReadDataSourceCandles(TestingResult, SelectedResultTestingMenu == ResultTestingMenu[0] ? true : false, SelectedDataSourceGroupTestingResultCombobox.DataSourceGroup); //вызываем метод модели, считывающий, и возвращающий свечки для указанной гурппы источников данных
+            }
+            
         }
 
         private ObservableCollection<TabControlTestingResultItem> _tabControlTestingResultItems = new ObservableCollection<TabControlTestingResultItem>();

@@ -286,6 +286,7 @@ namespace ktradesystem.Models
                 }
             }
             stopwatch.Stop();
+            ModelTesting.StopwatchTesting.Stop();
 
             //считываем результаты тестирования, проверяя просроченные и удаляя их
             ReadAndCheckTestingResults();
@@ -294,7 +295,6 @@ namespace ktradesystem.Models
                 _mainCommunicationChannel.TestingProgress.Clear();
                 _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 3/3:  Запись результатов", StepTasksCount = countWrites, CompletedStepTasksCount = countWrite, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsSuccessSimulation = true, IsFinish = true });
             }));
-            ModelTesting.StopwatchTesting.Stop();
         }
 
         public void ReadTestingResults() //считывает результаты тестирования

@@ -309,7 +309,6 @@
                                                     </MultiBinding>
                                                 </TextBlock.Text>
                                             </TextBlock>
-                                            <TextBlock Text="{Binding AlgorithmIndicator.Indicator.Name, Mode=OneWay}" Margin="5 0 0 0"/>
                                             <ComboBox ItemsSource="{Binding TradeChartAreas}" SelectedItem="{Binding SelectedTradeChartArea, Mode=TwoWay}" DisplayMemberPath="Name" Height="20" Padding="3 1 3 3" Margin="5 0 0 0"/>
                                             <ToggleButton Content="Поместить в новую область" IsChecked="{Binding IsButtonAddAreaChecked, Mode=TwoWay}" Width="168" HorizontalAlignment="Left" Margin="5 0 0 0"/>
                                         </StackPanel>
@@ -318,7 +317,7 @@
                             </MenuItem.ItemTemplate>
                         </MenuItem>
                     </Menu>
-                    <Button Content="Кнопка" Command="{Binding Button1_Click}"/>
+                    <Button Content="Кнопка" Command="{Binding Button1_Click}" Margin="5 0 0 0"/>
                 </StackPanel>
             </StackPanel>
             <Canvas Grid.Row="1" x:Name="canvasChart" Background="Transparent" ClipToBounds="True" Loaded="canvasChart_Loaded">

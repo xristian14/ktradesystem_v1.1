@@ -8,9 +8,27 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.ViewModels
 {
-    class TradeChartAreaPageTradeChart
+    class TradeChartAreaPageTradeChart : ViewModelBase
     {
-        public string Name { get; set; } //название области
-        public int AreaHeight { get; set; } //высота области
+        private string _name;
+        public string Name //название области
+        {
+            get { return _name; }
+            set
+            {
+                _name = value;
+                OnPropertyChanged();
+            }
+        }
+        public int _areaHeight;
+        public int AreaHeight //высота области
+        {
+            get { return _areaHeight; }
+            set
+            {
+                _areaHeight = value;
+                OnPropertyChanged();
+            }
+        }
     }
 }

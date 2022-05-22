@@ -14,7 +14,6 @@ namespace ktradesystem.Models.Datatables
         public int IdIndicator { get; set; }
         [JsonIgnore]
         public Algorithm Algorithm { get; set; }
-        [JsonIgnore]
         public Indicator Indicator { get; set; }
         public List<IndicatorParameterRange> IndicatorParameterRanges { get; set; }
         public string Ending { get; set; }

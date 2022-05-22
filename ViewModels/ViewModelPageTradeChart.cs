@@ -27,7 +27,7 @@ namespace ktradesystem.ViewModels
         private TestRun _testRun; //тестовый прогон, для которого строится график
         private int _candlesMaxWidth = 11; //максимальная ширина свечки, в пикселях
         private int _tradeChartScale; //масштаб графика, сколько свечек должно уместиться в видимую область графика
-        private ObservableCollection<TradeChartAreaPageTradeChart> _tradeChartAreas = new ObservableCollection<TradeChartAreaPageTradeChart>(); //области графика с названием и указанной высотой области, первый элемент - главная область со свечками, следующие - области для индикаторов
+        private double _indicatorAreasHeight = 0.15; //суммарная высота областей для индикаторов, как часть от главной области
         private int _timeLineHeight = 24; //высота временной шкалы
         public double СanvasChartWidth { get; set; } //ширина canvas с графиком
         public double СanvasChartHeight { get; set; } //высота canvas с графиком
@@ -43,6 +43,16 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        private ObservableCollection<TradeChartAreaPageTradeChart> _tradeChartAreas = new ObservableCollection<TradeChartAreaPageTradeChart>();
+        public ObservableCollection<TradeChartAreaPageTradeChart> TradeChartAreas //области графика с названием и указанной высотой области, первый элемент - главная область со свечками, следующие - области для индикаторов
+        {
+            get { return _tradeChartAreas; }
+            set
+            {
+                _tradeChartAreas = value;
+                OnPropertyChanged();
+            }
+        }
         private ObservableCollection<IndicatorMenuItemPageTradeChart> _indicatorsMenuItemPageTradeChart = new ObservableCollection<IndicatorMenuItemPageTradeChart>();
         public ObservableCollection<IndicatorMenuItemPageTradeChart> IndicatorsMenuItemPageTradeChart
         {
@@ -57,11 +67,43 @@ namespace ktradesystem.ViewModels
         {
             if (propertyName == "SelectedTradeChartArea") //была выбрана другая область
             {
-
+                //проверяем, если есть области которые не выбраны ни у одного индиктаора, кроме главной, удаляем их
+                bool isDelete = false; //была ли удалена область
+                for(int i = TradeChartAreas.Count - 1; i > 0; i--)
+                {
+                    if (IndicatorsMenuItemPageTradeChart.Where(j => j.SelectedTradeChartArea == TradeChartAreas[i]).Any() == false) //если данная область не выбрана ни у одного их индикаторов
+                    {
+                        TradeChartAreas.RemoveAt(i); //удаляем данную область
+                        isDelete = true;
+                    }
+                }
+                if (isDelete) //если были удалены области, обновляем названия у областей чтобы они назывались по порядку
+                {
+                    for(int i = 1; i < TradeChartAreas.Count; i++)
+                    {
+                        TradeChartAreas[i].Name = "#" + i.ToString();
+                    }
+                }
             }
             if (propertyName == "IsButtonAddAreaChecked") //была нажата кнопка поместить в новую область
             {
-
+                if(indicatorMenuItemPageTradeChart.IsButtonAddAreaChecked)//если кнопка в состоянии true, - добавляем область и выбираем её для текущего индикатора
+                {
+                    indicatorMenuItemPageTradeChart.IsButtonAddAreaChecked = false;
+                    int mainAreaHeight = (int)Math.Truncate(СanvasChartHeight) - _timeLineHeight;
+                    int indiactorAreaHeight = (int)Math.Truncate((mainAreaHeight * _indicatorAreasHeight) / TradeChartAreas.Count); //высота области индикаторов
+                    mainAreaHeight = mainAreaHeight - indiactorAreaHeight * TradeChartAreas.Count; //вычитаем из высоты главной области, высоту текущих областей + высоту добавляемой области
+                                                                                                   //обновляем высоту областей
+                    TradeChartAreas[0].AreaHeight = mainAreaHeight;
+                    for (int i = 1; i < TradeChartAreas.Count; i++)
+                    {
+                        TradeChartAreas[i].AreaHeight = indiactorAreaHeight;
+                    }
+                    //добавляем новую область
+                    TradeChartAreas.Add(new TradeChartAreaPageTradeChart { Name = "#" + TradeChartAreas.Count.ToString(), AreaHeight = indiactorAreaHeight });
+                    //выбираем добавленную область для текущего индикатора
+                    indicatorMenuItemPageTradeChart.SelectedTradeChartArea = TradeChartAreas.Last();
+                }
             }
         }
 
@@ -69,14 +111,14 @@ namespace ktradesystem.ViewModels
         {
             for(int i = 0; i < _testing.Algorithm.AlgorithmIndicators.Count; i++)
             {
-                IndicatorsMenuItemPageTradeChart.Add(IndicatorMenuItemPageTradeChart.CreateIndicator(IndicatorsMenuItemPageTradeChart_PropertyChanged, _testing.Algorithm.AlgorithmIndicators[i], _tradeChartAreas, 0));
+                IndicatorsMenuItemPageTradeChart.Add(IndicatorMenuItemPageTradeChart.CreateIndicator(IndicatorsMenuItemPageTradeChart_PropertyChanged, _testing.Algorithm.AlgorithmIndicators[i], TradeChartAreas, 0));
             }
         }
 
         private void CreateTradeChartAreas() //создает области для графика котировок
         {
-            _tradeChartAreas.Clear();
-            _tradeChartAreas.Add(new TradeChartAreaPageTradeChart { Name = "Главная область", AreaHeight = (int)Math.Truncate(СanvasChartHeight) - _timeLineHeight });
+            TradeChartAreas.Clear();
+            TradeChartAreas.Add(new TradeChartAreaPageTradeChart { Name = "Главная область", AreaHeight = (int)Math.Truncate(СanvasChartHeight) - _timeLineHeight });
         }
 
         public void UpdatePage() //обновляет страницу на новый источник данных

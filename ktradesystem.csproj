@@ -164,6 +164,7 @@
     <Compile Include="ViewModels\EvaluationCriteriaPageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\EvaluationCriteriaView.cs" />
     <Compile Include="ViewModels\FilterTopModelView.cs" />
+    <Compile Include="ViewModels\IndicatorMenuItemPageTradeChart.cs" />
     <Compile Include="ViewModels\IndicatorParameterRangeView.cs" />
     <Compile Include="ViewModels\IndicatorParameterTemplateView.cs" />
     <Compile Include="ViewModels\LevelPageThreeDimensionChart.cs" />

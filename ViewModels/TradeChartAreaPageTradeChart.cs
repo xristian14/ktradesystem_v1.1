@@ -10,7 +10,7 @@ namespace ktradesystem.ViewModels
 {
     class TradeChartAreaPageTradeChart
     {
+        public string Name { get; set; } //название области
         public int AreaHeight { get; set; } //высота области
-        public List<Indicator> Indicators { get; set; } //индикаторы в данной области
     }
 }

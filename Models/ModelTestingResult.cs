@@ -357,7 +357,7 @@ namespace ktradesystem.Models
         {
             DataSourceCandles[] dataSourceCandles = new DataSourceCandles[dataSourceGroup.DataSourceAccordances.Count];
             string dataSourceCandlesPath = isHistory ? Directory.GetCurrentDirectory() + _historyRealivePath : Directory.GetCurrentDirectory() + _savesRealivePath; //путь к папке со свечками. Если isHistory == true значит в папке с историей, иначе - в папке с сохраненными
-            dataSourceCandlesPath += testing.TestingName + "\\dataSourcesCandles";
+            dataSourceCandlesPath += "\\" + testing.TestingName + "\\dataSourcesCandles";
             for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
             {
                 bool isBroken = false; //прозошли ли ошибки при попытки считать свечки
@@ -394,6 +394,88 @@ namespace ktradesystem.Models
             }
 
             return dataSourceCandles;
+        }
+
+        public void ReadIndicatorValues(Testing testing, bool isHistory, TestRun testRun) //считывает значения индикаторов алгоритма для источников данных в testing.DataSourcesCandles и для параметров testRun
+        {
+            string dataSourceCandlesPath = isHistory ? Directory.GetCurrentDirectory() + _historyRealivePath : Directory.GetCurrentDirectory() + _savesRealivePath; //путь к папке со свечками. Если isHistory == true значит в папке с историей, иначе - в папке с сохраненными
+            dataSourceCandlesPath += "\\" + testing.TestingName + "\\dataSourcesCandles";
+
+            foreach(DataSourceCandles dataSourceCandles in testing.DataSourcesCandles) //проходим по всем testing.DataSourcesCandles (источникам данных) для которых имеются свечки и значения индикаторов
+            {
+                AlgorithmIndicatorValues[] algorithmIndicatorValues = new AlgorithmIndicatorValues[testing.Algorithm.AlgorithmIndicators.Count];
+                for (int i = 0; i < dataSourceCandles.AlgorithmIndicatorCatalogs.Count; i++) //проходим по всем индикаторам для данного источника данных
+                {
+                    bool isBroken = false; //прозошли ли ошибки при попытки считать значения индикатора
+                    //находим название файла со значениями текущего индикатора для указанных в testRun параметрах алгоритма
+                    bool isFind = false; //найдено ли название файла
+                    int indexCatalogElement = -1;
+                    while(isFind == false)
+                    {
+                        indexCatalogElement++;
+                        //проходим по всем параметрам текущего элемента каталога, и если все его значения параметров совпадают со значениями этих параметров у testRun, отмечаем что нашли элемент каталога с параметрами как у testRun
+                        bool isAllEqual = true; //все ли значения параметров совпадают
+                        foreach(AlgorithmParameterValue algorithmParameterValue in dataSourceCandles.AlgorithmIndicatorCatalogs[i].AlgorithmIndicatorCatalogElements[indexCatalogElement].AlgorithmParameterValues)
+                        {
+                            AlgorithmParameterValue algorithmParameterValueTestRun = testRun.AlgorithmParameterValues.Where(j => j.AlgorithmParameter.Id == algorithmParameterValue.AlgorithmParameter.Id).First(); //значение параметра алгоритма у testRun
+                            if(algorithmParameterValue.AlgorithmParameter.ParameterValueType.Id == 1) //параметр типа int
+                            {
+                                if(algorithmParameterValue.IntValue != algorithmParameterValueTestRun.IntValue) //если не равны
+                                {
+                                    isAllEqual = false;
+                                }
+                            }
+                            else //параметр типа double
+                            {
+                                if (algorithmParameterValue.DoubleValue != algorithmParameterValueTestRun.DoubleValue) //если не равны
+                                {
+                                    isAllEqual = false;
+                                }
+                            }
+                        }
+
+                        if (isAllEqual)
+                        {
+                            isFind = true;
+                        }
+                    }
+
+                    //проверяем наличие файла со значениями индикатора
+                    string dataSourceCandlesPathFolder = dataSourceCandlesPath + "\\" + dataSourceCandles.DataSource.Id; //папка с текущим источником данных
+                    string dataSourceCandlesCurrentIndicatorPathFolder = dataSourceCandlesPathFolder + "\\" + dataSourceCandles.AlgorithmIndicatorCatalogs[i].AlgorithmIndicatorFolderName; //папка с текущим индикатором
+                    string filePath = dataSourceCandlesCurrentIndicatorPathFolder + "\\" + dataSourceCandles.AlgorithmIndicatorCatalogs[i].AlgorithmIndicatorCatalogElements[indexCatalogElement].FileName;
+                    if (Directory.Exists(dataSourceCandlesCurrentIndicatorPathFolder) == true) //если существует папка с текущим индикатором для данного источника данных
+                    {
+                        if (File.Exists(filePath) == true) //если существует файл с текущим индикатором
+                        {
+                            //пробуем считать и десериализовать
+                            try
+                            {
+                                string jsonAlgorithmIndicatorValues = File.ReadAllText(filePath);
+                                algorithmIndicatorValues[i] = JsonSerializer.Deserialize<AlgorithmIndicatorValues>(jsonAlgorithmIndicatorValues);
+                            }
+                            catch
+                            {
+                                isBroken = true;
+                            }
+                        }
+                        else//файла со свечками не существует
+                        {
+                            isBroken = true;
+                        }
+                    }
+                    else //папки не существует
+                    {
+                        isBroken = true;
+                    }
+
+                    if (isBroken) //если не удалось считать файл, уведомляем об этом пользователя
+                    {
+                        DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Файл со значениями индикатора: " + filePath + " не удалось считать."); }));
+                    }
+                }
+                dataSourceCandles.AlgorithmIndicatorsValues = algorithmIndicatorValues;
+            }
         }
 
         public bool CheckAndDeleteExpiredTestingResults() //проверяет наличие результатов тестирования в истории у которых вышел срок хранения, и удаляет их. Если было удаление возвращает true, иначе - false

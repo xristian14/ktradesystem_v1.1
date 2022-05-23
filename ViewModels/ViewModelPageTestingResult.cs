@@ -263,6 +263,7 @@ namespace ktradesystem.ViewModels
             {
                 _selectedTestRunTestingResultCombobox = value;
                 OnPropertyChanged();
+                ReadIndicatorValues(); //считываем значения индикаторов для выбранного testRun
                 TestRunsUpdatePages?.Invoke(); //вызываем методы, обновляющие страницы, отображающие информацию о конкретном тестовом прогоне
             }
         }
@@ -400,11 +401,17 @@ namespace ktradesystem.ViewModels
         }
         private void ReadDataSourceCandles() //считывает свечки источников данных, выбранной группы источников данных
         {
+            if (TestingResult != null && SelectedDataSourceGroupTestingResultCombobox != null)
+            {
+                TestingResult.DataSourcesCandles = _modelTestingResult.ReadDataSourceCandles(TestingResult, SelectedResultTestingMenu == ResultTestingMenu[0] ? true : false, SelectedDataSourceGroupTestingResultCombobox.DataSourceGroup); //вызываем метод модели, считывающий, и возвращающий свечки для указанной группы источников данных
+            }
+        }
+        private void ReadIndicatorValues() //считывает значения индикаторов для выбранного testRun
+        {
             if (TestingResult != null)
             {
-                TestingResult.DataSourcesCandles = _modelTestingResult.ReadDataSourceCandles(TestingResult, SelectedResultTestingMenu == ResultTestingMenu[0] ? true : false, SelectedDataSourceGroupTestingResultCombobox.DataSourceGroup); //вызываем метод модели, считывающий, и возвращающий свечки для указанной гурппы источников данных
+                _modelTestingResult.ReadIndicatorValues(TestingResult, SelectedResultTestingMenu == ResultTestingMenu[0] ? true : false, SelectedTestRunTestingResultCombobox.TestRun); //считываем значения индикаторов алгоритма
             }
-            
         }
 
         private ObservableCollection<TabControlTestingResultItem> _tabControlTestingResultItems = new ObservableCollection<TabControlTestingResultItem>();

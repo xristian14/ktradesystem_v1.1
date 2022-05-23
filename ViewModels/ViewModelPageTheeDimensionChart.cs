@@ -691,7 +691,7 @@ namespace ktradesystem.ViewModels
                 double range = _max - _min;
                 double permissibleErrorRange = range * permissibleError;
                 int digits = 0; //количество знаков после запятой, до которого нужно округлять значения шкалы значений
-                while (permissibleErrorRange * Math.Pow(10, digits) < 1)
+                while (permissibleErrorRange * Math.Pow(10, digits) < 1 && range > 0)
                 {
                     digits++;
                 }

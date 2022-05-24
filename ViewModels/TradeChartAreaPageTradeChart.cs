@@ -10,6 +10,25 @@ namespace ktradesystem.ViewModels
 {
     class TradeChartAreaPageTradeChart : ViewModelBase
     {
+        private TradeChartAreaPageTradeChart()
+        {
+
+        }
+        public static TradeChartAreaPageTradeChart CreateDataSourceArea(DataSourceAccordance dataSourceAccordance)
+        {
+            TradeChartAreaPageTradeChart tradeChartAreaPageTradeChart = new TradeChartAreaPageTradeChart();
+            tradeChartAreaPageTradeChart.Name = dataSourceAccordance.DataSourceTemplate.Name + "  –  " + dataSourceAccordance.DataSource.Name;
+            tradeChartAreaPageTradeChart.IsDataSource = true;
+            tradeChartAreaPageTradeChart.DataSourceAccordance = dataSourceAccordance;
+            return tradeChartAreaPageTradeChart;
+        }
+        public static TradeChartAreaPageTradeChart CreateIndicatorArea(string name)
+        {
+            TradeChartAreaPageTradeChart tradeChartAreaPageTradeChart = new TradeChartAreaPageTradeChart();
+            tradeChartAreaPageTradeChart.Name = name;
+            tradeChartAreaPageTradeChart.IsDataSource = false;
+            return tradeChartAreaPageTradeChart;
+        }
         private string _name;
         public string Name //название области
         {
@@ -20,7 +39,27 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        public int _areaHeight;
+        private bool _isDataSource;
+        public bool IsDataSource //отображает ли данная область свечки источника данных
+        {
+            get { return _isDataSource; }
+            set
+            {
+                _isDataSource = value;
+                OnPropertyChanged();
+            }
+        }
+        private DataSourceAccordance _dataSourceAccordance;
+        public DataSourceAccordance DataSourceAccordance //источник данных и макет источника данных, свечки которого отображает данная область
+        {
+            get { return _dataSourceAccordance; }
+            set
+            {
+                _dataSourceAccordance = value;
+                OnPropertyChanged();
+            }
+        }
+        private int _areaHeight;
         public int AreaHeight //высота области
         {
             get { return _areaHeight; }

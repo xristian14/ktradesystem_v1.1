@@ -317,6 +317,28 @@
                             </MenuItem.ItemTemplate>
                         </MenuItem>
                     </Menu>
+                    <Menu Width="262" Margin="5 0 0 0">
+                        <MenuItem ItemsSource="{Binding DataSourcesOrderDisplayPageTradeChart}" Header="Порядок отображения источников данных ⯆" Style="{DynamicResource MenuItemStyle1}" StaysOpenOnClick="True">
+                            <MenuItem.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock>
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0}  –  {1}">
+                                                        <Binding Path="DataSourceAccordance.DataSourceTemplate.Name"/>
+                                                        <Binding Path="DataSourceAccordance.DataSource.Name"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                            <ToggleButton Content="⯅" IsChecked="{Binding IsButtonUpChecked, Mode=TwoWay}" HorizontalAlignment="Left" Margin="5 0 0 0" Width="20" Height="20" Padding="0 -2"/>
+                                            <ToggleButton Content="⯆" IsChecked="{Binding IsButtonDownChecked, Mode=TwoWay}" HorizontalAlignment="Left" Margin="5 0 0 0" Width="20" Height="20" Padding="0 -2"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </MenuItem.ItemTemplate>
+                        </MenuItem>
+                    </Menu>
                     <Button Content="Кнопка" Command="{Binding Button1_Click}" Margin="5 0 0 0"/>
                 </StackPanel>
             </StackPanel>

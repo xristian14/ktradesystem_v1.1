@@ -25,12 +25,17 @@ namespace ktradesystem.ViewModels
         }
         private Testing _testing; //результат тестирования
         private TestRun _testRun; //тестовый прогон, для которого строится график
+        private int _candlesMinWidth = 1; //минимальная ширина свечки, в пикселях
         private int _candlesMaxWidth = 11; //максимальная ширина свечки, в пикселях
         private int _tradeChartScale; //масштаб графика, сколько свечек должно уместиться в видимую область графика
-        private double _indicatorAreasHeight = 0.15; //суммарная высота областей для индикаторов, как часть от главной области
+        private int _scaleValuesWidth = 40; //ширина правой области со шкалой значений
+        private double _tradeChartHiddenCandlesSize = 1; //размер генерируемых свечек справа и слева от видимых свечек, относительно видимых свечек. Размер отдельно для левых и правых свечек
+        private double[] _indicatorAreasHeight = new double[3] { 0.15, 0.25, 0.35 }; //суммарная высота областей для индикаторов, как часть от главной области, номер элемента соответствует количеству индикаторов и показывает суммарную высоту для них, если количество индикаторов больше, берется последний элемент
         private int _timeLineHeight = 24; //высота временной шкалы
-        public double СanvasChartWidth { get; set; } //ширина canvas с графиком
-        public double СanvasChartHeight { get; set; } //высота canvas с графиком
+        private int _currentFileIndex; //индекс текущего файла со свечками
+        private int _currentCandleIndex; //индекс текущей свечки
+        public double СanvasTradeChartWidth { get; set; } //ширина canvas с графиком
+        public double СanvasTradeChartHeight { get; set; } //высота canvas с графиком
 
         private ObservableCollection<CandlePageTradeChart> _candles = new ObservableCollection<CandlePageTradeChart>();
         public ObservableCollection<CandlePageTradeChart> Candles
@@ -90,8 +95,8 @@ namespace ktradesystem.ViewModels
                 if(indicatorMenuItemPageTradeChart.IsButtonAddAreaChecked)//если кнопка в состоянии true, - добавляем область и выбираем её для текущего индикатора
                 {
                     indicatorMenuItemPageTradeChart.IsButtonAddAreaChecked = false;
-                    int mainAreaHeight = (int)Math.Truncate(СanvasChartHeight) - _timeLineHeight;
-                    int indiactorAreaHeight = (int)Math.Truncate((mainAreaHeight * _indicatorAreasHeight) / TradeChartAreas.Count); //высота области индикаторов
+                    int mainAreaHeight = (int)Math.Truncate(СanvasTradeChartHeight) - _timeLineHeight;
+                    int indiactorAreaHeight = (int)Math.Truncate((mainAreaHeight * (IndicatorsMenuItemPageTradeChart.Count > _indicatorAreasHeight.Length ? _indicatorAreasHeight.Last() : _indicatorAreasHeight[IndicatorsMenuItemPageTradeChart.Count])) / TradeChartAreas.Count); //высота области индикаторов
                     mainAreaHeight = mainAreaHeight - indiactorAreaHeight * TradeChartAreas.Count; //вычитаем из высоты главной области, высоту текущих областей + высоту добавляемой области
                                                                                                    //обновляем высоту областей
                     TradeChartAreas[0].AreaHeight = mainAreaHeight;
@@ -114,11 +119,25 @@ namespace ktradesystem.ViewModels
                 IndicatorsMenuItemPageTradeChart.Add(IndicatorMenuItemPageTradeChart.CreateIndicator(IndicatorsMenuItemPageTradeChart_PropertyChanged, _testing.Algorithm.AlgorithmIndicators[i], TradeChartAreas, 0));
             }
         }
+        private void DefineTradeChartInitialScale() //определяем начальный масштаб графика: количество свечек, которое должно поместиться на графике
+        {
+            int candleWidth = 3; //ширина свечки, исходя из которой будет определяться количество свечек
+            _tradeChartScale = (int)Math.Truncate((СanvasTradeChartWidth - _scaleValuesWidth) / candleWidth);
+        }
 
         private void CreateTradeChartAreas() //создает области для графика котировок
         {
             TradeChartAreas.Clear();
-            TradeChartAreas.Add(new TradeChartAreaPageTradeChart { Name = "Главная область", AreaHeight = (int)Math.Truncate(СanvasChartHeight) - _timeLineHeight });
+            TradeChartAreas.Add(new TradeChartAreaPageTradeChart { Name = "Главная область", AreaHeight = (int)Math.Truncate(СanvasTradeChartHeight) - _timeLineHeight });
+        }
+
+        private void BiuldTradeChart() //строит график котировок
+        {
+            //проходим по всем областям, и строим шкалы значений, для главной области свечки и объемы, а так же индикаторы для всех областей
+            for(int i = 0; i < TradeChartAreas.Count; i++)
+            {
+
+            }
         }
 
         public void UpdatePage() //обновляет страницу на новый источник данных
@@ -127,6 +146,8 @@ namespace ktradesystem.ViewModels
             _testRun = ViewModelPageTestingResult.getInstance().SelectedTestRunTestingResultCombobox.TestRun;
             CreateTradeChartAreas(); //создаем области для графика котировок
             CreateIndicatorsMenuItemPageTradeChart(); //создаем элементы для меню выбора областей для индикаторов
+            DefineTradeChartInitialScale(); //определяем начальный масштаб графика
+            BiuldTradeChart(); //строим график котировок
         }
         public ICommand Button1_Click
         {

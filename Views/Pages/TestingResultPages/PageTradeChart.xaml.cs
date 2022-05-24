@@ -32,8 +32,8 @@ namespace ktradesystem.Views.Pages.TestingResultPages
 
         private void canvasChart_Loaded(object sender, RoutedEventArgs e)
         {
-            _viewModelPageTradeChart.СanvasChartWidth = canvasChart.ActualWidth;
-            _viewModelPageTradeChart.СanvasChartHeight = canvasChart.ActualHeight;
+            _viewModelPageTradeChart.СanvasTradeChartWidth = canvasChart.ActualWidth;
+            _viewModelPageTradeChart.СanvasTradeChartHeight = canvasChart.ActualHeight;
         }
     }
 }

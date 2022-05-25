@@ -34,8 +34,7 @@ namespace ktradesystem.ViewModels
         private double _tradeChartHiddenCandlesSize = 1; //размер генерируемых свечек справа и слева от видимых свечек, относительно видимых свечек. Размер отдельно для левых и правых свечек
         private double[] _indicatorAreasHeight = new double[3] { 0.15, 0.225, 0.3 }; //суммарная высота областей для индикаторов, как часть от доступной под области высоты, номер элемента соответствует количеству индикаторов и показывает суммарную высоту для них, если количество индикаторов больше, берется последний элемент
         private int _timeLineHeight = 24; //высота временной шкалы
-        private int _currentFileIndex; //индекс текущего файла со свечками
-        private int _currentCandleIndex; //индекс текущей свечки
+        private FileCandleIndexesPageTradeChart[] _currentFileCandleIndexes; //текущие индексы файлов и свечек для источников данных
         public double СanvasTradeChartWidth { get; set; } //ширина canvas с графиком
         public double СanvasTradeChartHeight { get; set; } //высота canvas с графиком
 
@@ -196,21 +195,33 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private void DefineTradeChartInitialScaleAndSetCurrentFileCandleIndexes() //определяет начальный масштаб графика: количество свечек, которое должно поместиться на графике, и индексы текущего файла и свечки
+        private void DefineTradeChartInitialScaleAndSetCurrentFileCandleIndexes() //определяет начальный масштаб графика: количество свечек, которое должно поместиться на графике, и индексы текущего файла и свечки для всех источников данных
         {
-            int candleWidth = 3; //ширина свечки, исходя из которой будет определяться количество свечек
+            int candleWidth = 5; //ширина свечки, исходя из которой будет определяться количество свечек
             _tradeChartScale = (int)Math.Truncate((СanvasTradeChartWidth - _scaleValuesWidth) / candleWidth);
             int candlesCount = (int)Math.Round(_tradeChartScale * _minCandlesFullness); //количество свечек, которое нужно отобразить на графике
             bool isEndFiles = false; //закончились ли файлы
             int candleNumber = 1; //количество свечек которые уже прошли
-            _currentFileIndex = 0;
-            _currentCandleIndex = 0;
-            /*while(candleNumber <= candlesCount && isEndFiles == false)
+            _currentFileIndexes = new int[_testBatch.DataSourceGroup.DataSourceAccordances.Count];
+            _currentCandleIndexes = new int[_testBatch.DataSourceGroup.DataSourceAccordances.Count];
+            while (candleNumber <= candlesCount && isEndFiles == false)
             {
                 //переходим на следующую свечку
                 _currentCandleIndex++;
                 
-            }*/
+            }
+        }
+
+        private Tuple<List<CandleTemplatePageTradeChart>, List<DivideTemplatePageTradeChart>> GetChartTemplate(bool isLeft) //возвращает шаблон графика, при isLeft = true вернет шаблон для левой части, иначе - для правой
+        {
+            List<CandleTemplatePageTradeChart> candlesTemplate = new List<CandleTemplatePageTradeChart>(); //шаблоны свечек
+            List<DivideTemplatePageTradeChart> dividesTemplate = new List<DivideTemplatePageTradeChart>(); //шаблоны разрывов
+
+        }
+
+        private bool IsCandlesMinCandlesFullness(int[] currentFilesIndexes, int[] currentCandlesIndexes) //определяет, заполняют ли свечки минимальную заполненность на графике
+        {
+            return true;
         }
 
         private void BiuldTradeChart() //строит график котировок

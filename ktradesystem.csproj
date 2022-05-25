@@ -155,6 +155,7 @@
     <Compile Include="ViewModels\AxesParameterSelectView.cs" />
     <Compile Include="ViewModels\AxisSearchPlanePageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\CandlePageTradeChart.cs" />
+    <Compile Include="ViewModels\CandleTemplatePageTradeChart.cs" />
     <Compile Include="ViewModels\DataSourceAccordanceView.cs" />
     <Compile Include="ViewModels\DataSourceGroupTestingResultCombobox.cs" />
     <Compile Include="ViewModels\DataSourceGroupView.cs" />
@@ -162,8 +163,10 @@
     <Compile Include="ViewModels\DataSourcesForAddingDsGroupView.cs" />
     <Compile Include="ViewModels\DataSourceView.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
+    <Compile Include="ViewModels\DivideTemplatePageTradeChart.cs" />
     <Compile Include="ViewModels\EvaluationCriteriaPageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\EvaluationCriteriaView.cs" />
+    <Compile Include="ViewModels\FileCandleIndexesPageTradeChart.cs" />
     <Compile Include="ViewModels\FilterTopModelView.cs" />
     <Compile Include="ViewModels\IndicatorMenuItemPageTradeChart.cs" />
     <Compile Include="ViewModels\IndicatorParameterRangeView.cs" />

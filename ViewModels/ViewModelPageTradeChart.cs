@@ -30,6 +30,7 @@ namespace ktradesystem.ViewModels
         private int _candlesMaxWidth = 11; //максимальная ширина свечки, в пикселях
         private int _tradeChartScale; //масштаб графика, сколько свечек должно уместиться в видимую область графика
         private double _minCandlesFullness = 0.7; //минимальная наполненность свечками. Относительно количества свечек в _tradeChartScale. Минимальное количество свечек которое будет показано на графике в самом левом положении
+        private int _divideWidth = 10; //ширина разрыва
         private int _scaleValuesWidth = 40; //ширина правой области со шкалой значений
         private double _tradeChartHiddenCandlesSize = 1; //размер генерируемых свечек справа и слева от видимых свечек, относительно видимых свечек. Размер отдельно для левых и правых свечек
         private double[] _indicatorAreasHeight = new double[3] { 0.15, 0.225, 0.3 }; //суммарная высота областей для индикаторов, как часть от доступной под области высоты, номер элемента соответствует количеству индикаторов и показывает суммарную высоту для них, если количество индикаторов больше, берется последний элемент
@@ -202,14 +203,19 @@ namespace ktradesystem.ViewModels
             int candlesCount = (int)Math.Round(_tradeChartScale * _minCandlesFullness); //количество свечек, которое нужно отобразить на графике
             bool isEndFiles = false; //закончились ли файлы
             int candleNumber = 1; //количество свечек которые уже прошли
-            _currentFileIndexes = new int[_testBatch.DataSourceGroup.DataSourceAccordances.Count];
-            _currentCandleIndexes = new int[_testBatch.DataSourceGroup.DataSourceAccordances.Count];
+            _currentFileCandleIndexes = new FileCandleIndexesPageTradeChart[_testBatch.DataSourceGroup.DataSourceAccordances.Count];
             while (candleNumber <= candlesCount && isEndFiles == false)
             {
                 //переходим на следующую свечку
                 _currentCandleIndex++;
                 
             }
+        }
+        private bool MoveCurrentFileCandleIndexes(int offset) //сдвигает индекс текущей свечки на указанное число, как положительное (вправо), так и отрицательное (влево), и возвращает true если смещение имело место даже не на все значение offset, если смещение не получилось (уже начальные индексы или конечные) возвращает false
+        {
+            bool isMove = false;
+            int currentOffset = 0; //смещение которое уже достигнуто
+
         }
 
         private Tuple<List<CandleTemplatePageTradeChart>, List<DivideTemplatePageTradeChart>> GetChartTemplate(bool isLeft) //возвращает шаблон графика, при isLeft = true вернет шаблон для левой части, иначе - для правой

@@ -154,8 +154,8 @@
     <Compile Include="ViewModels\AlgorithmParameterView.cs" />
     <Compile Include="ViewModels\AxesParameterSelectView.cs" />
     <Compile Include="ViewModels\AxisSearchPlanePageThreeDimensionChart.cs" />
+    <Compile Include="ViewModels\CandleIndexPageTradeChart.cs" />
     <Compile Include="ViewModels\CandlePageTradeChart.cs" />
-    <Compile Include="ViewModels\CandleTemplatePageTradeChart.cs" />
     <Compile Include="ViewModels\DataSourceAccordanceView.cs" />
     <Compile Include="ViewModels\DataSourceGroupTestingResultCombobox.cs" />
     <Compile Include="ViewModels\DataSourceGroupView.cs" />
@@ -163,7 +163,6 @@
     <Compile Include="ViewModels\DataSourcesForAddingDsGroupView.cs" />
     <Compile Include="ViewModels\DataSourceView.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
-    <Compile Include="ViewModels\DivideTemplatePageTradeChart.cs" />
     <Compile Include="ViewModels\EvaluationCriteriaPageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\EvaluationCriteriaView.cs" />
     <Compile Include="ViewModels\FilterTopModelView.cs" />
@@ -172,9 +171,11 @@
     <Compile Include="ViewModels\IndicatorParameterTemplateView.cs" />
     <Compile Include="ViewModels\LevelPageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\ObservableCollectionWithItemNotify.cs" />
+    <Compile Include="ViewModels\OrderIndexPageTradeChart.cs" />
     <Compile Include="ViewModels\PageItem.cs" />
-    <Compile Include="ViewModels\SectionDataSourcePageTradeChart.cs" />
-    <Compile Include="ViewModels\SectionPageTradeChart.cs" />
+    <Compile Include="ViewModels\SegmentDealIndexPageTradeChart.cs" />
+    <Compile Include="ViewModels\SegmentOrderIndexPageTradeChart.cs" />
+    <Compile Include="ViewModels\SegmentPageTradeChart.cs" />
     <Compile Include="ViewModels\StackPanelTestingResult.cs" />
     <Compile Include="ViewModels\TabControlTestingResultItem.cs" />
     <Compile Include="ViewModels\TestBatchTestingResultCombobox.cs" />

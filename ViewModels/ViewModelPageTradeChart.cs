@@ -35,7 +35,10 @@ namespace ktradesystem.ViewModels
         private double _tradeChartHiddenCandlesSize = 1; //размер генерируемых свечек справа и слева от видимых свечек, относительно видимых свечек. Размер отдельно для левых и правых свечек
         private double[] _indicatorAreasHeight = new double[3] { 0.15, 0.225, 0.3 }; //суммарная высота областей для индикаторов, как часть от доступной под области высоты, номер элемента соответствует количеству индикаторов и показывает суммарную высоту для них, если количество индикаторов больше, берется последний элемент
         private int _timeLineHeight = 24; //высота временной шкалы
-        private FileCandleIndexesPageTradeChart[] _currentFileCandleIndexes; //текущие индексы файлов и свечек для источников данных
+        private List<SegmentPageTradeChart> _segments { get; set; } //сегменты из которых состоит график
+        private int _segmentIndex; //текущий индекс сегмента
+        private List<SegmentOrderIndexPageTradeChart> _segmentOrders; //индексы сегмента и заявки, чтобы можно было быстро найти сегмент с заявкой
+        private List<SegmentDealIndexPageTradeChart> _segmentDeals; //индексы сегмента и сделки, чтобы можно было быстро найти сегмент со сделкой
         public double СanvasTradeChartWidth { get; set; } //ширина canvas с графиком
         public double СanvasTradeChartHeight { get; set; } //высота canvas с графиком
 
@@ -215,13 +218,6 @@ namespace ktradesystem.ViewModels
         {
             bool isMove = false;
             int currentOffset = 0; //смещение которое уже достигнуто
-
-        }
-
-        private Tuple<List<CandleTemplatePageTradeChart>, List<DivideTemplatePageTradeChart>> GetChartTemplate(bool isLeft) //возвращает шаблон графика, при isLeft = true вернет шаблон для левой части, иначе - для правой
-        {
-            List<CandleTemplatePageTradeChart> candlesTemplate = new List<CandleTemplatePageTradeChart>(); //шаблоны свечек
-            List<DivideTemplatePageTradeChart> dividesTemplate = new List<DivideTemplatePageTradeChart>(); //шаблоны разрывов
 
         }
 

@@ -8,15 +8,16 @@ using System.Text.Json.Serialization;
 
 namespace ktradesystem.Models
 {
+    [Serializable]
     public class Deal
     {
         public int Number { get; set; }
         public int IdDataSource { get; set; }
-        [JsonIgnore]
-        public DataSource DataSource { get; set; }
+        [NonSerialized]
+        public DataSource DataSource;
         public int OrderNumber { get; set; } //номер заявки
-        [JsonIgnore]
-        public Order Order { get; set; }
+        [NonSerialized]
+        public Order Order;
         public double Price { get; set; }
         public decimal Count { get; set; }
         public DateTime DateTime { get; set; }

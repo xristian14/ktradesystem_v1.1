@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace ktradesystem.Models
 {
@@ -136,8 +137,17 @@ namespace ktradesystem.Models
             TestingHeader testingHeader = new TestingHeader { IsHistory = true, TestingName = testing.TestingName, DateTimeSimulationEnding = testing.DateTimeSimulationEnding }; //создаем файл с заголовком тестирования, который будет считываться в список результатов тестирования
             string jsonTestingHeader = JsonSerializer.Serialize(testingHeader); //сериализуем
             File.WriteAllText(testingDirectoryPath + "\\testingHeader.json", jsonTestingHeader); //записываем в файл
+
+            BinaryFormatter binaryFormatter = new BinaryFormatter();
+            using (FileStream fileStream = new FileStream(testingDirectoryPath + "\\testing.dat", FileMode.Create))
+            {
+                binaryFormatter.Serialize(fileStream, testing); //сериализуем объект тестирования в файл
+            }
+
+            /*
             string jsonTesting = JsonSerializer.Serialize(testing); //сериализуем объект тестирования
             File.WriteAllText(testingDirectoryPath + "\\testing.json", jsonTesting); //записываем в файл
+            */
 
             //формируем AlgorithmIndicatorCatalogElements для DataSourcesCandles
             for (int i = 0; i < testing.DataSourcesCandles.Length; i++)
@@ -161,7 +171,7 @@ namespace ktradesystem.Models
 
                     if (algorithmParameters.Count == 0) //если нет параметров, значит только 1 вариант значений индикатора для источника данных
                     {
-                        algorithmIndicatorCatalog.AlgorithmIndicatorCatalogElements.Add(new AlgorithmIndicatorCatalogElement { AlgorithmParameterValues = new List<AlgorithmParameterValue>(), FileName = "withoutParameters.json" });
+                        algorithmIndicatorCatalog.AlgorithmIndicatorCatalogElements.Add(new AlgorithmIndicatorCatalogElement { AlgorithmParameterValues = new List<AlgorithmParameterValue>(), FileName = "withoutParameters.dat" });
                     }
                     else
                     {
@@ -216,7 +226,7 @@ namespace ktradesystem.Models
                                 fileName += fileName.Length == 0 ? "" : " "; //если это не первые символы названия, отделяем их пробелом от предыдущих
                                 fileName += testing.Algorithm.AlgorithmParameters[value[0]].Name + "=" + parameterValue;
                             }
-                            fileName += ".json";
+                            fileName += ".dat";
                             AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement = new AlgorithmIndicatorCatalogElement { AlgorithmParameterValues = new List<AlgorithmParameterValue>(), FileName = fileName };
                             for (int u = 0; u < algorithmParameterCombinations[k].Length; u++)
                             {
@@ -258,8 +268,14 @@ namespace ktradesystem.Models
             {
                 string dataSourcesCandlesPath = testingDirectoryPath + "\\dataSourcesCandles\\" + testing.DataSourcesCandles[i].DataSource.Id.ToString(); //путь к папке с текущим DataSourceCandles
                 Directory.CreateDirectory(dataSourcesCandlesPath); //создаем папку с текущим DataSourceCandles
+                using (FileStream fileStream = new FileStream(dataSourcesCandlesPath + "\\dataSourceCandles.dat", FileMode.Create))
+                {
+                    binaryFormatter.Serialize(fileStream, testing.DataSourcesCandles[i]); //сериализуем
+                }
+                /*
                 string jsonDataSourceCandles = JsonSerializer.Serialize(testing.DataSourcesCandles[i]); //сериализуем
-                File.WriteAllText(dataSourcesCandlesPath + "\\dataSourceCandles.json", jsonDataSourceCandles); //записываем в файл
+                File.WriteAllText(dataSourcesCandlesPath + "\\dataSourceCandles.dat", jsonDataSourceCandles); //записываем в файл
+                */
                 countWrite++;
                 DispatcherInvoke((Action)(() => {
                     _mainCommunicationChannel.TestingProgress.Clear();
@@ -275,8 +291,14 @@ namespace ktradesystem.Models
                     {
                         //вычисляем значения индикатора алгоритма
                         AlgorithmIndicatorValues algorithmIndicatorValues = _modelSimulation.AlgorithmIndicatorCalculate(testing, testing.DataSourcesCandles[i], algorithmIndicatorCatalog1.AlgorithmIndicator, algorithmIndicatorCatalogElement.AlgorithmParameterValues);
-                        string jsonAlgorithmIndicatorValues = JsonSerializer.Serialize(algorithmIndicatorValues); //сериализуем
+                        using (FileStream fileStream = new FileStream(algorithmIndicatorPath + "\\" + algorithmIndicatorCatalogElement.FileName, FileMode.Create))
+                        {
+                            binaryFormatter.Serialize(fileStream, algorithmIndicatorValues); //сериализуем в файл
+                        }
+
+                        /*string jsonAlgorithmIndicatorValues = JsonSerializer.Serialize(algorithmIndicatorValues); //сериализуем
                         File.WriteAllText(algorithmIndicatorPath + "\\" + algorithmIndicatorCatalogElement.FileName, jsonAlgorithmIndicatorValues); //записываем в файл
+                        */
                         countWrite++;
                         DispatcherInvoke((Action)(() => {
                             _mainCommunicationChannel.TestingProgress.Clear();
@@ -358,19 +380,25 @@ namespace ktradesystem.Models
             DataSourceCandles[] dataSourceCandles = new DataSourceCandles[dataSourceGroup.DataSourceAccordances.Count];
             string dataSourceCandlesPath = isHistory ? Directory.GetCurrentDirectory() + _historyRealivePath : Directory.GetCurrentDirectory() + _savesRealivePath; //путь к папке со свечками. Если isHistory == true значит в папке с историей, иначе - в папке с сохраненными
             dataSourceCandlesPath += "\\" + testing.TestingName + "\\dataSourcesCandles";
+            BinaryFormatter binaryFormatter = new BinaryFormatter();
             for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
             {
                 bool isBroken = false; //прозошли ли ошибки при попытки считать свечки
                 string dataSourceCandlesPathFolder = dataSourceCandlesPath + "\\" + dataSourceGroup.DataSourceAccordances[i].DataSource.Id;
                 if (Directory.Exists(dataSourceCandlesPathFolder) == true) //если существует папка со свечками для данного источника данных
                 {
-                    if(File.Exists(dataSourceCandlesPathFolder + "\\dataSourceCandles.json") == true) //если существует файл со свечками
+                    if(File.Exists(dataSourceCandlesPathFolder + "\\dataSourceCandles.dat") == true) //если существует файл со свечками
                     {
                         //пробуем считать и десериализовать тестирование
                         try
                         {
-                            string jsonDataSourceCandles = File.ReadAllText(dataSourceCandlesPathFolder + "\\dataSourceCandles.json");
-                            dataSourceCandles[i] = JsonSerializer.Deserialize<DataSourceCandles>(jsonDataSourceCandles);
+                            using (FileStream fileStream = new FileStream(dataSourceCandlesPathFolder + "\\dataSourceCandles.dat", FileMode.Open))
+                            {
+                                dataSourceCandles[i] = (DataSourceCandles)binaryFormatter.Deserialize(fileStream); //десериализуем объект
+                            }
+                            
+                            /*string jsonDataSourceCandles = File.ReadAllText(dataSourceCandlesPathFolder + "\\dataSourceCandles.json");
+                            dataSourceCandles[i] = JsonSerializer.Deserialize<DataSourceCandles>(jsonDataSourceCandles);*/
                         }
                         catch
                         {
@@ -389,7 +417,7 @@ namespace ktradesystem.Models
 
                 if (isBroken) //если не удалось считать файл, уведомляем об этом пользователя
                 {
-                    DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Файл со свечками: " + dataSourceCandlesPathFolder + "\\dataSourceCandles.json не удалось считать."); }));
+                    DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Файл со свечками: " + dataSourceCandlesPathFolder + "\\dataSourceCandles.dat не удалось считать."); }));
                 }
             }
 
@@ -444,6 +472,7 @@ namespace ktradesystem.Models
                     string dataSourceCandlesPathFolder = dataSourceCandlesPath + "\\" + dataSourceCandles.DataSource.Id; //папка с текущим источником данных
                     string dataSourceCandlesCurrentIndicatorPathFolder = dataSourceCandlesPathFolder + "\\" + dataSourceCandles.AlgorithmIndicatorCatalogs[i].AlgorithmIndicatorFolderName; //папка с текущим индикатором
                     string filePath = dataSourceCandlesCurrentIndicatorPathFolder + "\\" + dataSourceCandles.AlgorithmIndicatorCatalogs[i].AlgorithmIndicatorCatalogElements[indexCatalogElement].FileName;
+                    BinaryFormatter binaryFormatter = new BinaryFormatter();
                     if (Directory.Exists(dataSourceCandlesCurrentIndicatorPathFolder) == true) //если существует папка с текущим индикатором для данного источника данных
                     {
                         if (File.Exists(filePath) == true) //если существует файл с текущим индикатором
@@ -451,8 +480,12 @@ namespace ktradesystem.Models
                             //пробуем считать и десериализовать
                             try
                             {
-                                string jsonAlgorithmIndicatorValues = File.ReadAllText(filePath);
-                                algorithmIndicatorValues[i] = JsonSerializer.Deserialize<AlgorithmIndicatorValues>(jsonAlgorithmIndicatorValues);
+                                using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
+                                {
+                                    algorithmIndicatorValues[i] = (AlgorithmIndicatorValues)binaryFormatter.Deserialize(fileStream); //десериализуем объект
+                                }
+                                /*string jsonAlgorithmIndicatorValues = File.ReadAllText(filePath);
+                                algorithmIndicatorValues[i] = JsonSerializer.Deserialize<AlgorithmIndicatorValues>(jsonAlgorithmIndicatorValues);*/
                             }
                             catch
                             {
@@ -550,8 +583,14 @@ namespace ktradesystem.Models
             bool isException = false; //было ли исключение при считывании
             try
             {
-                string jsonTesting = File.ReadAllText(testingDirectory + "\\testing.json");
-                testing = JsonSerializer.Deserialize<Testing>(jsonTesting);
+                BinaryFormatter binaryFormatter = new BinaryFormatter();
+                using (FileStream fileStream = new FileStream(testingDirectory + "\\testing.dat", FileMode.Open))
+                {
+                    testing = (Testing)binaryFormatter.Deserialize(fileStream); //десериализуем объект
+                }
+
+                /*string jsonTesting = File.ReadAllText(testingDirectory + "\\testing.dat");
+                testing = JsonSerializer.Deserialize<Testing>(jsonTesting);*/
             }
             catch
             {

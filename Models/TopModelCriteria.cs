@@ -7,6 +7,7 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
+    [Serializable]
     public class TopModelCriteria
     {
         public EvaluationCriteria EvaluationCriteria { get; set; }

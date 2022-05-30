@@ -7,6 +7,7 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
+    [Serializable]
     public class DataSourceAccordance //соответствие между шаблоном источника данных, и источником данных, для тестирования
     {
         public DataSourceTemplate DataSourceTemplate { get; set; }

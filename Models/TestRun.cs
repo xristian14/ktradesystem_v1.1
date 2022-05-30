@@ -7,10 +7,11 @@ using System.Text.Json.Serialization;
 
 namespace ktradesystem.Models
 {
+    [Serializable]
     public class TestRun
     {
-        [JsonIgnore]
-        public TestBatch TestBatch { get; set; }
+        [NonSerialized]
+        public TestBatch TestBatch;
         public int Number { get; set; } //номер тестового прогона
         public Account Account { get; set; }
         public DateTime StartPeriod { get; set; }

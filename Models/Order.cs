@@ -5,12 +5,13 @@ using System.Text.Json.Serialization;
 
 namespace ktradesystem.Models
 {
+    [Serializable]
     public class Order
     {
         public int Number { get; set; } //номер заявки
         public int IdDataSource { get; set; }
-        [JsonIgnore]
-        public DataSource DataSource { get; set; }
+        [NonSerialized]
+        public DataSource DataSource;
         public TypeOrder TypeOrder { get; set; }
         public bool Direction { get; set; } //true - купить, false - продать
         public double Price { get; set; }
@@ -19,7 +20,7 @@ namespace ktradesystem.Models
         public DateTime DateTimeSubmit { get; set; }
         public DateTime DateTimeRemove { get; set; }
         public int LinkedOrderNumber { get; set; } //номер связанной заявки
-        [JsonIgnore]
-        public Order LinkedOrder { get; set; } //связанная заявка (тейк-профит для стоп-заявки или стоп-лосс для лимитной заявки на тейк профит)
+        [NonSerialized]
+        public Order LinkedOrder; //связанная заявка (тейк-профит для стоп-заявки или стоп-лосс для лимитной заявки на тейк профит)
     }
 }

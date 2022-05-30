@@ -199,6 +199,70 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        private void CreateSegments() //создает сегменты на основе загруженных данных свечек
+        {
+            _segments = new List<SegmentPageTradeChart>();
+            _segmentIndex = 0;
+            _segmentOrders = new List<SegmentOrderIndexPageTradeChart>();
+            _segmentDeals = new List<SegmentDealIndexPageTradeChart>();//Enumerable.Repeat(0, _leftAxisParameters.Count).ToArray();
+            int[] fileIndexes = Enumerable.Repeat(0, _testing.DataSourcesCandles.Length).ToArray(); //индексы текущего файла для всех источников данных (заполнили массив нулями)
+            int[] candleIndexes = Enumerable.Repeat(0, _testing.DataSourcesCandles.Length).ToArray(); //индексы текущей свечки для всех источников данных (заполнили массив нулями)
+            List<int> currentOrdersIndex = new List<int>(); //индексы заявок, которыевыставлены, но еще не сняты, и поэтому будут в сегментах с источниками данных этой заявки пока не будет дата снятия/исполнения данной заявки
+            int orderIndex = 0; //индекс заявки
+            int dealIndex = 0; //индекс сделки
+            //проходя по свечкам и файлам, я буду разбивать график на секции. У каждой секции имеется свой источник данных и файл, свечки которого отображаются в секции. Секция заканчивается если закончился один из файлов, тогда начинается новая с теми источниками данных, у которых произошел переход на новый файл, эта секция продолжается до последней даты прошлой секции, после дохода до той даты, начинается новая секция в которой учавствуют все источники данных. 
+            List<int> sectionDataSourceIndexes = new List<int>(); //список с индексами источников данных в текущей секции
+            for(int i = 0; i < _testing.DataSourcesCandles.Length; i++) //заполняем индексами всех источников данных
+            {
+                sectionDataSourceIndexes.Add(i);
+            }
+            DateTime savedDateTime = new DateTime(); //последняя дата прошлой секции
+            bool isAllFilesEnd = false; //закончились ли все файлы
+            while(isAllFilesEnd == false)
+            {
+                //находим самую раннюю дату среди текущих свечек источников данных
+                DateTime earliestDateTime = _testing.DataSourcesCandles[sectionDataSourceIndexes[0]].Candles[fileIndexes[sectionDataSourceIndexes[0]]][candleIndexes[sectionDataSourceIndexes[0]]].DateTime; //самая ранняя дата среди текущих свечек, она же дата текущей свечки
+                for(int i = 1; i < sectionDataSourceIndexes.Count; i++)
+                {
+                    if(DateTime.Compare(_testing.DataSourcesCandles[sectionDataSourceIndexes[i]].Candles[fileIndexes[sectionDataSourceIndexes[i]]][candleIndexes[sectionDataSourceIndexes[i]]].DateTime, earliestDateTime) < 0)
+                    {
+                        earliestDateTime = _testing.DataSourcesCandles[sectionDataSourceIndexes[i]].Candles[fileIndexes[sectionDataSourceIndexes[i]]][candleIndexes[sectionDataSourceIndexes[i]]].DateTime;
+                    }
+                }
+                //формируем список с заявками у которых текущая дата выставления. Проходим по заявкам, дата выставления которых равняется текущей
+                List<int> currentOrderIndexes = new List<int>();
+                bool orderDateTimeNotEqual = false;
+                while(orderIndex < _testRun.Account.AllOrders.Count && orderDateTimeNotEqual == false)
+                {
+                    if(DateTime.Compare(_testRun.Account.AllOrders[orderIndex].DateTimeSubmit, earliestDateTime) == 0)
+                    {
+                        currentOrderIndexes.Add(orderIndex);
+                        orderIndex++;
+                    }
+                    else
+                    {
+                        orderDateTimeNotEqual = true;
+                    }
+                }
+                //формируем сегмент
+                SegmentPageTradeChart segment = new SegmentPageTradeChart();
+                segment.IsDivide = false;
+                segment.CandleIndexes = new List<CandleIndexPageTradeChart>();
+                for (int i = 0; i < sectionDataSourceIndexes.Count; i++) //добавляем в сегмент свечки с текущей датой для источников данных текущей секции
+                {
+                    if (DateTime.Compare(_testing.DataSourcesCandles[sectionDataSourceIndexes[i]].Candles[fileIndexes[sectionDataSourceIndexes[i]]][candleIndexes[sectionDataSourceIndexes[i]]].DateTime, earliestDateTime) == 0) //равняется ли дата свечки текущей дате
+                    {
+                        CandleIndexPageTradeChart candleIndex = new CandleIndexPageTradeChart { DataSourceIndex = sectionDataSourceIndexes[i], FileIndex = fileIndexes[sectionDataSourceIndexes[i]], CandleIndex = candleIndexes[sectionDataSourceIndexes[i]] };
+                        List<OrderIndexPageTradeChart> orderIndexes = new List<OrderIndexPageTradeChart>(); //индексы с заявками на текущей свечке
+                        int currentIdDataSource = _testBatch.DataSourceGroup.DataSourceAccordances[sectionDataSourceIndexes[i]].DataSource.Id; //id текущего источника данных
+                        //проходим по заявкам
+                        segment.CandleIndexes.Add(candleIndex);
+                    }
+                }
+                
+            }
+        }
+
         private void DefineTradeChartInitialScaleAndSetCurrentFileCandleIndexes() //определяет начальный масштаб графика: количество свечек, которое должно поместиться на графике, и индексы текущего файла и свечки для всех источников данных
         {
             int candleWidth = 5; //ширина свечки, исходя из которой будет определяться количество свечек
@@ -206,19 +270,19 @@ namespace ktradesystem.ViewModels
             int candlesCount = (int)Math.Round(_tradeChartScale * _minCandlesFullness); //количество свечек, которое нужно отобразить на графике
             bool isEndFiles = false; //закончились ли файлы
             int candleNumber = 1; //количество свечек которые уже прошли
-            _currentFileCandleIndexes = new FileCandleIndexesPageTradeChart[_testBatch.DataSourceGroup.DataSourceAccordances.Count];
+            /*_currentFileCandleIndexes = new FileCandleIndexesPageTradeChart[_testBatch.DataSourceGroup.DataSourceAccordances.Count];
             while (candleNumber <= candlesCount && isEndFiles == false)
             {
                 //переходим на следующую свечку
                 _currentCandleIndex++;
                 
-            }
+            }*/
         }
         private bool MoveCurrentFileCandleIndexes(int offset) //сдвигает индекс текущей свечки на указанное число, как положительное (вправо), так и отрицательное (влево), и возвращает true если смещение имело место даже не на все значение offset, если смещение не получилось (уже начальные индексы или конечные) возвращает false
         {
             bool isMove = false;
             int currentOffset = 0; //смещение которое уже достигнуто
-
+            return isMove;
         }
 
         private bool IsCandlesMinCandlesFullness(int[] currentFilesIndexes, int[] currentCandlesIndexes) //определяет, заполняют ли свечки минимальную заполненность на графике

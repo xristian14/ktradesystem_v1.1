@@ -7,6 +7,7 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
+    [Serializable]
     //класс содержит комбинацию значений параметров индикатора алгоритма и название файла с сериализованным объектом со значениями данного индикатора алгоритма
     public class AlgorithmIndicatorCatalogElement
     {

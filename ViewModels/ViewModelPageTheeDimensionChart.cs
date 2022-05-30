@@ -670,7 +670,7 @@ namespace ktradesystem.ViewModels
             double widthOffset = CameraWidth / 2; //смещение, которое покажет значение не в системе координат где левый край находится на -CameraWidth/2, а где левый край находится на 0 и любая точка находится от 0 до CameraWidth
             x2D = x2D + widthOffset;
             x2D = Viewport3DWidth * (x2D / CameraWidth); //умножаем ширину вьюпорта на ту часть, которую занимает координата от ширины вьюпорта, и получаем координату в пикселях
-            double cameraHeight = Viewport3DHeight / Viewport3DWidth * CameraWidth; //получаем величину в высоту, которую покрывает камера вьюпорта
+            double cameraHeight = Viewport3DWidth != 0 ? Viewport3DHeight / Viewport3DWidth * CameraWidth : 1; //получаем величину в высоту, которую покрывает камера вьюпорта. Поставил проверку, что если ширина 0, то установить в 1 чтобы не было деления на 0
             double heightOffset = cameraHeight / 2;
             y2D = y2D + heightOffset;
             y2D = Viewport3DHeight * (1 - (y2D / cameraHeight));

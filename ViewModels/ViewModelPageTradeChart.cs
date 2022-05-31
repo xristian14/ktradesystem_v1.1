@@ -301,14 +301,17 @@ namespace ktradesystem.ViewModels
 
         public void UpdatePage() //обновляет страницу на новый источник данных
         {
-            _testing = ViewModelPageTestingResult.getInstance().TestingResult;
-            _testBatch = ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox.TestBatch;
-            _testRun = ViewModelPageTestingResult.getInstance().SelectedTestRunTestingResultCombobox.TestRun;
-            CreateDataSourcesOrderDisplayPageTradeChart(); //создаем элементы для меню управления порядком следования областей с источниками данных
-            CreateTradeChartAreas(); //создаем области для графика котировок
-            CreateIndicatorsMenuItemPageTradeChart(); //создаем элементы для меню выбора областей для индикаторов
-            DefineTradeChartInitialScaleAndSetCurrentFileCandleIndexes(); //определяем начальный масштаб графика: количество свечек, которое должно поместиться на графике, и индексы текущего файла и свечки
-            BiuldTradeChart(); //строим график котировок
+            if(ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox != null && ViewModelPageTestingResult.getInstance().SelectedTestRunTestingResultCombobox != null)
+            {
+                _testing = ViewModelPageTestingResult.getInstance().TestingResult;
+                _testBatch = ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox.TestBatch;
+                _testRun = ViewModelPageTestingResult.getInstance().SelectedTestRunTestingResultCombobox.TestRun;
+                CreateDataSourcesOrderDisplayPageTradeChart(); //создаем элементы для меню управления порядком следования областей с источниками данных
+                CreateTradeChartAreas(); //создаем области для графика котировок
+                CreateIndicatorsMenuItemPageTradeChart(); //создаем элементы для меню выбора областей для индикаторов
+                DefineTradeChartInitialScaleAndSetCurrentFileCandleIndexes(); //определяем начальный масштаб графика: количество свечек, которое должно поместиться на графике, и индексы текущего файла и свечки
+                BiuldTradeChart(); //строим график котировок
+            }
         }
         public ICommand Button1_Click
         {

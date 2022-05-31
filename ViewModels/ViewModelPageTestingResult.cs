@@ -408,7 +408,7 @@ namespace ktradesystem.ViewModels
         }
         private void ReadIndicatorValues() //считывает значения индикаторов для выбранного testRun
         {
-            if (TestingResult != null)
+            if (TestingResult != null && SelectedTestRunTestingResultCombobox != null)
             {
                 _modelTestingResult.ReadIndicatorValues(TestingResult, SelectedResultTestingMenu == ResultTestingMenu[0] ? true : false, SelectedTestRunTestingResultCombobox.TestRun); //считываем значения индикаторов алгоритма
             }

@@ -1459,14 +1459,14 @@ namespace ktradesystem.Models
                             AlgorithmParameterValue algorithmParameterValueTestRun = testRun.AlgorithmParameterValues.Where(j => j.AlgorithmParameter.Id == algorithmParameterValue.AlgorithmParameter.Id).First(); //значение параметра алгоритма с таким же параметром алгоритма как и текущий параметр из элемента каталога
                             if(algorithmParameterValue.AlgorithmParameter.ParameterValueType.Id == 1) //параметр типа int
                             {
-                                if(algorithmParameterValueTestRun.IntValue != algorithmParameterValueTestRun.IntValue)
+                                if(algorithmParameterValue.IntValue != algorithmParameterValueTestRun.IntValue)
                                 {
                                     isAllParameterValuesEqual = false;
                                 }
                             }
                             else //параметр типа double
                             {
-                                if (algorithmParameterValueTestRun.DoubleValue != algorithmParameterValueTestRun.DoubleValue)
+                                if (algorithmParameterValue.DoubleValue != algorithmParameterValueTestRun.DoubleValue)
                                 {
                                     isAllParameterValuesEqual = false;
                                 }
@@ -1477,6 +1477,7 @@ namespace ktradesystem.Models
                             algorithmIndicatorCatalogElementIndexes[i][k] = catalogElementIndex; //запоминаем индекс элемента каталога со значенями индикатора
                             isFind = true;
                         }
+                        catalogElementIndex++;
                     }
                 }
             }
@@ -1583,7 +1584,7 @@ namespace ktradesystem.Models
                     bool IsOverIndex = false; //было ли превышение индекса в индикаторах и алгоритме
                     double[][] indicatorsValues = new double[dataSourceCandles.Length][];
                     //проходим по всем источникам данных и формируем значения всех индикаторов для каждого источника данных
-                    /*for (int i = 0; i < dataSourceCandles.Length; i++)
+                    for (int i = 0; i < dataSourceCandles.Length; i++)
                     {
                         indicatorsValues[i] = new double[algorithmIndicators.Count];
                         for (int k = 0; k < indicatorsValues[i].Length; k++)
@@ -1594,29 +1595,7 @@ namespace ktradesystem.Models
                                 IsOverIndex = true;
                             }
                         }
-                    }*/
-
-
-
-                    
-                    //проходим по всем источникам данных и вычисляем значения всех индикаторов для каждого источника данных
-                    for (int i = 0; i < dataSourceCandles.Length; i++)
-                    {
-                        //вычисляем значения всех индикаторов
-                        indicatorsValues[i] = new double[algorithmIndicators.Count];
-                        for (int k = 0; k < indicatorsValues[i].Length; k++)
-                        {
-                            //копируем объект скомпилированного индикатора, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
-                            dynamic CompiledIndicatorCopy = testing.CompiledIndicators[k].Clone();
-                            //вычисляем значение индикатора
-                            IndicatorCalculateResult indicatorCalculateResult = CompiledIndicatorCopy.Calculate(dataSourceCandles[i].Candles[fileIndexes[i]], candleIndexes[i], indicatorParametersIntValues[k], indicatorParametersDoubleValues[k]); //indicatorParametersIntValues[индекс_индикатора]
-                            //Calculate(Candle[] inputCandles, int currentCandleIndex, int[] indicatorParametersIntValues, double[] indicatorParametersDoubleValues)
-                            IsOverIndex = indicatorCalculateResult.OverIndex > 0 ? true : IsOverIndex; //если было превышение индекса, отмечаем это
-                            indicatorsValues[i][k] = indicatorCalculateResult.Value; //запоминаем значение индикатора для файла i и индикатора k
-                        }
                     }
-
-
 
                     //если были сделки на этой свечке, то для того чтобы проверить мог ли исполниться стоп-лосс на текущей свечке, выполняем алгоритм (после чего для открытой позиции будет выставлен стоп-лосс) и проверяем исполнение стоп-заявок. Если в процессе выполнения стоп-заявок были совершены сделки, еще раз выполняем алгоритм, обновляем заявки и переходим на следующую свечку
                     int iteration = 0; //номер итерации

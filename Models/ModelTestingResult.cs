@@ -261,7 +261,7 @@ namespace ktradesystem.Models
             stopwatch.Start();
             DispatcherInvoke((Action)(() => {
                 _mainCommunicationChannel.TestingProgress.Clear();
-                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 3/3:  Запись результатов", StepTasksCount = countWrites, CompletedStepTasksCount = countWrite, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsSuccessSimulation=true, IsFinish = false });
+                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 4/4:  Запись результатов", StepTasksCount = countWrites, CompletedStepTasksCount = countWrite, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsSuccessSimulation=true, IsFinish = false });
             }));
 
             //записываем DataSourcesCandles
@@ -281,7 +281,7 @@ namespace ktradesystem.Models
                 countWrite++;
                 DispatcherInvoke((Action)(() => {
                     _mainCommunicationChannel.TestingProgress.Clear();
-                    _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 3/3:  Запись результатов", StepTasksCount = countWrites, CompletedStepTasksCount = countWrite, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsSuccessSimulation = true, IsFinish = false });
+                    _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 4/4:  Запись результатов", StepTasksCount = countWrites, CompletedStepTasksCount = countWrite, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsSuccessSimulation = true, IsFinish = false });
                 }));
 
                 //вычисляем и записываем значения всех индикаторов алгоритмов со всеми комбинациями параметров
@@ -304,7 +304,7 @@ namespace ktradesystem.Models
                         countWrite++;
                         DispatcherInvoke((Action)(() => {
                             _mainCommunicationChannel.TestingProgress.Clear();
-                            _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 3/3:  Запись результатов", StepTasksCount = countWrites, CompletedStepTasksCount = countWrite, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsSuccessSimulation = true, IsFinish = false });
+                            _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 4/4:  Запись результатов", StepTasksCount = countWrites, CompletedStepTasksCount = countWrite, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsSuccessSimulation = true, IsFinish = false });
                         }));
                     }
                 }
@@ -317,7 +317,7 @@ namespace ktradesystem.Models
 
             DispatcherInvoke((Action)(() => {
                 _mainCommunicationChannel.TestingProgress.Clear();
-                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 3/3:  Запись результатов", StepTasksCount = countWrites, CompletedStepTasksCount = countWrite, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsSuccessSimulation = true, IsFinish = true });
+                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 4/4:  Запись результатов", StepTasksCount = countWrites, CompletedStepTasksCount = countWrite, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatch.Elapsed, CancelPossibility = false, IsSuccessSimulation = true, IsFinish = true });
             }));
         }
 

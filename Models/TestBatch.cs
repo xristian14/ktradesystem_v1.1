@@ -9,7 +9,6 @@ namespace ktradesystem.Models
     [Serializable]
     public class TestBatch //тестовая связка
     {
-        [NonSerialized]
         public DataSourceGroup DataSourceGroup;
         public int DataSourceGroupIndex { get; set; } //индекс текущей группы источников данных в testing.DataSourceGroups
         public List<TestRun> OptimizationTestRuns { get; set; }

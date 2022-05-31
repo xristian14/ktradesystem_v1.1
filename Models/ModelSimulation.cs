@@ -884,7 +884,7 @@ namespace ktradesystem.Models
                     stopwatchReadDataSources.Start();
                     DispatcherInvoke((Action)(() => {
                         _mainCommunicationChannel.TestingProgress.Clear();
-                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 1/3:  Считывание файлов источников данных", StepTasksCount = filesCount, CompletedStepTasksCount = readFilesCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchReadDataSources.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
+                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 1/4:  Считывание файлов источников данных", StepTasksCount = filesCount, CompletedStepTasksCount = readFilesCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchReadDataSources.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                     }));
                     testing.DataSourcesCandles = new DataSourceCandles[dataSources.Count]; //инициализируем массив со всеми свечками источников данных
                     for(int i = 0; i < dataSources.Count; i++)
@@ -932,7 +932,7 @@ namespace ktradesystem.Models
                             readFilesCount++;
                             DispatcherInvoke((Action)(() => {
                                 _mainCommunicationChannel.TestingProgress.Clear();
-                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 1/3:  Считывание файлов источников данных", StepTasksCount = filesCount, CompletedStepTasksCount = readFilesCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchReadDataSources.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
+                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 1/4:  Считывание файлов источников данных", StepTasksCount = filesCount, CompletedStepTasksCount = readFilesCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchReadDataSources.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                             }));
                         }
                     }
@@ -1046,7 +1046,7 @@ namespace ktradesystem.Models
                     }
                     DispatcherInvoke((Action)(() => {
                         _mainCommunicationChannel.TestingProgress.Clear();
-                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/3:  Вычисление индикаторов", StepTasksCount = AlgorithmIndicatorsValuesCount, CompletedStepTasksCount = CalculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
+                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/4:  Вычисление индикаторов", StepTasksCount = AlgorithmIndicatorsValuesCount, CompletedStepTasksCount = CalculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                     }));
 
                     //вычисляем значения индикаторов для всех источников данных со всеми комбинациями оптимизационных параметров
@@ -1060,22 +1060,13 @@ namespace ktradesystem.Models
                                 algorithmIndicatorCatalogElement.AlgorithmIndicatorValues = AlgorithmIndicatorCalculate(testing, testing.DataSourcesCandles[i], algorithmIndicatorCatalog.AlgorithmIndicator, algorithmIndicatorCatalogElement.AlgorithmParameterValues);
                                 DispatcherInvoke((Action)(() => {
                                     _mainCommunicationChannel.TestingProgress.Clear();
-                                    _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/3:  Вычисление индикаторов", StepTasksCount = AlgorithmIndicatorsValuesCount, CompletedStepTasksCount = CalculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
+                                    _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/4:  Вычисление индикаторов", StepTasksCount = AlgorithmIndicatorsValuesCount, CompletedStepTasksCount = CalculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                                 }));
                                 CalculatedAlgorithmIndicatorsCount++;
                             }
                         }
                     }
                     stopwatchCalculateIndicators.Stop();
-
-                    //заполняем элементы массива IndicatorsValues объектами IndicatorValues, указываем размерность Values исходя из количества файлов. Размер массива со значениями для файла будет определен при заполнении значений в потоке.
-                    for (int i = 0; i < testing.DataSourcesCandles.Length; i++)
-                    {
-                        for (int k = 0; k < testing.DataSourcesCandles[i].AlgorithmIndicatorsValues.Length; k++)
-                        {
-                            testing.DataSourcesCandles[i].AlgorithmIndicatorsValues[k] = new AlgorithmIndicatorValues { AlgorithmIndicator = testing.Algorithm.AlgorithmIndicators[k], Values = new double[testing.DataSourcesCandles[i].Candles.Length][] };
-                        }
-                    }
 
                     //вычисляем идеальную прибыль для каждого DataSourceCandles
                     foreach (DataSourceCandles dataSourceCandles in testing.DataSourcesCandles)
@@ -1152,7 +1143,7 @@ namespace ktradesystem.Models
                     int n = 0; //номер задачи, нужен для начального заполнения массива tasks
                     DispatcherInvoke((Action)(() => {
                         _mainCommunicationChannel.TestingProgress.Clear();
-                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/3:  Симуляция тестов", StepTasksCount = countTestRunWithForward, CompletedStepTasksCount = completedCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchTestRunsExecution.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
+                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 3/4:  Симуляция тестов", StepTasksCount = countTestRunWithForward, CompletedStepTasksCount = completedCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchTestRunsExecution.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                     }));
                     while (isAllTestRunsComplete == false)
                     {
@@ -1235,7 +1226,7 @@ namespace ktradesystem.Models
                             }
                             DispatcherInvoke((Action)(() => {
                                 _mainCommunicationChannel.TestingProgress.Clear();
-                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/3:  Симуляция тестов", StepTasksCount = countTestRunWithForward, CompletedStepTasksCount = completedCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchTestRunsExecution.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
+                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 3/4:  Симуляция тестов", StepTasksCount = countTestRunWithForward, CompletedStepTasksCount = completedCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchTestRunsExecution.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                             }));
 
                             //обрабатываем выполненные testRun-ы
@@ -1446,6 +1437,50 @@ namespace ktradesystem.Models
             }
             int[] fileIndexes = new int[testRun.TestBatch.DataSourceGroup.DataSourceAccordances.Count]; //индексы (для всех источников данных группы) элемента массива Candle[][] Candles в DataSourcesCandles, соответствующий файлу источника данных
             int[] candleIndexes = new int[testRun.TestBatch.DataSourceGroup.DataSourceAccordances.Count]; //индексы (для всех источников данных группы) элемента массива Candles[], сответствующий свечке
+
+            //определяем индексы элемента каталога в AlgorithmIndicatorCatalog со значениями индикатора для всех индикаторов во всех источниках данных
+            int[][] algorithmIndicatorCatalogElementIndexes = new int[dataSourceCandles.Length][]; //индексы элемента каталога в AlgorithmIndicatorCatalog со значениями индикатора для всех индикаторов во всех источниках данных
+            //algorithmIndicatorCatalogElementIndexes[0] - соответствует источнику данных dataSourceCandles[0]
+            //algorithmIndicatorCatalogElementIndexes[0][0] - соответствует индикатору dataSourceCandles[0].AlgorithmIndicatorCatalogs[0]. И содержит индекс элемента каталога со значениями для даннного индикатора
+            for (int i = 0; i < dataSourceCandles.Length; i++)
+            {
+                algorithmIndicatorCatalogElementIndexes[i] = new int[dataSourceCandles[i].AlgorithmIndicatorCatalogs.Length]; //индексы для всех индикаторов в данном источнике данных
+                for(int k = 0; k < algorithmIndicatorCatalogElementIndexes[i].Length; k++)
+                {
+                    //определяем индекс элемента каталога с текущей комбинацией значений параметров алгоритма
+                    bool isFind = false;
+                    int catalogElementIndex = 0;
+                    while(isFind == false && catalogElementIndex < dataSourceCandles[i].AlgorithmIndicatorCatalogs[k].AlgorithmIndicatorCatalogElements.Count)
+                    {
+                        bool isAllParameterValuesEqual = true; //совпадают ли все значения параметров алгоритма со значениями в элементе каталога
+                        //проходим по всем занчениями параметров алгоритма в элементе каталога
+                        foreach(AlgorithmParameterValue algorithmParameterValue in dataSourceCandles[i].AlgorithmIndicatorCatalogs[k].AlgorithmIndicatorCatalogElements[catalogElementIndex].AlgorithmParameterValues)
+                        {
+                            AlgorithmParameterValue algorithmParameterValueTestRun = testRun.AlgorithmParameterValues.Where(j => j.AlgorithmParameter.Id == algorithmParameterValue.AlgorithmParameter.Id).First(); //значение параметра алгоритма с таким же параметром алгоритма как и текущий параметр из элемента каталога
+                            if(algorithmParameterValue.AlgorithmParameter.ParameterValueType.Id == 1) //параметр типа int
+                            {
+                                if(algorithmParameterValueTestRun.IntValue != algorithmParameterValueTestRun.IntValue)
+                                {
+                                    isAllParameterValuesEqual = false;
+                                }
+                            }
+                            else //параметр типа double
+                            {
+                                if (algorithmParameterValueTestRun.DoubleValue != algorithmParameterValueTestRun.DoubleValue)
+                                {
+                                    isAllParameterValuesEqual = false;
+                                }
+                            }
+                        }
+                        if (isAllParameterValuesEqual)
+                        {
+                            algorithmIndicatorCatalogElementIndexes[i][k] = catalogElementIndex; //запоминаем индекс элемента каталога со значенями индикатора
+                            isFind = true;
+                        }
+                    }
+                }
+            }
+
             //устанавливаем начальные индексы файла и свечки для источников данных
             for (int i = 0; i < fileIndexes.Length; i++)
             {
@@ -1545,8 +1580,25 @@ namespace ktradesystem.Models
                 {
                     //если были совершены сделки на текущей свечке, дважды выполняем алгоритм: первый раз обновляем заявки и проверяем на исполнение стоп-заявки (если была открыта позиция на текущей свечке, нужно выставить стоп и проверить мог ли он на этой же свечке исполнится), и если были сделки то выполняем алгоритм еще раз и обновляем заявки, после чего переходим на следующую свечку
 
-                    int maxOverIndex = 0; //максимальное превышение индекса в индикаторах и алгоритме
+                    bool IsOverIndex = false; //было ли превышение индекса в индикаторах и алгоритме
                     double[][] indicatorsValues = new double[dataSourceCandles.Length][];
+                    //проходим по всем источникам данных и формируем значения всех индикаторов для каждого источника данных
+                    /*for (int i = 0; i < dataSourceCandles.Length; i++)
+                    {
+                        indicatorsValues[i] = new double[algorithmIndicators.Count];
+                        for (int k = 0; k < indicatorsValues[i].Length; k++)
+                        {
+                            indicatorsValues[i][k] = dataSourceCandles[i].AlgorithmIndicatorCatalogs[k].AlgorithmIndicatorCatalogElements[algorithmIndicatorCatalogElementIndexes[i][k]].AlgorithmIndicatorValues.Values[fileIndexes[i]][candleIndexes[i]].Value;
+                            if(dataSourceCandles[i].AlgorithmIndicatorCatalogs[k].AlgorithmIndicatorCatalogElements[algorithmIndicatorCatalogElementIndexes[i][k]].AlgorithmIndicatorValues.Values[fileIndexes[i]][candleIndexes[i]].IsNotOverIndex == false) //если при вычислении данного значения индикатора было превышение индекса свечки, отмечаем что было превышение индекса
+                            {
+                                IsOverIndex = true;
+                            }
+                        }
+                    }*/
+
+
+
+                    
                     //проходим по всем источникам данных и вычисляем значения всех индикаторов для каждого источника данных
                     for (int i = 0; i < dataSourceCandles.Length; i++)
                     {
@@ -1559,10 +1611,12 @@ namespace ktradesystem.Models
                             //вычисляем значение индикатора
                             IndicatorCalculateResult indicatorCalculateResult = CompiledIndicatorCopy.Calculate(dataSourceCandles[i].Candles[fileIndexes[i]], candleIndexes[i], indicatorParametersIntValues[k], indicatorParametersDoubleValues[k]); //indicatorParametersIntValues[индекс_индикатора]
                             //Calculate(Candle[] inputCandles, int currentCandleIndex, int[] indicatorParametersIntValues, double[] indicatorParametersDoubleValues)
-                            maxOverIndex = indicatorCalculateResult.OverIndex > maxOverIndex ? indicatorCalculateResult.OverIndex : maxOverIndex; //если превышение индекса больше максимального, обновляем его максимальное значение
+                            IsOverIndex = indicatorCalculateResult.OverIndex > 0 ? true : IsOverIndex; //если было превышение индекса, отмечаем это
                             indicatorsValues[i][k] = indicatorCalculateResult.Value; //запоминаем значение индикатора для файла i и индикатора k
                         }
                     }
+
+
 
                     //если были сделки на этой свечке, то для того чтобы проверить мог ли исполниться стоп-лосс на текущей свечке, выполняем алгоритм (после чего для открытой позиции будет выставлен стоп-лосс) и проверяем исполнение стоп-заявок. Если в процессе выполнения стоп-заявок были совершены сделки, еще раз выполняем алгоритм, обновляем заявки и переходим на следующую свечку
                     int iteration = 0; //номер итерации
@@ -1622,9 +1676,8 @@ namespace ktradesystem.Models
                         //копируем объект скомпилированного алгоритма, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
                         dynamic CompiledAlgorithmCopy = testing.CompiledAlgorithm.Clone();
                         AlgorithmCalculateResult algorithmCalculateResult = CompiledAlgorithmCopy.Calculate(accountForCalculate, dataSourcesForCalculate, algorithmParametersIntValues, algorithmParametersDoubleValues);
-                        maxOverIndex = algorithmCalculateResult.OverIndex > maxOverIndex ? algorithmCalculateResult.OverIndex : maxOverIndex; //если првышение индекса больше максимального, обновляем его максимальное значение
 
-                        if (maxOverIndex == 0) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
+                        if (IsOverIndex == false) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
                         {
                             //удаляем заявки, количество лотов в которых равно 0
                             for(int i = algorithmCalculateResult.Orders.Count - 1; i >= 0; i--)
@@ -2800,7 +2853,7 @@ namespace ktradesystem.Models
 
         private void TestingEnding(bool isSuccess, Testing testing) //оповещение представления о том что тестирование закончено, isSucces - флаг того что тестирование выполнено успешно.
         {
-            TestingProgress testingProgress = new TestingProgress { StepDescription = "Шаг 2/3:  Симуляция тестов", StepTasksCount = 1, CompletedStepTasksCount = 1, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = TimeSpan.FromSeconds(1), CancelPossibility = false, IsFinishSimulation = true, IsSuccessSimulation = isSuccess, IsFinish = false };
+            TestingProgress testingProgress = new TestingProgress { StepDescription = "Шаг 3/4:  Симуляция тестов", StepTasksCount = 1, CompletedStepTasksCount = 1, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = TimeSpan.FromSeconds(1), CancelPossibility = false, IsFinishSimulation = true, IsSuccessSimulation = isSuccess, IsFinish = false };
             if (isSuccess)
             {
                 testing.TestingDuration = ModelTesting.StopwatchTesting.Elapsed; //записываем длительность тестирования
@@ -2819,11 +2872,11 @@ namespace ktradesystem.Models
 
         public AlgorithmIndicatorValues AlgorithmIndicatorCalculate(Testing testing, DataSourceCandles dataSourceCandles, AlgorithmIndicator algorithmIndicator, List<AlgorithmParameterValue> algorithmParameterValues) //возвращает вычисленные значения индикатора алгоритма для свечек из dataSourceCandles
         {
-            AlgorithmIndicatorValues algorithmIndicatorValues = new AlgorithmIndicatorValues { AlgorithmIndicator = algorithmIndicator, Values = new double[dataSourceCandles.Candles.Length][] };
+            AlgorithmIndicatorValues algorithmIndicatorValues = new AlgorithmIndicatorValues { AlgorithmIndicator = algorithmIndicator, Values = new AlgorithmIndicatorValue[dataSourceCandles.Candles.Length][] };
             int algorithmIndicatorIndex = testing.Algorithm.AlgorithmIndicators.IndexOf(algorithmIndicator); //индекс индикатора алгоритма
             for (int i = 0; i < dataSourceCandles.Candles.Length; i++)
             {
-                algorithmIndicatorValues.Values[i] = new double[dataSourceCandles.Candles[i].Length]; //определяем количество значений индикатора в файле
+                algorithmIndicatorValues.Values[i] = new AlgorithmIndicatorValue[dataSourceCandles.Candles[i].Length]; //определяем количество значений индикатора в файле
                 for(int k = 0; k < dataSourceCandles.Candles[i].Length; k++)
                 {
                     int[] indicatorParametersIntValues = new int[algorithmIndicator.IndicatorParameterRanges.Count];
@@ -2837,10 +2890,9 @@ namespace ktradesystem.Models
                     dynamic compiledIndicatorCopy = testing.CompiledIndicators[algorithmIndicatorIndex].Clone();
                     //вычисляем значение индикатора
                     IndicatorCalculateResult indicatorCalculateResult = compiledIndicatorCopy.Calculate(dataSourceCandles.Candles[i], k, indicatorParametersIntValues, indicatorParametersDoubleValues);
-                    if(indicatorCalculateResult.OverIndex == 0)
-                    {
-                        algorithmIndicatorValues.Values[i][k] = indicatorCalculateResult.Value;
-                    }
+                    algorithmIndicatorValues.Values[i][k] = new AlgorithmIndicatorValue();
+                    algorithmIndicatorValues.Values[i][k].IsNotOverIndex = indicatorCalculateResult.OverIndex == 0 ? true : false; //если не было превышения индекса устанавливаем true, иначе false
+                    algorithmIndicatorValues.Values[i][k].Value = indicatorCalculateResult.Value;
                 }
             }
 

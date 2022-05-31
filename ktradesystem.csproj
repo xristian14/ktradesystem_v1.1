@@ -116,6 +116,7 @@
     <Compile Include="Models\AlgorithmCalculateResult.cs" />
     <Compile Include="Models\AlgorithmIndicatorCatalog.cs" />
     <Compile Include="Models\AlgorithmIndicatorCatalogElement.cs" />
+    <Compile Include="Models\AlgorithmIndicatorValue.cs" />
     <Compile Include="Models\AlgorithmParameterValue.cs" />
     <Compile Include="Models\AxesParameter.cs" />
     <Compile Include="Models\CandleIndex.cs" />

@@ -9,7 +9,9 @@ namespace ktradesystem.Models
     [Serializable]
     public class TestBatch //тестовая связка
     {
-        public DataSourceGroup DataSourceGroup { get; set; }
+        [NonSerialized]
+        public DataSourceGroup DataSourceGroup;
+        public int DataSourceGroupIndex { get; set; } //индекс текущей группы источников данных в testing.DataSourceGroups
         public List<TestRun> OptimizationTestRuns { get; set; }
         public List<AxesParameter> AxesTopModelSearchPlane { get; set; } //оси плоскости для поиска топ-модели с соседями
         public TestRun TopModelTestRun { get; set; } //ссылка на testRun, определенный как лучшая модель

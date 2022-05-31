@@ -14,8 +14,8 @@ namespace ktradesystem.Models
         public DataSource DataSource { get; set; }
         public Candle[][] Candles { get; set; } //массив со свечками на каждый файл источника данных
         [NonSerialized]
-        public AlgorithmIndicatorValues[] AlgorithmIndicatorsValues; //массив содержит значения индикаторов (сюда будут считываться значения индикаторов для отображения на графике)
-        public List<AlgorithmIndicatorCatalog> AlgorithmIndicatorCatalogs { get; set; } //список с каталогами индикаторов алгоритмов. Каталог содержит индикатор алгоритма и список с: комбинацией значений параметров индикатора алгоритма и название файла со значениями данного индикатора
+        public AlgorithmIndicatorValues[] AlgorithmIndicatorsValues; //массив со значениями индикаторов для отображения на графике
+        public AlgorithmIndicatorCatalog[] AlgorithmIndicatorCatalogs { get; set; } //массив с каталогами индикаторов алгоритмов. Каталог содержит индикатор алгоритма и список с: комбинацией значений параметров индикатора алгоритма и название файла со значениями данного индикатора
         public double PerfectProfit { get; set; } //идеальная прибыль. Сумма разности цен закрытия всех последовательных по датам свечек (при переходе на следующий файл доходит до даты которая позже текущей, а разница между свечками разных файлов не высчитывается), взятая по модулю, поделенная на шаг цены и умноженная на стоимость пункта цены
     }
 }

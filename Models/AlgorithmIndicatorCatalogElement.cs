@@ -7,11 +7,13 @@ using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
-    [Serializable]
     //класс содержит комбинацию значений параметров индикатора алгоритма и название файла с сериализованным объектом со значениями данного индикатора алгоритма
+    [Serializable]
     public class AlgorithmIndicatorCatalogElement
     {
         public List<AlgorithmParameterValue> AlgorithmParameterValues { get; set; }
         public string FileName { get; set; }
+        [NonSerialized]
+        public AlgorithmIndicatorValues AlgorithmIndicatorValues; //значения индикатора алгоритма
     }
 }

@@ -42,10 +42,12 @@ namespace ktradesystem.Models
         public dynamic[] CompiledEvaluationCriterias; //объекты, содержащие метод, выполняющий расчет критерия оценки тестового прогона
         [NonSerialized]
         public DataSourceCandles[] DataSourcesCandles; //список с массивами свечек (для файлов) для источников данных (от сюда же будут браться данные для отображения графиков)
+        public DataSourceGroupSegments[] DataSourceGroupsSegments; //сегменты для групп источников данных
         public int TopModelEvaluationCriteriaIndex { get; set; } //индекс критерия оценки топ-модели
         public List<int>[] AlgorithmParametersAllIntValues { get; set; }
         public List<double>[] AlgorithmParametersAllDoubleValues { get; set; }
         public DateTime DateTimeSimulationEnding { get; set; } //дата и время завершения выполнения тестирования
+        public TimeSpan TestingDuration { get; set; } //длительность тестирования
         public string TestingName { get; set; } //название результата тестирования
     }
 }

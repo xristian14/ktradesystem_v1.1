@@ -153,8 +153,9 @@ namespace ktradesystem.Models
             for (int i = 0; i < testing.DataSourcesCandles.Length; i++)
             {
                 //определяем каталоги индикаторов алгоритмов
-                testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs = new List<AlgorithmIndicatorCatalog>();
+                testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs = new AlgorithmIndicatorCatalog[testing.Algorithm.AlgorithmIndicators.Count];
                 //проходим по всем индикаторам алгоритма
+                int algorithmIndicatorIndex = 0;
                 foreach (AlgorithmIndicator algorithmIndicator in testing.Algorithm.AlgorithmIndicators)
                 {
                     AlgorithmIndicatorCatalog algorithmIndicatorCatalog = new AlgorithmIndicatorCatalog { AlgorithmIndicator = algorithmIndicator, AlgorithmIndicatorFolderName = algorithmIndicator.Indicator.Name + "_" + algorithmIndicator.Ending + "_values", AlgorithmIndicatorCatalogElements = new List<AlgorithmIndicatorCatalogElement>() };
@@ -237,7 +238,8 @@ namespace ktradesystem.Models
                             algorithmIndicatorCatalog.AlgorithmIndicatorCatalogElements.Add(algorithmIndicatorCatalogElement);
                         }
                     }
-                    testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs.Add(algorithmIndicatorCatalog); //записываем каталог для индикатора алгоритма
+                    testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs[algorithmIndicatorIndex] = algorithmIndicatorCatalog; //записываем каталог для индикатора алгоритма
+                    algorithmIndicatorIndex++;
                 }
             }
 
@@ -432,7 +434,7 @@ namespace ktradesystem.Models
             foreach(DataSourceCandles dataSourceCandles in testing.DataSourcesCandles) //проходим по всем testing.DataSourcesCandles (источникам данных) для которых имеются свечки и значения индикаторов
             {
                 AlgorithmIndicatorValues[] algorithmIndicatorValues = new AlgorithmIndicatorValues[testing.Algorithm.AlgorithmIndicators.Count];
-                for (int i = 0; i < dataSourceCandles.AlgorithmIndicatorCatalogs.Count; i++) //проходим по всем индикаторам для данного источника данных
+                for (int i = 0; i < dataSourceCandles.AlgorithmIndicatorCatalogs.Length; i++) //проходим по всем индикаторам для данного источника данных
                 {
                     bool isBroken = false; //прозошли ли ошибки при попытки считать значения индикатора
                     //находим название файла со значениями текущего индикатора для указанных в testRun параметрах алгоритма

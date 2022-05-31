@@ -690,7 +690,7 @@ namespace ktradesystem.Models
                         }
 
                         //создаем testBatch
-                        TestBatch testBatch = new TestBatch { DataSourceGroup = dataSourceGroup, StatisticalSignificance = new List<string[]>(), IsTopModelDetermining = false, IsTopModelWasFind = false };
+                        TestBatch testBatch = new TestBatch { DataSourceGroup = dataSourceGroup, DataSourceGroupIndex = testing.DataSourceGroups.IndexOf(dataSourceGroup), StatisticalSignificance = new List<string[]>(), IsTopModelDetermining = false, IsTopModelWasFind = false };
 
                         int testRunNumber = 1; //номер тестового прогона
 
@@ -937,6 +937,137 @@ namespace ktradesystem.Models
                         }
                     }
                     stopwatchReadDataSources.Stop();
+
+                    Stopwatch stopwatchCalculateIndicators = new Stopwatch();
+                    stopwatchCalculateIndicators.Start();
+                    //формируем AlgorithmIndicatorCatalogElements для DataSourcesCandles
+                    for (int i = 0; i < testing.DataSourcesCandles.Length; i++)
+                    {
+                        //определяем каталоги индикаторов алгоритмов
+                        testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs = new AlgorithmIndicatorCatalog[testing.Algorithm.AlgorithmIndicators.Count];
+                        //проходим по всем индикаторам алгоритма
+                        int algorithmIndicatorIndex = 0;
+                        foreach (AlgorithmIndicator algorithmIndicator in testing.Algorithm.AlgorithmIndicators)
+                        {
+                            AlgorithmIndicatorCatalog algorithmIndicatorCatalog = new AlgorithmIndicatorCatalog { AlgorithmIndicator = algorithmIndicator, AlgorithmIndicatorFolderName = algorithmIndicator.Indicator.Name + "_" + algorithmIndicator.Ending + "_values", AlgorithmIndicatorCatalogElements = new List<AlgorithmIndicatorCatalogElement>() };
+
+                            //получаем список параметров алгоритмов, используемых в индикаторе алгоритма
+                            List<AlgorithmParameter> algorithmParameters = new List<AlgorithmParameter>();
+                            foreach (IndicatorParameterRange indicatorParameterRange in algorithmIndicator.IndicatorParameterRanges)
+                            {
+                                if (algorithmParameters.Contains(indicatorParameterRange.AlgorithmParameter) == false)
+                                {
+                                    algorithmParameters.Add(indicatorParameterRange.AlgorithmParameter);
+                                }
+                            }
+
+                            if (algorithmParameters.Count == 0) //если нет параметров, значит только 1 вариант значений индикатора для источника данных
+                            {
+                                algorithmIndicatorCatalog.AlgorithmIndicatorCatalogElements.Add(new AlgorithmIndicatorCatalogElement { AlgorithmParameterValues = new List<AlgorithmParameterValue>(), FileName = "withoutParameters.dat" });
+                            }
+                            else
+                            {
+                                //формируем список со всеми комбинациями параметров алгоритма данного индикатора алгоритма
+                                List<int[][]> algorithmParameterCombinations = new List<int[][]>(); //список с комбинациями (массивами с комбинацией параметров алгоритма и значения): 0-й элемент - индекс параметра алгоритма во всех параметрах, 1-й - индекс значения параметра во всех значениях параметров алгоритма
+                                                                                                    //algorithmParameterCombinations[0] - первая комбинация параметров алгоритма
+                                                                                                    //algorithmParameterCombinations[0][0] - первый параметр комбинации
+                                                                                                    //algorithmParameterCombinations[0][0][0] - индекс параметра алгоритма первого элемента первой комбинации
+                                                                                                    //algorithmParameterCombinations[0][0][1] - индекс значения параметра алгоритма первого элемента первой комбинации
+
+                                //заполняем комбинации всеми вариантами первого параметра
+                                int indexFirstParameter = testing.Algorithm.AlgorithmParameters.IndexOf(algorithmParameters[0]); //индекс первого параметра алгоритма индикатора алгоритма
+                                int countParameterValues1 = testing.Algorithm.AlgorithmParameters[indexFirstParameter].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[indexFirstParameter].Count : testing.AlgorithmParametersAllDoubleValues[indexFirstParameter].Count; //количество значений текущего параметра алгоритма
+                                for (int k = 0; k < countParameterValues1; k++)
+                                {
+                                    int[][] arr = new int[1][];
+                                    arr[0] = new int[2] { indexFirstParameter, k }; //записываем индекс параметра алгоритма и индекс значения параметра
+                                    algorithmParameterCombinations.Add(arr);
+                                }
+
+                                //формируем комбинации со всеми параметрами кроме первого
+                                for (int k = 1; k < algorithmParameters.Count; k++)
+                                {
+                                    int indexAlgorithmParameter = testing.Algorithm.AlgorithmParameters.IndexOf(algorithmParameters[k]); //индекс текущего параметра алгоритма
+                                    List<int[][]> newAlgorithmParameterCombinations = new List<int[][]>(); //новые комбинации. Для всех элементов старых комбинаций будут созданы комбинации с текущим параметром и старые комбинации обновятся на новые
+                                    for (int u = 0; u < algorithmParameterCombinations.Count; u++)
+                                    {
+                                        int countParameterValues2 = testing.Algorithm.AlgorithmParameters[indexAlgorithmParameter].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[indexAlgorithmParameter].Count : testing.AlgorithmParametersAllDoubleValues[indexAlgorithmParameter].Count; //количество значений текущего параметра алгоритма
+                                        for (int y = 0; y < countParameterValues2; y++)
+                                        {
+                                            int[][] arr = new int[algorithmParameterCombinations[u].Length + 1][]; //увеличиваем количество элементов в комбинации на 1
+                                                                                                                   //заполняем комбинацию старыми элементами
+                                            for (int x = 0; x < algorithmParameterCombinations[u].Length; x++)
+                                            {
+                                                arr[x] = algorithmParameterCombinations[u][x];
+                                            }
+                                            //записываем новый параметр
+                                            arr[arr.Length - 1] = new int[2] { indexAlgorithmParameter, y }; //записываем индекс параметра алгоритма и индекс значения параметра
+                                            newAlgorithmParameterCombinations.Add(arr);
+                                        }
+                                    }
+                                    algorithmParameterCombinations = newAlgorithmParameterCombinations;
+                                }
+
+                                //для каждой комбинации параметров формируем элемент каталога индикатора алгоритма
+                                for (int k = 0; k < algorithmParameterCombinations.Count; k++)
+                                {
+                                    string fileName = "";
+                                    foreach (int[] value in algorithmParameterCombinations[k])
+                                    {
+                                        string parameterValue = testing.Algorithm.AlgorithmParameters[value[0]].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[value[0]][value[1]].ToString() : testing.AlgorithmParametersAllDoubleValues[value[0]][value[1]].ToString();
+                                        fileName += fileName.Length == 0 ? "" : " "; //если это не первые символы названия, отделяем их пробелом от предыдущих
+                                        fileName += testing.Algorithm.AlgorithmParameters[value[0]].Name + "=" + parameterValue;
+                                    }
+                                    fileName += ".dat";
+                                    AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement = new AlgorithmIndicatorCatalogElement { AlgorithmParameterValues = new List<AlgorithmParameterValue>(), FileName = fileName };
+                                    for (int u = 0; u < algorithmParameterCombinations[k].Length; u++)
+                                    {
+                                        int intValue = testing.Algorithm.AlgorithmParameters[algorithmParameterCombinations[k][u][0]].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[algorithmParameterCombinations[k][u][0]][algorithmParameterCombinations[k][u][1]] : 0;
+                                        double doubleValue = testing.Algorithm.AlgorithmParameters[algorithmParameterCombinations[k][u][0]].ParameterValueType.Id == 1 ? 0 : testing.AlgorithmParametersAllDoubleValues[algorithmParameterCombinations[k][u][0]][algorithmParameterCombinations[k][u][1]];
+                                        algorithmIndicatorCatalogElement.AlgorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[algorithmParameterCombinations[k][u][0]], IntValue = intValue, DoubleValue = doubleValue });
+                                    }
+                                    algorithmIndicatorCatalog.AlgorithmIndicatorCatalogElements.Add(algorithmIndicatorCatalogElement);
+                                }
+                            }
+                            testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs[algorithmIndicatorIndex] = algorithmIndicatorCatalog; //записываем каталог для индикатора алгоритма
+                            algorithmIndicatorIndex++;
+                        }
+                    }
+
+                    //определяем количество значений всех индикаторов
+                    int AlgorithmIndicatorsValuesCount = 0; //количество значений всех индикаторов
+                    int CalculatedAlgorithmIndicatorsCount = 0; //количество вычисленных индикаторов
+                    for (int i = 0; i < testing.DataSourcesCandles.Length; i++)
+                    {
+                        foreach (AlgorithmIndicatorCatalog algorithmIndicatorCatalog in testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs)
+                        {
+                            AlgorithmIndicatorsValuesCount += algorithmIndicatorCatalog.AlgorithmIndicatorCatalogElements.Count;
+                        }
+                    }
+                    DispatcherInvoke((Action)(() => {
+                        _mainCommunicationChannel.TestingProgress.Clear();
+                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/3:  Вычисление индикаторов", StepTasksCount = AlgorithmIndicatorsValuesCount, CompletedStepTasksCount = CalculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
+                    }));
+
+                    //вычисляем значения индикаторов для всех источников данных со всеми комбинациями оптимизационных параметров
+                    for (int i = 0; i < testing.DataSourcesCandles.Length; i++)
+                    {
+                        foreach (AlgorithmIndicatorCatalog algorithmIndicatorCatalog in testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs)
+                        {
+                            foreach (AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement in algorithmIndicatorCatalog.AlgorithmIndicatorCatalogElements)
+                            {
+                                //вычисляем значения индикатора алгоритма
+                                algorithmIndicatorCatalogElement.AlgorithmIndicatorValues = AlgorithmIndicatorCalculate(testing, testing.DataSourcesCandles[i], algorithmIndicatorCatalog.AlgorithmIndicator, algorithmIndicatorCatalogElement.AlgorithmParameterValues);
+                                DispatcherInvoke((Action)(() => {
+                                    _mainCommunicationChannel.TestingProgress.Clear();
+                                    _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/3:  Вычисление индикаторов", StepTasksCount = AlgorithmIndicatorsValuesCount, CompletedStepTasksCount = CalculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
+                                }));
+                                CalculatedAlgorithmIndicatorsCount++;
+                            }
+                        }
+                    }
+                    stopwatchCalculateIndicators.Stop();
+
                     //заполняем элементы массива IndicatorsValues объектами IndicatorValues, указываем размерность Values исходя из количества файлов. Размер массива со значениями для файла будет определен при заполнении значений в потоке.
                     for (int i = 0; i < testing.DataSourcesCandles.Length; i++)
                     {
@@ -946,7 +1077,7 @@ namespace ktradesystem.Models
                         }
                     }
 
-                    //вычисляем идеальную прибыль дял каждого DataSourceCandles
+                    //вычисляем идеальную прибыль для каждого DataSourceCandles
                     foreach (DataSourceCandles dataSourceCandles in testing.DataSourcesCandles)
                     {
                         double pricesAmount = 0; //сумма разности цен закрытия, взятой по модулю
@@ -1493,11 +1624,6 @@ namespace ktradesystem.Models
                         AlgorithmCalculateResult algorithmCalculateResult = CompiledAlgorithmCopy.Calculate(accountForCalculate, dataSourcesForCalculate, algorithmParametersIntValues, algorithmParametersDoubleValues);
                         maxOverIndex = algorithmCalculateResult.OverIndex > maxOverIndex ? algorithmCalculateResult.OverIndex : maxOverIndex; //если првышение индекса больше максимального, обновляем его максимальное значение
 
-                        if(currentDateTime.Hour == 12 && currentDateTime.Minute == 11)
-                        {
-                            int y = 0;
-                        }
-
                         if (maxOverIndex == 0) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
                         {
                             //удаляем заявки, количество лотов в которых равно 0
@@ -1600,11 +1726,6 @@ namespace ktradesystem.Models
                             }
                             //устанавливаем текущие выставленные заявки в newOrders
                             testRun.Account.Orders = newOrders;
-                            
-                            if(testRun.Account.Orders.Count > 2)
-                            {
-                                int y = 0;
-                            }
 
                             //если на текущей свечке были совершены сделки, проверяем стоп-заявки на исполнение (чтобы если на текущей свечке была открыта позиция, после выставления стоп-заявки проверить её на исполнение на текущей свечке)
                             if (isWereDeals && iteration == 1)
@@ -2682,6 +2803,7 @@ namespace ktradesystem.Models
             TestingProgress testingProgress = new TestingProgress { StepDescription = "Шаг 2/3:  Симуляция тестов", StepTasksCount = 1, CompletedStepTasksCount = 1, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = TimeSpan.FromSeconds(1), CancelPossibility = false, IsFinishSimulation = true, IsSuccessSimulation = isSuccess, IsFinish = false };
             if (isSuccess)
             {
+                testing.TestingDuration = ModelTesting.StopwatchTesting.Elapsed; //записываем длительность тестирования
                 testing.DateTimeSimulationEnding = DateTime.Now; //записываем дату и время завершения выполнения симуляции тестирования
                 testingProgress.Testing = testing;
             }

@@ -118,9 +118,11 @@
     <Compile Include="Models\AlgorithmIndicatorCatalogElement.cs" />
     <Compile Include="Models\AlgorithmParameterValue.cs" />
     <Compile Include="Models\AxesParameter.cs" />
+    <Compile Include="Models\CandleIndex.cs" />
     <Compile Include="Models\CompareSign.cs" />
     <Compile Include="Models\DataSourceCandles.cs" />
     <Compile Include="Models\DataSourceForCalculate.cs" />
+    <Compile Include="Models\DataSourceGroupSegments.cs" />
     <Compile Include="Models\Datatables\AlgorithmIndicator.cs" />
     <Compile Include="Models\Datatables\ParameterValueType.cs" />
     <Compile Include="Models\DateTimeDuration.cs" />
@@ -133,6 +135,7 @@
     <Compile Include="Models\ModelSimulation.cs" />
     <Compile Include="Models\ModelTestingResult.cs" />
     <Compile Include="Models\Order.cs" />
+    <Compile Include="Models\Segment.cs" />
     <Compile Include="Models\TestBatch.cs" />
     <Compile Include="Models\TestingHeader.cs" />
     <Compile Include="Models\TestRun.cs" />

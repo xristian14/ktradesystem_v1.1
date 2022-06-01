@@ -1174,6 +1174,10 @@ namespace ktradesystem.Models
                                     }
                                 }
                                 dataSourceGroupSegments.Segments.Add(segment);
+                                if (dataSourceGroupSegments.Segments.Count == 28990)
+                                {
+                                    int t = 0;
+                                }
                                 if(isNewSection == false) //если не было добавлено новой секции по причине окончания одного из источников данных, проверяем, не закончилась ли секция по причине выхода на дату которая не позже самой поздней или которая позже самой поздней
                                 {
                                     if (dataSourceGroupSegments.Sections.Last().IsPresent) //если секция в настоящем, условием для создания новой секции является переход одной из свечек на дату которая равна или раньше самой поздней
@@ -1234,7 +1238,6 @@ namespace ktradesystem.Models
 
                                     //добавляем новую секцию
                                     Section newSection = new Section(); //новая секция
-                                    newSection.IsPresent = true;
                                     newSection.DataSources = new List<DataSource>();
                                     newSection.DataSourceCandlesIndexes = new List<int>();
                                     foreach (DataSourceAccordance dataSourceAccordance in dataSourceGroup.DataSourceAccordances)
@@ -1244,6 +1247,20 @@ namespace ktradesystem.Models
                                             newSection.DataSources.Add(dataSourceAccordance.DataSource);
                                         }
                                     }
+                                    //определяем, секция в настоящем или прошлом
+                                    bool isAllCandlesLater = true; //все ли свечки позднее самой поздней даты
+                                    for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
+                                    {
+                                        if (newSection.DataSources.Where(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
+                                        {
+                                            int dataSourceCandlesIndex = testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id);
+                                            if (DateTime.Compare(testing.DataSourcesCandles[dataSourceCandlesIndex].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, laterDateTime) <= 0) //если дата свечки раньше или равняется самой последней дате
+                                            {
+                                                isAllCandlesLater = false;
+                                            }
+                                        }
+                                    }
+                                    newSection.IsPresent = isAllCandlesLater ? true : false;
                                     dataSourceGroupSegments.Sections.Add(newSection);
                                 }
                             }

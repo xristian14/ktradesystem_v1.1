@@ -293,7 +293,7 @@ namespace ktradesystem.ViewModels
             if (isSelectedTesting)
             {
                 Testing testing = _modelTestingResult.LoadTesting(testingHeader);
-                if(testing != null) //если тестирование успешно считано, записываем его и заносим в поля занчения
+                if(testing != null) //если тестирование успешно считано, записываем его и заносим в поля значения
                 {
                     TestingResult = testing;
 

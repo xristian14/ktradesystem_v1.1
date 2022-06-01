@@ -136,6 +136,7 @@
     <Compile Include="Models\ModelSimulation.cs" />
     <Compile Include="Models\ModelTestingResult.cs" />
     <Compile Include="Models\Order.cs" />
+    <Compile Include="Models\Section.cs" />
     <Compile Include="Models\Segment.cs" />
     <Compile Include="Models\TestBatch.cs" />
     <Compile Include="Models\TestingHeader.cs" />

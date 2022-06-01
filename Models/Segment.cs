@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ktradesystem.Models.Datatables;
 
 namespace ktradesystem.Models
 {
@@ -10,7 +11,7 @@ namespace ktradesystem.Models
     [Serializable]
     public class Segment
     {
-        public bool IsPresent { get; set; } //сегмент находится в настоящем, или на дате которая уже была (если в следующем файле есть даты которые уже были, то для такого сегмента будет false)
+        public Section Section { get; set; } //секция, к которой относится сегмент
         public List<CandleIndex> CandleIndexes { get; set; } //индексы свечек которые имеются в текущем сегменте для источников данных
     }
 }

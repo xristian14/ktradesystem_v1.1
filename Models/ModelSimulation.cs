@@ -1068,6 +1068,57 @@ namespace ktradesystem.Models
                     }
                     stopwatchCalculateIndicators.Stop();
 
+                    //формируем сегменты для всех групп источников данных
+                    testing.DataSourceGroupsSegments = new List<DataSourceGroupSegments>();
+                    foreach(DataSourceGroup dataSourceGroup in testing.DataSourceGroups)
+                    {
+                        int[] fileIndexes = Enumerable.Repeat(0, dataSourceGroup.DataSourceAccordances.Count).ToArray(); //индексы файлов для всех источников данных группы
+                        int[] candleIndexes = Enumerable.Repeat(0, dataSourceGroup.DataSourceAccordances.Count).ToArray(); //индексы свечек для всех источников данных группы
+                        DataSourceGroupSegments dataSourceGroupSegments = new DataSourceGroupSegments();
+                        dataSourceGroupSegments.DataSourceGroup = dataSourceGroup;
+                        dataSourceGroupSegments.Segments = new List<Segment>();
+                        DateTime laterDateTime = new DateTime(); //самая поздняя дата и время, используется для определения дат которые уже были
+                        //определяем самую раннюю дату среди всех источников данных группы
+                        for(int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
+                        {
+                            if (i == 0)
+                            {
+                                laterDateTime = testing.DataSourcesCandles.Where(j => j.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).First().Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                            }
+                            else
+                            {
+                                DateTime currentDateTime = testing.DataSourcesCandles.Where(j => j.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).First().Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                                if(DateTime.Compare(currentDateTime, laterDateTime) < 0)
+                                {
+                                    laterDateTime = currentDateTime;
+                                }
+                            }
+                        }
+                        
+                        bool isAllFilesEnd = false; //закончились ли все файлы
+                        List<Section> sections = new List<Section>(); //секции
+                        Section section = new Section(); //первая секция
+                        section.IsPresent = true;
+                        section.DataSources = new List<DataSource>();
+                        foreach(DataSourceAccordance dataSourceAccordance in dataSourceGroup.DataSourceAccordances)
+                        {
+                            section.DataSources.Add(dataSourceAccordance.DataSource);
+                        }
+                        sections.Add(section);
+                        while (isAllFilesEnd == false)
+                        {
+                            int[] sectionDataSourceCountSegments = new int[sections.Last().DataSources.Count]; //количество сегментов для источников данных в секции. Значение в sectionDataSourceCountSegments[i] соответствует количеству сегментов с источником данных: sections.Last().DataSources[i]
+                            bool isNewSection = false; //перешли ли на новую секцию
+                            while(isNewSection == false)
+                            {
+                                //формируем сегмент
+                                Segment segment = new Segment();
+                                segment.Section = sections.Last();
+
+                            }
+                        }
+                    }
+
                     //вычисляем идеальную прибыль для каждого DataSourceCandles
                     foreach (DataSourceCandles dataSourceCandles in testing.DataSourcesCandles)
                     {

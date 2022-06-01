@@ -11,6 +11,6 @@ namespace ktradesystem.Models
     public class DataSourceGroupSegments
     {
         public DataSourceGroup DataSourceGroup { get; set; }
-        public Segment[] Segments { get; set; }
+        public List<Segment> Segments { get; set; } //сегменты, каждый из которых отражает одну дату на таймлайне
     }
 }

@@ -1077,6 +1077,8 @@ namespace ktradesystem.Models
                         DataSourceGroupSegments dataSourceGroupSegments = new DataSourceGroupSegments();
                         dataSourceGroupSegments.DataSourceGroup = dataSourceGroup;
                         dataSourceGroupSegments.Segments = new List<Segment>();
+                        dataSourceGroupSegments.LastTradeSegmentIndex = -1; //устанавливаем в -1, чтобы установить этот индекс на первый индекс, на котором закончатся файлы одного из источников данных
+                        List<DataSource> endedDataSources = new List<DataSource>(); //источники данных, которые закончились (индекс файла вышел за границы массива)
                         DateTime currentDateTime = new DateTime(); //текущая дата
                         //определяем самую раннюю дату среди всех источников данных группы
                         for(int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
@@ -1096,7 +1098,7 @@ namespace ktradesystem.Models
                         }
                         DateTime laterDateTime = currentDateTime; //самая поздняя дата и время, используется для определения дат которые уже были
 
-                        bool isAllFilesEnd = false; //закончились ли все файлы
+                        bool isAllDataSourcesEnd = false; //закончились ли все источники данных
                         List<Section> sections = new List<Section>(); //секции
                         Section section = new Section(); //первая секция
                         section.IsPresent = true;
@@ -1105,28 +1107,149 @@ namespace ktradesystem.Models
                         foreach (DataSourceAccordance dataSourceAccordance in dataSourceGroup.DataSourceAccordances)
                         {
                             section.DataSources.Add(dataSourceAccordance.DataSource);
-                            section.DataSourceCandlesIndexes.Add(testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == dataSourceAccordance.DataSource.Id)); //сохраняем индекс DataSourceCandles в котором свечки данного источника данных
                         }
                         sections.Add(section);
-                        while (isAllFilesEnd == false)
+                        while (isAllDataSourcesEnd == false)
                         {
-                            int[] sectionDataSourceCountSegments = new int[sections.Last().DataSources.Count]; //количество сегментов для источников данных в секции. Значение в sectionDataSourceCountSegments[i] соответствует количеству сегментов с источником данных: sections.Last().DataSources[i]
+                            int[] sectionDataSourceCountSegments = Enumerable.Repeat(0, sections.Last().DataSources.Count).ToArray(); //количество сегментов для источников данных в секции. Значение в sectionDataSourceCountSegments[i] соответствует количеству сегментов с источником данных: sections.Last().DataSources[i]
                             bool isNewSection = false; //перешли ли на новую секцию
                             while(isNewSection == false)
                             {
+                                //определяем текущую дату (самую раннюю дату среди всех источников данных секции)
+                                for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
+                                {
+                                    if (sections.Last().DataSources.Where(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
+                                    {
+                                        if (i == 0)
+                                        {
+                                            currentDateTime = testing.DataSourcesCandles.Where(j => j.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).First().Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                                        }
+                                        else
+                                        {
+                                            DateTime dateTime = testing.DataSourcesCandles.Where(j => j.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).First().Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                                            if (DateTime.Compare(dateTime, currentDateTime) < 0) //если дата свечки у текущего источника данных раньше текущей даты, обновляем текущую дату
+                                            {
+                                                currentDateTime = dateTime;
+                                            }
+                                        }
+                                    }
+                                }
+                                if(DateTime.Compare(currentDateTime, laterDateTime) > 0) //если текущая дата позже самой поздней, обновляем самую позднюю дату
+                                {
+                                    laterDateTime = currentDateTime;
+                                }
                                 //формируем сегмент
                                 Segment segment = new Segment();
                                 segment.Section = sections.Last();
                                 segment.CandleIndexes = new List<CandleIndex>();
-                                //проходим по источникам данных группы, и добавляем в сегмент свечки тех которые имеют текущую дату
+                                //проходим по источникам данных секции, и добавляем в сегмент свечки тех которые имеют текущую дату
                                 for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
                                 {
-                                    int dataSourceCandlesIndex = testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id);
-                                    if(DateTime.Compare(currentDateTime, testing.DataSourcesCandles[dataSourceCandlesIndex].Candles[fileIndexes[i]][candleIndexes[i]].DateTime) == 0) //если текущая дата и дата текущей свечки у текущего источника данных равны
+                                    if(sections.Last().DataSources.Where(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
                                     {
-                                        segment.CandleIndexes.Add(new CandleIndex { DataSourceCandlesIndex = dataSourceCandlesIndex, FileIndex = fileIndexes[i], IndexCandle = candleIndexes[i] });
+                                        int dataSourceCandlesIndex = testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id);
+                                        if (DateTime.Compare(currentDateTime, testing.DataSourcesCandles[dataSourceCandlesIndex].Candles[fileIndexes[i]][candleIndexes[i]].DateTime) == 0) //если текущая дата и дата текущей свечки у текущего источника данных равны
+                                        {
+                                            segment.CandleIndexes.Add(new CandleIndex { DataSourceCandlesIndex = dataSourceCandlesIndex, FileIndex = fileIndexes[i], IndexCandle = candleIndexes[i] });
+                                            int sectionDataSourceIndex = sections.Last().DataSources.FindIndex(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id);
+                                            sectionDataSourceCountSegments[sectionDataSourceIndex]++; //увеличиваем количество свечек с данным источником данных
+                                            //переходим на следующую свечку у данного источника данных
+                                            candleIndexes[i]++;
+                                            if(candleIndexes[i] >= testing.DataSourcesCandles[dataSourceCandlesIndex].Candles[fileIndexes[i]].Length)
+                                            {
+                                                candleIndexes[i] = 0;
+                                                fileIndexes[i]++;
+                                                if(fileIndexes[i] >= testing.DataSourcesCandles[dataSourceCandlesIndex].Candles.Length) //если вышли за предел файла и это был первый закончившийся источник данных, запоминаем индекс сегмента на котором торговля заканчивается
+                                                {
+                                                    if(dataSourceGroupSegments.LastTradeSegmentIndex == -1)
+                                                    {
+                                                        dataSourceGroupSegments.LastTradeSegmentIndex = dataSourceGroupSegments.Segments.Count; //не вычитаем 1, т.к. еще не добавили текущий сегмент, и индекс будет на 1 больше чем текущий последний
+                                                    }
+                                                    endedDataSources.Add(dataSourceGroup.DataSourceAccordances[i].DataSource); //запоминаем источник данных, для которого закончились файлы, в последствии при создании новой секции, этот источник данных не будет включен в секцию
+                                                    isNewSection = true; //отмечаем, что нужно создать новую секцию, т.к. при текущей секции будут обращения к несуществующему файлу
+                                                }
+                                            }
+                                        }
                                     }
                                 }
+                                dataSourceGroupSegments.Segments.Add(segment);
+                                if(isNewSection == false) //если не было добавлено новой секции по причине окончания одного из источников данных, проверяем, не закончилась ли секция по причине выхода на дату которая не позже самой поздней или которая позже самой поздней
+                                {
+                                    if (sections.Last().IsPresent) //если секция в настоящем, условием для создания новой секции является переход одной из свечек на дату которая равна или раньше самой поздней
+                                    {
+                                        bool isAllCandlesLater = true; //все ли свечки позднее самой поздней даты
+                                        for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
+                                        {
+                                            if (sections.Last().DataSources.Where(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
+                                            {
+                                                int dataSourceCandlesIndex = testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id);
+                                                if (DateTime.Compare(testing.DataSourcesCandles[dataSourceCandlesIndex].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, laterDateTime) <= 0) //если дата свечки раньше или равняется самой последней дате
+                                                {
+                                                    isAllCandlesLater = false;
+                                                }
+                                            }
+                                        }
+                                        if(isAllCandlesLater == false) //если хоть одна из свечек не была позднее
+                                        {
+                                            isNewSection = true;
+                                        }
+                                    }
+                                    else //если даты секции уже были, значит условием перехода на следующую секцию является переход на дату, которая позже самой поздней
+                                    {
+                                        bool isAllCandlesLater = true; //все ли свечки позднее самой поздней даты
+                                        for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
+                                        {
+                                            if (sections.Last().DataSources.Where(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
+                                            {
+                                                int dataSourceCandlesIndex = testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id);
+                                                if (DateTime.Compare(testing.DataSourcesCandles[dataSourceCandlesIndex].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, laterDateTime) <= 0) //если дата свечки раньше или равняется самой последней дате
+                                                {
+                                                    isAllCandlesLater = false;
+                                                }
+                                            }
+                                        }
+                                        if (isAllCandlesLater) //если все свечки были позднее
+                                        {
+                                            isNewSection = true;
+                                        }
+                                    }
+                                }
+
+                                if (isNewSection) //если нужно добавить новую секцию, добавляем её
+                                {
+                                    //удаляем из текущей секции источники данных, свечки которых не были добавлены в сегменты секции
+                                    for(int i = sectionDataSourceCountSegments.Length - 1; i >= 0 ; i--)
+                                    {
+                                        if(sectionDataSourceCountSegments[i] == 0) //если не было добавлено свечек с данным источником данных, удаляем его из секции
+                                        {
+                                            sections.Last().DataSources.RemoveAt(i);
+                                        }
+                                    }
+                                    //сохраняем индексы объектов со свечками источников данных которые соответствуют источникам данных в DataSources
+                                    foreach (DataSource dataSource in sections.Last().DataSources)
+                                    {
+                                        sections.Last().DataSourceCandlesIndexes.Add(testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == dataSource.Id)); //сохраняем индекс DataSourceCandles в котором свечки данного источника данных
+                                    }
+
+                                    //добавляем новую секцию
+                                    Section newSection = new Section(); //новая секция
+                                    newSection.IsPresent = true;
+                                    newSection.DataSources = new List<DataSource>();
+                                    newSection.DataSourceCandlesIndexes = new List<int>();
+                                    foreach (DataSourceAccordance dataSourceAccordance in dataSourceGroup.DataSourceAccordances)
+                                    {
+                                        if(endedDataSources.Where(a => a.Id == dataSourceAccordance.DataSource.Id).Any() == false) //если данного источника данных нет в списке закончившихся источников данных
+                                        {
+                                            newSection.DataSources.Add(dataSourceAccordance.DataSource);
+                                        }
+                                    }
+                                    sections.Add(newSection);
+                                }
+                            }
+                            //проверяем, закончились ли все источники данных
+                            if(endedDataSources.Count == dataSourceGroup.DataSourceAccordances.Count)
+                            {
+                                isAllDataSourcesEnd = true;
                             }
                         }
                     }

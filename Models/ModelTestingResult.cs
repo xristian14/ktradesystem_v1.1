@@ -151,7 +151,7 @@ namespace ktradesystem.Models
 
             //определяем количество DataSourcesCandles и AlgorithmIndicatorValues которые необходимо записать в файлы
             int countWrites = 0;
-            for (int i = 0; i < testing.DataSourcesCandles.Length; i++)
+            for (int i = 0; i < testing.DataSourcesCandles.Count; i++)
             {
                 countWrites++;
                 foreach (AlgorithmIndicatorCatalog algorithmIndicatorCatalog1 in testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs)
@@ -172,7 +172,7 @@ namespace ktradesystem.Models
 
             //записываем DataSourcesCandles
             Directory.CreateDirectory(testingDirectoryPath + "\\dataSourcesCandles");
-            for (int i = 0; i < testing.DataSourcesCandles.Length; i++)
+            for (int i = 0; i < testing.DataSourcesCandles.Count; i++)
             {
                 string dataSourcesCandlesPath = testingDirectoryPath + "\\dataSourcesCandles\\" + testing.DataSourcesCandles[i].DataSource.Id.ToString(); //путь к папке с текущим DataSourceCandles
                 Directory.CreateDirectory(dataSourcesCandlesPath); //создаем папку с текущим DataSourceCandles
@@ -281,9 +281,9 @@ namespace ktradesystem.Models
             while (iteration < 2);
         }
 
-        public DataSourceCandles[] ReadDataSourceCandles(Testing testing, bool isHistory, DataSourceGroup dataSourceGroup) //считывает свечки для полученных источников данных
+        public List<DataSourceCandles> ReadDataSourceCandles(Testing testing, bool isHistory, DataSourceGroup dataSourceGroup) //считывает свечки для полученных источников данных
         {
-            DataSourceCandles[] dataSourceCandles = new DataSourceCandles[dataSourceGroup.DataSourceAccordances.Count];
+            List<DataSourceCandles> dataSourcesCandles = new List<DataSourceCandles>(); //new DataSourceCandles[dataSourceGroup.DataSourceAccordances.Count];
             string dataSourceCandlesPath = isHistory ? Directory.GetCurrentDirectory() + _historyRealivePath : Directory.GetCurrentDirectory() + _savesRealivePath; //путь к папке со свечками. Если isHistory == true значит в папке с историей, иначе - в папке с сохраненными
             dataSourceCandlesPath += "\\" + testing.TestingName + "\\dataSourcesCandles";
             BinaryFormatter binaryFormatter = new BinaryFormatter();
@@ -300,7 +300,8 @@ namespace ktradesystem.Models
                         {
                             using (FileStream fileStream = new FileStream(dataSourceCandlesPathFolder + "\\dataSourceCandles.dat", FileMode.Open))
                             {
-                                dataSourceCandles[i] = (DataSourceCandles)binaryFormatter.Deserialize(fileStream); //десериализуем объект
+                                DataSourceCandles dataSourceCandles = (DataSourceCandles)binaryFormatter.Deserialize(fileStream); //десериализуем объект
+                                dataSourcesCandles.Add(dataSourceCandles);
                             }
                             
                             /*string jsonDataSourceCandles = File.ReadAllText(dataSourceCandlesPathFolder + "\\dataSourceCandles.json");
@@ -327,7 +328,7 @@ namespace ktradesystem.Models
                 }
             }
 
-            return dataSourceCandles;
+            return dataSourcesCandles;
         }
 
         public void ReadIndicatorValues(Testing testing, bool isHistory, TestRun testRun) //считывает значения индикаторов алгоритма для источников данных в testing.DataSourcesCandles и для параметров testRun

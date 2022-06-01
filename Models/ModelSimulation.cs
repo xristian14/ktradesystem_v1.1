@@ -1076,6 +1076,7 @@ namespace ktradesystem.Models
                         int[] candleIndexes = Enumerable.Repeat(0, dataSourceGroup.DataSourceAccordances.Count).ToArray(); //индексы свечек для всех источников данных группы
                         DataSourceGroupSegments dataSourceGroupSegments = new DataSourceGroupSegments();
                         dataSourceGroupSegments.DataSourceGroup = dataSourceGroup;
+                        dataSourceGroupSegments.Sections = new List<Section>(); //секции
                         dataSourceGroupSegments.Segments = new List<Segment>();
                         dataSourceGroupSegments.LastTradeSegmentIndex = -1; //устанавливаем в -1, чтобы установить этот индекс на первый индекс, на котором закончатся файлы одного из источников данных
                         List<DataSource> endedDataSources = new List<DataSource>(); //источники данных, которые закончились (индекс файла вышел за границы массива)
@@ -1099,7 +1100,6 @@ namespace ktradesystem.Models
                         DateTime laterDateTime = currentDateTime; //самая поздняя дата и время, используется для определения дат которые уже были
 
                         bool isAllDataSourcesEnd = false; //закончились ли все источники данных
-                        List<Section> sections = new List<Section>(); //секции
                         Section section = new Section(); //первая секция
                         section.IsPresent = true;
                         section.DataSources = new List<DataSource>();
@@ -1108,17 +1108,17 @@ namespace ktradesystem.Models
                         {
                             section.DataSources.Add(dataSourceAccordance.DataSource);
                         }
-                        sections.Add(section);
+                        dataSourceGroupSegments.Sections.Add(section);
                         while (isAllDataSourcesEnd == false)
                         {
-                            int[] sectionDataSourceCountSegments = Enumerable.Repeat(0, sections.Last().DataSources.Count).ToArray(); //количество сегментов для источников данных в секции. Значение в sectionDataSourceCountSegments[i] соответствует количеству сегментов с источником данных: sections.Last().DataSources[i]
+                            int[] sectionDataSourceCountSegments = Enumerable.Repeat(0, dataSourceGroupSegments.Sections.Last().DataSources.Count).ToArray(); //количество сегментов для источников данных в секции. Значение в sectionDataSourceCountSegments[i] соответствует количеству сегментов с источником данных: sections.Last().DataSources[i]
                             bool isNewSection = false; //перешли ли на новую секцию
                             while(isNewSection == false)
                             {
                                 //определяем текущую дату (самую раннюю дату среди всех источников данных секции)
                                 for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
                                 {
-                                    if (sections.Last().DataSources.Where(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
+                                    if (dataSourceGroupSegments.Sections.Last().DataSources.Where(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
                                     {
                                         if (i == 0)
                                         {
@@ -1140,18 +1140,19 @@ namespace ktradesystem.Models
                                 }
                                 //формируем сегмент
                                 Segment segment = new Segment();
-                                segment.Section = sections.Last();
+                                segment.Section = dataSourceGroupSegments.Sections.Last();
+                                segment.SectionIndex = dataSourceGroupSegments.Sections.Count - 1; //индекс секции
                                 segment.CandleIndexes = new List<CandleIndex>();
                                 //проходим по источникам данных секции, и добавляем в сегмент свечки тех которые имеют текущую дату
                                 for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
                                 {
-                                    if(sections.Last().DataSources.Where(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
+                                    if(dataSourceGroupSegments.Sections.Last().DataSources.Where(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
                                     {
                                         int dataSourceCandlesIndex = testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id);
                                         if (DateTime.Compare(currentDateTime, testing.DataSourcesCandles[dataSourceCandlesIndex].Candles[fileIndexes[i]][candleIndexes[i]].DateTime) == 0) //если текущая дата и дата текущей свечки у текущего источника данных равны
                                         {
                                             segment.CandleIndexes.Add(new CandleIndex { DataSourceCandlesIndex = dataSourceCandlesIndex, FileIndex = fileIndexes[i], IndexCandle = candleIndexes[i] });
-                                            int sectionDataSourceIndex = sections.Last().DataSources.FindIndex(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id);
+                                            int sectionDataSourceIndex = dataSourceGroupSegments.Sections.Last().DataSources.FindIndex(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id);
                                             sectionDataSourceCountSegments[sectionDataSourceIndex]++; //увеличиваем количество свечек с данным источником данных
                                             //переходим на следующую свечку у данного источника данных
                                             candleIndexes[i]++;
@@ -1175,12 +1176,12 @@ namespace ktradesystem.Models
                                 dataSourceGroupSegments.Segments.Add(segment);
                                 if(isNewSection == false) //если не было добавлено новой секции по причине окончания одного из источников данных, проверяем, не закончилась ли секция по причине выхода на дату которая не позже самой поздней или которая позже самой поздней
                                 {
-                                    if (sections.Last().IsPresent) //если секция в настоящем, условием для создания новой секции является переход одной из свечек на дату которая равна или раньше самой поздней
+                                    if (dataSourceGroupSegments.Sections.Last().IsPresent) //если секция в настоящем, условием для создания новой секции является переход одной из свечек на дату которая равна или раньше самой поздней
                                     {
                                         bool isAllCandlesLater = true; //все ли свечки позднее самой поздней даты
                                         for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
                                         {
-                                            if (sections.Last().DataSources.Where(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
+                                            if (dataSourceGroupSegments.Sections.Last().DataSources.Where(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
                                             {
                                                 int dataSourceCandlesIndex = testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id);
                                                 if (DateTime.Compare(testing.DataSourcesCandles[dataSourceCandlesIndex].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, laterDateTime) <= 0) //если дата свечки раньше или равняется самой последней дате
@@ -1199,7 +1200,7 @@ namespace ktradesystem.Models
                                         bool isAllCandlesLater = true; //все ли свечки позднее самой поздней даты
                                         for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
                                         {
-                                            if (sections.Last().DataSources.Where(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
+                                            if (dataSourceGroupSegments.Sections.Last().DataSources.Where(a => a.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
                                             {
                                                 int dataSourceCandlesIndex = testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id);
                                                 if (DateTime.Compare(testing.DataSourcesCandles[dataSourceCandlesIndex].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, laterDateTime) <= 0) //если дата свечки раньше или равняется самой последней дате
@@ -1222,13 +1223,13 @@ namespace ktradesystem.Models
                                     {
                                         if(sectionDataSourceCountSegments[i] == 0) //если не было добавлено свечек с данным источником данных, удаляем его из секции
                                         {
-                                            sections.Last().DataSources.RemoveAt(i);
+                                            dataSourceGroupSegments.Sections.Last().DataSources.RemoveAt(i);
                                         }
                                     }
                                     //сохраняем индексы объектов со свечками источников данных которые соответствуют источникам данных в DataSources
-                                    foreach (DataSource dataSource in sections.Last().DataSources)
+                                    foreach (DataSource dataSource in dataSourceGroupSegments.Sections.Last().DataSources)
                                     {
-                                        sections.Last().DataSourceCandlesIndexes.Add(testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == dataSource.Id)); //сохраняем индекс DataSourceCandles в котором свечки данного источника данных
+                                        dataSourceGroupSegments.Sections.Last().DataSourceCandlesIndexes.Add(testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == dataSource.Id)); //сохраняем индекс DataSourceCandles в котором свечки данного источника данных
                                     }
 
                                     //добавляем новую секцию
@@ -1243,7 +1244,7 @@ namespace ktradesystem.Models
                                             newSection.DataSources.Add(dataSourceAccordance.DataSource);
                                         }
                                     }
-                                    sections.Add(newSection);
+                                    dataSourceGroupSegments.Sections.Add(newSection);
                                 }
                             }
                             //проверяем, закончились ли все источники данных
@@ -1252,6 +1253,7 @@ namespace ktradesystem.Models
                                 isAllDataSourcesEnd = true;
                             }
                         }
+                        testing.DataSourceGroupsSegments.Add(dataSourceGroupSegments);
                     }
 
                     //вычисляем идеальную прибыль для каждого DataSourceCandles

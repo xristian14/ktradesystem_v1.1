@@ -11,7 +11,9 @@ namespace ktradesystem.Models
     [Serializable]
     public class Segment
     {
-        public Section Section { get; set; } //секция, к которой относится сегмент
+        [NonSerialized]
+        public Section Section; //секция, к которой относится сегмент
+        public int SectionIndex { get; set; } //индекс секции, используется для определения секции после десериализации
         public List<CandleIndex> CandleIndexes { get; set; } //индексы свечек которые имеются в текущем сегменте для источников данных
     }
 }

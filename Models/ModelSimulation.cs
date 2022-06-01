@@ -886,10 +886,10 @@ namespace ktradesystem.Models
                         _mainCommunicationChannel.TestingProgress.Clear();
                         _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 1/4:  Считывание файлов источников данных", StepTasksCount = filesCount, CompletedStepTasksCount = readFilesCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchReadDataSources.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                     }));
-                    testing.DataSourcesCandles = new DataSourceCandles[dataSources.Count]; //инициализируем массив со всеми свечками источников данных
+                    testing.DataSourcesCandles = new List<DataSourceCandles>(); //инициализируем список со всеми свечками источников данных
                     for(int i = 0; i < dataSources.Count; i++)
                     {
-                        testing.DataSourcesCandles[i] = new DataSourceCandles { DataSource = dataSources[i], Candles = new Candle[dataSources[i].DataSourceFiles.Count][], AlgorithmIndicatorsValues = new AlgorithmIndicatorValues[testing.Algorithm.AlgorithmIndicators.Count] };
+                        testing.DataSourcesCandles.Add(new DataSourceCandles { DataSource = dataSources[i], Candles = new Candle[dataSources[i].DataSourceFiles.Count][], AlgorithmIndicatorsValues = new AlgorithmIndicatorValues[testing.Algorithm.AlgorithmIndicators.Count] });
                         //проходим по всем файлам источника данных
                         for (int k = 0; k < dataSources[i].DataSourceFiles.Count; k++)
                         {
@@ -941,7 +941,7 @@ namespace ktradesystem.Models
                     Stopwatch stopwatchCalculateIndicators = new Stopwatch();
                     stopwatchCalculateIndicators.Start();
                     //формируем AlgorithmIndicatorCatalogElements для DataSourcesCandles
-                    for (int i = 0; i < testing.DataSourcesCandles.Length; i++)
+                    for (int i = 0; i < testing.DataSourcesCandles.Count; i++)
                     {
                         //определяем каталоги индикаторов алгоритмов
                         testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs = new AlgorithmIndicatorCatalog[testing.Algorithm.AlgorithmIndicators.Count];
@@ -1037,7 +1037,7 @@ namespace ktradesystem.Models
                     //определяем количество значений всех индикаторов
                     int AlgorithmIndicatorsValuesCount = 0; //количество значений всех индикаторов
                     int CalculatedAlgorithmIndicatorsCount = 0; //количество вычисленных индикаторов
-                    for (int i = 0; i < testing.DataSourcesCandles.Length; i++)
+                    for (int i = 0; i < testing.DataSourcesCandles.Count; i++)
                     {
                         foreach (AlgorithmIndicatorCatalog algorithmIndicatorCatalog in testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs)
                         {
@@ -1050,7 +1050,7 @@ namespace ktradesystem.Models
                     }));
 
                     //вычисляем значения индикаторов для всех источников данных со всеми комбинациями оптимизационных параметров
-                    for (int i = 0; i < testing.DataSourcesCandles.Length; i++)
+                    for (int i = 0; i < testing.DataSourcesCandles.Count; i++)
                     {
                         foreach (AlgorithmIndicatorCatalog algorithmIndicatorCatalog in testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs)
                         {
@@ -1077,32 +1077,35 @@ namespace ktradesystem.Models
                         DataSourceGroupSegments dataSourceGroupSegments = new DataSourceGroupSegments();
                         dataSourceGroupSegments.DataSourceGroup = dataSourceGroup;
                         dataSourceGroupSegments.Segments = new List<Segment>();
-                        DateTime laterDateTime = new DateTime(); //самая поздняя дата и время, используется для определения дат которые уже были
+                        DateTime currentDateTime = new DateTime(); //текущая дата
                         //определяем самую раннюю дату среди всех источников данных группы
                         for(int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
                         {
                             if (i == 0)
                             {
-                                laterDateTime = testing.DataSourcesCandles.Where(j => j.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).First().Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                                currentDateTime = testing.DataSourcesCandles.Where(j => j.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).First().Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
                             }
                             else
                             {
-                                DateTime currentDateTime = testing.DataSourcesCandles.Where(j => j.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).First().Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
-                                if(DateTime.Compare(currentDateTime, laterDateTime) < 0)
+                                DateTime dateTime = testing.DataSourcesCandles.Where(j => j.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id).First().Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                                if(DateTime.Compare(dateTime, currentDateTime) < 0) //если дата свечки у текущего источника данных раньше текущей даты, обновляем текущую дату
                                 {
-                                    laterDateTime = currentDateTime;
+                                    currentDateTime = dateTime;
                                 }
                             }
                         }
-                        
+                        DateTime laterDateTime = currentDateTime; //самая поздняя дата и время, используется для определения дат которые уже были
+
                         bool isAllFilesEnd = false; //закончились ли все файлы
                         List<Section> sections = new List<Section>(); //секции
                         Section section = new Section(); //первая секция
                         section.IsPresent = true;
                         section.DataSources = new List<DataSource>();
-                        foreach(DataSourceAccordance dataSourceAccordance in dataSourceGroup.DataSourceAccordances)
+                        section.DataSourceCandlesIndexes = new List<int>();
+                        foreach (DataSourceAccordance dataSourceAccordance in dataSourceGroup.DataSourceAccordances)
                         {
                             section.DataSources.Add(dataSourceAccordance.DataSource);
+                            section.DataSourceCandlesIndexes.Add(testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == dataSourceAccordance.DataSource.Id)); //сохраняем индекс DataSourceCandles в котором свечки данного источника данных
                         }
                         sections.Add(section);
                         while (isAllFilesEnd == false)
@@ -1114,7 +1117,16 @@ namespace ktradesystem.Models
                                 //формируем сегмент
                                 Segment segment = new Segment();
                                 segment.Section = sections.Last();
-
+                                segment.CandleIndexes = new List<CandleIndex>();
+                                //проходим по источникам данных группы, и добавляем в сегмент свечки тех которые имеют текущую дату
+                                for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
+                                {
+                                    int dataSourceCandlesIndex = testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == dataSourceGroup.DataSourceAccordances[i].DataSource.Id);
+                                    if(DateTime.Compare(currentDateTime, testing.DataSourcesCandles[dataSourceCandlesIndex].Candles[fileIndexes[i]][candleIndexes[i]].DateTime) == 0) //если текущая дата и дата текущей свечки у текущего источника данных равны
+                                    {
+                                        segment.CandleIndexes.Add(new CandleIndex { DataSourceCandlesIndex = dataSourceCandlesIndex, FileIndex = fileIndexes[i], IndexCandle = candleIndexes[i] });
+                                    }
+                                }
                             }
                         }
                     }

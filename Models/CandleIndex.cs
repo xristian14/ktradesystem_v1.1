@@ -9,7 +9,7 @@ namespace ktradesystem.Models
     [Serializable]
     public class CandleIndex
     {
-        public int DataSourceIndex { get; set; } //индекс источника данных в DataSourcesCandles
+        public int DataSourceCandlesIndex { get; set; } //индекс источника данных в DataSourcesCandles
         public int FileIndex { get; set; } //индекс файла
         public int IndexCandle { get; set; } //индекс свечки
     }

@@ -178,6 +178,7 @@
     <Compile Include="ViewModels\ObservableCollectionWithItemNotify.cs" />
     <Compile Include="ViewModels\OrderIndexPageTradeChart.cs" />
     <Compile Include="ViewModels\PageItem.cs" />
+    <Compile Include="ViewModels\SectionPageTradeChart.cs" />
     <Compile Include="ViewModels\SegmentDealIndexPageTradeChart.cs" />
     <Compile Include="ViewModels\SegmentOrderIndexPageTradeChart.cs" />
     <Compile Include="ViewModels\SegmentPageTradeChart.cs" />

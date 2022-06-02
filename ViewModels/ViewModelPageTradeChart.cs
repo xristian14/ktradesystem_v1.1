@@ -37,6 +37,7 @@ namespace ktradesystem.ViewModels
         private int _timeLineHeight = 24; //высота временной шкалы
         private List<SegmentPageTradeChart> _segments { get; set; } //сегменты из которых состоит график
         private int _segmentIndex; //текущий индекс сегмента
+        private List<SectionPageTradeChart> _sections { get; set; } //секции для сегментов
         private List<SegmentOrderIndexPageTradeChart> _segmentOrders; //индексы сегмента и заявки, чтобы можно было быстро найти сегмент с заявкой
         private List<SegmentDealIndexPageTradeChart> _segmentDeals; //индексы сегмента и сделки, чтобы можно было быстро найти сегмент со сделкой
         public double СanvasTradeChartWidth { get; set; } //ширина canvas с графиком
@@ -199,71 +200,189 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private void CreateSegments() //создает сегменты на основе загруженных данных свечек
+        private void CreateSegments() //создает сегменты, на основе которых будет строиться график
         {
+            //формируем сегменты для всех групп источников данных
+            int[] fileIndexes = Enumerable.Repeat(0, _testing.DataSourcesCandles.Count).ToArray(); //индексы файлов для всех источников данных группы
+            int[] candleIndexes = Enumerable.Repeat(0, _testing.DataSourcesCandles.Count).ToArray(); //индексы свечек для всех источников данных группы
+            _sections = new List<SectionPageTradeChart>();
             _segments = new List<SegmentPageTradeChart>();
-            _segmentIndex = 0;
-            _segmentOrders = new List<SegmentOrderIndexPageTradeChart>();
-            _segmentDeals = new List<SegmentDealIndexPageTradeChart>();//Enumerable.Repeat(0, _leftAxisParameters.Count).ToArray();
-            int[] fileIndexes = Enumerable.Repeat(0, _testing.DataSourcesCandles.Count).ToArray(); //индексы текущего файла для всех источников данных (заполнили массив нулями)
-            int[] candleIndexes = Enumerable.Repeat(0, _testing.DataSourcesCandles.Count).ToArray(); //индексы текущей свечки для всех источников данных (заполнили массив нулями)
-            List<int> currentOrdersIndex = new List<int>(); //индексы заявок, которыевыставлены, но еще не сняты, и поэтому будут в сегментах с источниками данных этой заявки пока не будет дата снятия/исполнения данной заявки
-            int orderIndex = 0; //индекс заявки
-            int dealIndex = 0; //индекс сделки
-            //проходя по свечкам и файлам, я буду разбивать график на секции. У каждой секции имеется свой источник данных и файл, свечки которого отображаются в секции. Секция заканчивается если закончился один из файлов, тогда начинается новая с теми источниками данных, у которых произошел переход на новый файл, эта секция продолжается до последней даты прошлой секции, после дохода до той даты, начинается новая секция в которой учавствуют все источники данных. 
-            List<int> sectionDataSourceIndexes = new List<int>(); //список с индексами источников данных в текущей секции
-            for(int i = 0; i < _testing.DataSourcesCandles.Count; i++) //заполняем индексами всех источников данных
+            List<DataSource> endedDataSources = new List<DataSource>(); //источники данных, которые закончились (индекс файла вышел за границы массива)
+            DateTime currentDateTime = new DateTime(); //текущая дата
+            //определяем самую раннюю дату среди всех источников данных группы
+            for (int i = 0; i < _testing.DataSourcesCandles.Count; i++)
             {
-                sectionDataSourceIndexes.Add(i);
+                if (i == 0)
+                {
+                    currentDateTime = _testing.DataSourcesCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                }
+                else
+                {
+                    DateTime dateTime = _testing.DataSourcesCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                    if (DateTime.Compare(dateTime, currentDateTime) < 0) //если дата свечки у текущего источника данных раньше текущей даты, обновляем текущую дату
+                    {
+                        currentDateTime = dateTime;
+                    }
+                }
             }
-            DateTime savedDateTime = new DateTime(); //последняя дата прошлой секции
-            bool isAllFilesEnd = false; //закончились ли все файлы
-            while(isAllFilesEnd == false)
+            DateTime laterDateTime = currentDateTime; //самая поздняя дата и время, используется для определения дат которые уже были
+
+            bool isAllDataSourcesEnd = false; //закончились ли все источники данных
+            SectionPageTradeChart section = new SectionPageTradeChart(); //первая секция
+            section.IsPresent = true;
+            section.DataSources = new List<DataSource>();
+            for (int i = 0; i < _testing.DataSourcesCandles.Count; i++)
             {
-                //находим самую раннюю дату среди текущих свечек источников данных
-                DateTime earliestDateTime = _testing.DataSourcesCandles[sectionDataSourceIndexes[0]].Candles[fileIndexes[sectionDataSourceIndexes[0]]][candleIndexes[sectionDataSourceIndexes[0]]].DateTime; //самая ранняя дата среди текущих свечек, она же дата текущей свечки
-                for(int i = 1; i < sectionDataSourceIndexes.Count; i++)
+                section.DataSources.Add(_testing.DataSourcesCandles[i].DataSource);
+            }
+            _sections.Add(section);
+            while (isAllDataSourcesEnd == false)
+            {
+                int[] sectionDataSourceCountSegments = Enumerable.Repeat(0, _sections.Last().DataSources.Count).ToArray(); //количество сегментов для источников данных в секции. Значение в sectionDataSourceCountSegments[i] соответствует количеству сегментов с источником данных: sections.Last().DataSources[i]
+                bool isNewSection = false; //перешли ли на новую секцию
+                while (isNewSection == false)
                 {
-                    if(DateTime.Compare(_testing.DataSourcesCandles[sectionDataSourceIndexes[i]].Candles[fileIndexes[sectionDataSourceIndexes[i]]][candleIndexes[sectionDataSourceIndexes[i]]].DateTime, earliestDateTime) < 0)
+                    //определяем текущую дату (самую раннюю дату среди всех источников данных секции)
+                    for (int i = 0; i < _testing.DataSourcesCandles.Count; i++)
                     {
-                        earliestDateTime = _testing.DataSourcesCandles[sectionDataSourceIndexes[i]].Candles[fileIndexes[sectionDataSourceIndexes[i]]][candleIndexes[sectionDataSourceIndexes[i]]].DateTime;
+                        if (i == 0)
+                        {
+                            currentDateTime = _testing.DataSourcesCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                        }
+                        else
+                        {
+                            DateTime dateTime = _testing.DataSourcesCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
+                            if (DateTime.Compare(dateTime, currentDateTime) < 0) //если дата свечки у текущего источника данных раньше текущей даты, обновляем текущую дату
+                            {
+                                currentDateTime = dateTime;
+                            }
+                        }
+                    }
+                    if (DateTime.Compare(currentDateTime, laterDateTime) > 0) //если текущая дата позже самой поздней, обновляем самую позднюю дату
+                    {
+                        laterDateTime = currentDateTime;
+                    }
+                    //формируем сегмент
+                    SegmentPageTradeChart segment = new SegmentPageTradeChart();
+                    segment.Section = _sections.Last();
+                    segment.CandleIndexes = new List<CandleIndexPageTradeChart>();
+                    //проходим по источникам данных секции, и добавляем в сегмент свечки тех которые имеют текущую дату
+                    for (int i = 0; i < _testing.DataSourcesCandles.Count; i++)
+                    {
+                        if (_sections.Last().DataSources.Where(a => a.Id == _testing.DataSourcesCandles[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
+                        {
+                            if (DateTime.Compare(currentDateTime, _testing.DataSourcesCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime) == 0) //если текущая дата и дата текущей свечки у текущего источника данных равны
+                            {
+                                segment.CandleIndexes.Add(new CandleIndexPageTradeChart { DataSourceCandlesIndex = i, FileIndex = fileIndexes[i], CandleIndex = candleIndexes[i] });
+                                int sectionDataSourceIndex = _sections.Last().DataSources.FindIndex(a => a.Id == _testing.DataSourcesCandles[i].DataSource.Id);
+                                sectionDataSourceCountSegments[sectionDataSourceIndex]++; //увеличиваем количество свечек с данным источником данных
+                                //переходим на следующую свечку у данного источника данных
+                                candleIndexes[i]++;
+                                if (candleIndexes[i] >= _testing.DataSourcesCandles[i].Candles[fileIndexes[i]].Length)
+                                {
+                                    candleIndexes[i] = 0;
+                                    fileIndexes[i]++;
+                                    if (fileIndexes[i] >= _testing.DataSourcesCandles[i].Candles.Length) //если вышли за предел файла, запоминаем источник данных, для которого закончились файлы
+                                    {
+                                        endedDataSources.Add(_testing.DataSourcesCandles[i].DataSource); //запоминаем источник данных, для которого закончились файлы, в последствии при создании новой секции, этот источник данных не будет включен в секцию
+                                        isNewSection = true; //отмечаем, что нужно создать новую секцию, т.к. при текущей секции будут обращения к несуществующему файлу
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _segments.Add(segment);
+                    if (isNewSection == false) //если не было добавлено новой секции по причине окончания одного из источников данных, проверяем, не закончилась ли секция по причине выхода на дату которая не позже самой поздней или которая позже самой поздней
+                    {
+                        if (_sections.Last().IsPresent) //если секция в настоящем, условием для создания новой секции является переход одной из свечек на дату которая равна или раньше самой поздней
+                        {
+                            bool isAllCandlesLater = true; //все ли свечки позднее самой поздней даты
+                            for (int i = 0; i < _testing.DataSourcesCandles.Count; i++)
+                            {
+                                if (_sections.Last().DataSources.Where(a => a.Id == _testing.DataSourcesCandles[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
+                                {
+                                    if (DateTime.Compare(_testing.DataSourcesCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, laterDateTime) <= 0) //если дата свечки раньше или равняется самой последней дате
+                                    {
+                                        isAllCandlesLater = false;
+                                    }
+                                }
+                            }
+                            if (isAllCandlesLater == false) //если хоть одна из свечек не была позднее
+                            {
+                                isNewSection = true;
+                            }
+                        }
+                        else //если даты секции уже были, значит условием перехода на следующую секцию является переход на дату, которая позже самой поздней
+                        {
+                            bool isAllCandlesLater = true; //все ли свечки позднее самой поздней даты
+                            for (int i = 0; i < _testing.DataSourcesCandles.Count; i++)
+                            {
+                                if (_sections.Last().DataSources.Where(a => a.Id == _testing.DataSourcesCandles[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
+                                {
+                                    if (DateTime.Compare(_testing.DataSourcesCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, laterDateTime) <= 0) //если дата свечки раньше или равняется самой последней дате
+                                    {
+                                        isAllCandlesLater = false;
+                                    }
+                                }
+                            }
+                            if (isAllCandlesLater) //если все свечки были позднее
+                            {
+                                isNewSection = true;
+                            }
+                        }
+                    }
+
+                    if (isNewSection) //если нужно добавить новую секцию, добавляем её
+                    {
+                        //удаляем из текущей секции источники данных, свечки которых не были добавлены в сегменты секции
+                        for (int i = sectionDataSourceCountSegments.Length - 1; i >= 0; i--)
+                        {
+                            if (sectionDataSourceCountSegments[i] == 0) //если не было добавлено свечек с данным источником данных, удаляем его из секции
+                            {
+                                _sections.Last().DataSources.RemoveAt(i);
+                            }
+                        }
+
+                        //добавляем новую секцию
+                        SectionPageTradeChart newSection = new SectionPageTradeChart(); //новая секция
+                        newSection.DataSources = new List<DataSource>();
+                        for (int i = 0; i < _testing.DataSourcesCandles.Count; i++)
+                        {
+                            if (endedDataSources.Where(a => a.Id == _testing.DataSourcesCandles[i].DataSource.Id).Any() == false) //если данного источника данных нет в списке закончившихся источников данных
+                            {
+                                newSection.DataSources.Add(_testing.DataSourcesCandles[i].DataSource);
+                            }
+                        }
+                        //определяем, секция в настоящем или прошлом
+                        bool isAllCandlesLater = true; //все ли свечки позднее самой поздней даты
+                        for (int i = 0; i < _testing.DataSourcesCandles.Count; i++)
+                        {
+                            if (newSection.DataSources.Where(a => a.Id == _testing.DataSourcesCandles[i].DataSource.Id).Any()) //если в текущей секции имеется текущий источник данных
+                            {
+                                if (DateTime.Compare(_testing.DataSourcesCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, laterDateTime) <= 0) //если дата свечки раньше или равняется самой последней дате
+                                {
+                                    isAllCandlesLater = false;
+                                }
+                            }
+                        }
+                        newSection.IsPresent = isAllCandlesLater ? true : false;
+                        _sections.Add(newSection);
                     }
                 }
-                //формируем список с заявками у которых текущая дата выставления. Проходим по заявкам, дата выставления которых равняется текущей
-                List<int> currentOrderIndexes = new List<int>();
-                bool orderDateTimeNotEqual = false;
-                while(orderIndex < _testRun.Account.AllOrders.Count && orderDateTimeNotEqual == false)
+                //проверяем, закончились ли все источники данных
+                if (endedDataSources.Count == _testing.DataSourcesCandles.Count)
                 {
-                    if(DateTime.Compare(_testRun.Account.AllOrders[orderIndex].DateTimeSubmit, earliestDateTime) == 0)
+                    isAllDataSourcesEnd = true;
+                    //при переходе на новый файл создается новая секция, поэтому когда все файлы заканчиваются создается пустая секция, удаляем её сейчас
+                    if (_sections.Any())
                     {
-                        currentOrderIndexes.Add(orderIndex);
-                        orderIndex++;
-                    }
-                    else
-                    {
-                        orderDateTimeNotEqual = true;
+                        _sections.RemoveAt(_sections.Count - 1);
                     }
                 }
-                //формируем сегмент
-                SegmentPageTradeChart segment = new SegmentPageTradeChart();
-                segment.IsDivide = false;
-                segment.CandleIndexes = new List<CandleIndexPageTradeChart>();
-                for (int i = 0; i < sectionDataSourceIndexes.Count; i++) //добавляем в сегмент свечки с текущей датой для источников данных текущей секции
-                {
-                    if (DateTime.Compare(_testing.DataSourcesCandles[sectionDataSourceIndexes[i]].Candles[fileIndexes[sectionDataSourceIndexes[i]]][candleIndexes[sectionDataSourceIndexes[i]]].DateTime, earliestDateTime) == 0) //равняется ли дата свечки текущей дате
-                    {
-                        CandleIndexPageTradeChart candleIndex = new CandleIndexPageTradeChart { DataSourceIndex = sectionDataSourceIndexes[i], FileIndex = fileIndexes[sectionDataSourceIndexes[i]], CandleIndex = candleIndexes[sectionDataSourceIndexes[i]] };
-                        List<OrderIndexPageTradeChart> orderIndexes = new List<OrderIndexPageTradeChart>(); //индексы с заявками на текущей свечке
-                        int currentIdDataSource = _testBatch.DataSourceGroup.DataSourceAccordances[sectionDataSourceIndexes[i]].DataSource.Id; //id текущего источника данных
-                        //проходим по заявкам
-                        segment.CandleIndexes.Add(candleIndex);
-                    }
-                }
-                
             }
         }
 
-        private void DefineTradeChartInitialScaleAndSetCurrentFileCandleIndexes() //определяет начальный масштаб графика: количество свечек, которое должно поместиться на графике, и индексы текущего файла и свечки для всех источников данных
+        private void DefineTradeChartInitialScaleAndSetCurrentFileCandleIndexes() //определяет начальный масштаб графика: количество свечек, которое должно поместиться на графике
         {
             int candleWidth = 5; //ширина свечки, исходя из которой будет определяться количество свечек
             _tradeChartScale = (int)Math.Truncate((СanvasTradeChartWidth - _scaleValuesWidth) / candleWidth);
@@ -277,6 +396,10 @@ namespace ktradesystem.ViewModels
                 _currentCandleIndex++;
                 
             }*/
+        }
+        private void SetInitialSegmentIndex() //определяет начальный индекс сегмента
+        {
+
         }
         private bool MoveCurrentFileCandleIndexes(int offset) //сдвигает индекс текущей свечки на указанное число, как положительное (вправо), так и отрицательное (влево), и возвращает true если смещение имело место даже не на все значение offset, если смещение не получилось (уже начальные индексы или конечные) возвращает false
         {
@@ -309,6 +432,7 @@ namespace ktradesystem.ViewModels
                 CreateDataSourcesOrderDisplayPageTradeChart(); //создаем элементы для меню управления порядком следования областей с источниками данных
                 CreateTradeChartAreas(); //создаем области для графика котировок
                 CreateIndicatorsMenuItemPageTradeChart(); //создаем элементы для меню выбора областей для индикаторов
+                CreateSegments(); //создаем сегменты, на основе которых будет строиться график
                 DefineTradeChartInitialScaleAndSetCurrentFileCandleIndexes(); //определяем начальный масштаб графика: количество свечек, которое должно поместиться на графике, и индексы текущего файла и свечки
                 BiuldTradeChart(); //строим график котировок
             }

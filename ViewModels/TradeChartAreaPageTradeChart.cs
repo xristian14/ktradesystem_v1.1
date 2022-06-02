@@ -14,12 +14,11 @@ namespace ktradesystem.ViewModels
         {
 
         }
-        public static TradeChartAreaPageTradeChart CreateDataSourceArea(DataSourceAccordance dataSourceAccordance)
+        public static TradeChartAreaPageTradeChart CreateDataSourceArea()
         {
             TradeChartAreaPageTradeChart tradeChartAreaPageTradeChart = new TradeChartAreaPageTradeChart();
-            tradeChartAreaPageTradeChart.Name = dataSourceAccordance.DataSourceTemplate.Name + "  –  " + dataSourceAccordance.DataSource.Name;
+            tradeChartAreaPageTradeChart.Name = "Главная область";
             tradeChartAreaPageTradeChart.IsDataSource = true;
-            tradeChartAreaPageTradeChart.DataSourceAccordance = dataSourceAccordance;
             return tradeChartAreaPageTradeChart;
         }
         public static TradeChartAreaPageTradeChart CreateIndicatorArea(string name)
@@ -46,16 +45,6 @@ namespace ktradesystem.ViewModels
             set
             {
                 _isDataSource = value;
-                OnPropertyChanged();
-            }
-        }
-        private DataSourceAccordance _dataSourceAccordance;
-        public DataSourceAccordance DataSourceAccordance //источник данных и макет источника данных, свечки которого отображает данная область
-        {
-            get { return _dataSourceAccordance; }
-            set
-            {
-                _dataSourceAccordance = value;
                 OnPropertyChanged();
             }
         }

@@ -323,7 +323,9 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Vertical">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock>
+                                            <ToggleButton Content="⯅" IsChecked="{Binding IsButtonUpChecked, Mode=TwoWay}" HorizontalAlignment="Left" Width="20" Height="20" Padding="0 -2"/>
+                                            <ToggleButton Content="⯆" IsChecked="{Binding IsButtonDownChecked, Mode=TwoWay}" HorizontalAlignment="Left" Width="20" Height="20" Padding="0 -2"/>
+                                            <TextBlock Margin="5 0 0 0">
                                                 <TextBlock.Text>
                                                     <MultiBinding StringFormat="{}{0}  –  {1}">
                                                         <Binding Path="DataSourceAccordance.DataSourceTemplate.Name"/>
@@ -331,8 +333,6 @@
                                                     </MultiBinding>
                                                 </TextBlock.Text>
                                             </TextBlock>
-                                            <ToggleButton Content="⯅" IsChecked="{Binding IsButtonUpChecked, Mode=TwoWay}" HorizontalAlignment="Left" Margin="5 0 0 0" Width="20" Height="20" Padding="0 -2"/>
-                                            <ToggleButton Content="⯆" IsChecked="{Binding IsButtonDownChecked, Mode=TwoWay}" HorizontalAlignment="Left" Margin="5 0 0 0" Width="20" Height="20" Padding="0 -2"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </DataTemplate>

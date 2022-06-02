@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ktradesystem.Models;
 
 namespace ktradesystem.ViewModels
 {
     class CandlePageTradeChart : ViewModelBase
     {
-        public DateTime DateTime { get; set; }
+        public int IdDataSource { get; set; }
+        public Candle Candle { get; set; }
         private double _bodyLeft;
         public double BodyLeft //отступ слева для тела свечки
         {

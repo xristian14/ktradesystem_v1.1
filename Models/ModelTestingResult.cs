@@ -274,7 +274,8 @@ namespace ktradesystem.Models
                     }
                     else //иначе удаляем директорию с данным результатом тестирования и сообщаем об этом пользователю
                     {
-                        DeleteTestingResultDirectory(testingResultsDirectories[i], true, "Заголовок результата тестирования: " + testingResultsDirectories[i] + " - поврежден, и результат тестирования был удален.", "Заголовок результата тестирования: " + testingResultsDirectories[i] + " - поврежден, и при попытке удалить результат тестирования возникло исключение.");
+                        DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Заголовок результата тестирования: " + testingResultsDirectories[i] + " - поврежден, не удалось считать его."); }));
+                        //DeleteTestingResultDirectory(testingResultsDirectories[i], true, "Заголовок результата тестирования: " + testingResultsDirectories[i] + " - поврежден, и результат тестирования был удален.", "Заголовок результата тестирования: " + testingResultsDirectories[i] + " - поврежден, и при попытке удалить результат тестирования возникло исключение.");
                     }
                 }
             }
@@ -509,7 +510,8 @@ namespace ktradesystem.Models
             }
             else //если было исключение при считывании, удаляем результат тестирования
             {
-                DeleteTestingResultDirectory(testingDirectory, true, "Результат тестирования: " + testingHeader.TestingName + " - поврежден, и был удален.", "Результат тестирования: " + testingHeader.TestingName + " - поврежден, и при попытке его удалить возникло исключение.");
+                DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Результат тестирования: " + testingHeader.TestingName + " - поврежден, не удалось считать его."); }));
+                //DeleteTestingResultDirectory(testingDirectory, true, "Результат тестирования: " + testingHeader.TestingName + " - поврежден, и был удален.", "Результат тестирования: " + testingHeader.TestingName + " - поврежден, и при попытке его удалить возникло исключение.");
                 ReadAndCheckTestingResults(); //обновляем списки с результатами тестирования
                 return null;
             }

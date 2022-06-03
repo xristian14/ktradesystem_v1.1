@@ -339,7 +339,8 @@
                             </MenuItem.ItemTemplate>
                         </MenuItem>
                     </Menu>
-                    <Button Content="Кнопка" Command="{Binding Button1_Click}" Margin="5 0 0 0"/>
+                    <Button Content="Кнопка1" Command="{Binding Button1_Click}" Margin="5 0 0 0"/>
+                    <Button Content="Кнопка2" Command="{Binding Button2_Click}" Margin="5 0 0 0"/>
                 </StackPanel>
             </StackPanel>
             <Canvas Grid.Row="1" x:Name="canvasChart" Background="Transparent" ClipToBounds="True" Loaded="canvasChart_Loaded">

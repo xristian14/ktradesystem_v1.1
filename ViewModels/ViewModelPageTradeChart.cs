@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using ktradesystem.Models;
 using ktradesystem.Models.Datatables;
 using System.Windows.Media;
+using System.Diagnostics;
 
 namespace ktradesystem.ViewModels
 {
@@ -452,13 +453,26 @@ namespace ktradesystem.ViewModels
                     {
                         if(DateTime.Compare(_testing.DataSourcesCandles[dataSourceCandleIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].DateTime, _testRun.Account.AllOrders[ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]]].DateTimeSubmit) == 0)
                         {
-                            bool isOrderEnd = DateTime.Compare(_testRun.Account.AllOrders[ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]]].DateTimeRemove, _testRun.Account.AllOrders[ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]]].DateTimeSubmit) == 0;
-                            _segments[i].CandleIndexes[k].OrderIndexes.Add(new OrderIndexPageTradeChart { IsStart = true, isEnd = isOrderEnd, OrderIndex = ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]] });
-                            if(isOrderEnd == false) //если заявка не снимается на текущей свечке, запоминаем её для того чтобы указывать для следующих сегментов, пока она не будет снята
+                            bool isDateEqual = true; //даты свечки и текущей заявки равны или нет
+                            //записываем все заявки, дата выставления которых совпадает с датой текущей свечки
+                            do
                             {
-                                submitedOrdersIndexes[dataSourceCandleIndex].Add(ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]]);
+                                bool isOrderEnd = DateTime.Compare(_testRun.Account.AllOrders[ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]]].DateTimeRemove, _testRun.Account.AllOrders[ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]]].DateTimeSubmit) == 0;
+                                _segments[i].CandleIndexes[k].OrderIndexes.Add(new OrderIndexPageTradeChart { IsStart = true, isEnd = isOrderEnd, OrderIndex = ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]] });
+                                if (isOrderEnd == false) //если заявка не снимается на текущей свечке, запоминаем её для того чтобы указывать для следующих сегментов, пока она не будет снята
+                                {
+                                    submitedOrdersIndexes[dataSourceCandleIndex].Add(ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]]);
+                                }
+                                currentOrderIndexes[dataSourceCandleIndex]++; //переходим на следующую заявку
+                                if (currentOrderIndexes[dataSourceCandleIndex] < ordersIndexes[dataSourceCandleIndex].Count) //проверяем, не вышли ли за границы списка
+                                {
+                                    if (DateTime.Compare(_testing.DataSourcesCandles[dataSourceCandleIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].DateTime, _testRun.Account.AllOrders[ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]]].DateTimeSubmit) != 0)
+                                    {
+                                        isDateEqual = false;
+                                    }
+                                }
                             }
-                            currentOrderIndexes[dataSourceCandleIndex]++;
+                            while (currentOrderIndexes[dataSourceCandleIndex] < ordersIndexes[dataSourceCandleIndex].Count && isDateEqual);
                         }
                     }
 
@@ -467,8 +481,21 @@ namespace ktradesystem.ViewModels
                     {
                         if(DateTime.Compare(_testing.DataSourcesCandles[dataSourceCandleIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].DateTime, _testRun.Account.AllDeals[dealsIndexes[dataSourceCandleIndex][currentDealIndexes[dataSourceCandleIndex]]].DateTime) == 0)
                         {
-                            _segments[i].CandleIndexes[k].DealIndexes.Add(dealsIndexes[dataSourceCandleIndex][currentDealIndexes[dataSourceCandleIndex]]);
-                            currentDealIndexes[dataSourceCandleIndex]++;
+                            bool isDateEqual = true; //даты свечки и текущей сделки равны или нет
+                            //записываем все сделки, дата выставления которых совпадает с датой текущей свечки
+                            do
+                            {
+                                _segments[i].CandleIndexes[k].DealIndexes.Add(dealsIndexes[dataSourceCandleIndex][currentDealIndexes[dataSourceCandleIndex]]);
+                                currentDealIndexes[dataSourceCandleIndex]++; //переходим на следующую сделку
+                                if (currentDealIndexes[dataSourceCandleIndex] < dealsIndexes[dataSourceCandleIndex].Count) //проверяем, не вышли ли за границы списка
+                                {
+                                    if (DateTime.Compare(_testing.DataSourcesCandles[dataSourceCandleIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].DateTime, _testRun.Account.AllDeals[dealsIndexes[dataSourceCandleIndex][currentDealIndexes[dataSourceCandleIndex]]].DateTime) != 0)
+                                    {
+                                        isDateEqual = false;
+                                    }
+                                }
+                            }
+                            while (currentDealIndexes[dataSourceCandleIndex] < dealsIndexes[dataSourceCandleIndex].Count && isDateEqual);
                         }
                     }
                 }
@@ -477,7 +504,7 @@ namespace ktradesystem.ViewModels
 
         private void SetInitialCandleWidth() //устанавливает начальную ширину свечки
         {
-            _candleWidth = 5; //текущая ширина свечки
+            _candleWidth = 3; //текущая ширина свечки
         }
         private void SetInitialSegmentIndex() //устанавливает начальный индекс сегмента
         {
@@ -681,7 +708,7 @@ namespace ktradesystem.ViewModels
                 {
                     if (ordersCurrentDs[orderIndex].HorizontalLineLeft + ordersCurrentDs[orderIndex].HorizontalLineWidth > 0) //правая координата заявки положительная, значит эта заявка в видимой области
                     {
-                        double horizontalLineThickness = _candleWidth > 1 ? 2 : 1;
+                        double horizontalLineThickness = _candleWidth > 4 ? 2 : 1;
                         ordersCurrentDs[orderIndex].HorizontalLineTop = /*Math.Round*/(TradeChartAreas[0].AreaHeight * (1 - (ordersCurrentDs[orderIndex].Order.Price - minPrice) / priceRange) - horizontalLineThickness / 2) + currentTop;
                         ordersCurrentDs[orderIndex].HorizontalLineHeight = horizontalLineThickness;
                         if (ordersCurrentDs[orderIndex].IsStart) //если заявка начинается на этом сегменте, рисуем вертикальную линию
@@ -728,7 +755,19 @@ namespace ktradesystem.ViewModels
                 return new DelegateCommand((obj) =>
                 {
                     _segmentIndex = 10560;
-                    //_segmentIndex += 500;
+                    _segmentIndex = _segmentIndex >= _segments.Count ? _segments.Count - 1 : _segmentIndex;
+                    BuildTradeChart(); //строим график котировок
+                    UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
+                }, (obj) => true);
+            }
+        }
+        public ICommand Button2_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    _segmentIndex += 200;
                     _segmentIndex = _segmentIndex >= _segments.Count ? _segments.Count - 1 : _segmentIndex;
                     BuildTradeChart(); //строим график котировок
                     UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов

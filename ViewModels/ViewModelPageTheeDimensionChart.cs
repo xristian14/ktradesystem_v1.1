@@ -674,10 +674,6 @@ namespace ktradesystem.ViewModels
             double heightOffset = cameraHeight / 2;
             y2D = y2D + heightOffset;
             y2D = Viewport3DHeight * (1 - (y2D / cameraHeight));
-            if(y2D is double.NaN)
-            {
-                int a = 0;
-            }
             return new Point(x2D, y2D);
         }
 

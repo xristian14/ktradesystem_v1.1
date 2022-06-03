@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 using ktradesystem.Models;
 
 namespace ktradesystem.ViewModels
@@ -10,6 +11,8 @@ namespace ktradesystem.ViewModels
     class CandlePageTradeChart : ViewModelBase
     {
         public int IdDataSource { get; set; }
+        public SolidColorBrush StrokeColor { get; set; } //цвет обводки
+        public SolidColorBrush FillColor { get; set; } //цвет заливки
         public Candle Candle { get; set; }
         private double _bodyLeft;
         public double BodyLeft //отступ слева для тела свечки

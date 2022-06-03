@@ -177,6 +177,7 @@
     <Compile Include="ViewModels\LevelPageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\ObservableCollectionWithItemNotify.cs" />
     <Compile Include="ViewModels\OrderIndexPageTradeChart.cs" />
+    <Compile Include="ViewModels\OrderPageTradeChart.cs" />
     <Compile Include="ViewModels\PageItem.cs" />
     <Compile Include="ViewModels\SectionPageTradeChart.cs" />
     <Compile Include="ViewModels\SegmentDealIndexPageTradeChart.cs" />

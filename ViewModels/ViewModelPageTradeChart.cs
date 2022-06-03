@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Collections.ObjectModel;
 using ktradesystem.Models;
 using ktradesystem.Models.Datatables;
+using System.Windows.Media;
 
 namespace ktradesystem.ViewModels
 {
@@ -16,23 +17,28 @@ namespace ktradesystem.ViewModels
         public ViewModelPageTradeChart()
         {
             ViewModelPageTestingResult.TestRunsUpdatePages += UpdatePage;
-            Candles.Clear();
-            double bodyWidth = 4;
-            for(int i = 0; i < 20; i++)
-            {
-                Candles.Add(new CandlePageTradeChart { BodyLeft = i * bodyWidth + i, BodyTop = 10, BodyHeight = 20, BodyWidth = bodyWidth, StickLeft = i * bodyWidth + i + Math.Truncate(bodyWidth / 2), StickTop = 4, StickHeight = 30, StickWidth = 1 });
-            }
         }
         private Testing _testing; //результат тестирования
         private TestBatch _testBatch; //тестовая связка
         private TestRun _testRun; //тестовый прогон, для которого строится график
+        private SolidColorBrush _candleStrokeColor = new SolidColorBrush(Color.FromRgb(40, 40, 40)); //цвет линии свечки
+        private SolidColorBrush _risingCandleFillColor = new SolidColorBrush(Color.FromRgb(200, 200, 200)); //цвет заливки растущей свечки
+        private SolidColorBrush _fallingCandleFillColor = new SolidColorBrush(Color.FromRgb(172, 172, 172)); //цвет заливки падающей свечки
+        private SolidColorBrush _limitBuyOrderFillColor = new SolidColorBrush(Color.FromRgb(181, 230, 29)); //цвет заливки лимитной заявки на покупку
+        private SolidColorBrush _limitSellOrderFillColor = new SolidColorBrush(Color.FromRgb(255, 174, 201)); //цвет заливки лимитной заявки на продажу
+        private SolidColorBrush _marketBuyOrderFillColor = new SolidColorBrush(Color.FromRgb(0, 232, 163)); //цвет заливки рыночной заявки на покупку
+        private SolidColorBrush _marketSellOrderFillColor = new SolidColorBrush(Color.FromRgb(255, 55, 190)); //цвет заливки рыночной заявки на продажу
+        private SolidColorBrush _stopBuyOrderFillColor = new SolidColorBrush(Color.FromRgb(255, 222, 0)); //цвет заливки стоп заявки на покупку
+        private SolidColorBrush _stopSellOrderFillColor = new SolidColorBrush(Color.FromRgb(255, 127, 39)); //цвет заливки стоп заявки на продажу
         private int _dataSourceAreasHighlightHeight = 15; //высота линии, на которой написано название источника данных для которого следуют ниже области
         private int _candleMinWidth = 1; //минимальная ширина свечки, в пикселях
         private int _candleMaxWidth = 11; //максимальная ширина свечки, в пикселях
         private int _candleWidth; //текущая ширина свечки
+        private double _partOfOnePriceStepHeightForOrderVerticalLine = 0.667; //часть от высоты одного пункта центы, исходя из которой будет вычитсляться высота вертикальной линии для заявки
         private int _tradeChartScale; //масштаб графика, сколько свечек должно уместиться в видимую область графика
         private int _divideWidth = 10; //ширина разрыва
-        private int _scaleValuesWidth = 40; //ширина правой области со шкалой значений
+        private double _scaleValuesAddingRange = 0.05; //дополнительный диапазон для шкалы значений в каждую из сторон
+        private int _scaleValuesWidth = 27; //ширина правой области со шкалой значений
         private double _tradeChartHiddenSegmentsSize = 1; //размер генерируемой области с сегментами и слева от видимых свечек, относительно размера видимых свечек. Размер отдельно для левых и правых свечек
         private double[] _indicatorAreasHeight = new double[3] { 0.15, 0.225, 0.3 }; //суммарная высота областей для индикаторов, как часть от доступной высоты под области источника данных, номер элемента соответствует количеству индикаторов и показывает суммарную высоту для них, если количество индикаторов больше, берется последний элемент
         private int _timeLineHeight = 24; //высота временной шкалы
@@ -45,12 +51,23 @@ namespace ktradesystem.ViewModels
         public double СanvasTradeChartHeight { get; set; } //высота canvas с графиком
 
         private ObservableCollection<CandlePageTradeChart> _candles = new ObservableCollection<CandlePageTradeChart>();
-        public ObservableCollection<CandlePageTradeChart> Candles
+        public ObservableCollection<CandlePageTradeChart> Candles //свечки, которые будут отображатся на графике
         {
             get { return _candles; }
             set
             {
                 _candles = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<OrderPageTradeChart> _orders = new ObservableCollection<OrderPageTradeChart>();
+        public ObservableCollection<OrderPageTradeChart> Orders //заявки, которые будут отображатся на графике
+        {
+            get { return _orders; }
+            set
+            {
+                _orders = value;
                 OnPropertyChanged();
             }
         }
@@ -121,8 +138,8 @@ namespace ktradesystem.ViewModels
             int dataSourceCount = _testing.DataSourcesCandles.Count; //количество источников данных
             int indicatorAreasCount = TradeChartAreas.Where(j => j.IsDataSource == false).Count(); //количество областей с индикаторами
             int dataSourceAreasAvailableHeight = (int)Math.Truncate((СanvasTradeChartHeight - _timeLineHeight) / dataSourceCount - _dataSourceAreasHighlightHeight); //доступная высота под области одного источника данных
-            int indiactorAreaHeight = indicatorAreasCount > 0 ? (int)Math.Truncate((dataSourceAreasAvailableHeight * (IndicatorsMenuItemPageTradeChart.Count > _indicatorAreasHeight.Length ? _indicatorAreasHeight.Last() : _indicatorAreasHeight[IndicatorsMenuItemPageTradeChart.Count - 1])) / TradeChartAreas.Count - 1) : 0; //высота для областей индикаторов
-            int dataSourceAreaHeight = (int)Math.Truncate((dataSourceAreasAvailableHeight - indiactorAreaHeight * indicatorAreasCount) / (double)dataSourceCount); //высота для областей с источниками данных
+            int indiactorAreaHeight = indicatorAreasCount > 0 ? (int)Math.Truncate((dataSourceAreasAvailableHeight * (indicatorAreasCount > _indicatorAreasHeight.Length ? _indicatorAreasHeight.Last() : _indicatorAreasHeight[indicatorAreasCount - 1])) / TradeChartAreas.Count - 1) : 0; //высота для областей индикаторов
+            int dataSourceAreaHeight = (int)Math.Truncate(dataSourceAreasAvailableHeight - indiactorAreaHeight * (double)indicatorAreasCount); //высота для областей с источниками данных
             foreach(TradeChartAreaPageTradeChart tradeChartAreaPageTradeChart in TradeChartAreas)
             {
                 tradeChartAreaPageTradeChart.AreaHeight = tradeChartAreaPageTradeChart.IsDataSource ? dataSourceAreaHeight : indiactorAreaHeight;
@@ -460,7 +477,7 @@ namespace ktradesystem.ViewModels
 
         private void SetInitialCandleWidth() //устанавливает начальную ширину свечки
         {
-            _candleWidth = 4; //текущая ширина свечки
+            _candleWidth = 5; //текущая ширина свечки
         }
         private void SetInitialSegmentIndex() //устанавливает начальный индекс сегмента
         {
@@ -488,6 +505,7 @@ namespace ktradesystem.ViewModels
         private void BuildTradeChart() //строит график котировок
         {
             Candles.Clear();
+            Orders.Clear();
             int areasWidth = (int)Math.Truncate(СanvasTradeChartWidth - _scaleValuesWidth); //ширина областей
             //находим индекс самого правого сегмента на графике, а так же суммарную ширину сегментов, которые правее текущего сегмента
             int rightSegmentIndex = _segmentIndex + 1;
@@ -521,8 +539,31 @@ namespace ktradesystem.ViewModels
                     for (int k = 0; k < _segments[i].CandleIndexes.Count; k++)
                     {
                         //добавляем свечку
+                        bool isCandleFalling = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].C < _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].O; //свечка падающая или растущая
                         double bodyLeft = areasWidth + totalRightSegmentsWidth - totalSegmentsWidth;
-                        Candles.Insert(0, new CandlePageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, BodyLeft = bodyLeft - _candleWidth, Candle = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex], BodyWidth = _candleWidth, StickLeft = bodyLeft - _candleWidth / 2.0 - 1 / 2.0, StickWidth = 1 });
+                        Candles.Insert(0, new CandlePageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, StrokeColor = _candleStrokeColor, FillColor = isCandleFalling ? _fallingCandleFillColor : _risingCandleFillColor, BodyLeft = bodyLeft - _candleWidth, Candle = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex], BodyWidth = _candleWidth, StickLeft = bodyLeft - _candleWidth / 2.0 - 1 / 2.0, StickWidth = 1 });
+
+                        //добавляем заявки
+                        //проходим по всем заявкам
+                        foreach(OrderIndexPageTradeChart orderIndexPageTradeChart in _segments[i].CandleIndexes[k].OrderIndexes)
+                        {
+                            SolidColorBrush orderFillColor = new SolidColorBrush();
+                            if (_testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].TypeOrder.Id == 1) //лимитная заявка
+                            {
+                                orderFillColor = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].Direction ? _limitBuyOrderFillColor : _limitSellOrderFillColor;
+                            }
+                            else if(_testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].TypeOrder.Id == 2) //рыночная заявка
+                            {
+                                orderFillColor = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].Direction ? _marketBuyOrderFillColor : _marketSellOrderFillColor;
+                            }
+                            else if(_testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].TypeOrder.Id == 3) //стоп заявка
+                            {
+                                orderFillColor = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].Direction ? _stopBuyOrderFillColor : _stopSellOrderFillColor;
+                            }
+                            double verticalLineWidth = _candleWidth >= 2 ? _candleWidth / 2 : 1;
+                            Orders.Insert(0, new OrderPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, FillColor = orderFillColor, Order = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex], IsStart = orderIndexPageTradeChart.IsStart, HorizontalLineLeft = bodyLeft - _candleWidth, HorizontalLineWidth = _candleWidth, VerticalLineLeft = bodyLeft - _candleWidth + verticalLineWidth / 2, VerticalLineWidth = verticalLineWidth });
+                        }
+
                         totalSegmentsWidth += _candleWidth;
                     }
                 }
@@ -540,65 +581,124 @@ namespace ktradesystem.ViewModels
             //проходим по всем источникам данных
             for (int i = 0; i < DataSourcesOrderDisplayPageTradeChart.Count; i++)
             {
-                int currentTop = dataSourceAreasTotalHeight * i; //текущий отступ сверху (с учетом уже отрисованных областей с источниками данных)
-                int dsCandlesIndex = _testing.DataSourcesCandles.FindIndex(a => a.DataSource.Id == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id);
-                //определяем максимальную и минимальную цены для видимых свечек на графике
+                int currentTop = dataSourceAreasTotalHeight * i + _dataSourceAreasHighlightHeight; //текущий отступ сверху (с учетом уже отрисованных областей с источниками данных)
+                List<CandlePageTradeChart> candlesCurrentDs = Candles.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id).ToList(); //список со свечками, которые имеют id текущего источника данных
+                List<OrderPageTradeChart> ordersCurrentDs = Orders.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id).ToList(); //список с заявками, которые имеют id текущего источника данных
+                //определяем максимальную и минимальную цены для видимых свечек и заявок на графике
                 double maxPrice = 0;
                 double minPrice = 0;
                 bool isFirstCandle = true;
                 int candleIndex = 0;
-                bool isBodyLeftLowThanAreasWidth = Candles[candleIndex].BodyLeft <= areasWidth;
-                while (isBodyLeftLowThanAreasWidth && candleIndex < Candles.Count)
+                bool isBodyLeftLowThanAreasWidth = candlesCurrentDs.Count > 0 ? candlesCurrentDs[candleIndex].BodyLeft <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
+                //находим максимальную и минимальную цены для свечек
+                while (isBodyLeftLowThanAreasWidth && candleIndex < candlesCurrentDs.Count)
                 {
-                    if(Candles[candleIndex].BodyLeft + Candles[candleIndex].BodyWidth > 0) //правая координата свечки положительная, значит эта свечка в видимой области
+                    if(candlesCurrentDs[candleIndex].BodyLeft + candlesCurrentDs[candleIndex].BodyWidth > 0) //правая координата свечки положительная, значит эта свечка в видимой области
                     {
                         if (isFirstCandle)
                         {
-                            maxPrice = Candles[candleIndex].Candle.H;
-                            minPrice = Candles[candleIndex].Candle.L;
+                            maxPrice = candlesCurrentDs[candleIndex].Candle.H;
+                            minPrice = candlesCurrentDs[candleIndex].Candle.L;
                             isFirstCandle = false;
                         }
                         else
                         {
-                            maxPrice = Candles[candleIndex].Candle.H > maxPrice ? Candles[candleIndex].Candle.H : maxPrice;
-                            minPrice = Candles[candleIndex].Candle.L < minPrice ? Candles[candleIndex].Candle.L : minPrice;
+                            maxPrice = candlesCurrentDs[candleIndex].Candle.H > maxPrice ? candlesCurrentDs[candleIndex].Candle.H : maxPrice;
+                            minPrice = candlesCurrentDs[candleIndex].Candle.L < minPrice ? candlesCurrentDs[candleIndex].Candle.L : minPrice;
                         }
                     }
                     candleIndex++;
-                    if(Candles[candleIndex].BodyLeft > areasWidth)
+                    if(candleIndex < candlesCurrentDs.Count)
                     {
-                        isBodyLeftLowThanAreasWidth = false;
+                        if (candlesCurrentDs[candleIndex].BodyLeft > areasWidth)
+                        {
+                            isBodyLeftLowThanAreasWidth = false;
+                        }
                     }
                 }
+                int orderIndex = 0;
+                bool isHorizontalLineLeftLowThanAreasWidth = ordersCurrentDs.Count > 0 ? ordersCurrentDs[orderIndex].HorizontalLineLeft <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
+                //так же ищем максимальную и минимальную цены в заявках
+                while (isHorizontalLineLeftLowThanAreasWidth && orderIndex < ordersCurrentDs.Count)
+                {
+                    if(ordersCurrentDs[orderIndex].HorizontalLineLeft + ordersCurrentDs[orderIndex].HorizontalLineWidth > 0) //правая координата заявки положительная, значит эта заявка в видимой области
+                    {
+                        maxPrice = ordersCurrentDs[orderIndex].Order.Price > maxPrice ? ordersCurrentDs[orderIndex].Order.Price : maxPrice;
+                        minPrice = ordersCurrentDs[orderIndex].Order.Price < minPrice ? ordersCurrentDs[orderIndex].Order.Price : minPrice;
+                    }
+                    orderIndex++;
+                    if(orderIndex < ordersCurrentDs.Count)
+                    {
+                        if (ordersCurrentDs[orderIndex].HorizontalLineLeft > areasWidth)
+                        {
+                            isHorizontalLineLeftLowThanAreasWidth = false;
+                        }
+                    }
+                }
+                double addingRange = (maxPrice - minPrice) * _scaleValuesAddingRange; //дополнительный диапазон. Чтобы свечки графика не касались верхнего и нижнего краев области
+                maxPrice += addingRange;
+                minPrice -= addingRange;
                 double priceRange = maxPrice - minPrice;
                 //устанавливаем отступ сверху и высоту для видимых свечек
                 candleIndex = 0;
-                isBodyLeftLowThanAreasWidth = Candles[candleIndex].BodyLeft <= areasWidth;
-                while (isBodyLeftLowThanAreasWidth && candleIndex < Candles.Count)
+                isBodyLeftLowThanAreasWidth = candlesCurrentDs.Count > 0 ? candlesCurrentDs[candleIndex].BodyLeft <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
+                while (isBodyLeftLowThanAreasWidth && candleIndex < candlesCurrentDs.Count)
                 {
-                    if (Candles[candleIndex].BodyLeft + Candles[candleIndex].BodyWidth > 0) //правая координата свечки положительная, значит эта свечка в видимой области
+                    if (candlesCurrentDs[candleIndex].BodyLeft + candlesCurrentDs[candleIndex].BodyWidth > 0) //правая координата свечки положительная, значит эта свечка в видимой области
                     {
-                        double highBodyPrice = Candles[candleIndex].Candle.O > Candles[candleIndex].Candle.C ? Candles[candleIndex].Candle.O : Candles[candleIndex].Candle.C; //цена верхней границы тела свечки
-                        Candles[candleIndex].BodyTop = Math.Round(TradeChartAreas[0].AreaHeight * (1 - (highBodyPrice - minPrice) / priceRange)) + currentTop;
-                        double lowBodyPrice = Candles[candleIndex].Candle.O < Candles[candleIndex].Candle.C ? Candles[candleIndex].Candle.O : Candles[candleIndex].Candle.C; //цена нижней границы тела свечки
-                        Candles[candleIndex].BodyHeight = Math.Round(TradeChartAreas[0].AreaHeight * ((highBodyPrice - lowBodyPrice) / priceRange)) + currentTop;
-                        if(Candles[candleIndex].BodyHeight < 0.1) //если высота тела близка к 0, устанавливаем её в 1,а отступ сверху уменьшаем на 0,5
+                        double highBodyPrice = candlesCurrentDs[candleIndex].Candle.O > candlesCurrentDs[candleIndex].Candle.C ? candlesCurrentDs[candleIndex].Candle.O : candlesCurrentDs[candleIndex].Candle.C; //цена верхней границы тела свечки
+                        candlesCurrentDs[candleIndex].BodyTop = /*Math.Round*/(TradeChartAreas[0].AreaHeight * (1 - (highBodyPrice - minPrice) / priceRange)) + currentTop;
+                        double lowBodyPrice = candlesCurrentDs[candleIndex].Candle.O < candlesCurrentDs[candleIndex].Candle.C ? candlesCurrentDs[candleIndex].Candle.O : candlesCurrentDs[candleIndex].Candle.C; //цена нижней границы тела свечки
+                        candlesCurrentDs[candleIndex].BodyHeight = /*Math.Round*/(TradeChartAreas[0].AreaHeight * ((highBodyPrice - lowBodyPrice) / priceRange));
+                        if(candlesCurrentDs[candleIndex].BodyHeight < 0.1) //если высота тела близка к 0, устанавливаем её в 1,а отступ сверху уменьшаем на 0,5
                         {
-                            Candles[candleIndex].BodyTop -= 0.5;
-                            Candles[candleIndex].BodyHeight = 1;
+                            candlesCurrentDs[candleIndex].BodyTop -= 0.5;
+                            candlesCurrentDs[candleIndex].BodyHeight = 1;
                         }
-                        Candles[candleIndex].StickTop = Math.Round(TradeChartAreas[0].AreaHeight * (1 - (Candles[candleIndex].Candle.H - minPrice) / priceRange)) + currentTop;
-                        Candles[candleIndex].StickHeight = Math.Round(TradeChartAreas[0].AreaHeight * ((Candles[candleIndex].Candle.H - Candles[candleIndex].Candle.L) / priceRange)) + currentTop;
-                        if (Candles[candleIndex].StickHeight < 0.1) //если высота линии близка к 0, устанавливаем её в 1,а отступ сверху уменьшаем на 0,5
+                        candlesCurrentDs[candleIndex].StickTop = /*Math.Round*/(TradeChartAreas[0].AreaHeight * (1 - (candlesCurrentDs[candleIndex].Candle.H - minPrice) / priceRange)) + currentTop;
+                        candlesCurrentDs[candleIndex].StickHeight = /*Math.Round*/(TradeChartAreas[0].AreaHeight * ((candlesCurrentDs[candleIndex].Candle.H - candlesCurrentDs[candleIndex].Candle.L) / priceRange));
+                        if (candlesCurrentDs[candleIndex].StickHeight < 0.1) //если высота линии близка к 0, устанавливаем её в 1,а отступ сверху уменьшаем на 0,5
                         {
-                            Candles[candleIndex].StickTop -= 0.5;
-                            Candles[candleIndex].StickHeight = 1;
+                            candlesCurrentDs[candleIndex].StickTop -= 0.5;
+                            candlesCurrentDs[candleIndex].StickHeight = 1;
                         }
                     }
                     candleIndex++;
-                    if (Candles[candleIndex].BodyLeft > areasWidth)
+                    if (candleIndex < candlesCurrentDs.Count)
                     {
-                        isBodyLeftLowThanAreasWidth = false;
+                        if (candlesCurrentDs[candleIndex].BodyLeft > areasWidth)
+                        {
+                            isBodyLeftLowThanAreasWidth = false;
+                        }
+                    }
+                }
+
+                //устанавливаем отступ сверху и высоту для видимых заявок
+                orderIndex = 0;
+                isHorizontalLineLeftLowThanAreasWidth = ordersCurrentDs.Count > 0 ? ordersCurrentDs[orderIndex].HorizontalLineLeft <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
+                double onePriceStepHeight = TradeChartAreas[0].AreaHeight / (priceRange / DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.PriceStep); //высота одного пункта цены
+                while (isHorizontalLineLeftLowThanAreasWidth && orderIndex < ordersCurrentDs.Count)
+                {
+                    if (ordersCurrentDs[orderIndex].HorizontalLineLeft + ordersCurrentDs[orderIndex].HorizontalLineWidth > 0) //правая координата заявки положительная, значит эта заявка в видимой области
+                    {
+                        double horizontalLineThickness = _candleWidth > 1 ? 2 : 1;
+                        ordersCurrentDs[orderIndex].HorizontalLineTop = /*Math.Round*/(TradeChartAreas[0].AreaHeight * (1 - (ordersCurrentDs[orderIndex].Order.Price - minPrice) / priceRange) - horizontalLineThickness / 2) + currentTop;
+                        ordersCurrentDs[orderIndex].HorizontalLineHeight = horizontalLineThickness;
+                        if (ordersCurrentDs[orderIndex].IsStart) //если заявка начинается на этом сегменте, рисуем вертикальную линию
+                        {
+                            ordersCurrentDs[orderIndex].VerticalLineHeight = _partOfOnePriceStepHeightForOrderVerticalLine * onePriceStepHeight;
+                            ordersCurrentDs[orderIndex].VerticalLineHeight = ordersCurrentDs[orderIndex].VerticalLineHeight < horizontalLineThickness + 2 ? horizontalLineThickness + 2 : ordersCurrentDs[orderIndex].VerticalLineHeight; //если высота вертикальной линии меньше чем толщина горизонтальной линии + 2, устанавливаем на такую толщину
+                            ordersCurrentDs[orderIndex].VerticalLineTop = ordersCurrentDs[orderIndex].HorizontalLineTop - ordersCurrentDs[orderIndex].VerticalLineHeight / 2;
+                            ordersCurrentDs[orderIndex].VerticalLineTop = ordersCurrentDs[orderIndex].HorizontalLineTop - (ordersCurrentDs[orderIndex].VerticalLineHeight - horizontalLineThickness) / 2;
+                        }
+                    }
+                    orderIndex++;
+                    if (orderIndex < ordersCurrentDs.Count)
+                    {
+                        if (ordersCurrentDs[orderIndex].HorizontalLineLeft > areasWidth)
+                        {
+                            isHorizontalLineLeftLowThanAreasWidth = false;
+                        }
                     }
                 }
             }
@@ -627,11 +727,11 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    foreach(CandlePageTradeChart candle in Candles)
-                    {
-                        candle.BodyLeft -= 1;
-                        candle.StickLeft -= 1;
-                    }
+                    _segmentIndex = 10560;
+                    //_segmentIndex += 500;
+                    _segmentIndex = _segmentIndex >= _segments.Count ? _segments.Count - 1 : _segmentIndex;
+                    BuildTradeChart(); //строим график котировок
+                    UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
                 }, (obj) => true);
             }
         }

@@ -5,17 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using ktradesystem.Models;
-using System.Collections.ObjectModel;
-using System.Windows;
 
 namespace ktradesystem.ViewModels
 {
-    class DealPageTradeChart : ViewModelBase
+    class IndicatorPolylinePageTradeChart : ViewModelBase
     {
         public int IdDataSource { get; set; }
+        public int IdIndicator { get; set; }
         public SolidColorBrush StrokeColor { get; set; } //цвет линии
-        public SolidColorBrush FillColor { get; set; } //цвет заливки
-        public Deal Deal { get; set; }
         private double _left;
         public double Left //отступ слева
         {
@@ -36,33 +33,23 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        private int _triangleWidth;
-        public int TriangleWidth //ширина треугольника
-        {
-            get { return _triangleWidth; }
-            set
-            {
-                _triangleWidth = value;
-                OnPropertyChanged();
-            }
-        }
-        private int _triangleHeight;
-        public int TriangleHeight //высота треугольника
-        {
-            get { return _triangleHeight; }
-            set
-            {
-                _triangleHeight = value;
-                OnPropertyChanged();
-            }
-        }
         private PointCollection _points;
-        public PointCollection Points //точки по которым будет строиться треугольник
+        public PointCollection Points //точки линии
         {
             get { return _points; }
             set
             {
                 _points = value;
+                OnPropertyChanged();
+            }
+        }
+        private List<double> _pointsPrices;
+        public List<double> PointsPrices //цены, соответствующие точкам линии
+        {
+            get { return _pointsPrices; }
+            set
+            {
+                _pointsPrices = value;
                 OnPropertyChanged();
             }
         }

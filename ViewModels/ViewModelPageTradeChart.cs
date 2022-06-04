@@ -38,7 +38,7 @@ namespace ktradesystem.ViewModels
         private int _dataSourceAreasHighlightHeight = 15; //высота линии, на которой написано название источника данных для которого следуют ниже области
         private int _candleMinWidth = 1; //минимальная ширина свечки, в пикселях
         private int _candleMaxWidth = 11; //максимальная ширина свечки, в пикселях
-        private int _initialCandleWidth = 11; //начальная ширина свечки
+        private int _initialCandleWidth = 3; //начальная ширина свечки
         private int _candleWidth; //текущая ширина свечки
         private double _partOfOnePriceStepHeightForOrderVerticalLine = 0.667; //часть от высоты одного пункта центы, исходя из которой будет вычитсляться высота вертикальной линии для заявки
         private int _tradeChartScale; //масштаб графика, сколько свечек должно уместиться в видимую область графика
@@ -63,6 +63,17 @@ namespace ktradesystem.ViewModels
             set
             {
                 _candles = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<IndicatorPolylinePageTradeChart> _indicatorsPolylines = new ObservableCollection<IndicatorPolylinePageTradeChart>();
+        public ObservableCollection<IndicatorPolylinePageTradeChart> IndicatorsPolylines //линии индикаторов, которые будут отображатся на графике
+        {
+            get { return _indicatorsPolylines; }
+            set
+            {
+                _indicatorsPolylines = value;
                 OnPropertyChanged();
             }
         }
@@ -551,6 +562,16 @@ namespace ktradesystem.ViewModels
             Candles.Clear();
             Orders.Clear();
             Deals.Clear();
+            IndicatorsPolylines.Clear();
+            //формируем индикаторы для каждого источника данных
+            for(int i = 0; i < _testing.DataSourcesCandles.Count; i++)
+            {
+                foreach (AlgorithmIndicatorValues algorithmIndicatorValues in _testing.DataSourcesCandles[i].AlgorithmIndicatorsValues)
+                {
+                    IndicatorsPolylines.Add(new IndicatorPolylinePageTradeChart { IdDataSource = _testing.DataSourcesCandles[i].DataSource.Id, IdIndicator = algorithmIndicatorValues.AlgorithmIndicator.IdIndicator, Left = 0, Points = new PointCollection(), PointsPrices = new List<double>() });
+                }
+            }
+
             int areasWidth = (int)Math.Truncate(СanvasTradeChartWidth - _scaleValuesWidth); //ширина областей
             //находим индекс самого правого сегмента на графике, а так же суммарную ширину сегментов, которые правее текущего сегмента
             int rightSegmentIndex = _segmentIndex + 1;
@@ -632,6 +653,19 @@ namespace ktradesystem.ViewModels
                             }
                             Deals.Insert(0, new DealPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, StrokeColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealStrokeColor : _sellDealStrokeColor, FillColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealFillColor : _sellDealFillColor, Deal = _testRun.Account.AllDeals[dealIndex], Left = bodyLeft - triangleWidth, TriangleWidth = triangleWidth, TriangleHeight = triangleHeight });
                         }
+
+                        //добавляем точки со значениями для всех индикаторов текущего источника данных
+                        //проходим по всем индикаторам
+                        foreach(AlgorithmIndicatorValues algorithmIndicatorValues in _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].AlgorithmIndicatorsValues)
+                        {
+                            if (algorithmIndicatorValues.Values[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].IsNotOverIndex) //если не было превышения индекса при рассчете данного значения индикатора
+                            {
+                                IndicatorPolylinePageTradeChart indicatorPolyline = IndicatorsPolylines.Where(a => a.IdDataSource == _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id && a.IdIndicator == algorithmIndicatorValues.AlgorithmIndicator.IdIndicator).First(); //индикатор с текущим источником данных
+                                indicatorPolyline.Points.Insert(0, new Point(bodyLeft - _candleWidth / 2, 0)); //добавляем точку для графика
+                                indicatorPolyline.PointsPrices.Insert(0, algorithmIndicatorValues.Values[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].Value); //добавляем значение цены для данной точки, на основании которой будет вычисляться координата Y точки
+                            }
+                        }
+
                         totalSegmentsWidth += _candleWidth;
                     }
                 }
@@ -723,6 +757,30 @@ namespace ktradesystem.ViewModels
                         }
                     }
                 }
+                //так же ищем максимальную и минимальную цены в индикаторах главной области
+                //проходим по всем индикаторам главной области
+                foreach(IndicatorMenuItemPageTradeChart indicatorMenuItemPageTradeChart in IndicatorsMenuItemPageTradeChart.Where(a => a.SelectedTradeChartArea.IsDataSource))
+                {
+                    IndicatorPolylinePageTradeChart indicatorPolyline = IndicatorsPolylines.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id && a.IdIndicator == indicatorMenuItemPageTradeChart.AlgorithmIndicator.IdIndicator).First(); //текущий индикатор в IndicatorsMenuItemPageTradeChart с текущим источником данных
+                    int pointIndex = 0;
+                    bool isXLowThanAreasWidth = indicatorPolyline.Points.Count > 0 ? indicatorPolyline.Points[pointIndex].X <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
+                    while (isXLowThanAreasWidth && pointIndex < indicatorPolyline.Points.Count)
+                    {
+                        if (indicatorPolyline.Points[pointIndex].X > 0) //координата точки положительная, значит она в видимой области
+                        {
+                            maxPrice = indicatorPolyline.PointsPrices[pointIndex] > maxPrice ? indicatorPolyline.PointsPrices[pointIndex] : maxPrice;
+                            minPrice = indicatorPolyline.PointsPrices[pointIndex] < minPrice ? indicatorPolyline.PointsPrices[pointIndex] : minPrice;
+                        }
+                        pointIndex++;
+                        if (pointIndex < indicatorPolyline.Points.Count)
+                        {
+                            if (indicatorPolyline.Points[pointIndex].X > areasWidth)
+                            {
+                                isXLowThanAreasWidth = false;
+                            }
+                        }
+                    }
+                }
                 double addingRange = (maxPrice - minPrice) * _scaleValuesAddingRange; //дополнительный диапазон. Чтобы свечки графика не касались верхнего и нижнего краев области
                 maxPrice += addingRange;
                 minPrice -= addingRange;
@@ -799,7 +857,7 @@ namespace ktradesystem.ViewModels
                     {
                         int verticalOffset = dealsCurrentDs[dealIndex].Deal.Direction ? 0 : -dealsCurrentDs[dealIndex].TriangleHeight; //вертикальное смещение, для сделки на покупку отсутствует, т.к. верхний край треугольника сделки на уровне цены, для продажи равняется высоте треугольника, т.к. уровень цены находится на нижней части треугольника
                         dealsCurrentDs[dealIndex].Top = (TradeChartAreas[0].AreaHeight * (1 - (dealsCurrentDs[dealIndex].Deal.Price - minPrice) / priceRange) + verticalOffset) + currentTop;
-                        dealsCurrentDs[dealIndex].Points.Clear();
+                        dealsCurrentDs[dealIndex].Points = new PointCollection();
                         if (dealsCurrentDs[dealIndex].Deal.Direction) //сделка на покупку
                         {
                             dealsCurrentDs[dealIndex].Points.Add(new Point(0, dealsCurrentDs[dealIndex].TriangleHeight - 1)); //левая координата

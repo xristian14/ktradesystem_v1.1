@@ -175,6 +175,7 @@
     <Compile Include="ViewModels\IndicatorMenuItemPageTradeChart.cs" />
     <Compile Include="ViewModels\IndicatorParameterRangeView.cs" />
     <Compile Include="ViewModels\IndicatorParameterTemplateView.cs" />
+    <Compile Include="ViewModels\IndicatorPolylinePageTradeChart.cs" />
     <Compile Include="ViewModels\LevelPageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\ObservableCollectionWithItemNotify.cs" />
     <Compile Include="ViewModels\OrderIndexPageTradeChart.cs" />

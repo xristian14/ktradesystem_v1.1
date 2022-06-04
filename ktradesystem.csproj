@@ -167,6 +167,7 @@
     <Compile Include="ViewModels\DataSourceOrderDisplayPageTradeChart.cs" />
     <Compile Include="ViewModels\DataSourcesForAddingDsGroupView.cs" />
     <Compile Include="ViewModels\DataSourceView.cs" />
+    <Compile Include="ViewModels\DealPageTradeChart.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
     <Compile Include="ViewModels\EvaluationCriteriaPageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\EvaluationCriteriaView.cs" />

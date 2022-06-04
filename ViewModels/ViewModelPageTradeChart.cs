@@ -31,9 +31,14 @@ namespace ktradesystem.ViewModels
         private SolidColorBrush _marketSellOrderFillColor = new SolidColorBrush(Color.FromRgb(255, 55, 190)); //цвет заливки рыночной заявки на продажу
         private SolidColorBrush _stopBuyOrderFillColor = new SolidColorBrush(Color.FromRgb(255, 222, 0)); //цвет заливки стоп заявки на покупку
         private SolidColorBrush _stopSellOrderFillColor = new SolidColorBrush(Color.FromRgb(255, 127, 39)); //цвет заливки стоп заявки на продажу
+        private SolidColorBrush _buyDealStrokeColor = new SolidColorBrush(Color.FromRgb(0, 196, 0)); //цвет линии сделки на покупку
+        private SolidColorBrush _buyDealFillColor = new SolidColorBrush(Color.FromRgb(0, 255, 0)); //цвет заливки сделки на покупку
+        private SolidColorBrush _sellDealStrokeColor = new SolidColorBrush(Color.FromRgb(196, 0, 0)); //цвет линии сделки на продажу
+        private SolidColorBrush _sellDealFillColor = new SolidColorBrush(Color.FromRgb(255, 0, 0)); //цвет заливки сделки на продажу
         private int _dataSourceAreasHighlightHeight = 15; //высота линии, на которой написано название источника данных для которого следуют ниже области
         private int _candleMinWidth = 1; //минимальная ширина свечки, в пикселях
         private int _candleMaxWidth = 11; //максимальная ширина свечки, в пикселях
+        private int _initialCandleWidth = 11; //начальная ширина свечки
         private int _candleWidth; //текущая ширина свечки
         private double _partOfOnePriceStepHeightForOrderVerticalLine = 0.667; //часть от высоты одного пункта центы, исходя из которой будет вычитсляться высота вертикальной линии для заявки
         private int _tradeChartScale; //масштаб графика, сколько свечек должно уместиться в видимую область графика
@@ -69,6 +74,18 @@ namespace ktradesystem.ViewModels
             set
             {
                 _orders = value;
+                OnPropertyChanged();
+            }
+
+        }
+
+        private ObservableCollection<DealPageTradeChart> _deals = new ObservableCollection<DealPageTradeChart>();
+        public ObservableCollection<DealPageTradeChart> Deals //сделки, которые будут отображатся на графике
+        {
+            get { return _deals; }
+            set
+            {
+                _deals = value;
                 OnPropertyChanged();
             }
         }
@@ -504,7 +521,7 @@ namespace ktradesystem.ViewModels
 
         private void SetInitialCandleWidth() //устанавливает начальную ширину свечки
         {
-            _candleWidth = 3; //текущая ширина свечки
+            _candleWidth = _initialCandleWidth; //текущая ширина свечки
         }
         private void SetInitialSegmentIndex() //устанавливает начальный индекс сегмента
         {
@@ -533,6 +550,7 @@ namespace ktradesystem.ViewModels
         {
             Candles.Clear();
             Orders.Clear();
+            Deals.Clear();
             int areasWidth = (int)Math.Truncate(СanvasTradeChartWidth - _scaleValuesWidth); //ширина областей
             //находим индекс самого правого сегмента на графике, а так же суммарную ширину сегментов, которые правее текущего сегмента
             int rightSegmentIndex = _segmentIndex + 1;
@@ -574,7 +592,7 @@ namespace ktradesystem.ViewModels
                         //проходим по всем заявкам
                         foreach(OrderIndexPageTradeChart orderIndexPageTradeChart in _segments[i].CandleIndexes[k].OrderIndexes)
                         {
-                            SolidColorBrush orderFillColor = new SolidColorBrush();
+                            SolidColorBrush orderFillColor = _limitBuyOrderFillColor;
                             if (_testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].TypeOrder.Id == 1) //лимитная заявка
                             {
                                 orderFillColor = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].Direction ? _limitBuyOrderFillColor : _limitSellOrderFillColor;
@@ -591,6 +609,29 @@ namespace ktradesystem.ViewModels
                             Orders.Insert(0, new OrderPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, FillColor = orderFillColor, Order = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex], IsStart = orderIndexPageTradeChart.IsStart, HorizontalLineLeft = bodyLeft - _candleWidth, HorizontalLineWidth = _candleWidth, VerticalLineLeft = bodyLeft - _candleWidth + verticalLineWidth / 2, VerticalLineWidth = verticalLineWidth });
                         }
 
+                        //добавляем сделки
+                        //проходим по всем сделкам
+                        foreach (int dealIndex in _segments[i].CandleIndexes[k].DealIndexes)
+                        {
+                            int triangleWidth = 0;
+                            int triangleHeight = 0;
+                            if(_candleWidth < 3)
+                            {
+                                triangleWidth = 7;
+                                triangleHeight = 4;
+                            }
+                            else if(_candleWidth < 11)
+                            {
+                                triangleWidth = 9;
+                                triangleHeight = 5;
+                            }
+                            else
+                            {
+                                triangleWidth = 11;
+                                triangleHeight = 6;
+                            }
+                            Deals.Insert(0, new DealPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, StrokeColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealStrokeColor : _sellDealStrokeColor, FillColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealFillColor : _sellDealFillColor, Deal = _testRun.Account.AllDeals[dealIndex], Left = bodyLeft - triangleWidth, TriangleWidth = triangleWidth, TriangleHeight = triangleHeight });
+                        }
                         totalSegmentsWidth += _candleWidth;
                     }
                 }
@@ -611,6 +652,7 @@ namespace ktradesystem.ViewModels
                 int currentTop = dataSourceAreasTotalHeight * i + _dataSourceAreasHighlightHeight; //текущий отступ сверху (с учетом уже отрисованных областей с источниками данных)
                 List<CandlePageTradeChart> candlesCurrentDs = Candles.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id).ToList(); //список со свечками, которые имеют id текущего источника данных
                 List<OrderPageTradeChart> ordersCurrentDs = Orders.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id).ToList(); //список с заявками, которые имеют id текущего источника данных
+                List<DealPageTradeChart> dealsCurrentDs = Deals.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id).ToList(); //список с сделками, которые имеют id текущего источника данных
                 //определяем максимальную и минимальную цены для видимых свечек и заявок на графике
                 double maxPrice = 0;
                 double minPrice = 0;
@@ -643,9 +685,9 @@ namespace ktradesystem.ViewModels
                         }
                     }
                 }
+                //так же ищем максимальную и минимальную цены в заявках
                 int orderIndex = 0;
                 bool isHorizontalLineLeftLowThanAreasWidth = ordersCurrentDs.Count > 0 ? ordersCurrentDs[orderIndex].HorizontalLineLeft <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
-                //так же ищем максимальную и минимальную цены в заявках
                 while (isHorizontalLineLeftLowThanAreasWidth && orderIndex < ordersCurrentDs.Count)
                 {
                     if(ordersCurrentDs[orderIndex].HorizontalLineLeft + ordersCurrentDs[orderIndex].HorizontalLineWidth > 0) //правая координата заявки положительная, значит эта заявка в видимой области
@@ -659,6 +701,25 @@ namespace ktradesystem.ViewModels
                         if (ordersCurrentDs[orderIndex].HorizontalLineLeft > areasWidth)
                         {
                             isHorizontalLineLeftLowThanAreasWidth = false;
+                        }
+                    }
+                }
+                //так же ищем максимальную и минимальную цены в сделках
+                int dealIndex = 0;
+                bool isDealLeftLowThanAreasWidth = dealsCurrentDs.Count > 0 ? dealsCurrentDs[dealIndex].Left <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
+                while (isDealLeftLowThanAreasWidth && dealIndex < dealsCurrentDs.Count)
+                {
+                    if(dealsCurrentDs[dealIndex].Left + dealsCurrentDs[dealIndex].TriangleWidth > 0) //правая координата заявки положительная, значит эта заявка в видимой области
+                    {
+                        maxPrice = dealsCurrentDs[dealIndex].Deal.Price > maxPrice ? dealsCurrentDs[dealIndex].Deal.Price : maxPrice;
+                        minPrice = dealsCurrentDs[dealIndex].Deal.Price < minPrice ? dealsCurrentDs[dealIndex].Deal.Price : minPrice;
+                    }
+                    dealIndex++;
+                    if(dealIndex < dealsCurrentDs.Count)
+                    {
+                        if (dealsCurrentDs[dealIndex].Left > areasWidth)
+                        {
+                            isDealLeftLowThanAreasWidth = false;
                         }
                     }
                 }
@@ -725,6 +786,39 @@ namespace ktradesystem.ViewModels
                         if (ordersCurrentDs[orderIndex].HorizontalLineLeft > areasWidth)
                         {
                             isHorizontalLineLeftLowThanAreasWidth = false;
+                        }
+                    }
+                }
+
+                //устанавливаем отступ сверху и высоту для видимых сделок
+                dealIndex = 0;
+                isDealLeftLowThanAreasWidth = dealsCurrentDs.Count > 0 ? dealsCurrentDs[dealIndex].Left <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
+                while (isDealLeftLowThanAreasWidth && dealIndex < dealsCurrentDs.Count)
+                {
+                    if (dealsCurrentDs[dealIndex].Left + dealsCurrentDs[dealIndex].TriangleWidth > 0) //правая координата заявки положительная, значит эта заявка в видимой области
+                    {
+                        int verticalOffset = dealsCurrentDs[dealIndex].Deal.Direction ? 0 : -dealsCurrentDs[dealIndex].TriangleHeight; //вертикальное смещение, для сделки на покупку отсутствует, т.к. верхний край треугольника сделки на уровне цены, для продажи равняется высоте треугольника, т.к. уровень цены находится на нижней части треугольника
+                        dealsCurrentDs[dealIndex].Top = (TradeChartAreas[0].AreaHeight * (1 - (dealsCurrentDs[dealIndex].Deal.Price - minPrice) / priceRange) + verticalOffset) + currentTop;
+                        dealsCurrentDs[dealIndex].Points.Clear();
+                        if (dealsCurrentDs[dealIndex].Deal.Direction) //сделка на покупку
+                        {
+                            dealsCurrentDs[dealIndex].Points.Add(new Point(0, dealsCurrentDs[dealIndex].TriangleHeight - 1)); //левая координата
+                            dealsCurrentDs[dealIndex].Points.Add(new Point(Math.Truncate(dealsCurrentDs[dealIndex].TriangleWidth / 2.0), 0)); //вершина треугольника
+                            dealsCurrentDs[dealIndex].Points.Add(new Point(dealsCurrentDs[dealIndex].TriangleWidth - 1, dealsCurrentDs[dealIndex].TriangleHeight - 1)); //правая координата
+                        }
+                        else //сделка на продажу
+                        {
+                            dealsCurrentDs[dealIndex].Points.Add(new Point(0, 0)); //левая координата
+                            dealsCurrentDs[dealIndex].Points.Add(new Point(Math.Truncate(dealsCurrentDs[dealIndex].TriangleWidth / 2.0), dealsCurrentDs[dealIndex].TriangleHeight - 1)); //вершина треугольника
+                            dealsCurrentDs[dealIndex].Points.Add(new Point(dealsCurrentDs[dealIndex].TriangleWidth - 1, 0)); //правая координата
+                        }
+                    }
+                    dealIndex++;
+                    if (dealIndex < dealsCurrentDs.Count)
+                    {
+                        if (dealsCurrentDs[dealIndex].Left > areasWidth)
+                        {
+                            isDealLeftLowThanAreasWidth = false;
                         }
                     }
                 }

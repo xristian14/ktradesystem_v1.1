@@ -15,9 +15,11 @@ namespace ktradesystem.Models
         public int IdDataSource { get; set; }
         [NonSerialized]
         public DataSource DataSource;
+
         public int OrderNumber { get; set; } //номер заявки
         [NonSerialized]
         public Order Order;
+        public bool Direction { get; set; } //true - купить, false - продать
         public double Price { get; set; }
         public decimal Count { get; set; }
         public DateTime DateTime { get; set; }

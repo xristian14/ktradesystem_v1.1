@@ -181,6 +181,7 @@
     <Compile Include="ViewModels\OrderIndexPageTradeChart.cs" />
     <Compile Include="ViewModels\OrderPageTradeChart.cs" />
     <Compile Include="ViewModels\PageItem.cs" />
+    <Compile Include="ViewModels\ScaleValuePageTradeChart.cs" />
     <Compile Include="ViewModels\SectionPageTradeChart.cs" />
     <Compile Include="ViewModels\SegmentDealIndexPageTradeChart.cs" />
     <Compile Include="ViewModels\SegmentOrderIndexPageTradeChart.cs" />

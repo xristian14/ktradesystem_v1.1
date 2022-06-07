@@ -23,8 +23,9 @@ namespace ktradesystem.ViewModels
         private TestBatch _testBatch; //тестовая связка
         private TestRun _testRun; //тестовый прогон, для которого строится график
         private SolidColorBrush _candleStrokeColor = new SolidColorBrush(Color.FromRgb(40, 40, 40)); //цвет линии свечки
-        private SolidColorBrush _risingCandleFillColor = new SolidColorBrush(Color.FromRgb(200, 200, 200)); //цвет заливки растущей свечки
-        private SolidColorBrush _fallingCandleFillColor = new SolidColorBrush(Color.FromRgb(172, 172, 172)); //цвет заливки падающей свечки
+        private SolidColorBrush _risingCandleFillColor = new SolidColorBrush(Color.FromRgb(230, 230, 230)); //цвет заливки растущей свечки
+        private SolidColorBrush _fallingCandleFillColor = new SolidColorBrush(Color.FromRgb(200, 200, 200)); //цвет заливки падающей свечки
+        private SolidColorBrush _indicatorStrokeColor = new SolidColorBrush(Color.FromRgb(128, 128, 128)); //цвет линии индикаторов
         private SolidColorBrush _limitBuyOrderFillColor = new SolidColorBrush(Color.FromRgb(181, 230, 29)); //цвет заливки лимитной заявки на покупку
         private SolidColorBrush _limitSellOrderFillColor = new SolidColorBrush(Color.FromRgb(255, 174, 201)); //цвет заливки лимитной заявки на продажу
         private SolidColorBrush _marketBuyOrderFillColor = new SolidColorBrush(Color.FromRgb(0, 232, 163)); //цвет заливки рыночной заявки на покупку
@@ -35,17 +36,23 @@ namespace ktradesystem.ViewModels
         private SolidColorBrush _buyDealFillColor = new SolidColorBrush(Color.FromRgb(0, 255, 0)); //цвет заливки сделки на покупку
         private SolidColorBrush _sellDealStrokeColor = new SolidColorBrush(Color.FromRgb(196, 0, 0)); //цвет линии сделки на продажу
         private SolidColorBrush _sellDealFillColor = new SolidColorBrush(Color.FromRgb(255, 0, 0)); //цвет заливки сделки на продажу
+        private SolidColorBrush _scaleValueStrokeLineColor = new SolidColorBrush(Color.FromRgb(210, 210, 210)); //цвет линии шкалы значения
+        private SolidColorBrush _scaleValueTextColor = new SolidColorBrush(Color.FromRgb(80, 80, 80)); //цвет текста шкалы значения
         private int _dataSourceAreasHighlightHeight = 15; //высота линии, на которой написано название источника данных для которого следуют ниже области
         private int _candleMinWidth = 1; //минимальная ширина свечки, в пикселях
-        private int _candleMaxWidth = 11; //максимальная ширина свечки, в пикселях
+        private int _candleMaxWidth = 31; //максимальная ширина свечки, в пикселях
         private int _initialCandleWidth = 3; //начальная ширина свечки
         private int _candleWidth; //текущая ширина свечки
         private double _partOfOnePriceStepHeightForOrderVerticalLine = 0.667; //часть от высоты одного пункта центы, исходя из которой будет вычитсляться высота вертикальной линии для заявки
         private int _tradeChartScale; //масштаб графика, сколько свечек должно уместиться в видимую область графика
         private int _divideWidth = 10; //ширина разрыва
         private double _scaleValuesAddingRange = 0.05; //дополнительный диапазон для шкалы значений в каждую из сторон
-        private int _scaleValuesWidth = 27; //ширина правой области со шкалой значений
+        private int _scaleValuesWidth = 32; //ширина правой области со шкалой значений
         private double _tradeChartHiddenSegmentsSize = 1; //размер генерируемой области с сегментами и слева от видимых свечек, относительно размера видимых свечек. Размер отдельно для левых и правых свечек
+        private int _scaleValueFontSize = 9; //размер шрифта цены на шкале значения
+        private double _scaleValueTextTop = 8; //отступ сверху цены на шкале значения
+        private int[] _scaleValuesCuts = new int[4] { 1, 2, 3, 5 }; //отрезки для шкалы значений (отрезки по сколько пунктов будут. Будет браться значение, при котором количество пикселей на один отрезок будет ближе всего к _scaleValuePixelPerCut) Поиск подходящего размера будет продолжаться, исходя из помноженных на 10 значений массива, на 100, и т.д.
+        private double _scaleValuePixelPerCut = 35; //количество пикселей для одного отрезка на шкале значений. К этому значению будет стремиться размер отрезка
         private double[] _indicatorAreasHeight = new double[3] { 0.15, 0.225, 0.3 }; //суммарная высота областей для индикаторов, как часть от доступной высоты под области источника данных, номер элемента соответствует количеству индикаторов и показывает суммарную высоту для них, если количество индикаторов больше, берется последний элемент
         private int _timeLineHeight = 24; //высота временной шкалы
         private List<SegmentPageTradeChart> _segments { get; set; } //сегменты из которых состоит график
@@ -55,6 +62,17 @@ namespace ktradesystem.ViewModels
         private List<SegmentDealIndexPageTradeChart> _segmentDeals; //индексы сегмента и сделки, чтобы можно было быстро найти сегмент со сделкой
         public double СanvasTradeChartWidth { get; set; } //ширина canvas с графиком
         public double СanvasTradeChartHeight { get; set; } //высота canvas с графиком
+
+        private ObservableCollection<ScaleValuePageTradeChart> _scaleValuesPageTradeChart = new ObservableCollection<ScaleValuePageTradeChart>();
+        public ObservableCollection<ScaleValuePageTradeChart> ScaleValuesPageTradeChart //значения шкал значений, которые будут отображатся на графике
+        {
+            get { return _scaleValuesPageTradeChart; }
+            set
+            {
+                _scaleValuesPageTradeChart = value;
+                OnPropertyChanged();
+            }
+        }
 
         private ObservableCollection<CandlePageTradeChart> _candles = new ObservableCollection<CandlePageTradeChart>();
         public ObservableCollection<CandlePageTradeChart> Candles //свечки, которые будут отображатся на графике
@@ -167,7 +185,7 @@ namespace ktradesystem.ViewModels
             int dataSourceCount = _testing.DataSourcesCandles.Count; //количество источников данных
             int indicatorAreasCount = TradeChartAreas.Where(j => j.IsDataSource == false).Count(); //количество областей с индикаторами
             int dataSourceAreasAvailableHeight = (int)Math.Truncate((СanvasTradeChartHeight - _timeLineHeight) / dataSourceCount - _dataSourceAreasHighlightHeight); //доступная высота под области одного источника данных
-            int indiactorAreaHeight = indicatorAreasCount > 0 ? (int)Math.Truncate((dataSourceAreasAvailableHeight * (indicatorAreasCount > _indicatorAreasHeight.Length ? _indicatorAreasHeight.Last() : _indicatorAreasHeight[indicatorAreasCount - 1])) / TradeChartAreas.Count - 1) : 0; //высота для областей индикаторов
+            int indiactorAreaHeight = indicatorAreasCount > 0 ? (int)Math.Truncate((dataSourceAreasAvailableHeight * (indicatorAreasCount > _indicatorAreasHeight.Length ? _indicatorAreasHeight.Last() : _indicatorAreasHeight[indicatorAreasCount - 1])) / indicatorAreasCount) : 0; //высота для областей индикаторов
             int dataSourceAreaHeight = (int)Math.Truncate(dataSourceAreasAvailableHeight - indiactorAreaHeight * (double)indicatorAreasCount); //высота для областей с источниками данных
             foreach(TradeChartAreaPageTradeChart tradeChartAreaPageTradeChart in TradeChartAreas)
             {
@@ -568,7 +586,7 @@ namespace ktradesystem.ViewModels
             {
                 foreach (AlgorithmIndicatorValues algorithmIndicatorValues in _testing.DataSourcesCandles[i].AlgorithmIndicatorsValues)
                 {
-                    IndicatorsPolylines.Add(new IndicatorPolylinePageTradeChart { IdDataSource = _testing.DataSourcesCandles[i].DataSource.Id, IdIndicator = algorithmIndicatorValues.AlgorithmIndicator.IdIndicator, Left = 0, Points = new PointCollection(), PointsPrices = new List<double>() });
+                    IndicatorsPolylines.Add(new IndicatorPolylinePageTradeChart { IdDataSource = _testing.DataSourcesCandles[i].DataSource.Id, IdIndicator = algorithmIndicatorValues.AlgorithmIndicator.IdIndicator, StrokeColor = _indicatorStrokeColor, Left = 0, Points = new PointCollection(), PointsPrices = new List<double>() });
                 }
             }
 
@@ -672,8 +690,74 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        private List<double> GetScalueValuesCuts(double maxPrice, double minPrice, double priceStep, double areaHeight) //возвращает список с ценами отрезков шкалы значений
+        {
+            //находим размер отрезка, при котором высота одного пункта цены будет ближе всего к _scaleValuePixelPerCut _scaleValuesCuts
+            int maxPriceStep = (int)Math.Round(maxPrice / priceStep); //значение максимальной цены в пунктах
+            int minPriceStep = (int)Math.Round(minPrice / priceStep); //значение минимальной цены в пунктах
+            int iteration = 0;
+            int cut = 0; //количество пунктов, которому должны быть кратны отрезки
+            int lastCut = 0; //прошлое количество пунктов, которому должны быть кратны отрезки
+            double currentPixelPerCut = 0; //текущее количество пикселей на 1 пункт цены
+            double lastPixelPerCut = 0; //прошлое количество пикселей на 1 пункт цены
+            int scaleValuesCutsIndex = 0; //индекс значения в _scaleValuesCuts (если индекс выходит за пределы массива, из индекса вычитается длина массива, а для значений устанавливается множитель 10)
+            do
+            {
+                iteration++; //номер итерации цикла
+                lastCut = cut;
+                lastPixelPerCut = currentPixelPerCut;
+                int multiply = 1; //множитель для значений в _scaleValuesCuts
+                while (scaleValuesCutsIndex >= _scaleValuesCuts.Length)
+                {
+                    scaleValuesCutsIndex -= _scaleValuesCuts.Length;
+                    multiply *= 10;
+                }
+                cut = _scaleValuesCuts[scaleValuesCutsIndex] * multiply; //количество пунктов, которому должны быть кратны отрезки
+                int currentCuts = 0; //текущее количество отрезков
+                int currentPriceStep = minPriceStep;
+                //проходим по пунктам цены от минимума до максимума, и если значение кратно cut (количеству пунктов для одного отрезка), увеличиваем количество отрезков для текущего значения в _scaleValuesCuts
+                //доходим до первого кратного числа cut
+                while (currentPriceStep <= maxPriceStep && currentPriceStep % cut != 0)
+                {
+                    currentPriceStep++;
+                }
+                //увеличиваем значение на cut, чтобы экономить на итерациях
+                while (currentPriceStep <= maxPriceStep)
+                {
+                    if (currentPriceStep % cut == 0)
+                    {
+                        currentCuts++;
+                    }
+                    currentPriceStep += cut;
+                }
+                //вычисляем текущее количество пикселей на один пункт цены
+                currentPixelPerCut = areaHeight / currentCuts;
+                scaleValuesCutsIndex++;
+            }
+            while (Math.Abs(lastPixelPerCut - _scaleValuePixelPerCut) >= Math.Abs(currentPixelPerCut - _scaleValuePixelPerCut) || iteration == 1); //выходим, когда разница между прошлым и номинальным количеством пикселей на 1 пункт цены, меньше разницы между текущим и номинальным. То есть когда следующий элемент (currentPixelPerCut) будет дальше от номинального нежели предыдущий (lastPixelPerCut). iteration == 1 чтобы пройти 2 раза по циклу, чтобы сформировать как текущее так и прошлое значение
+            //создаем список с ценами отрезков шкалы значений
+            List<double> cuts = new List<double>();
+            int currentPrice = minPriceStep;
+            //доходим до первого кратного числа cut
+            while (currentPrice < maxPriceStep && currentPrice % lastCut != 0)
+            {
+                currentPrice++;
+            }
+            //увеличиваем значение на lastCut, чтобы экономить на итерациях
+            while (currentPrice < maxPriceStep)
+            {
+                if (currentPrice % lastCut == 0)
+                {
+                    cuts.Add(currentPrice * priceStep);
+                }
+                currentPrice += lastCut;
+            }
+            return cuts;
+        }
+
         public void UpdateScaleValues() //создает шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
         {
+            ScaleValuesPageTradeChart.Clear();
             int areasWidth = (int)Math.Truncate(СanvasTradeChartWidth - _scaleValuesWidth); //ширина областей
             int dataSourceAreasTotalHeight = _dataSourceAreasHighlightHeight; //высота областей для одного источника данных с учетом высоты строки с подписью источника данных
             foreach(TradeChartAreaPageTradeChart tradeChartArea in TradeChartAreas)
@@ -683,6 +767,13 @@ namespace ktradesystem.ViewModels
             //проходим по всем источникам данных
             for (int i = 0; i < DataSourcesOrderDisplayPageTradeChart.Count; i++)
             {
+                int countDsPriceStepDigitsAfterComma = 0; //количество цифр после запятой у шага цены источника данных
+                string stringPriceStep = DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.PriceStep.ToString();
+                if (stringPriceStep.Contains(","))
+                {
+                    string[] arrStr = stringPriceStep.Split(',');
+                    countDsPriceStepDigitsAfterComma = arrStr[1].Length;
+                }
                 int currentTop = dataSourceAreasTotalHeight * i + _dataSourceAreasHighlightHeight; //текущий отступ сверху (с учетом уже отрисованных областей с источниками данных)
                 List<CandlePageTradeChart> candlesCurrentDs = Candles.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id).ToList(); //список со свечками, которые имеют id текущего источника данных
                 List<OrderPageTradeChart> ordersCurrentDs = Orders.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id).ToList(); //список с заявками, которые имеют id текущего источника данных
@@ -880,6 +971,120 @@ namespace ktradesystem.ViewModels
                         }
                     }
                 }
+
+                //создаем шкалы значений для всех областей текущего источника данных, а так же устанавливаем отступ сверху для видимых точек линий индикаторов
+                //проходим по всем областям
+                int pastAreasHeight = 0; //высота предыдущих, уже обработанных областей. Чтобы указывать отступ сверху для текущей области
+                for(int k = 0; k < TradeChartAreas.Count; k++)
+                {
+                    //находим максимальное и минимальное значение области
+                    double areaMaxPrice = 0;
+                    double areaMinPrice = 0;
+                    if(k == 0) //текущая область главная, значит берем максимум и минимум цены главной области
+                    {
+                        areaMaxPrice = maxPrice;
+                        areaMinPrice = minPrice;
+                    }
+                    else //текущая область для индикаторов, значит вычисляем максимум и минимм текущей области
+                    {
+                        bool isFirstPrice = true;
+                        //проходим по всем индикаторам текущей области
+                        foreach (IndicatorMenuItemPageTradeChart indicatorMenuItemPageTradeChart in IndicatorsMenuItemPageTradeChart.Where(a => a.SelectedTradeChartArea == TradeChartAreas[k]))
+                        {
+                            IndicatorPolylinePageTradeChart indicatorPolyline = IndicatorsPolylines.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id && a.IdIndicator == indicatorMenuItemPageTradeChart.AlgorithmIndicator.IdIndicator).First(); //текущий индикатор в IndicatorsMenuItemPageTradeChart с текущим источником данных
+                            int pointIndex = 0;
+                            bool isXLowThanAreasWidth = indicatorPolyline.Points.Count > 0 ? indicatorPolyline.Points[pointIndex].X <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
+                            while (isXLowThanAreasWidth && pointIndex < indicatorPolyline.Points.Count)
+                            {
+                                if (indicatorPolyline.Points[pointIndex].X > 0) //координата точки положительная, значит она в видимой области
+                                {
+                                    if (isFirstPrice)
+                                    {
+                                        areaMaxPrice = indicatorPolyline.PointsPrices[pointIndex];
+                                        areaMinPrice = indicatorPolyline.PointsPrices[pointIndex];
+                                        isFirstPrice = false;
+                                    }
+                                    else
+                                    {
+                                        areaMaxPrice = indicatorPolyline.PointsPrices[pointIndex] > areaMaxPrice ? indicatorPolyline.PointsPrices[pointIndex] : areaMaxPrice;
+                                        areaMinPrice = indicatorPolyline.PointsPrices[pointIndex] < areaMinPrice ? indicatorPolyline.PointsPrices[pointIndex] : areaMinPrice;
+                                    }
+                                }
+                                pointIndex++;
+                                if (pointIndex < indicatorPolyline.Points.Count)
+                                {
+                                    if (indicatorPolyline.Points[pointIndex].X > areasWidth)
+                                    {
+                                        isXLowThanAreasWidth = false;
+                                    }
+                                }
+                            }
+                        }
+                        double addingAreaRange = (areaMaxPrice - areaMinPrice) * _scaleValuesAddingRange; //дополнительный диапазон. Чтобы значения индикатора не касались верхнего и нижнего краев области
+                        areaMaxPrice += addingAreaRange;
+                        areaMinPrice -= addingAreaRange;
+                    }
+                    
+                    double areaPriceRange = areaMaxPrice - areaMinPrice;
+                    //устанавливаем отступ сверху для всех индикаторов и точек индикаторов текущей области
+                    //проходим по всем индикаторам текущей области
+                    foreach (IndicatorMenuItemPageTradeChart indicatorMenuItemPageTradeChart in IndicatorsMenuItemPageTradeChart.Where(a => a.SelectedTradeChartArea == TradeChartAreas[k]))
+                    {
+                        IndicatorPolylinePageTradeChart indicatorPolyline = IndicatorsPolylines.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id && a.IdIndicator == indicatorMenuItemPageTradeChart.AlgorithmIndicator.IdIndicator).First(); //текущий индикатор в IndicatorsMenuItemPageTradeChart с текущим источником данных
+                        indicatorPolyline.Top = currentTop + pastAreasHeight;
+                        int pointIndex = 0;
+                        bool isXLowThanAreasWidth = indicatorPolyline.Points.Count > 0 ? indicatorPolyline.Points[pointIndex].X <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
+                        while (isXLowThanAreasWidth && pointIndex < indicatorPolyline.Points.Count)
+                        {
+                            if (indicatorPolyline.Points[pointIndex].X + _candleWidth > 0) //координата точки положительная, значит она в видимой области (+ _candleWidth для того чтобы установить высоту и для точки которая слева от самой крайней, т.к. иначе у неё будет позиция 0, то есть на самом верху, и слиния будет туда тянуться)
+                            {
+                                indicatorPolyline.Points[pointIndex] = new Point(indicatorPolyline.Points[pointIndex].X, (TradeChartAreas[k].AreaHeight * (1 - (indicatorPolyline.PointsPrices[pointIndex] - areaMinPrice) / areaPriceRange)));
+                            }
+                            pointIndex++;
+                            if (pointIndex < indicatorPolyline.Points.Count)
+                            {
+                                if (indicatorPolyline.Points[pointIndex].X - _candleWidth > areasWidth)
+                                {
+                                    isXLowThanAreasWidth = false;
+                                }
+                            }
+                        }
+                    }
+
+                    //создаем шкалу значений для текущей области
+                    List<double> cuts = GetScalueValuesCuts(areaMaxPrice, areaMinPrice, DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.PriceStep, TradeChartAreas[k].AreaHeight); //список с ценами отрезков шкалы значений
+                    for(int u = 0; u < cuts.Count; u++)
+                    {
+                        double lineTop = (TradeChartAreas[k].AreaHeight * (1 - (cuts[u] - areaMinPrice) / areaPriceRange));
+                        string priceText = cuts[u].ToString();
+                        if(countDsPriceStepDigitsAfterComma > 0) //если у источника данных, имеются цифры после запятой, проверяем чтобы были нули на их позициях в тексте
+                        {
+                            if (priceText.Contains(","))
+                            {
+                                string[] priceTextArr = priceText.Split(',');
+                                if(priceTextArr[1].Length < countDsPriceStepDigitsAfterComma)
+                                {
+                                    for(int n = 0; n < countDsPriceStepDigitsAfterComma - priceTextArr[1].Length; n++)
+                                    {
+                                        priceText += "0";
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                priceText += ",";
+                                for (int n = 0; n < countDsPriceStepDigitsAfterComma; n++)
+                                {
+                                    priceText += "0";
+                                }
+                            }
+                        }
+                        ScaleValuesPageTradeChart.Add(new ScaleValuePageTradeChart { StrokeLineColor = _scaleValueStrokeLineColor, TextColor = _scaleValueTextColor, FontSize = _scaleValueFontSize, Price = priceText, PriceLeft = areasWidth + 3, PriceTop = (TradeChartAreas[k].AreaHeight * (1 - (cuts[u] - areaMinPrice) / areaPriceRange)) + _scaleValueTextTop, LineLeft = 0, LineTop = currentTop + pastAreasHeight, X1 = 0, Y1 = lineTop, X2 = areasWidth, Y2 = lineTop });
+                    }
+
+                    pastAreasHeight += TradeChartAreas[k].AreaHeight;
+                }
+
             }
         }
 

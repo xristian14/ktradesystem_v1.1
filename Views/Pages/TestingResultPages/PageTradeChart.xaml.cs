@@ -26,14 +26,24 @@ namespace ktradesystem.Views.Pages.TestingResultPages
             InitializeComponent();
             _viewModelPageTradeChart = new ViewModelPageTradeChart();
             DataContext = _viewModelPageTradeChart;
+            _viewModelPageTradeChart.СanvasTradeChart = canvasTradeChart;
         }
 
         private ViewModelPageTradeChart _viewModelPageTradeChart;
 
-        private void canvasChart_Loaded(object sender, RoutedEventArgs e)
+        private void canvasTradeChart_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            _viewModelPageTradeChart.СanvasTradeChartWidth = canvasChart.ActualWidth;
-            _viewModelPageTradeChart.СanvasTradeChartHeight = canvasChart.ActualHeight;
+            _viewModelPageTradeChart.MouseDown(e.GetPosition(sender as IInputElement));
+        }
+
+        private void canvasTradeChart_MouseMove(object sender, MouseEventArgs e)
+        {
+            _viewModelPageTradeChart.MouseMove(e.GetPosition(sender as IInputElement));
+        }
+
+        private void canvasTradeChart_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            _viewModelPageTradeChart.MouseUp();
         }
     }
 }

@@ -340,16 +340,23 @@
                         </MenuItem>
                     </Menu>
                     <Button Content="Кнопка1" Command="{Binding Button1_Click}" Margin="5 0 0 0"/>
-                    <Button Content="Кнопка2" Command="{Binding Button2_Click}" Margin="5 0 0 0"/>
+                    <Button Content="+200" Command="{Binding Button2_Click}" Margin="5 0 0 0"/>
+                    <Button Content="+2000" Command="{Binding Button3_Click}" Margin="5 0 0 0"/>
                 </StackPanel>
             </StackPanel>
-            <Canvas Grid.Row="1" x:Name="canvasChart" Background="Transparent" ClipToBounds="True" Loaded="canvasChart_Loaded">
+            <Canvas Grid.Row="1" x:Name="canvasTradeChart" Background="Transparent" ClipToBounds="True" MouseDown="canvasTradeChart_MouseDown" MouseMove="canvasTradeChart_MouseMove" MouseUp="canvasTradeChart_MouseUp">
                 <ItemsControl ItemsSource="{Binding TimeLinesPageTradeChart}"><!-- линии таймлайна -->
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <Canvas/>
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="0"/>
+                            <Setter Property="Canvas.Top" Value="0"/>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Line X1="{Binding X1}" Y1="{Binding Y1}" X2="{Binding X2}" Y2="{Binding Y2}" Stroke="{Binding StrokeLineColor}" StrokeDashArray="5 2"/>

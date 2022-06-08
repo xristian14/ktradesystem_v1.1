@@ -10,6 +10,8 @@ using ktradesystem.Models;
 using ktradesystem.Models.Datatables;
 using System.Windows.Media;
 using System.Diagnostics;
+using System.Windows.Controls;
+using System.Threading.Tasks;
 
 namespace ktradesystem.ViewModels
 {
@@ -39,17 +41,16 @@ namespace ktradesystem.ViewModels
         private SolidColorBrush _scaleValueStrokeLineColor = new SolidColorBrush(Color.FromRgb(230, 230, 230)); //цвет линии шкалы значения
         private SolidColorBrush _scaleValueTextColor = new SolidColorBrush(Color.FromRgb(80, 80, 80)); //цвет текста шкалы значения
         private SolidColorBrush _timeLineStrokeLineColor = new SolidColorBrush(Color.FromRgb(230, 230, 230)); //цвет линии шкалы значения
-        private SolidColorBrush _timeLineTextColor = new SolidColorBrush(Color.FromRgb(40, 40, 40)); //цвет текста шкалы значения
+        private SolidColorBrush _timeLineTextColor = new SolidColorBrush(Color.FromRgb(40, 40, 40)); //цвет текста даты и времени
         private int _timeLineFontSize = 9; //размер шрифта даты и времени на шкале даты и времени
         private double _timeLineFullDateTimeLeft = 32; //отступ слева для полной даты и времени на шкале даты и времени
         private double _timeLineTimePixelsPerCut = 70; //количество пикселей на один отрезок на шкале даты и времени
         private int _dataSourceAreasHighlightHeight = 15; //высота линии, на которой написано название источника данных для которого следуют ниже области
         private int _candleMinWidth = 1; //минимальная ширина свечки, в пикселях
-        private int _candleMaxWidth = 31; //максимальная ширина свечки, в пикселях
+        private int _candleMaxWidth = 37; //максимальная ширина свечки, в пикселях
         private int _initialCandleWidth = 3; //начальная ширина свечки
         private int _candleWidth; //текущая ширина свечки
         private double _partOfOnePriceStepHeightForOrderVerticalLine = 0.667; //часть от высоты одного пункта центы, исходя из которой будет вычитсляться высота вертикальной линии для заявки
-        private int _tradeChartScale; //масштаб графика, сколько свечек должно уместиться в видимую область графика
         private int _divideWidth = 10; //ширина разрыва
         private double _scaleValuesAddingRange = 0.03; //дополнительный диапазон для шкалы значений в каждую из сторон
         private double _tradeChartHiddenSegmentsSize = 1; //размер генерируемой области с сегментами и слева от видимых свечек, относительно размера видимых свечек. Размер отдельно для левых и правых свечек
@@ -64,6 +65,28 @@ namespace ktradesystem.ViewModels
         private List<SectionPageTradeChart> _sections { get; set; } //секции для сегментов
         private List<SegmentOrderIndexPageTradeChart> _segmentOrders; //индексы сегмента и заявки, чтобы можно было быстро найти сегмент с заявкой
         private List<SegmentDealIndexPageTradeChart> _segmentDeals; //индексы сегмента и сделки, чтобы можно было быстро найти сегмент со сделкой
+
+        private double _tradeChartMovePosition = 0; //значение, на которое нужно сдвинуть элементы графика
+        private double _tradeChartMovedPosition = 0; //значение, на которое уже сдвинуты элементы графика
+        private double _tradeChartScale = 0.0833; //масштаб графика, 0 - минимальный масштаб (_candleMinWidth), 1 - максимальный (_candleMaxWidth)
+        private bool _isMouseDown = false; //зажата ли левая клавиша мыши
+        private bool _isMoveTradeChart = true; //двигаем график или масштабируем
+        private Point _mouseDownPosition; //позиция мыши при нажатии мыши
+        private double _moveToMoveFactor = 1; //скольким значениям движения элементов графика соответствует 1 значение движения мыши
+        private double _moveToScaleFactor = 0.005; //скольким значениям _tradeChartScale соответствует 1 значение движения мыши
+        private double _mouseDownTradeChartMovePosition; //значение масштаба в момент нажатия левой клавиши мыши
+        private double _mouseDownTradeChartScale; //значение масштаба в момент нажатия левой клавиши мыши
+
+        private Canvas _canvasTradeChart;
+        public Canvas СanvasTradeChart //canvas с графиком
+        {
+            get { return _canvasTradeChart; }
+            set
+            {
+                _canvasTradeChart = value;
+                OnPropertyChanged();
+            }
+        }
         private double _canvasTradeChartWidth;
         public double СanvasTradeChartWidth //ширина canvas с графиком
         {
@@ -300,6 +323,76 @@ namespace ktradesystem.ViewModels
             {
                 DataSourcesOrderDisplayPageTradeChart.Add(DataSourceOrderDisplayPageTradeChart.CreateDataSource(DataSourcesOrderDisplayPageTradeChart_PropertyChanged, dataSourceAccordance));
             }
+        }
+
+        public void MouseDown(Point position)
+        {
+            _isMouseDown = true;
+            _mouseDownPosition = position; //запоминаем позицию мыши в момент нажатия клавиши мыши
+            _tradeChartMovedPosition = 0; //сбрасываем величину, на которую сдвинут график
+        }
+
+        public void MouseMove(Point position)
+        {
+            if (_isMouseDown)
+            {
+                _tradeChartMovePosition = (position.X - _mouseDownPosition.X) * _moveToMoveFactor - _tradeChartMovedPosition;
+                _tradeChartMovedPosition += _tradeChartMovePosition;
+                MoveTradeChart();
+            }
+        }
+
+        public void MouseUp()
+        {
+            _isMouseDown = false;
+            _segmentIndex += (int)Math.Round(-_tradeChartMovedPosition / _candleWidth);
+            _segmentIndex = _segmentIndex >= _segments.Count ? _segments.Count - 1 : _segmentIndex;
+            BuildTradeChart(); //строим график котировок
+            UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
+        }
+
+        private void MoveTradeChart()
+        {
+            //двигаем таймлайн
+            foreach(TimeLinePageTradeChart timeLinePageTradeChart in TimeLinesPageTradeChart)
+            {
+                timeLinePageTradeChart.TextLeft += _tradeChartMovePosition;
+                timeLinePageTradeChart.LineLeft += _tradeChartMovePosition;
+                timeLinePageTradeChart.X1 += _tradeChartMovePosition;
+                timeLinePageTradeChart.X2 += _tradeChartMovePosition;
+            }
+            //двигаем свечки
+            foreach(CandlePageTradeChart candlePageTradeChart in Candles)
+            {
+                candlePageTradeChart.BodyLeft += _tradeChartMovePosition;
+                candlePageTradeChart.StickLeft += _tradeChartMovePosition;
+            }
+            //двигаем индикаторы
+            foreach(IndicatorPolylinePageTradeChart indicatorPolylinePageTradeChart in IndicatorsPolylines)
+            {
+                PointCollection newPoints = new PointCollection();
+                for (int i = 0; i < indicatorPolylinePageTradeChart.Points.Count; i++)
+                {
+                    newPoints.Add(new Point(indicatorPolylinePageTradeChart.Points[i].X + _tradeChartMovePosition, indicatorPolylinePageTradeChart.Points[i].Y));
+                }
+                indicatorPolylinePageTradeChart.Points = newPoints;
+            }
+            //двигаем заявки
+            foreach(OrderPageTradeChart orderPageTradeChart in Orders)
+            {
+                orderPageTradeChart.HorizontalLineLeft += _tradeChartMovePosition;
+                orderPageTradeChart.VerticalLineLeft += _tradeChartMovePosition;
+            }
+            //двигаем сделки
+            foreach (DealPageTradeChart dealPageTradeChart in Deals)
+            {
+                dealPageTradeChart.Left += _tradeChartMovePosition;
+                for (int i = 0; i < dealPageTradeChart.Points.Count; i++)
+                {
+                    dealPageTradeChart.Points[i] = new Point(dealPageTradeChart.Points[i].X + _tradeChartMovePosition, dealPageTradeChart.Points[i].Y);
+                }
+            }
+            UpdateScaleValues();
         }
 
         private void CreateSegments() //создает сегменты, на основе которых будет строиться график
@@ -738,7 +831,7 @@ namespace ktradesystem.ViewModels
                                 triangleWidth = 11;
                                 triangleHeight = 6;
                             }
-                            Deals.Insert(0, new DealPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, StrokeColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealStrokeColor : _sellDealStrokeColor, FillColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealFillColor : _sellDealFillColor, Deal = _testRun.Account.AllDeals[dealIndex], Left = bodyLeft - triangleWidth, TriangleWidth = triangleWidth, TriangleHeight = triangleHeight });
+                            Deals.Insert(0, new DealPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, StrokeColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealStrokeColor : _sellDealStrokeColor, FillColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealFillColor : _sellDealFillColor, Deal = _testRun.Account.AllDeals[dealIndex], Left = bodyLeft - triangleWidth, TriangleWidth = triangleWidth, TriangleHeight = triangleHeight, Points = new PointCollection() });
                         }
 
                         //добавляем точки со значениями для всех индикаторов текущего источника данных
@@ -1052,7 +1145,7 @@ namespace ktradesystem.ViewModels
                     {
                         int verticalOffset = dealsCurrentDs[dealIndex].Deal.Direction ? 0 : -dealsCurrentDs[dealIndex].TriangleHeight; //вертикальное смещение, для сделки на покупку отсутствует, т.к. верхний край треугольника сделки на уровне цены, для продажи равняется высоте треугольника, т.к. уровень цены находится на нижней части треугольника
                         dealsCurrentDs[dealIndex].Top = (TradeChartAreas[0].AreaHeight * (1 - (dealsCurrentDs[dealIndex].Deal.Price - minPrice) / priceRange) + verticalOffset) + currentTop;
-                        dealsCurrentDs[dealIndex].Points = new PointCollection();
+                        dealsCurrentDs[dealIndex].Points.Clear();
                         if (dealsCurrentDs[dealIndex].Deal.Direction) //сделка на покупку
                         {
                             dealsCurrentDs[dealIndex].Points.Add(new Point(0, dealsCurrentDs[dealIndex].TriangleHeight - 1)); //левая координата
@@ -1199,6 +1292,8 @@ namespace ktradesystem.ViewModels
                 _testing = ViewModelPageTestingResult.getInstance().TestingResult;
                 _testBatch = ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox.TestBatch;
                 _testRun = ViewModelPageTestingResult.getInstance().SelectedTestRunTestingResultCombobox.TestRun;
+                СanvasTradeChartWidth = СanvasTradeChart.ActualWidth;
+                СanvasTradeChartHeight = СanvasTradeChart.ActualHeight;
                 CreateDataSourcesOrderDisplayPageTradeChart(); //создаем элементы для меню управления порядком следования областей с источниками данных
                 CreateTradeChartAreas(); //создаем области для графика котировок
                 CreateIndicatorsMenuItemPageTradeChart(); //создаем элементы для меню выбора областей для индикаторов
@@ -1229,6 +1324,19 @@ namespace ktradesystem.ViewModels
                 return new DelegateCommand((obj) =>
                 {
                     _segmentIndex += 200;
+                    _segmentIndex = _segmentIndex >= _segments.Count ? _segments.Count - 1 : _segmentIndex;
+                    BuildTradeChart(); //строим график котировок
+                    UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
+                }, (obj) => true);
+            }
+        }
+        public ICommand Button3_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    _segmentIndex += 2000;
                     _segmentIndex = _segmentIndex >= _segments.Count ? _segments.Count - 1 : _segmentIndex;
                     BuildTradeChart(); //строим график котировок
                     UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов

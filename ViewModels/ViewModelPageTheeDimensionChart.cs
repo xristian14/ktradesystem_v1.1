@@ -44,6 +44,7 @@ namespace ktradesystem.ViewModels
         private double _mouseDownСameraInArcRotate; //значение угла в момент нажатия левой клавиши мыши
         private double _cameraArcRotate = 0; //угол вращения дуги на которой расположена камера, вокруг центральной оси
         private double _cameraInArcRotate = 0; //угол на котором камера распологается на дуге
+        public Viewport3D Viewport3D { get; set; }
         public double Viewport3DWidth { get; set; } //ширина вьюпорта 3D, используется для определения двумерных координат на canvas трехмерной координаты 
         public double Viewport3DHeight { get; set; } //высота вьюпорта 3D, используется для определения двумерных координат на canvas трехмерной координаты
         public Canvas CanvasOn3D { get; set; }
@@ -1090,6 +1091,8 @@ namespace ktradesystem.ViewModels
                 isLoadingTestResultComplete = false; //устанавливаем чтобы поверхности не строились при выборе критерия оценки пока не создана матрица тестовых прогонов
                 _testing = ViewModelPageTestingResult.getInstance().TestingResult;
                 _testBatch = ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox.TestBatch;
+                Viewport3DWidth = Viewport3D.ActualWidth;
+                Viewport3DHeight = Viewport3D.ActualHeight;
                 ResetEvaluationCriteriasPageThreeDimensionChart(); //сбрасываем выбранные критерии оценки на тот что используется для определения топ-модели
                 LevelsPageThreeDimensionChart.Clear();
                 LevelsPageThreeDimensionChart.Add(LevelPageThreeDimensionChart.CreateButtonAddLevel(LevelPageThreeDimensionChart_PropertyChanged)); //создаем кнопку добавить для меню уровней

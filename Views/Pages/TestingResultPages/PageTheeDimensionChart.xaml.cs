@@ -26,6 +26,7 @@ namespace ktradesystem.Views.Pages.TestingResultPages
             InitializeComponent();
             _viewModelPageTheeDimensionChart = new ViewModelPageTheeDimensionChart();
             DataContext = _viewModelPageTheeDimensionChart;
+            _viewModelPageTheeDimensionChart.Viewport3D = viewport3D;
             _viewModelPageTheeDimensionChart.CanvasOn3D = canvasOn3D;
         }
 
@@ -44,12 +45,6 @@ namespace ktradesystem.Views.Pages.TestingResultPages
         private void canvasOn3D_MouseUp(object sender, MouseButtonEventArgs e)
         {
             _viewModelPageTheeDimensionChart.MouseUp();
-        }
-
-        private void viewport3D_Loaded(object sender, RoutedEventArgs e)
-        {
-            _viewModelPageTheeDimensionChart.Viewport3DWidth = viewport3D.ActualWidth;
-            _viewModelPageTheeDimensionChart.Viewport3DHeight = viewport3D.ActualHeight;
         }
     }
 }

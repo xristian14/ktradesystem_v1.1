@@ -344,7 +344,19 @@
                 </StackPanel>
             </StackPanel>
             <Canvas Grid.Row="1" x:Name="canvasChart" Background="Transparent" ClipToBounds="True" Loaded="canvasChart_Loaded">
-                <ItemsControl ItemsSource="{Binding ScaleValuesPageTradeChart}"><!-- значения цены шкал значений -->
+                <ItemsControl ItemsSource="{Binding TimeLinesPageTradeChart}"><!-- линии таймлайна -->
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Line X1="{Binding X1}" Y1="{Binding Y1}" X2="{Binding X2}" Y2="{Binding Y2}" Stroke="{Binding StrokeLineColor}" StrokeDashArray="5 2"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <ItemsControl ItemsSource="{Binding TimeLinesPageTradeChart}"><!-- значения даты таймлайна -->
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <Canvas/>
@@ -352,13 +364,13 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemContainerStyle>
                         <Style TargetType="ContentPresenter">
-                            <Setter Property="Canvas.Left" Value="{Binding PriceLeft}"/>
-                            <Setter Property="Canvas.Top" Value="{Binding PriceTop}"/>
+                            <Setter Property="Canvas.Left" Value="{Binding TextLeft}"/>
+                            <Setter Property="Canvas.Top" Value="{Binding TextTop}"/>
                         </Style>
                     </ItemsControl.ItemContainerStyle>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Price}" FontSize="{Binding FontSize}" Foreground="{Binding TextColor}"/>
+                            <TextBlock Text="{Binding Text}" FontSize="{Binding FontSize}" Foreground="{Binding TextColor}"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -376,7 +388,7 @@
                     </ItemsControl.ItemContainerStyle>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Line X1="{Binding X1}" Y1="{Binding Y1}" X2="{Binding X2}" Y2="{Binding Y2}" Stroke="{Binding StrokeLineColor}" StrokeDashArray="2 4"/>
+                            <Line X1="{Binding X1}" Y1="{Binding Y1}" X2="{Binding X2}" Y2="{Binding Y2}" Stroke="{Binding StrokeLineColor}" StrokeDashArray="5 3"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -485,6 +497,27 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Polygon Points="{Binding Points}" Stroke="{Binding StrokeColor}" Fill="{Binding FillColor}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Canvas Canvas.Left="{Binding AreasWidth}" Canvas.Top="0"><!-- плоскость, которая должна скрыть индикаторы которые находятся на шкале значений -->
+                    <Rectangle Width="{Binding AreasWidth}" Height="{Binding СanvasTradeChartHeight}" Fill="White"/>
+                </Canvas>
+                <ItemsControl ItemsSource="{Binding ScaleValuesPageTradeChart}"><!-- значения цены шкал значений -->
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="{Binding PriceLeft}"/>
+                            <Setter Property="Canvas.Top" Value="{Binding PriceTop}"/>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Price}" FontSize="{Binding FontSize}" Foreground="{Binding TextColor}"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

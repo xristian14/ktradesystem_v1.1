@@ -1063,6 +1063,11 @@ namespace ktradesystem.Models
                                     _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/4:  Вычисление индикаторов", StepTasksCount = AlgorithmIndicatorsValuesCount, CompletedStepTasksCount = CalculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                                 }));
                                 CalculatedAlgorithmIndicatorsCount++;
+                                if (cancellationToken.IsCancellationRequested) //если был запрос на отмену операции, прекращем функцию
+                                {
+                                    TestingEnding(false, testing);
+                                    return;
+                                }
                             }
                         }
                     }

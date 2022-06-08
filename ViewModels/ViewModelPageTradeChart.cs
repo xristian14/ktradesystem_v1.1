@@ -36,8 +36,13 @@ namespace ktradesystem.ViewModels
         private SolidColorBrush _buyDealFillColor = new SolidColorBrush(Color.FromRgb(0, 255, 0)); //цвет заливки сделки на покупку
         private SolidColorBrush _sellDealStrokeColor = new SolidColorBrush(Color.FromRgb(196, 0, 0)); //цвет линии сделки на продажу
         private SolidColorBrush _sellDealFillColor = new SolidColorBrush(Color.FromRgb(255, 0, 0)); //цвет заливки сделки на продажу
-        private SolidColorBrush _scaleValueStrokeLineColor = new SolidColorBrush(Color.FromRgb(210, 210, 210)); //цвет линии шкалы значения
+        private SolidColorBrush _scaleValueStrokeLineColor = new SolidColorBrush(Color.FromRgb(230, 230, 230)); //цвет линии шкалы значения
         private SolidColorBrush _scaleValueTextColor = new SolidColorBrush(Color.FromRgb(80, 80, 80)); //цвет текста шкалы значения
+        private SolidColorBrush _timeLineStrokeLineColor = new SolidColorBrush(Color.FromRgb(230, 230, 230)); //цвет линии шкалы значения
+        private SolidColorBrush _timeLineTextColor = new SolidColorBrush(Color.FromRgb(40, 40, 40)); //цвет текста шкалы значения
+        private int _timeLineFontSize = 9; //размер шрифта даты и времени на шкале даты и времени
+        private double _timeLineFullDateTimeLeft = 32; //отступ слева для полной даты и времени на шкале даты и времени
+        private double _timeLineTimePixelsPerCut = 70; //количество пикселей на один отрезок на шкале даты и времени
         private int _dataSourceAreasHighlightHeight = 15; //высота линии, на которой написано название источника данных для которого следуют ниже области
         private int _candleMinWidth = 1; //минимальная ширина свечки, в пикселях
         private int _candleMaxWidth = 31; //максимальная ширина свечки, в пикселях
@@ -46,11 +51,10 @@ namespace ktradesystem.ViewModels
         private double _partOfOnePriceStepHeightForOrderVerticalLine = 0.667; //часть от высоты одного пункта центы, исходя из которой будет вычитсляться высота вертикальной линии для заявки
         private int _tradeChartScale; //масштаб графика, сколько свечек должно уместиться в видимую область графика
         private int _divideWidth = 10; //ширина разрыва
-        private double _scaleValuesAddingRange = 0.05; //дополнительный диапазон для шкалы значений в каждую из сторон
-        private int _scaleValuesWidth = 32; //ширина правой области со шкалой значений
+        private double _scaleValuesAddingRange = 0.03; //дополнительный диапазон для шкалы значений в каждую из сторон
         private double _tradeChartHiddenSegmentsSize = 1; //размер генерируемой области с сегментами и слева от видимых свечек, относительно размера видимых свечек. Размер отдельно для левых и правых свечек
         private int _scaleValueFontSize = 9; //размер шрифта цены на шкале значения
-        private double _scaleValueTextTop = 8; //отступ сверху цены на шкале значения
+        private double _scaleValueTextTop = 6; //отступ сверху цены на шкале значения
         private int[] _scaleValuesCuts = new int[4] { 1, 2, 3, 5 }; //отрезки для шкалы значений (отрезки по сколько пунктов будут. Будет браться значение, при котором количество пикселей на один отрезок будет ближе всего к _scaleValuePixelPerCut) Поиск подходящего размера будет продолжаться, исходя из помноженных на 10 значений массива, на 100, и т.д.
         private double _scaleValuePixelPerCut = 35; //количество пикселей для одного отрезка на шкале значений. К этому значению будет стремиться размер отрезка
         private double[] _indicatorAreasHeight = new double[3] { 0.15, 0.225, 0.3 }; //суммарная высота областей для индикаторов, как часть от доступной высоты под области источника данных, номер элемента соответствует количеству индикаторов и показывает суммарную высоту для них, если количество индикаторов больше, берется последний элемент
@@ -60,8 +64,57 @@ namespace ktradesystem.ViewModels
         private List<SectionPageTradeChart> _sections { get; set; } //секции для сегментов
         private List<SegmentOrderIndexPageTradeChart> _segmentOrders; //индексы сегмента и заявки, чтобы можно было быстро найти сегмент с заявкой
         private List<SegmentDealIndexPageTradeChart> _segmentDeals; //индексы сегмента и сделки, чтобы можно было быстро найти сегмент со сделкой
-        public double СanvasTradeChartWidth { get; set; } //ширина canvas с графиком
-        public double СanvasTradeChartHeight { get; set; } //высота canvas с графиком
+        private double _canvasTradeChartWidth;
+        public double СanvasTradeChartWidth //ширина canvas с графиком
+        {
+            get { return _canvasTradeChartWidth; }
+            set
+            {
+                _canvasTradeChartWidth = value;
+                OnPropertyChanged();
+            }
+        }
+        private double _canvasTradeChartHeight;
+        public double СanvasTradeChartHeight //высота canvas с графиком
+        {
+            get { return _canvasTradeChartHeight; }
+            set
+            {
+                _canvasTradeChartHeight = value;
+                OnPropertyChanged();
+            }
+        }
+        private int _scaleValuesWidth = 32;
+        public int ScaleValuesWidth //ширина правой области со шкалой значений
+        {
+            get { return _scaleValuesWidth; }
+            set
+            {
+                _scaleValuesWidth = value;
+                OnPropertyChanged();
+            }
+        }
+        private double _areasWidth;
+        public double AreasWidth //ширина областей для графиков и индикаторов
+        {
+            get { return _areasWidth; }
+            set
+            {
+                _areasWidth = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<TimeLinePageTradeChart> _timeLinesPageTradeChart = new ObservableCollection<TimeLinePageTradeChart>();
+        public ObservableCollection<TimeLinePageTradeChart> TimeLinesPageTradeChart //линии и значения даты и времени, которые будут отображатся на графике
+        {
+            get { return _timeLinesPageTradeChart; }
+            set
+            {
+                _timeLinesPageTradeChart = value;
+                OnPropertyChanged();
+            }
+        }
 
         private ObservableCollection<ScaleValuePageTradeChart> _scaleValuesPageTradeChart = new ObservableCollection<ScaleValuePageTradeChart>();
         public ObservableCollection<ScaleValuePageTradeChart> ScaleValuesPageTradeChart //значения шкал значений, которые будут отображатся на графике
@@ -577,12 +630,15 @@ namespace ktradesystem.ViewModels
 
         private void BuildTradeChart() //строит график котировок
         {
+            TimeLinesPageTradeChart.Clear();
             Candles.Clear();
             Orders.Clear();
             Deals.Clear();
             IndicatorsPolylines.Clear();
+            List<DateTime> timeLineDateTimes = new List<DateTime>(); //список с датами и временем сегментов, по возрастанию
+            List<double> timeLineLefts = new List<double>(); //список с отступами слева, соответствующими дате и времени в timeLineDateTimes
             //формируем индикаторы для каждого источника данных
-            for(int i = 0; i < _testing.DataSourcesCandles.Count; i++)
+            for (int i = 0; i < _testing.DataSourcesCandles.Count; i++)
             {
                 foreach (AlgorithmIndicatorValues algorithmIndicatorValues in _testing.DataSourcesCandles[i].AlgorithmIndicatorsValues)
                 {
@@ -590,6 +646,7 @@ namespace ktradesystem.ViewModels
                 }
             }
 
+            AreasWidth = СanvasTradeChartWidth - _scaleValuesWidth;
             int areasWidth = (int)Math.Truncate(СanvasTradeChartWidth - _scaleValuesWidth); //ширина областей
             //находим индекс самого правого сегмента на графике, а так же суммарную ширину сегментов, которые правее текущего сегмента
             int rightSegmentIndex = _segmentIndex + 1;
@@ -626,6 +683,18 @@ namespace ktradesystem.ViewModels
                         bool isCandleFalling = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].C < _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].O; //свечка падающая или растущая
                         double bodyLeft = areasWidth + totalRightSegmentsWidth - totalSegmentsWidth;
                         Candles.Insert(0, new CandlePageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, StrokeColor = _candleStrokeColor, FillColor = isCandleFalling ? _fallingCandleFillColor : _risingCandleFillColor, BodyLeft = bodyLeft - _candleWidth, Candle = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex], BodyWidth = _candleWidth, StickLeft = bodyLeft - _candleWidth / 2.0 - 1 / 2.0, StickWidth = 1 });
+
+                        //если даты текущей свечки нет в датах и времени таймлайна, добавляем её
+                        if (timeLineDateTimes.Contains(_testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].DateTime) == false)
+                        {
+                            int timeLineindex = timeLineDateTimes.FindIndex(a => DateTime.Compare(a, _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].DateTime) > 0); //получаем индекс даты, которая позже даты текущей свечки
+                            if(timeLineindex == -1) //если индекс не найден, устанавливаем в конец
+                            {
+                                timeLineindex = timeLineDateTimes.Count;
+                            }
+                            timeLineDateTimes.Insert(timeLineindex, _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].DateTime);
+                            timeLineLefts.Insert(timeLineindex, Math.Truncate(bodyLeft - _candleWidth / 2.0 - 1));
+                        }
 
                         //добавляем заявки
                         //проходим по всем заявкам
@@ -688,6 +757,41 @@ namespace ktradesystem.ViewModels
                     }
                 }
             }
+            //добавляем элементы таймлайна
+            double currentLeft = Math.Truncate(_timeLineTimePixelsPerCut / 2); //текущий отступ слева
+            for(int i = 0; i < timeLineDateTimes.Count; i++)
+            {
+                if(currentLeft >= _timeLineTimePixelsPerCut)
+                {
+                    currentLeft = 0;
+                    string text = timeLineDateTimes[i].Day.ToString();
+                    if(text.Length < 2)
+                    {
+                        text = text.Insert(0, "0");
+                    }
+                    text += "." + timeLineDateTimes[i].Month.ToString();
+                    if (text.Length < 5)
+                    {
+                        text = text.Insert(3, "0");
+                    }
+                    text += "." + timeLineDateTimes[i].Year.ToString();
+                    text += " " + timeLineDateTimes[i].Hour.ToString();
+                    if (text.Length < 13)
+                    {
+                        text = text.Insert(11, "0");
+                    }
+                    text += ":" + timeLineDateTimes[i].Minute.ToString();
+                    if (text.Length < 16)
+                    {
+                        text = text.Insert(14, "0");
+                    }
+                    TimeLinesPageTradeChart.Add(new TimeLinePageTradeChart { DateTime = timeLineDateTimes[i], StrokeLineColor = _timeLineStrokeLineColor, TextColor = _timeLineTextColor, FontSize = _timeLineFontSize, Text = text, TextLeft = timeLineLefts[i] - _timeLineFullDateTimeLeft, TextTop = СanvasTradeChartHeight - _timeLineHeight + 3, LineLeft = timeLineLefts[i], X1 = Math.Truncate(timeLineLefts[i]), Y1 = 0, X2 = Math.Truncate(timeLineLefts[i]), Y2 = СanvasTradeChartHeight - _timeLineHeight });
+                }
+                else
+                {
+                    currentLeft += i > 0 ? timeLineLefts[i] - timeLineLefts[i - 1] : timeLineLefts[i];
+                }
+            }
         }
 
         private List<double> GetScalueValuesCuts(double maxPrice, double minPrice, double priceStep, double areaHeight) //возвращает список с ценами отрезков шкалы значений
@@ -701,12 +805,12 @@ namespace ktradesystem.ViewModels
             double currentPixelPerCut = 0; //текущее количество пикселей на 1 пункт цены
             double lastPixelPerCut = 0; //прошлое количество пикселей на 1 пункт цены
             int scaleValuesCutsIndex = 0; //индекс значения в _scaleValuesCuts (если индекс выходит за пределы массива, из индекса вычитается длина массива, а для значений устанавливается множитель 10)
+            int multiply = 1; //множитель для значений в _scaleValuesCuts
             do
             {
                 iteration++; //номер итерации цикла
                 lastCut = cut;
                 lastPixelPerCut = currentPixelPerCut;
-                int multiply = 1; //множитель для значений в _scaleValuesCuts
                 while (scaleValuesCutsIndex >= _scaleValuesCuts.Length)
                 {
                     scaleValuesCutsIndex -= _scaleValuesCuts.Length;
@@ -722,7 +826,7 @@ namespace ktradesystem.ViewModels
                     currentPriceStep++;
                 }
                 //увеличиваем значение на cut, чтобы экономить на итерациях
-                while (currentPriceStep <= maxPriceStep)
+                 while (currentPriceStep <= maxPriceStep)
                 {
                     if (currentPriceStep % cut == 0)
                     {
@@ -734,7 +838,7 @@ namespace ktradesystem.ViewModels
                 currentPixelPerCut = areaHeight / currentCuts;
                 scaleValuesCutsIndex++;
             }
-            while (Math.Abs(lastPixelPerCut - _scaleValuePixelPerCut) >= Math.Abs(currentPixelPerCut - _scaleValuePixelPerCut) || iteration == 1); //выходим, когда разница между прошлым и номинальным количеством пикселей на 1 пункт цены, меньше разницы между текущим и номинальным. То есть когда следующий элемент (currentPixelPerCut) будет дальше от номинального нежели предыдущий (lastPixelPerCut). iteration == 1 чтобы пройти 2 раза по циклу, чтобы сформировать как текущее так и прошлое значение
+            while (Math.Abs(_scaleValuePixelPerCut - lastPixelPerCut) >= Math.Abs(_scaleValuePixelPerCut - currentPixelPerCut) || iteration == 1); //выходим, когда разница между прошлым и номинальным количеством пикселей на 1 пункт цены, меньше разницы между текущим и номинальным. То есть когда следующий элемент (currentPixelPerCut) будет дальше от номинального нежели предыдущий (lastPixelPerCut). iteration == 1 чтобы пройти 2 раза по циклу, чтобы сформировать как текущее так и прошлое значение
             //создаем список с ценами отрезков шкалы значений
             List<double> cuts = new List<double>();
             int currentPrice = minPriceStep;
@@ -1079,7 +1183,7 @@ namespace ktradesystem.ViewModels
                                 }
                             }
                         }
-                        ScaleValuesPageTradeChart.Add(new ScaleValuePageTradeChart { StrokeLineColor = _scaleValueStrokeLineColor, TextColor = _scaleValueTextColor, FontSize = _scaleValueFontSize, Price = priceText, PriceLeft = areasWidth + 3, PriceTop = (TradeChartAreas[k].AreaHeight * (1 - (cuts[u] - areaMinPrice) / areaPriceRange)) + _scaleValueTextTop, LineLeft = 0, LineTop = currentTop + pastAreasHeight, X1 = 0, Y1 = lineTop, X2 = areasWidth, Y2 = lineTop });
+                        ScaleValuesPageTradeChart.Add(new ScaleValuePageTradeChart { StrokeLineColor = _scaleValueStrokeLineColor, TextColor = _scaleValueTextColor, FontSize = _scaleValueFontSize, Price = priceText, PriceLeft = areasWidth + 3, PriceTop = currentTop + pastAreasHeight + (TradeChartAreas[k].AreaHeight * (1 - (cuts[u] - areaMinPrice) / areaPriceRange)) - _scaleValueTextTop, LineLeft = 0, LineTop = currentTop + pastAreasHeight, X1 = 0, Y1 = lineTop, X2 = areasWidth, Y2 = lineTop });
                     }
 
                     pastAreasHeight += TradeChartAreas[k].AreaHeight;

@@ -12,7 +12,7 @@
             <RowDefinition Height="1*"/>
             <RowDefinition Height="{Binding StatusBarHeight}"/>
             <!--<RowDefinition Height="25"/>-->
-            <RowDefinition Height="108"/>
+            <RowDefinition Height="69"/>
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
             <StackPanel Grid.Row="0" Background="#FFFAFAFA" Orientation="Horizontal">

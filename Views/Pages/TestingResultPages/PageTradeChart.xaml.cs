@@ -24,9 +24,11 @@ namespace ktradesystem.Views.Pages.TestingResultPages
         public PageTradeChart()
         {
             InitializeComponent();
-            _viewModelPageTradeChart = new ViewModelPageTradeChart();
+            _viewModelPageTradeChart = ViewModelPageTradeChart.getInstance();
             DataContext = _viewModelPageTradeChart;
             _viewModelPageTradeChart.СanvasTradeChart = canvasTradeChart;
+            this.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity)); //без этого actualHeight и actualWidth будут нулями
+            this.Arrange(new Rect(0, 0, this.DesiredSize.Width, this.DesiredSize.Height)); //без этого actualHeight и actualWidth будут нулями
         }
 
         private ViewModelPageTradeChart _viewModelPageTradeChart;

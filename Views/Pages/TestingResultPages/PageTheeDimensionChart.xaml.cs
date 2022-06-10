@@ -28,6 +28,8 @@ namespace ktradesystem.Views.Pages.TestingResultPages
             DataContext = _viewModelPageTheeDimensionChart;
             _viewModelPageTheeDimensionChart.Viewport3D = viewport3D;
             _viewModelPageTheeDimensionChart.CanvasOn3D = canvasOn3D;
+            this.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity)); //без этого actualHeight и actualWidth будут нулями
+            this.Arrange(new Rect(0, 0, this.DesiredSize.Width, this.DesiredSize.Height)); //без этого actualHeight и actualWidth будут нулями
         }
 
         ViewModelPageTheeDimensionChart _viewModelPageTheeDimensionChart;

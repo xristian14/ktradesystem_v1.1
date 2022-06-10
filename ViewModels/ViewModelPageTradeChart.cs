@@ -17,10 +17,23 @@ namespace ktradesystem.ViewModels
 {
     class ViewModelPageTradeChart : ViewModelBase
     {
-        public ViewModelPageTradeChart()
+        private static ViewModelPageTradeChart _instance;
+
+        private ViewModelPageTradeChart()
         {
             ViewModelPageTestingResult.TestRunsUpdatePages += UpdatePage;
+            SetInitialCandleWidth(); //устанавливаем начальную ширину свечки
         }
+
+        public static ViewModelPageTradeChart getInstance()
+        {
+            if (_instance == null)
+            {
+                _instance = new ViewModelPageTradeChart();
+            }
+            return _instance;
+        }
+
         private Testing _testing; //результат тестирования
         private TestBatch _testBatch; //тестовая связка
         private TestRun _testRun; //тестовый прогон, для которого строится график
@@ -42,14 +55,14 @@ namespace ktradesystem.ViewModels
         private SolidColorBrush _scaleValueTextColor = new SolidColorBrush(Color.FromRgb(80, 80, 80)); //цвет текста шкалы значения
         private SolidColorBrush _timeLineStrokeLineColor = new SolidColorBrush(Color.FromRgb(230, 230, 230)); //цвет линии шкалы значения
         private SolidColorBrush _timeLineTextColor = new SolidColorBrush(Color.FromRgb(40, 40, 40)); //цвет текста даты и времени
+        private bool _isLoadingTestResultComplete = false; //флаг того что результаты загружены
         private int _timeLineFontSize = 9; //размер шрифта даты и времени на шкале даты и времени
-        private double _timeLineFullDateTimeLeft = 32; //отступ слева для полной даты и времени на шкале даты и времени
+        private double _timeLineFullDateTimeLeft = 33; //отступ слева для полной даты и времени на шкале даты и времени
         private double _timeLineTimePixelsPerCut = 70; //количество пикселей на один отрезок на шкале даты и времени
         private int _dataSourceAreasHighlightHeight = 15; //высота линии, на которой написано название источника данных для которого следуют ниже области
         private int _candleMinWidth = 1; //минимальная ширина свечки, в пикселях
         private int _candleMaxWidth = 37; //максимальная ширина свечки, в пикселях
         private int _initialCandleWidth = 3; //начальная ширина свечки
-        private int _candleWidth; //текущая ширина свечки
         private double _partOfOnePriceStepHeightForOrderVerticalLine = 0.667; //часть от высоты одного пункта центы, исходя из которой будет вычитсляться высота вертикальной линии для заявки
         private int _divideWidth = 10; //ширина разрыва
         private double _scaleValuesAddingRange = 0.03; //дополнительный диапазон для шкалы значений в каждую из сторон
@@ -77,6 +90,31 @@ namespace ktradesystem.ViewModels
         private double _mouseDownTradeChartMovePosition; //значение масштаба в момент нажатия левой клавиши мыши
         private double _mouseDownTradeChartScale; //значение масштаба в момент нажатия левой клавиши мыши
 
+        private int _candleWidth;
+        public int CandleWidth //текущая ширина свечки
+        {
+            get { return _candleWidth; }
+            set
+            {
+                _candleWidth = value;
+                OnPropertyChanged();
+                if (_isLoadingTestResultComplete)
+                {
+                    BuildTradeChart(); //строим график котировок
+                    UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
+                }
+            }
+        }
+        private List<int> _candleWidths = new List<int>() { 1, 2, 3, 4, 5, 7, 9, 11, 15, 21, 29, 37 };
+        public List<int> CandleWidths //варианты ширины свечки
+        {
+            get { return _candleWidths; }
+            set
+            {
+                _candleWidths = value;
+                OnPropertyChanged();
+            }
+        }
         private Canvas _canvasTradeChart;
         public Canvas СanvasTradeChart //canvas с графиком
         {
@@ -124,6 +162,16 @@ namespace ktradesystem.ViewModels
             set
             {
                 _areasWidth = value;
+                OnPropertyChanged();
+            }
+        }
+        private bool _isHideDuplicateDate = false;
+        public bool IsHideDuplicateDate //скрывать дублирующиеся даты
+        {
+            get { return _isHideDuplicateDate; }
+            set
+            {
+                _isHideDuplicateDate = value;
                 OnPropertyChanged();
             }
         }
@@ -347,6 +395,17 @@ namespace ktradesystem.ViewModels
             _isMouseDown = false;
             _segmentIndex += (int)Math.Round(-_tradeChartMovedPosition / _candleWidth);
             _segmentIndex = _segmentIndex >= _segments.Count ? _segments.Count - 1 : _segmentIndex;
+            if (IsHideDuplicateDate)
+            {
+                if(_segments[_segmentIndex].Section.IsPresent == false)
+                {
+                    int index = FindPresentSegmentIndex(_segmentIndex, true);
+                    if(index > -1)
+                    {
+                        _segmentIndex = index;
+                    }
+                }
+            }
             BuildTradeChart(); //строим график котировок
             UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
         }
@@ -696,7 +755,7 @@ namespace ktradesystem.ViewModels
 
         private void SetInitialCandleWidth() //устанавливает начальную ширину свечки
         {
-            _candleWidth = _initialCandleWidth; //текущая ширина свечки
+            CandleWidth = CandleWidths[2]; //текущая ширина свечки
         }
         private void SetInitialSegmentIndex() //устанавливает начальный индекс сегмента
         {
@@ -721,6 +780,19 @@ namespace ktradesystem.ViewModels
             return totalSegmentsWidth <= tradeChartWidth ? true : false;
         }
 
+        private int FindPresentSegmentIndex(int startIndex, bool direction) //находит индекс первого сегмента в настоящем, от стартового индекса в выбранном направлении, если сегмент в настоящем не найден, вернет -1
+        {
+            int index = startIndex;
+            bool isIndexOver = direction ? index >= _segments.Count : index < 0; //флаг того что вышли за пределы списка с сегментами
+            bool isPresent = isIndexOver == false ? _segments[index].Section.IsPresent : false; //флаг того что сегмент находится в настоящем
+            while (isIndexOver == false && isPresent == false)
+            {
+                index += direction ? 1 : -1;
+                isIndexOver = direction ? index >= _segments.Count : index < 0;
+                isPresent = isIndexOver == false ? _segments[index].Section.IsPresent : false;
+            }
+            return isPresent ? index : -1;
+        }
         private void BuildTradeChart() //строит график котировок
         {
             TimeLinesPageTradeChart.Clear();
@@ -742,86 +814,137 @@ namespace ktradesystem.ViewModels
             AreasWidth = СanvasTradeChartWidth - _scaleValuesWidth;
             int areasWidth = (int)Math.Truncate(СanvasTradeChartWidth - _scaleValuesWidth); //ширина областей
             //находим индекс самого правого сегмента на графике, а так же суммарную ширину сегментов, которые правее текущего сегмента
-            int rightSegmentIndex = _segmentIndex + 1;
+            List<int> rightSegmentIndexes = new List<int>(); //индексы правого сегмента, эти два списка содержат крайние индексы группы сегментов, если нужно пропустить прошлые даты, будет создано несколько групп сегментов, ограничивающиеся крайними индексами
+            List<int> leftSegmentIndexes = new List<int>(); //индексы левого сегмента
+            rightSegmentIndexes.Add(_segmentIndex + 1);
+            leftSegmentIndexes.Add(_segmentIndex);
+            bool isSegmentsEnd = !(rightSegmentIndexes[rightSegmentIndexes.Count - 1] < _segments.Count);
             int totalRightSegmentsWidth = 0;
-            while(totalRightSegmentsWidth < Math.Truncate(areasWidth * _tradeChartHiddenSegmentsSize) && rightSegmentIndex < _segments.Count)
+            while(totalRightSegmentsWidth < Math.Truncate(areasWidth * _tradeChartHiddenSegmentsSize) && isSegmentsEnd == false)
             {
-                totalRightSegmentsWidth += _segments[rightSegmentIndex].IsDivide ? _divideWidth : _candleWidth;
-                rightSegmentIndex++;
+                totalRightSegmentsWidth += _segments[rightSegmentIndexes[rightSegmentIndexes.Count - 1]].IsDivide ? _divideWidth : _candleWidth;
+                rightSegmentIndexes[rightSegmentIndexes.Count - 1]++;
+                if (rightSegmentIndexes[rightSegmentIndexes.Count - 1] < _segments.Count)
+                {
+                    if (IsHideDuplicateDate) //если нужно скрыть дублирующися даты, проверяем, находится ли сегмент, на который мы перешли, в настоящем
+                    {
+                        if (_segments[rightSegmentIndexes[rightSegmentIndexes.Count - 1]].Section.IsPresent == false) //если сегмент, на который мы перешли, в прошлом, находим следующий индекс сегмента в настоящем, и добавляем новую пару правого и левого индексов
+                        {
+                            int nextPresentSegmentIndex = FindPresentSegmentIndex(rightSegmentIndexes[rightSegmentIndexes.Count - 1], true);
+                            if(nextPresentSegmentIndex > -1) //если сегмент найден, добавляем новую пару правого и левого индексов
+                            {
+                                rightSegmentIndexes.Add(nextPresentSegmentIndex + 1);
+                                leftSegmentIndexes.Add(nextPresentSegmentIndex);
+                            }
+                            else //если сегмент в настоящем не был найден, отмечаем что сегменты закончились
+                            {
+                                isSegmentsEnd = true;
+                            }
+                        }
+                    }
+                }
+                if((rightSegmentIndexes[rightSegmentIndexes.Count - 1] < _segments.Count) == false)
+                {
+                    isSegmentsEnd = true; //если индекс превысил диапазон списка, отмечаем что сегменты закончились
+                }
             }
-            rightSegmentIndex--;
+            //уменьшаем правые индексы, т.к. они перешли на сегмент, котоырй не удовлетворяет условиям
+            for(int u = 0; u < rightSegmentIndexes.Count; u++)
+            {
+                rightSegmentIndexes[u]--;
+            }
             //находим индекс самого левого сегмента на графике
-            int leftSegmentIndex = _segmentIndex;
+            isSegmentsEnd = !(leftSegmentIndexes[0] >= 0);
             int totalLeftSegmentsWidth = 0;
-            while (totalLeftSegmentsWidth < Math.Truncate(areasWidth + areasWidth * _tradeChartHiddenSegmentsSize) && leftSegmentIndex >= 0)
+            while (totalLeftSegmentsWidth < Math.Truncate(areasWidth + areasWidth * _tradeChartHiddenSegmentsSize) && isSegmentsEnd == false)
             {
-                totalLeftSegmentsWidth += _segments[leftSegmentIndex].IsDivide ? _divideWidth : _candleWidth;
-                leftSegmentIndex--;
+                totalLeftSegmentsWidth += _segments[leftSegmentIndexes[0]].IsDivide ? _divideWidth : _candleWidth;
+                leftSegmentIndexes[0]--;
+                if (leftSegmentIndexes[0] >= 0)
+                {
+                    if (IsHideDuplicateDate) //если нужно скрыть дублирующися даты, проверяем, находится ли сегмент, на который мы перешли, в настоящем
+                    {
+                        if (_segments[leftSegmentIndexes[0]].Section.IsPresent == false) //если сегмент, на который мы перешли, в прошлом, находим следующий индекс сегмента в настоящем, и добавляем новую пару правого и левого индексов
+                        {
+                            int nextPresentSegmentIndex = FindPresentSegmentIndex(leftSegmentIndexes[0], false);
+                            if (nextPresentSegmentIndex > -1) //если сегмент найден, добавляем новую пару правого и левого индексов
+                            {
+                                rightSegmentIndexes.Insert(0, nextPresentSegmentIndex);
+                                leftSegmentIndexes.Insert(0, nextPresentSegmentIndex - 1);
+                            }
+                            else //если сегмент в настоящем не был найден, отмечаем что сегменты закончились
+                            {
+                                isSegmentsEnd = true;
+                            }
+                        }
+                    }
+                }
+                if ((leftSegmentIndexes[0] >= 0) == false)
+                {
+                    isSegmentsEnd = true; //если индекс превысил диапазон списка, отмечаем что сегменты закончились
+                }
             }
-            leftSegmentIndex++;
-            //проходим по всем сегментам и формируем свечки, заявки, сделки и индикаторы для сегментов
-            int totalSegmentsWidth = 0; //суммарная ширина сегментов
-            for (int i = rightSegmentIndex; i >= leftSegmentIndex; i--)
+            //увеличиваем левые индексы, т.к. они перешли на сегмент, который не удовлетворяет условиям
+            for (int u = 0; u < leftSegmentIndexes.Count; u++)
             {
-                if (_segments[i].IsDivide)
+                leftSegmentIndexes[u]++;
+            }
+
+            //проходим по всем сегментам и формируем свечки, заявки, сделки и индикаторы для сегментов
+            double lastTimeLineLeft = areasWidth + totalRightSegmentsWidth - Math.Truncate(_timeLineTimePixelsPerCut / 2) - 6; //последний отступ слева для элементов таймлайна
+            int segmentIndexesIndex = rightSegmentIndexes.Count - 1; //текущий индекс группы сегментов, ограниченных индексами сегментов слева и справа
+            int segmentIndex = rightSegmentIndexes[segmentIndexesIndex]; //текущий индекс сегмента
+            int totalSegmentsWidth = 0; //суммарная ширина сегментовIsHideDuplicateDate
+            bool isEndSegments = segmentIndexesIndex >= 0 ? false : true;
+            while(isEndSegments == false)
+            {
+                if (_segments[segmentIndex].IsDivide)
                 {
                     totalSegmentsWidth += _divideWidth;
                 }
                 else
                 {
                     //проходим по всем источникам данных текущего сегмента
-                    for (int k = 0; k < _segments[i].CandleIndexes.Count; k++)
+                    for (int k = 0; k < _segments[segmentIndex].CandleIndexes.Count; k++)
                     {
                         //добавляем свечку
-                        bool isCandleFalling = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].C < _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].O; //свечка падающая или растущая
+                        bool isCandleFalling = _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[segmentIndex].CandleIndexes[k].FileIndex][_segments[segmentIndex].CandleIndexes[k].CandleIndex].C < _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[segmentIndex].CandleIndexes[k].FileIndex][_segments[segmentIndex].CandleIndexes[k].CandleIndex].O; //свечка падающая или растущая
                         double bodyLeft = areasWidth + totalRightSegmentsWidth - totalSegmentsWidth;
-                        Candles.Insert(0, new CandlePageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, StrokeColor = _candleStrokeColor, FillColor = isCandleFalling ? _fallingCandleFillColor : _risingCandleFillColor, BodyLeft = bodyLeft - _candleWidth, Candle = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex], BodyWidth = _candleWidth, StickLeft = bodyLeft - _candleWidth / 2.0 - 1 / 2.0, StickWidth = 1 });
-
-                        //если даты текущей свечки нет в датах и времени таймлайна, добавляем её
-                        if (timeLineDateTimes.Contains(_testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].DateTime) == false)
-                        {
-                            int timeLineindex = timeLineDateTimes.FindIndex(a => DateTime.Compare(a, _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].DateTime) > 0); //получаем индекс даты, которая позже даты текущей свечки
-                            if(timeLineindex == -1) //если индекс не найден, устанавливаем в конец
-                            {
-                                timeLineindex = timeLineDateTimes.Count;
-                            }
-                            timeLineDateTimes.Insert(timeLineindex, _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].DateTime);
-                            timeLineLefts.Insert(timeLineindex, Math.Truncate(bodyLeft - _candleWidth / 2.0 - 1));
-                        }
+                        Candles.Insert(0, new CandlePageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, StrokeColor = _candleStrokeColor, FillColor = isCandleFalling ? _fallingCandleFillColor : _risingCandleFillColor, BodyLeft = bodyLeft - _candleWidth, Candle = _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].Candles[_segments[segmentIndex].CandleIndexes[k].FileIndex][_segments[segmentIndex].CandleIndexes[k].CandleIndex], BodyWidth = _candleWidth, StickLeft = bodyLeft - _candleWidth / 2.0 - 1 / 2.0, StickWidth = 1 });
 
                         //добавляем заявки
                         //проходим по всем заявкам
-                        foreach(OrderIndexPageTradeChart orderIndexPageTradeChart in _segments[i].CandleIndexes[k].OrderIndexes)
+                        foreach (OrderIndexPageTradeChart orderIndexPageTradeChart in _segments[segmentIndex].CandleIndexes[k].OrderIndexes)
                         {
                             SolidColorBrush orderFillColor = _limitBuyOrderFillColor;
                             if (_testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].TypeOrder.Id == 1) //лимитная заявка
                             {
                                 orderFillColor = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].Direction ? _limitBuyOrderFillColor : _limitSellOrderFillColor;
                             }
-                            else if(_testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].TypeOrder.Id == 2) //рыночная заявка
+                            else if (_testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].TypeOrder.Id == 2) //рыночная заявка
                             {
                                 orderFillColor = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].Direction ? _marketBuyOrderFillColor : _marketSellOrderFillColor;
                             }
-                            else if(_testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].TypeOrder.Id == 3) //стоп заявка
+                            else if (_testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].TypeOrder.Id == 3) //стоп заявка
                             {
                                 orderFillColor = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].Direction ? _stopBuyOrderFillColor : _stopSellOrderFillColor;
                             }
                             double verticalLineWidth = _candleWidth >= 2 ? _candleWidth / 2 : 1;
-                            Orders.Insert(0, new OrderPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, FillColor = orderFillColor, Order = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex], IsStart = orderIndexPageTradeChart.IsStart, HorizontalLineLeft = bodyLeft - _candleWidth, HorizontalLineWidth = _candleWidth, VerticalLineLeft = bodyLeft - _candleWidth + verticalLineWidth / 2, VerticalLineWidth = verticalLineWidth });
+                            Orders.Insert(0, new OrderPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, FillColor = orderFillColor, Order = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex], IsStart = orderIndexPageTradeChart.IsStart, HorizontalLineLeft = bodyLeft - _candleWidth, HorizontalLineWidth = _candleWidth, VerticalLineLeft = bodyLeft - _candleWidth + verticalLineWidth / 2, VerticalLineWidth = verticalLineWidth });
                         }
 
                         //добавляем сделки
                         //проходим по всем сделкам
-                        foreach (int dealIndex in _segments[i].CandleIndexes[k].DealIndexes)
+                        foreach (int dealIndex in _segments[segmentIndex].CandleIndexes[k].DealIndexes)
                         {
                             int triangleWidth = 0;
                             int triangleHeight = 0;
-                            if(_candleWidth < 3)
+                            if (_candleWidth < 3)
                             {
                                 triangleWidth = 7;
                                 triangleHeight = 4;
                             }
-                            else if(_candleWidth < 11)
+                            else if (_candleWidth < 11)
                             {
                                 triangleWidth = 9;
                                 triangleHeight = 5;
@@ -831,58 +954,68 @@ namespace ktradesystem.ViewModels
                                 triangleWidth = 11;
                                 triangleHeight = 6;
                             }
-                            Deals.Insert(0, new DealPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, StrokeColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealStrokeColor : _sellDealStrokeColor, FillColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealFillColor : _sellDealFillColor, Deal = _testRun.Account.AllDeals[dealIndex], Left = bodyLeft - triangleWidth, TriangleWidth = triangleWidth, TriangleHeight = triangleHeight, Points = new PointCollection() });
+                            Deals.Insert(0, new DealPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, StrokeColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealStrokeColor : _sellDealStrokeColor, FillColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealFillColor : _sellDealFillColor, Deal = _testRun.Account.AllDeals[dealIndex], Left = bodyLeft - triangleWidth, TriangleWidth = triangleWidth, TriangleHeight = triangleHeight, Points = new PointCollection() });
                         }
 
                         //добавляем точки со значениями для всех индикаторов текущего источника данных
                         //проходим по всем индикаторам
-                        foreach(AlgorithmIndicatorValues algorithmIndicatorValues in _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].AlgorithmIndicatorsValues)
+                        foreach (AlgorithmIndicatorValues algorithmIndicatorValues in _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].AlgorithmIndicatorsValues)
                         {
-                            if (algorithmIndicatorValues.Values[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].IsNotOverIndex) //если не было превышения индекса при рассчете данного значения индикатора
+                            if (algorithmIndicatorValues.Values[_segments[segmentIndex].CandleIndexes[k].FileIndex][_segments[segmentIndex].CandleIndexes[k].CandleIndex].IsNotOverIndex) //если не было превышения индекса при рассчете данного значения индикатора
                             {
-                                IndicatorPolylinePageTradeChart indicatorPolyline = IndicatorsPolylines.Where(a => a.IdDataSource == _testing.DataSourcesCandles[_segments[i].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id && a.IdIndicator == algorithmIndicatorValues.AlgorithmIndicator.IdIndicator).First(); //индикатор с текущим источником данных
+                                IndicatorPolylinePageTradeChart indicatorPolyline = IndicatorsPolylines.Where(a => a.IdDataSource == _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id && a.IdIndicator == algorithmIndicatorValues.AlgorithmIndicator.IdIndicator).First(); //индикатор с текущим источником данных
                                 indicatorPolyline.Points.Insert(0, new Point(bodyLeft - _candleWidth / 2, 0)); //добавляем точку для графика
-                                indicatorPolyline.PointsPrices.Insert(0, algorithmIndicatorValues.Values[_segments[i].CandleIndexes[k].FileIndex][_segments[i].CandleIndexes[k].CandleIndex].Value); //добавляем значение цены для данной точки, на основании которой будет вычисляться координата Y точки
+                                indicatorPolyline.PointsPrices.Insert(0, algorithmIndicatorValues.Values[_segments[segmentIndex].CandleIndexes[k].FileIndex][_segments[segmentIndex].CandleIndexes[k].CandleIndex].Value); //добавляем значение цены для данной точки, на основании которой будет вычисляться координата Y точки
                             }
                         }
+                    }
 
-                        totalSegmentsWidth += _candleWidth;
+                    //добавляем элемент таймлайна для текущего сегмента
+                    double timeLineLeft = areasWidth + totalRightSegmentsWidth - totalSegmentsWidth;
+                    if (lastTimeLineLeft - timeLineLeft >= _timeLineTimePixelsPerCut) //если отступ между предыдущей линией таймлайна и текущим сегментом, больше или равен расстоянию между линиями таймлайна, добавляем линию
+                    {
+                        lastTimeLineLeft = timeLineLeft;//_testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[0].DataSourceCandlesIndex].Candles[_segments[segmentIndex].CandleIndexes[0].FileIndex][_segments[segmentIndex].CandleIndexes[0].CandleIndex].DateTime
+                        DateTime segmentDateTime = _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[0].DataSourceCandlesIndex].Candles[_segments[segmentIndex].CandleIndexes[0].FileIndex][_segments[segmentIndex].CandleIndexes[0].CandleIndex].DateTime;
+                        string text = segmentDateTime.Day.ToString();
+                        if (text.Length < 2)
+                        {
+                            text = text.Insert(0, "0");
+                        }
+                        text += "." + segmentDateTime.Month.ToString();
+                        if (text.Length < 5)
+                        {
+                            text = text.Insert(3, "0");
+                        }
+                        text += "." + segmentDateTime.Year.ToString();
+                        text += " " + segmentDateTime.Hour.ToString();
+                        if (text.Length < 13)
+                        {
+                            text = text.Insert(11, "0");
+                        }
+                        text += ":" + segmentDateTime.Minute.ToString();
+                        if (text.Length < 16)
+                        {
+                            text = text.Insert(14, "0");
+                        }
+                        TimeLinesPageTradeChart.Add(new TimeLinePageTradeChart { DateTime = segmentDateTime, StrokeLineColor = _timeLineStrokeLineColor, TextColor = _timeLineTextColor, FontSize = _timeLineFontSize, Text = text, TextLeft = timeLineLeft - _timeLineFullDateTimeLeft, TextTop = СanvasTradeChartHeight - _timeLineHeight + 3, LineLeft = timeLineLeft, X1 = Math.Truncate(timeLineLeft), Y1 = 0, X2 = Math.Truncate(timeLineLeft), Y2 = СanvasTradeChartHeight - _timeLineHeight });
                     }
+
+                    totalSegmentsWidth += _candleWidth;
                 }
-            }
-            //добавляем элементы таймлайна
-            double currentLeft = Math.Truncate(_timeLineTimePixelsPerCut / 2); //текущий отступ слева
-            for(int i = 0; i < timeLineDateTimes.Count; i++)
-            {
-                if(currentLeft >= _timeLineTimePixelsPerCut)
+
+                //переходим на следующий сегмент
+                segmentIndex--;
+                if(segmentIndex < leftSegmentIndexes[segmentIndexesIndex]) //если текущий индекс сегмента, вышел за правый индекс группы сегментов, переходим на следующую группу
                 {
-                    currentLeft = 0;
-                    string text = timeLineDateTimes[i].Day.ToString();
-                    if(text.Length < 2)
+                    segmentIndexesIndex--;
+                    if(segmentIndexesIndex >= 0) //если индекс группы сегментов, не ревысил количество групп
                     {
-                        text = text.Insert(0, "0");
+                        segmentIndex = rightSegmentIndexes[segmentIndexesIndex];
                     }
-                    text += "." + timeLineDateTimes[i].Month.ToString();
-                    if (text.Length < 5)
+                    else //если индекс группы сегментов, превысил количество групп сегментов, отмечаем что сегменты закончились
                     {
-                        text = text.Insert(3, "0");
+                        isEndSegments = true;
                     }
-                    text += "." + timeLineDateTimes[i].Year.ToString();
-                    text += " " + timeLineDateTimes[i].Hour.ToString();
-                    if (text.Length < 13)
-                    {
-                        text = text.Insert(11, "0");
-                    }
-                    text += ":" + timeLineDateTimes[i].Minute.ToString();
-                    if (text.Length < 16)
-                    {
-                        text = text.Insert(14, "0");
-                    }
-                    TimeLinesPageTradeChart.Add(new TimeLinePageTradeChart { DateTime = timeLineDateTimes[i], StrokeLineColor = _timeLineStrokeLineColor, TextColor = _timeLineTextColor, FontSize = _timeLineFontSize, Text = text, TextLeft = timeLineLefts[i] - _timeLineFullDateTimeLeft, TextTop = СanvasTradeChartHeight - _timeLineHeight + 3, LineLeft = timeLineLefts[i], X1 = Math.Truncate(timeLineLefts[i]), Y1 = 0, X2 = Math.Truncate(timeLineLefts[i]), Y2 = СanvasTradeChartHeight - _timeLineHeight });
-                }
-                else
-                {
-                    currentLeft += i > 0 ? timeLineLefts[i] - timeLineLefts[i - 1] : timeLineLefts[i];
                 }
             }
         }
@@ -1145,19 +1278,20 @@ namespace ktradesystem.ViewModels
                     {
                         int verticalOffset = dealsCurrentDs[dealIndex].Deal.Direction ? 0 : -dealsCurrentDs[dealIndex].TriangleHeight; //вертикальное смещение, для сделки на покупку отсутствует, т.к. верхний край треугольника сделки на уровне цены, для продажи равняется высоте треугольника, т.к. уровень цены находится на нижней части треугольника
                         dealsCurrentDs[dealIndex].Top = (TradeChartAreas[0].AreaHeight * (1 - (dealsCurrentDs[dealIndex].Deal.Price - minPrice) / priceRange) + verticalOffset) + currentTop;
-                        dealsCurrentDs[dealIndex].Points.Clear();
+                        PointCollection newPoints = new PointCollection();
                         if (dealsCurrentDs[dealIndex].Deal.Direction) //сделка на покупку
                         {
-                            dealsCurrentDs[dealIndex].Points.Add(new Point(0, dealsCurrentDs[dealIndex].TriangleHeight - 1)); //левая координата
-                            dealsCurrentDs[dealIndex].Points.Add(new Point(Math.Truncate(dealsCurrentDs[dealIndex].TriangleWidth / 2.0), 0)); //вершина треугольника
-                            dealsCurrentDs[dealIndex].Points.Add(new Point(dealsCurrentDs[dealIndex].TriangleWidth - 1, dealsCurrentDs[dealIndex].TriangleHeight - 1)); //правая координата
+                            newPoints.Add(new Point(0, dealsCurrentDs[dealIndex].TriangleHeight - 1)); //левая координата
+                            newPoints.Add(new Point(Math.Truncate(dealsCurrentDs[dealIndex].TriangleWidth / 2.0), 0)); //вершина треугольника
+                            newPoints.Add(new Point(dealsCurrentDs[dealIndex].TriangleWidth - 1, dealsCurrentDs[dealIndex].TriangleHeight - 1)); //правая координата
                         }
                         else //сделка на продажу
                         {
-                            dealsCurrentDs[dealIndex].Points.Add(new Point(0, 0)); //левая координата
-                            dealsCurrentDs[dealIndex].Points.Add(new Point(Math.Truncate(dealsCurrentDs[dealIndex].TriangleWidth / 2.0), dealsCurrentDs[dealIndex].TriangleHeight - 1)); //вершина треугольника
-                            dealsCurrentDs[dealIndex].Points.Add(new Point(dealsCurrentDs[dealIndex].TriangleWidth - 1, 0)); //правая координата
+                            newPoints.Add(new Point(0, 0)); //левая координата
+                            newPoints.Add(new Point(Math.Truncate(dealsCurrentDs[dealIndex].TriangleWidth / 2.0), dealsCurrentDs[dealIndex].TriangleHeight - 1)); //вершина треугольника
+                            newPoints.Add(new Point(dealsCurrentDs[dealIndex].TriangleWidth - 1, 0)); //правая координата
                         }
+                        dealsCurrentDs[dealIndex].Points = newPoints;
                     }
                     dealIndex++;
                     if (dealIndex < dealsCurrentDs.Count)
@@ -1289,6 +1423,7 @@ namespace ktradesystem.ViewModels
         {
             if(ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox != null && ViewModelPageTestingResult.getInstance().SelectedTestRunTestingResultCombobox != null)
             {
+                _isLoadingTestResultComplete = false; //флаг того что результаты загружены
                 _testing = ViewModelPageTestingResult.getInstance().TestingResult;
                 _testBatch = ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox.TestBatch;
                 _testRun = ViewModelPageTestingResult.getInstance().SelectedTestRunTestingResultCombobox.TestRun;
@@ -1298,10 +1433,10 @@ namespace ktradesystem.ViewModels
                 CreateTradeChartAreas(); //создаем области для графика котировок
                 CreateIndicatorsMenuItemPageTradeChart(); //создаем элементы для меню выбора областей для индикаторов
                 CreateSegments(); //создаем сегменты, на основе которых будет строиться график
-                SetInitialCandleWidth(); //устанавливаем начальную ширину свечки
                 SetInitialSegmentIndex(); //устанавливаем начальный индекс сегмента
                 BuildTradeChart(); //строим график котировок
                 UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
+                _isLoadingTestResultComplete = true;
             }
         }
         public ICommand Button1_Click
@@ -1310,7 +1445,7 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    _segmentIndex = 10560;
+                    _segmentIndex = 29000;
                     _segmentIndex = _segmentIndex >= _segments.Count ? _segments.Count - 1 : _segmentIndex;
                     BuildTradeChart(); //строим график котировок
                     UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов

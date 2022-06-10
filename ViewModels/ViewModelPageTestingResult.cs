@@ -428,8 +428,11 @@ namespace ktradesystem.ViewModels
         private void CreateTabControlTestingResultItems()
         {
             TabControlTestingResultItem tabControlTestingResultItem1 = new TabControlTestingResultItem { Header = "Тестовая связка", HorizontalStackPanels = new List<StackPanelTestingResult>(), VerticalStackPanels = new List<StackPanelTestingResult>() };
-            tabControlTestingResultItem1.HorizontalStackPanels.Add(new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.TestingResultPages.PageTheeDimensionChart() }, new PageItem { Page = new Views.Pages.TestingResultPages.PageTradeChart() } } });
+            tabControlTestingResultItem1.HorizontalStackPanels.Add(new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.TestingResultPages.PageTheeDimensionChart() } } });
             TabControlTestingResultItems.Add(tabControlTestingResultItem1);
+            TabControlTestingResultItem tabControlTestingResultItem2 = new TabControlTestingResultItem { Header = "Тестовый прогон", HorizontalStackPanels = new List<StackPanelTestingResult>(), VerticalStackPanels = new List<StackPanelTestingResult>() };
+            tabControlTestingResultItem2.HorizontalStackPanels.Add(new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.TestingResultPages.PageTradeChart() } } });
+            TabControlTestingResultItems.Add(tabControlTestingResultItem2);
         }
 
         //делегаты, которые содержат методы страниц или ViewModel страниц которые обновляют информацию или график на странице в соответствии с новым выбранным элементом (TestingResult, или DataSourceGroup, или TestBatch, или TestRun

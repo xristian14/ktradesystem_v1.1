@@ -192,6 +192,7 @@
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\ViewModelData.cs" />
     <Compile Include="ViewModels\ViewModelPageDataSource.cs" />
+    <Compile Include="ViewModels\ViewModelPageOrders.cs" />
     <Compile Include="ViewModels\ViewModelPageTesting.cs" />
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
@@ -224,6 +225,9 @@
     </Compile>
     <Compile Include="Views\Pages\PageTestingResult.xaml.cs">
       <DependentUpon>PageTestingResult.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Pages\TestingResultPages\PageOrders.xaml.cs">
+      <DependentUpon>PageOrders.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Pages\TestingResultPages\PageTheeDimensionChart.xaml.cs">
       <DependentUpon>PageTheeDimensionChart.xaml</DependentUpon>
@@ -334,6 +338,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Pages\PageTestingResult.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Pages\TestingResultPages\PageOrders.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

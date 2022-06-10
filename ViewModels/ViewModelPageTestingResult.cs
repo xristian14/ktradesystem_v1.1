@@ -431,7 +431,8 @@ namespace ktradesystem.ViewModels
             tabControlTestingResultItem1.HorizontalStackPanels.Add(new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.TestingResultPages.PageTheeDimensionChart() } } });
             TabControlTestingResultItems.Add(tabControlTestingResultItem1);
             TabControlTestingResultItem tabControlTestingResultItem2 = new TabControlTestingResultItem { Header = "Тестовый прогон", HorizontalStackPanels = new List<StackPanelTestingResult>(), VerticalStackPanels = new List<StackPanelTestingResult>() };
-            tabControlTestingResultItem2.HorizontalStackPanels.Add(new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.TestingResultPages.PageTradeChart() } } });
+            tabControlTestingResultItem2.VerticalStackPanels.Add(new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.TestingResultPages.PageTradeChart() } } });
+            tabControlTestingResultItem2.VerticalStackPanels.Add(new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.TestingResultPages.PageOrders() } } });
             TabControlTestingResultItems.Add(tabControlTestingResultItem2);
         }
 

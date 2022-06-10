@@ -296,41 +296,65 @@
                     <TextBlock Text="Заявки" FontWeight="Bold" HorizontalAlignment="Center"/>
                 </StackPanel>
                 <StackPanel Margin="0 5 0 0" Orientation="Horizontal">
-                    <Button Content="Перейти к заявке" Width="110" Command="{Binding MoveToOrder_Click}"/>
+                    <Button Content="Перейти к заявке" Padding="5 0" Command="{Binding MoveToOrder_Click}"/>
                 </StackPanel>
             </StackPanel>
 
-            <ListView Grid.Row="1" IsEnabled="{Binding IsAlgorithmReadOnly}" ItemsSource="{Binding Algorithms}" SelectedItem="{Binding SelectedAlgorithm, Mode=TwoWay}" SelectionMode="Single">
+            <ListView Grid.Row="1" ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder, Mode=TwoWay}" SelectionMode="Single">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="№" Width="{Binding ElementName=helperAlg1, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Дата" Width="{Binding ElementName=helperAlg2, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Время" Width="{Binding ElementName=helperAlg2, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Направление" Width="{Binding ElementName=helperAlg2, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Цена" Width="{Binding ElementName=helperAlg2, Path=ActualWidth}"/>
-                        <GridViewColumn Header="Описание" Width="{Binding ElementName=helperAlg3, Path=ActualWidth}">
+                        <GridViewColumn DisplayMemberBinding="{Binding Number}" Header="№&#x0a;заявки" Width="{Binding ElementName=helper0, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding DataSource.Name}" Header="Источник&#x0a;данных" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding TypeOrder.Name}" Header="Тип заявки" Width="{Binding ElementName=helper2, Path=ActualWidth}"/>
+                        <GridViewColumn Header="Направление" Width="{Binding ElementName=helper3, Path=ActualWidth}">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBox Text="{Binding Description}" TextWrapping="Wrap" MaxLines="1" IsReadOnly="True"/>
+                                    <TextBlock>
+                                        <TextBlock.Style>
+                                            <Style TargetType="{x:Type TextBlock}">
+                                                <Setter Property="Text" Value="Продажа" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Direction}" Value="True">
+                                                        <Setter Property="Text" Value="Покупка" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
+                        <GridViewColumn DisplayMemberBinding="{Binding Price}" Header="Цена" Width="{Binding ElementName=helper4, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding StartCount}" Header="Начальное&#x0a;количество" Width="{Binding ElementName=helper5, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Count}" Header="Неисполненный&#x0a;остаток" Width="{Binding ElementName=helper6, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding DateTimeSubmit, StringFormat='dd.MM.yyyy HH:mm'}" Header="Дата&#x0a;выставления" Width="{Binding ElementName=helper7, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding DateTimeRemove, StringFormat='dd.MM.yyyy HH:mm'}" Header="Дата&#x0a;снятия" Width="{Binding ElementName=helper8, Path=ActualWidth}"/>
                     </GridView>
                 </ListView.View>
             </ListView>
             <Grid Visibility="Visible">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="37"/>
+                    <ColumnDefinition Width="41"/>
+                    <ColumnDefinition Width="65"/>
+                    <ColumnDefinition Width="65"/>
+                    <ColumnDefinition Width="79"/>
+                    <ColumnDefinition Width="46"/>
+                    <ColumnDefinition Width="65"/>
+                    <ColumnDefinition Width="65"/>
                     <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="1.4*"/>
                     <ColumnDefinition Width="1*"/>
                     <ColumnDefinition Width="33"/>
                 </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0" x:Name="helperAlg1"/>
-                <Grid Grid.Column="1" x:Name="helperAlg2"/>
-                <Grid Grid.Column="2" x:Name="helperAlg3"/>
+                <Grid Grid.Column="0" x:Name="helper0"/>
+                <Grid Grid.Column="1" x:Name="helper1"/>
+                <Grid Grid.Column="2" x:Name="helper2"/>
+                <Grid Grid.Column="3" x:Name="helper3"/>
+                <Grid Grid.Column="4" x:Name="helper4"/>
+                <Grid Grid.Column="5" x:Name="helper5"/>
+                <Grid Grid.Column="6" x:Name="helper6"/>
+                <Grid Grid.Column="7" x:Name="helper7"/>
+                <Grid Grid.Column="8" x:Name="helper8"/>
+                <Grid Grid.Column="9" x:Name="helper9"/>
             </Grid>
         </Grid>
     </Grid>

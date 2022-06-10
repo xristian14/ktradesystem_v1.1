@@ -74,6 +74,8 @@ namespace ktradesystem.ViewModels
         private double[] _indicatorAreasHeight = new double[3] { 0.15, 0.225, 0.3 }; //суммарная высота областей для индикаторов, как часть от доступной высоты под области источника данных, номер элемента соответствует количеству индикаторов и показывает суммарную высоту для них, если количество индикаторов больше, берется последний элемент
         private int _timeLineHeight = 24; //высота временной шкалы
         private List<SegmentPageTradeChart> _segments { get; set; } //сегменты из которых состоит график
+        private int _startPeriodSegmentIndex; //индекс сегмента, на котором начинается тестовый период
+        private int _endPeriodSegmentIndex; //индекс сегмента, на котором заканчивается тестовый период
         private int _segmentIndex; //текущий индекс сегмента
         private List<SectionPageTradeChart> _sections { get; set; } //секции для сегментов
         private List<SegmentOrderIndexPageTradeChart> _segmentOrders; //индексы сегмента и заявки, чтобы можно было быстро найти сегмент с заявкой
@@ -173,6 +175,8 @@ namespace ktradesystem.ViewModels
             {
                 _isHideDuplicateDate = value;
                 OnPropertyChanged();
+                BuildTradeChart(); //строим график котировок
+                UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
             }
         }
 
@@ -461,6 +465,10 @@ namespace ktradesystem.ViewModels
             int[] candleIndexes = Enumerable.Repeat(0, _testing.DataSourcesCandles.Count).ToArray(); //индексы свечек для всех источников данных группы
             _sections = new List<SectionPageTradeChart>();
             _segments = new List<SegmentPageTradeChart>();
+            _segmentOrders = new List<SegmentOrderIndexPageTradeChart>();
+            _segmentDeals = new List<SegmentDealIndexPageTradeChart>();
+            _startPeriodSegmentIndex = -1;
+            _endPeriodSegmentIndex = -1;
             List<DataSource> endedDataSources = new List<DataSource>(); //источники данных, которые закончились (индекс файла вышел за границы массива)
             DateTime currentDateTime = new DateTime(); //текущая дата
             //определяем самую раннюю дату среди всех источников данных группы
@@ -555,6 +563,20 @@ namespace ktradesystem.ViewModels
                         }
                     }
                     _segments.Add(segment);
+                    if(_startPeriodSegmentIndex == -1) //если не был присвоен индекс сегмента на котором начинается период тестового прогона
+                    {
+                        if(DateTime.Compare(_testing.DataSourcesCandles[segment.CandleIndexes[0].DataSourceCandlesIndex].Candles[segment.CandleIndexes[0].FileIndex][segment.CandleIndexes[0].CandleIndex].DateTime, _testRun.StartPeriod) >= 0) //если дата текущего сегмента равна или позже даты начала периода тестового прогона, сохраняем индекс сегмента
+                        {
+                            _startPeriodSegmentIndex = _segments.Count - 1;
+                        }
+                    }
+                    if (_endPeriodSegmentIndex == -1) //если не был присвоен индекс сегмента на котором заканчивается период тестового прогона
+                    {
+                        if (DateTime.Compare(_testing.DataSourcesCandles[segment.CandleIndexes[0].DataSourceCandlesIndex].Candles[segment.CandleIndexes[0].FileIndex][segment.CandleIndexes[0].CandleIndex].DateTime, _testRun.EndPeriod) >= 0) //если дата текущего сегмента равна или позже даты начала периода тестового прогона, сохраняем индекс сегмента
+                        {
+                            _endPeriodSegmentIndex = _segments.Count - 1;
+                        }
+                    }
                     if (isNewSection == false) //если не было добавлено новой секции по причине окончания одного из источников данных, проверяем, не закончилась ли секция по причине выхода на дату которая не позже самой поздней или которая позже самой поздней
                     {
                         if (_sections.Last().IsPresent) //если секция в настоящем, условием для создания новой секции является переход одной из свечек на дату которая равна или раньше самой поздней
@@ -710,6 +732,9 @@ namespace ktradesystem.ViewModels
                             {
                                 bool isOrderEnd = DateTime.Compare(_testRun.Account.AllOrders[ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]]].DateTimeRemove, _testRun.Account.AllOrders[ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]]].DateTimeSubmit) == 0;
                                 _segments[i].CandleIndexes[k].OrderIndexes.Add(new OrderIndexPageTradeChart { IsStart = true, isEnd = isOrderEnd, OrderIndex = ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]] });
+                                
+                                _segmentOrders.Add(new SegmentOrderIndexPageTradeChart { SegmentIndex = i, OrderIndex = ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]] }); //добавляем в список, позволяющий использовать навигацию по заявкам на графике
+
                                 if (isOrderEnd == false) //если заявка не снимается на текущей свечке, запоминаем её для того чтобы указывать для следующих сегментов, пока она не будет снята
                                 {
                                     submitedOrdersIndexes[dataSourceCandleIndex].Add(ordersIndexes[dataSourceCandleIndex][currentOrderIndexes[dataSourceCandleIndex]]);
@@ -737,6 +762,7 @@ namespace ktradesystem.ViewModels
                             do
                             {
                                 _segments[i].CandleIndexes[k].DealIndexes.Add(dealsIndexes[dataSourceCandleIndex][currentDealIndexes[dataSourceCandleIndex]]);
+                                _segmentDeals.Add(new SegmentDealIndexPageTradeChart { SegmentIndex = i, DealIndex = dealsIndexes[dataSourceCandleIndex][currentDealIndexes[dataSourceCandleIndex]] }); //добавляем в список, позволяющий использовать навигацию по сделкам на графике
                                 currentDealIndexes[dataSourceCandleIndex]++; //переходим на следующую сделку
                                 if (currentDealIndexes[dataSourceCandleIndex] < dealsIndexes[dataSourceCandleIndex].Count) //проверяем, не вышли ли за границы списка
                                 {
@@ -751,20 +777,15 @@ namespace ktradesystem.ViewModels
                     }
                 }
             }
+            if(_endPeriodSegmentIndex == -1)
+            {
+                _endPeriodSegmentIndex = _segments.Count - 1;
+            }
         }
 
         private void SetInitialCandleWidth() //устанавливает начальную ширину свечки
         {
             CandleWidth = CandleWidths[2]; //текущая ширина свечки
-        }
-        private void SetInitialSegmentIndex() //устанавливает начальный индекс сегмента
-        {
-            _segmentIndex = 0;
-            while (_segmentIndex < _segments.Count && IsMostLeftSegmentIndex() == true) //доходим до индекса который не считается самым левым
-            {
-                _segmentIndex++;
-            }
-            _segmentIndex -= _segmentIndex > 0 ? 1 : 0; //преходим на индекс меньше, то есть на тот который последним считался самым левым
         }
 
         private bool IsMostLeftSegmentIndex() //определяет, является ли текущий индекс сегмента самым левым, или же можно сдвинуть индекс еще левее
@@ -889,12 +910,12 @@ namespace ktradesystem.ViewModels
             {
                 leftSegmentIndexes[u]++;
             }
-
+            
             //проходим по всем сегментам и формируем свечки, заявки, сделки и индикаторы для сегментов
             double lastTimeLineLeft = areasWidth + totalRightSegmentsWidth - Math.Truncate(_timeLineTimePixelsPerCut / 2) - 6; //последний отступ слева для элементов таймлайна
             int segmentIndexesIndex = rightSegmentIndexes.Count - 1; //текущий индекс группы сегментов, ограниченных индексами сегментов слева и справа
             int segmentIndex = rightSegmentIndexes[segmentIndexesIndex]; //текущий индекс сегмента
-            int totalSegmentsWidth = 0; //суммарная ширина сегментовIsHideDuplicateDate
+            int totalSegmentsWidth = 0; //суммарная ширина сегментов
             bool isEndSegments = segmentIndexesIndex >= 0 ? false : true;
             while(isEndSegments == false)
             {
@@ -930,7 +951,7 @@ namespace ktradesystem.ViewModels
                                 orderFillColor = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].Direction ? _stopBuyOrderFillColor : _stopSellOrderFillColor;
                             }
                             double verticalLineWidth = _candleWidth >= 2 ? _candleWidth / 2 : 1;
-                            Orders.Insert(0, new OrderPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, FillColor = orderFillColor, Order = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex], IsStart = orderIndexPageTradeChart.IsStart, HorizontalLineLeft = bodyLeft - _candleWidth, HorizontalLineWidth = _candleWidth, VerticalLineLeft = bodyLeft - _candleWidth + verticalLineWidth / 2, VerticalLineWidth = verticalLineWidth });
+                            Orders.Insert(0, new OrderPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, FillColor = orderFillColor, Order = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex], IsStart = orderIndexPageTradeChart.IsStart, HorizontalLineLeft = bodyLeft - _candleWidth, HorizontalLineWidth = _candleWidth, VerticalLineLeft = bodyLeft - verticalLineWidth, VerticalLineWidth = verticalLineWidth });
                         }
 
                         //добавляем сделки
@@ -954,7 +975,7 @@ namespace ktradesystem.ViewModels
                                 triangleWidth = 11;
                                 triangleHeight = 6;
                             }
-                            Deals.Insert(0, new DealPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, StrokeColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealStrokeColor : _sellDealStrokeColor, FillColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealFillColor : _sellDealFillColor, Deal = _testRun.Account.AllDeals[dealIndex], Left = bodyLeft - triangleWidth, TriangleWidth = triangleWidth, TriangleHeight = triangleHeight, Points = new PointCollection() });
+                            Deals.Insert(0, new DealPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, StrokeColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealStrokeColor : _sellDealStrokeColor, FillColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealFillColor : _sellDealFillColor, Deal = _testRun.Account.AllDeals[dealIndex], Left = bodyLeft - CandleWidth + Math.Truncate((CandleWidth - triangleWidth) / 2.0), TriangleWidth = triangleWidth, TriangleHeight = triangleHeight, Points = new PointCollection() });
                         }
 
                         //добавляем точки со значениями для всех индикаторов текущего источника данных
@@ -1433,45 +1454,51 @@ namespace ktradesystem.ViewModels
                 CreateTradeChartAreas(); //создаем области для графика котировок
                 CreateIndicatorsMenuItemPageTradeChart(); //создаем элементы для меню выбора областей для индикаторов
                 CreateSegments(); //создаем сегменты, на основе которых будет строиться график
-                SetInitialSegmentIndex(); //устанавливаем начальный индекс сегмента
+                MoveToStartPeriod(); //переходим на сегмент с началом теста
                 BuildTradeChart(); //строим график котировок
                 UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
                 _isLoadingTestResultComplete = true;
             }
         }
-        public ICommand Button1_Click
+        public void GoToOrder(int orderIndex) //переходит на сегмент с заявкой с указанным индексом
+        {
+            double areasWidth = СanvasTradeChartWidth - _scaleValuesWidth; //ширина областей
+            _segmentIndex = _segmentOrders.Find(a => a.OrderIndex == orderIndex).SegmentIndex + (int)Math.Truncate(areasWidth * 0.7 / CandleWidth);
+            BuildTradeChart(); //строим график котировок
+            UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
+        }
+        public void GoToDeal(int dealIndex) //переходит на сегмент со сделкой с указанным индексом
+        {
+            double areasWidth = СanvasTradeChartWidth - _scaleValuesWidth; //ширина областей
+            _segmentIndex = _segmentDeals.Find(a => a.DealIndex == dealIndex).SegmentIndex + (int)Math.Truncate(areasWidth * 0.7 / CandleWidth);
+            BuildTradeChart(); //строим график котировок
+            UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
+        }
+        private void MoveToStartPeriod() //переходит на сегмент с началом теста
+        {
+            double areasWidth = СanvasTradeChartWidth - _scaleValuesWidth; //ширина областей
+            _segmentIndex = _startPeriodSegmentIndex + (int)Math.Truncate(areasWidth * 0.8 / CandleWidth);
+            _segmentIndex = _segmentIndex >= _segments.Count ? _segments.Count - 1 : _segmentIndex;
+        }
+        public ICommand ToStartPeriod_Click
         {
             get
             {
                 return new DelegateCommand((obj) =>
                 {
-                    _segmentIndex = 29000;
-                    _segmentIndex = _segmentIndex >= _segments.Count ? _segments.Count - 1 : _segmentIndex;
+                    MoveToStartPeriod();
                     BuildTradeChart(); //строим график котировок
                     UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
                 }, (obj) => true);
             }
         }
-        public ICommand Button2_Click
+        public ICommand ToEndPeriod_Click
         {
             get
             {
                 return new DelegateCommand((obj) =>
                 {
-                    _segmentIndex += 200;
-                    _segmentIndex = _segmentIndex >= _segments.Count ? _segments.Count - 1 : _segmentIndex;
-                    BuildTradeChart(); //строим график котировок
-                    UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
-                }, (obj) => true);
-            }
-        }
-        public ICommand Button3_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    _segmentIndex += 2000;
+                    _segmentIndex = _endPeriodSegmentIndex;
                     _segmentIndex = _segmentIndex >= _segments.Count ? _segments.Count - 1 : _segmentIndex;
                     BuildTradeChart(); //строим график котировок
                     UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов

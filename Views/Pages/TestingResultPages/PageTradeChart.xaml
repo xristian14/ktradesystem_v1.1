@@ -339,9 +339,8 @@
                             </MenuItem.ItemTemplate>
                         </MenuItem>
                     </Menu>
-                    <Button Content="Кнопка1" Command="{Binding Button1_Click}" Margin="5 0 0 0"/>
-                    <Button Content="+200" Command="{Binding Button2_Click}" Margin="5 0 0 0"/>
-                    <Button Content="+2000" Command="{Binding Button3_Click}" Margin="5 0 0 0"/>
+                    <Button Content="К началу" Command="{Binding ToStartPeriod_Click}" Margin="5 0 0 0" Padding="3 0"/>
+                    <Button Content="В конец" Command="{Binding ToEndPeriod_Click}" Margin="5 0 0 0" Padding="3 0"/>
                     <TextBlock Text="Ширина свечки" Margin="5 0 0 0"/>
                     <ComboBox ItemsSource="{Binding CandleWidths}" SelectedItem="{Binding CandleWidth}" Margin="4 0 0 0"/>
                     <CheckBox Content="Скрыть дублирующиеся даты" IsChecked="{Binding IsHideDuplicateDate}" Margin="5 0 0 0"/>

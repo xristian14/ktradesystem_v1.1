@@ -14,9 +14,11 @@ namespace ktradesystem.ViewModels
     {
         public ViewModelPageOrders()
         {
+            ViewModelPageTestingResult.TestRunsUpdatePages += UpdatePage;
             _viewModelPageTradeChart = ViewModelPageTradeChart.getInstance();
         }
         private ViewModelPageTradeChart _viewModelPageTradeChart;
+        private TestRun _testRun;
 
         private ObservableCollection<Order> _orders = new ObservableCollection<Order>();
         public ObservableCollection<Order> Orders //заявки
@@ -28,15 +30,41 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
+        private void CreateOrders()
+        {
+            Orders.Clear();
+            foreach (Order order in _testRun.Account.AllOrders)
+            {
+                Orders.Add(order);
+            }
+        }
 
+        private Order _selectedOrder;
+        public Order SelectedOrder //выбранная заявка
+        {
+            get { return _selectedOrder; }
+            set
+            {
+                _selectedOrder = value;
+                OnPropertyChanged();
+            }
+        }
+        public void UpdatePage() //обновляет страницу на новый источник данных
+        {
+            if (ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox != null && ViewModelPageTestingResult.getInstance().SelectedTestRunTestingResultCombobox != null)
+            {
+                _testRun = ViewModelPageTestingResult.getInstance().SelectedTestRunTestingResultCombobox.TestRun;
+                CreateOrders();
+            }
+        }
         public ICommand MoveToOrder_Click
         {
             get
             {
                 return new DelegateCommand((obj) =>
                 {
-                    
-                }, (obj) => true);
+                    _viewModelPageTradeChart.GoToOrder(Orders.IndexOf(SelectedOrder));
+                }, (obj) => SelectedOrder != null);
             }
         }
     }

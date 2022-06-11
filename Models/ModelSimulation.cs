@@ -702,14 +702,14 @@ namespace ktradesystem.Models
                             List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
                             foreach (Currency currency in _modelData.Currencies)
                             {
-                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0 });
-                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0 });
+                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = optimizationStartDate });
+                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = optimizationStartDate });
                             }
 
                             List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
                             foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
                             {
-                                firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
+                                firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0, DateTime = optimizationStartDate });
                             }
                             List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
                             depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
@@ -745,14 +745,14 @@ namespace ktradesystem.Models
                             List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
                             foreach (Currency currency in _modelData.Currencies)
                             {
-                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0 });
-                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0 });
+                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = forwardStartDate });
+                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = forwardStartDate });
                             }
 
                             List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
                             foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
                             {
-                                firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
+                                firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0, DateTime = forwardStartDate });
                             }
                             List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
                             depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
@@ -770,14 +770,14 @@ namespace ktradesystem.Models
                             List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
                             foreach (DepositCurrency depositCurrency in testing.ForwardDepositCurrencies)
                             {
-                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = depositCurrency.Deposit });
-                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0 });
+                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = depositCurrency.Deposit, DateTime = forwardStartDate });
+                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0, DateTime = forwardStartDate });
                             }
 
                             List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
                             foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
                             {
-                                firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = depositCurrency.Deposit });
+                                firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = depositCurrency.Deposit, DateTime = forwardStartDate });
                             }
                             List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
                             depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
@@ -2086,8 +2086,8 @@ namespace ktradesystem.Models
                     }
                 }
                 //обновляем средства во всех валютах
-                account.FreeForwardDepositCurrencies = CalculateDepositCurrrencies(freeDeposit, order.DataSource.Currency);
-                account.TakenForwardDepositCurrencies = CalculateDepositCurrrencies(takenDeposit, order.DataSource.Currency);
+                account.FreeForwardDepositCurrencies = CalculateDepositCurrrencies(freeDeposit, order.DataSource.Currency, dateTime);
+                account.TakenForwardDepositCurrencies = CalculateDepositCurrrencies(takenDeposit, order.DataSource.Currency, dateTime);
                 //если открытые позиции пусты и была совершена сделка, записываем состояние депозита
                 if (account.CurrentPosition.Count == 0 && isMakeADeal)
                 {
@@ -2097,7 +2097,7 @@ namespace ktradesystem.Models
             return isMakeADeal;
         }
 
-        private List<DepositCurrency> CalculateDepositCurrrencies(double deposit, Currency inputCurrency) //возвращает значения депозита во всех валютах
+        private List<DepositCurrency> CalculateDepositCurrrencies(double deposit, Currency inputCurrency, DateTime dateTime) //возвращает значения депозита во всех валютах
         {
             List<DepositCurrency> depositCurrencies = new List<DepositCurrency>();
 
@@ -2106,7 +2106,7 @@ namespace ktradesystem.Models
             {
                 //переводим доллоровую стоимость в валютную, умножая на стоимость 1 доллара
                 double cost = Math.Round(dollarCostDeposit * currency.DollarCost, 2);
-                depositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = cost });
+                depositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = cost, DateTime = dateTime });
             }
 
             return depositCurrencies;

@@ -343,6 +343,7 @@
                     <Button Content="В конец" Command="{Binding ToEndPeriod_Click}" Margin="5 0 0 0" Padding="3 0"/>
                     <TextBlock Text="Ширина свечки" Margin="5 0 0 0"/>
                     <ComboBox ItemsSource="{Binding CandleWidths}" SelectedItem="{Binding CandleWidth}" Margin="4 0 0 0"/>
+                    <CheckBox Content="Скрыть заявки" IsChecked="{Binding IsHideOrders}" Margin="5 0 0 0"/>
                     <CheckBox Content="Скрыть дублирующиеся даты" IsChecked="{Binding IsHideDuplicateDate}" Margin="5 0 0 0"/>
                 </StackPanel>
             </StackPanel>
@@ -379,7 +380,7 @@
                     </ItemsControl.ItemContainerStyle>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Text}" FontSize="{Binding FontSize}" Foreground="{Binding TextColor}"/>
+                            <TextBlock Text="{Binding DateTime, StringFormat='dd.MM.yyyy HH:mm'}" FontSize="{Binding FontSize}" Foreground="{Binding TextColor}"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -455,7 +456,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <ItemsControl ItemsSource="{Binding Orders}"><!-- горизонтальные линии заявок -->
+                <ItemsControl ItemsSource="{Binding Orders}" Visibility="{Binding OrdersVisibility}"><!-- горизонтальные линии заявок -->
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <Canvas/>
@@ -473,7 +474,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <ItemsControl ItemsSource="{Binding Orders}"><!-- вертикальные линии заявок -->
+                <ItemsControl ItemsSource="{Binding Orders}" Visibility="{Binding OrdersVisibility}"><!-- вертикальные линии заявок -->
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <Canvas/>

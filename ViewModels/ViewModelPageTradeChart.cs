@@ -11,7 +11,6 @@ using ktradesystem.Models.Datatables;
 using System.Windows.Media;
 using System.Diagnostics;
 using System.Windows.Controls;
-using System.Threading.Tasks;
 
 namespace ktradesystem.ViewModels
 {
@@ -58,7 +57,7 @@ namespace ktradesystem.ViewModels
         private bool _isLoadingTestResultComplete = false; //флаг того что результаты загружены
         private int _timeLineFontSize = 9; //размер шрифта даты и времени на шкале даты и времени
         private double _timeLineFullDateTimeLeft = 33; //отступ слева для полной даты и времени на шкале даты и времени
-        private double _timeLineTimePixelsPerCut = 70; //количество пикселей на один отрезок на шкале даты и времени
+        private double _timeLineTimePixelsPerCut = 80; //количество пикселей на один отрезок на шкале даты и времени
         private int _dataSourceAreasHighlightHeight = 15; //высота линии, на которой написано название источника данных для которого следуют ниже области
         private int _candleMinWidth = 1; //минимальная ширина свечки, в пикселях
         private int _candleMaxWidth = 37; //максимальная ширина свечки, в пикселях
@@ -66,13 +65,13 @@ namespace ktradesystem.ViewModels
         private double _partOfOnePriceStepHeightForOrderVerticalLine = 0.667; //часть от высоты одного пункта центы, исходя из которой будет вычитсляться высота вертикальной линии для заявки
         private int _divideWidth = 10; //ширина разрыва
         private double _scaleValuesAddingRange = 0.03; //дополнительный диапазон для шкалы значений в каждую из сторон
-        private double _tradeChartHiddenSegmentsSize = 1; //размер генерируемой области с сегментами и слева от видимых свечек, относительно размера видимых свечек. Размер отдельно для левых и правых свечек
+        private double _tradeChartHiddenSegmentsSize = 0.85; //размер генерируемой области с сегментами и слева от видимых свечек, относительно размера видимых свечек. Размер отдельно для левых и правых свечек
         private int _scaleValueFontSize = 9; //размер шрифта цены на шкале значения
         private double _scaleValueTextTop = 6; //отступ сверху цены на шкале значения
         private int[] _scaleValuesCuts = new int[4] { 1, 2, 3, 5 }; //отрезки для шкалы значений (отрезки по сколько пунктов будут. Будет браться значение, при котором количество пикселей на один отрезок будет ближе всего к _scaleValuePixelPerCut) Поиск подходящего размера будет продолжаться, исходя из помноженных на 10 значений массива, на 100, и т.д.
         private double _scaleValuePixelPerCut = 35; //количество пикселей для одного отрезка на шкале значений. К этому значению будет стремиться размер отрезка
         private double[] _indicatorAreasHeight = new double[3] { 0.15, 0.225, 0.3 }; //суммарная высота областей для индикаторов, как часть от доступной высоты под области источника данных, номер элемента соответствует количеству индикаторов и показывает суммарную высоту для них, если количество индикаторов больше, берется последний элемент
-        private int _timeLineHeight = 24; //высота временной шкалы
+        private int _timeLineHeight = 20; //высота временной шкалы
         private List<SegmentPageTradeChart> _segments { get; set; } //сегменты из которых состоит график
         private int _startPeriodSegmentIndex; //индекс сегмента, на котором начинается тестовый период
         private int _endPeriodSegmentIndex; //индекс сегмента, на котором заканчивается тестовый период
@@ -164,6 +163,29 @@ namespace ktradesystem.ViewModels
             set
             {
                 _areasWidth = value;
+                OnPropertyChanged();
+            }
+        }
+        private bool _isHideOrders = false;
+        public bool IsHideOrders //не показывать заявки
+        {
+            get { return _isHideOrders; }
+            set
+            {
+                _isHideOrders = value;
+                OrdersVisibility = value ? Visibility.Collapsed : Visibility.Visible;
+                OnPropertyChanged();
+                BuildTradeChart(); //строим график котировок
+                UpdateScaleValues(); //создаем шкалы значений для всех областей, а так же обновляет вертикальную позицию элементов
+            }
+        }
+        private Visibility _ordersVisibility = Visibility.Visible;
+        public Visibility OrdersVisibility //не показывать заявки
+        {
+            get { return _ordersVisibility; }
+            set
+            {
+                _ordersVisibility = value;
                 OnPropertyChanged();
             }
         }
@@ -788,19 +810,6 @@ namespace ktradesystem.ViewModels
             CandleWidth = CandleWidths[2]; //текущая ширина свечки
         }
 
-        private bool IsMostLeftSegmentIndex() //определяет, является ли текущий индекс сегмента самым левым, или же можно сдвинуть индекс еще левее
-        {
-            int totalSegmentsWidth = 0; //суммарная ширина сегментов
-            int tradeChartWidth = (int)Math.Truncate(СanvasTradeChartWidth - _scaleValuesWidth);
-            int segmentIndex = _segmentIndex;
-            while(totalSegmentsWidth <= tradeChartWidth && segmentIndex >= 0)
-            {
-                totalSegmentsWidth += _segments[segmentIndex].IsDivide ? _divideWidth : _candleWidth;
-                segmentIndex--;
-            }
-            return totalSegmentsWidth <= tradeChartWidth ? true : false;
-        }
-
         private int FindPresentSegmentIndex(int startIndex, bool direction) //находит индекс первого сегмента в настоящем, от стартового индекса в выбранном направлении, если сегмент в настоящем не найден, вернет -1
         {
             int index = startIndex;
@@ -997,28 +1006,7 @@ namespace ktradesystem.ViewModels
                     {
                         lastTimeLineLeft = timeLineLeft;//_testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[0].DataSourceCandlesIndex].Candles[_segments[segmentIndex].CandleIndexes[0].FileIndex][_segments[segmentIndex].CandleIndexes[0].CandleIndex].DateTime
                         DateTime segmentDateTime = _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[0].DataSourceCandlesIndex].Candles[_segments[segmentIndex].CandleIndexes[0].FileIndex][_segments[segmentIndex].CandleIndexes[0].CandleIndex].DateTime;
-                        string text = segmentDateTime.Day.ToString();
-                        if (text.Length < 2)
-                        {
-                            text = text.Insert(0, "0");
-                        }
-                        text += "." + segmentDateTime.Month.ToString();
-                        if (text.Length < 5)
-                        {
-                            text = text.Insert(3, "0");
-                        }
-                        text += "." + segmentDateTime.Year.ToString();
-                        text += " " + segmentDateTime.Hour.ToString();
-                        if (text.Length < 13)
-                        {
-                            text = text.Insert(11, "0");
-                        }
-                        text += ":" + segmentDateTime.Minute.ToString();
-                        if (text.Length < 16)
-                        {
-                            text = text.Insert(14, "0");
-                        }
-                        TimeLinesPageTradeChart.Add(new TimeLinePageTradeChart { DateTime = segmentDateTime, StrokeLineColor = _timeLineStrokeLineColor, TextColor = _timeLineTextColor, FontSize = _timeLineFontSize, Text = text, TextLeft = timeLineLeft - _timeLineFullDateTimeLeft, TextTop = СanvasTradeChartHeight - _timeLineHeight + 3, LineLeft = timeLineLeft, X1 = Math.Truncate(timeLineLeft), Y1 = 0, X2 = Math.Truncate(timeLineLeft), Y2 = СanvasTradeChartHeight - _timeLineHeight });
+                        TimeLinesPageTradeChart.Add(new TimeLinePageTradeChart { DateTime = segmentDateTime, StrokeLineColor = _timeLineStrokeLineColor, TextColor = _timeLineTextColor, FontSize = _timeLineFontSize, TextLeft = timeLineLeft - _timeLineFullDateTimeLeft, TextTop = СanvasTradeChartHeight - _timeLineHeight + 3, LineLeft = timeLineLeft, X1 = Math.Truncate(timeLineLeft), Y1 = 0, X2 = Math.Truncate(timeLineLeft), Y2 = СanvasTradeChartHeight - _timeLineHeight });
                     }
 
                     totalSegmentsWidth += _candleWidth;
@@ -1164,19 +1152,22 @@ namespace ktradesystem.ViewModels
                 //так же ищем максимальную и минимальную цены в заявках
                 int orderIndex = 0;
                 bool isHorizontalLineLeftLowThanAreasWidth = ordersCurrentDs.Count > 0 ? ordersCurrentDs[orderIndex].HorizontalLineLeft <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
-                while (isHorizontalLineLeftLowThanAreasWidth && orderIndex < ordersCurrentDs.Count)
+                if(IsHideOrders == false)
                 {
-                    if(ordersCurrentDs[orderIndex].HorizontalLineLeft + ordersCurrentDs[orderIndex].HorizontalLineWidth > 0) //правая координата заявки положительная, значит эта заявка в видимой области
+                    while (isHorizontalLineLeftLowThanAreasWidth && orderIndex < ordersCurrentDs.Count)
                     {
-                        maxPrice = ordersCurrentDs[orderIndex].Order.Price > maxPrice ? ordersCurrentDs[orderIndex].Order.Price : maxPrice;
-                        minPrice = ordersCurrentDs[orderIndex].Order.Price < minPrice ? ordersCurrentDs[orderIndex].Order.Price : minPrice;
-                    }
-                    orderIndex++;
-                    if(orderIndex < ordersCurrentDs.Count)
-                    {
-                        if (ordersCurrentDs[orderIndex].HorizontalLineLeft > areasWidth)
+                        if (ordersCurrentDs[orderIndex].HorizontalLineLeft + ordersCurrentDs[orderIndex].HorizontalLineWidth > 0) //правая координата заявки положительная, значит эта заявка в видимой области
                         {
-                            isHorizontalLineLeftLowThanAreasWidth = false;
+                            maxPrice = ordersCurrentDs[orderIndex].Order.Price > maxPrice ? ordersCurrentDs[orderIndex].Order.Price : maxPrice;
+                            minPrice = ordersCurrentDs[orderIndex].Order.Price < minPrice ? ordersCurrentDs[orderIndex].Order.Price : minPrice;
+                        }
+                        orderIndex++;
+                        if (orderIndex < ordersCurrentDs.Count)
+                        {
+                            if (ordersCurrentDs[orderIndex].HorizontalLineLeft > areasWidth)
+                            {
+                                isHorizontalLineLeftLowThanAreasWidth = false;
+                            }
                         }
                     }
                 }
@@ -1262,30 +1253,33 @@ namespace ktradesystem.ViewModels
                 }
 
                 //устанавливаем отступ сверху и высоту для видимых заявок
-                orderIndex = 0;
-                isHorizontalLineLeftLowThanAreasWidth = ordersCurrentDs.Count > 0 ? ordersCurrentDs[orderIndex].HorizontalLineLeft <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
-                double onePriceStepHeight = TradeChartAreas[0].AreaHeight / (priceRange / DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.PriceStep); //высота одного пункта цены
-                while (isHorizontalLineLeftLowThanAreasWidth && orderIndex < ordersCurrentDs.Count)
+                if (IsHideOrders == false)
                 {
-                    if (ordersCurrentDs[orderIndex].HorizontalLineLeft + ordersCurrentDs[orderIndex].HorizontalLineWidth > 0) //правая координата заявки положительная, значит эта заявка в видимой области
+                    orderIndex = 0;
+                    isHorizontalLineLeftLowThanAreasWidth = ordersCurrentDs.Count > 0 ? ordersCurrentDs[orderIndex].HorizontalLineLeft <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
+                    double onePriceStepHeight = TradeChartAreas[0].AreaHeight / (priceRange / DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.PriceStep); //высота одного пункта цены
+                    while (isHorizontalLineLeftLowThanAreasWidth && orderIndex < ordersCurrentDs.Count)
                     {
-                        double horizontalLineThickness = _candleWidth > 4 ? 2 : 1;
-                        ordersCurrentDs[orderIndex].HorizontalLineTop = /*Math.Round*/(TradeChartAreas[0].AreaHeight * (1 - (ordersCurrentDs[orderIndex].Order.Price - minPrice) / priceRange) - horizontalLineThickness / 2) + currentTop;
-                        ordersCurrentDs[orderIndex].HorizontalLineHeight = horizontalLineThickness;
-                        if (ordersCurrentDs[orderIndex].IsStart) //если заявка начинается на этом сегменте, рисуем вертикальную линию
+                        if (ordersCurrentDs[orderIndex].HorizontalLineLeft + ordersCurrentDs[orderIndex].HorizontalLineWidth > 0) //правая координата заявки положительная, значит эта заявка в видимой области
                         {
-                            ordersCurrentDs[orderIndex].VerticalLineHeight = _partOfOnePriceStepHeightForOrderVerticalLine * onePriceStepHeight;
-                            ordersCurrentDs[orderIndex].VerticalLineHeight = ordersCurrentDs[orderIndex].VerticalLineHeight < horizontalLineThickness + 2 ? horizontalLineThickness + 2 : ordersCurrentDs[orderIndex].VerticalLineHeight; //если высота вертикальной линии меньше чем толщина горизонтальной линии + 2, устанавливаем на такую толщину
-                            ordersCurrentDs[orderIndex].VerticalLineTop = ordersCurrentDs[orderIndex].HorizontalLineTop - ordersCurrentDs[orderIndex].VerticalLineHeight / 2;
-                            ordersCurrentDs[orderIndex].VerticalLineTop = ordersCurrentDs[orderIndex].HorizontalLineTop - (ordersCurrentDs[orderIndex].VerticalLineHeight - horizontalLineThickness) / 2;
+                            double horizontalLineThickness = _candleWidth > 4 ? 2 : 1;
+                            ordersCurrentDs[orderIndex].HorizontalLineTop = /*Math.Round*/(TradeChartAreas[0].AreaHeight * (1 - (ordersCurrentDs[orderIndex].Order.Price - minPrice) / priceRange) - horizontalLineThickness / 2) + currentTop;
+                            ordersCurrentDs[orderIndex].HorizontalLineHeight = horizontalLineThickness;
+                            if (ordersCurrentDs[orderIndex].IsStart) //если заявка начинается на этом сегменте, рисуем вертикальную линию
+                            {
+                                ordersCurrentDs[orderIndex].VerticalLineHeight = _partOfOnePriceStepHeightForOrderVerticalLine * onePriceStepHeight;
+                                ordersCurrentDs[orderIndex].VerticalLineHeight = ordersCurrentDs[orderIndex].VerticalLineHeight < horizontalLineThickness + 2 ? horizontalLineThickness + 2 : ordersCurrentDs[orderIndex].VerticalLineHeight; //если высота вертикальной линии меньше чем толщина горизонтальной линии + 2, устанавливаем на такую толщину
+                                ordersCurrentDs[orderIndex].VerticalLineTop = ordersCurrentDs[orderIndex].HorizontalLineTop - ordersCurrentDs[orderIndex].VerticalLineHeight / 2;
+                                ordersCurrentDs[orderIndex].VerticalLineTop = ordersCurrentDs[orderIndex].HorizontalLineTop - (ordersCurrentDs[orderIndex].VerticalLineHeight - horizontalLineThickness) / 2;
+                            }
                         }
-                    }
-                    orderIndex++;
-                    if (orderIndex < ordersCurrentDs.Count)
-                    {
-                        if (ordersCurrentDs[orderIndex].HorizontalLineLeft > areasWidth)
+                        orderIndex++;
+                        if (orderIndex < ordersCurrentDs.Count)
                         {
-                            isHorizontalLineLeftLowThanAreasWidth = false;
+                            if (ordersCurrentDs[orderIndex].HorizontalLineLeft > areasWidth)
+                            {
+                                isHorizontalLineLeftLowThanAreasWidth = false;
+                            }
                         }
                     }
                 }
@@ -1479,6 +1473,37 @@ namespace ktradesystem.ViewModels
             double areasWidth = СanvasTradeChartWidth - _scaleValuesWidth; //ширина областей
             _segmentIndex = _startPeriodSegmentIndex + (int)Math.Truncate(areasWidth * 0.8 / CandleWidth);
             _segmentIndex = _segmentIndex >= _segments.Count ? _segments.Count - 1 : _segmentIndex;
+        }
+        public List<double> GetDateRatesDepositCurrenciesChanges() //возвращает список с значениями от 0 до 1, для элементов DepositCurrenciesChanges, где 0 - начало тестового прогона, а 1 - окончание, значение отражает положение даты изменения депозита в диапазоне от начала периода теста до окончания
+        {
+            List<double> dateRatesDepositCurrenciesChanges = new List<double>();
+            int defaultCurrencyIndex = _testRun.Account.DepositCurrenciesChanges.FindIndex(a => a[0].Currency.Id == _testRun.Account.DefaultCurrency.Id); //индекс элемента, с валютой по умолчанию
+            int depositCurrenciesChangesIndex = 1; //индекс изменения депозита, устанавливаем в 1, чтобы пропустить начальное состояние депозита
+            int segmentsNumber = 0; //количество пройденных сегментов
+            dateRatesDepositCurrenciesChanges.Add(segmentsNumber); //добавляем первое изменение депозита, которое добавляется по умолчанию, как начальный депозит
+            int segmentIndex = _startPeriodSegmentIndex;
+            while (segmentIndex <= _endPeriodSegmentIndex)
+            {
+                if (_segments[segmentIndex].Section.IsPresent)
+                {
+                    segmentsNumber++;
+                    if (depositCurrenciesChangesIndex < _testRun.Account.DepositCurrenciesChanges.Count) //проверяем, не вышли ли за границы списка
+                    {
+                        if (DateTime.Compare(_testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[0].DataSourceCandlesIndex].Candles[_segments[segmentIndex].CandleIndexes[0].FileIndex][_segments[segmentIndex].CandleIndexes[0].CandleIndex].DateTime, _testRun.Account.DepositCurrenciesChanges[depositCurrenciesChangesIndex][defaultCurrencyIndex].DateTime) >= 0) //если дата текущего сегмента, раньше или равна дате текущего изменения депозита, запоминаем номер текущего сегмента
+                        {
+                            depositCurrenciesChangesIndex++;
+                            dateRatesDepositCurrenciesChanges.Add(segmentsNumber);
+                        }
+                    }
+                }
+                segmentIndex++;
+            }
+            //делим номер сегмента изменения депозита, на количество сегментов
+            for (int i = 0; i < dateRatesDepositCurrenciesChanges.Count; i++)
+            {
+                dateRatesDepositCurrenciesChanges[i] /= segmentsNumber;
+            }
+            return dateRatesDepositCurrenciesChanges;
         }
         public ICommand ToStartPeriod_Click
         {

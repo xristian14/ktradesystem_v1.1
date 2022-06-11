@@ -12,5 +12,6 @@ namespace ktradesystem.Models
     {
         public Currency Currency { get; set; }
         public double Deposit { get; set; }
+        public DateTime DateTime { get; set; }
     }
 }

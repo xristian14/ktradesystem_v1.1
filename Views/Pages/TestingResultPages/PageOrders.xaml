@@ -5,7 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:ktradesystem.Views.Pages.TestingResultPages"
       mc:Ignorable="d" 
-      d:DesignHeight="250" d:DesignWidth="680"
+      d:DesignHeight="240" d:DesignWidth="680"
       Title="PageOrders">
     <!-- Ресурс, который убирает отступ слева для элементов выпадающего меню -->
     <Page.Resources>
@@ -285,7 +285,7 @@
         </Style>
     </Page.Resources>
 
-    <Grid Width="680" Height="250" Background="#FFF9F9F9">
+    <Grid Width="680" Height="240" Background="#FFF9F9F9">
         <Grid Margin="5" Background="White">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>

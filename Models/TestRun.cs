@@ -12,6 +12,7 @@ namespace ktradesystem.Models
     {
         [NonSerialized]
         public TestBatch TestBatch;
+        public bool IsOptimizationTestRun { get; set; } //тестовый прогон оптимизационны или форвардный
         public int Number { get; set; } //номер тестового прогона
         public Account Account { get; set; }
         public DateTime StartPeriod { get; set; }

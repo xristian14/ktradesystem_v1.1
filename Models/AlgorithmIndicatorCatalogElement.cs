@@ -15,5 +15,24 @@ namespace ktradesystem.Models
         public string FileName { get; set; }
         [NonSerialized]
         public AlgorithmIndicatorValues AlgorithmIndicatorValues; //значения индикатора алгоритма
+        private readonly object locker = new object();
+        private bool _isComplete { get; set; } //завершен ли рассчет значений индикатора
+        public bool IsComplete //реализация потокобезопасного получения и установки свойства
+        {
+            get
+            {
+                lock (locker)
+                {
+                    return _isComplete;
+                }
+            }
+            set
+            {
+                lock (locker)
+                {
+                    _isComplete = value;
+                }
+            }
+        }
     }
 }

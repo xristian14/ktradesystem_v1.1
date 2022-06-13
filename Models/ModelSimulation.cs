@@ -690,7 +690,7 @@ namespace ktradesystem.Models
                         }
 
                         //создаем testBatch
-                        TestBatch testBatch = new TestBatch { DataSourceGroup = dataSourceGroup, DataSourceGroupIndex = testing.DataSourceGroups.IndexOf(dataSourceGroup), StatisticalSignificance = new List<string[]>(), IsTopModelDetermining = false, IsTopModelWasFind = false };
+                        TestBatch testBatch = new TestBatch { DataSourceGroup = dataSourceGroup, DataSourceGroupIndex = testing.DataSourceGroups.IndexOf(dataSourceGroup), StatisticalSignificance = new List<string[]>(), IsTopModelDetermining = false, IsTopModelWasFind = false, OptimizationPerfectProfits = new List<PerfectProfit>(), ForwardPerfectProfits = new List<PerfectProfit>() };
 
                         int testRunNumber = 1; //номер тестового прогона
 
@@ -732,7 +732,7 @@ namespace ktradesystem.Models
                                 algorithmParameterValues.Add(algorithmParameterValue);
                                 alg++;
                             }
-                            TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, Account = account, StartPeriod = optimizationStartDate, EndPeriod = optimizationEndDate, AlgorithmParameterValues = algorithmParameterValues, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
+                            TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, IsOptimizationTestRun = true, Account = account, StartPeriod = optimizationStartDate, EndPeriod = optimizationEndDate, AlgorithmParameterValues = algorithmParameterValues, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
                             testRunNumber++;
                             optimizationTestRuns.Add(testRun);
                         }
@@ -758,7 +758,7 @@ namespace ktradesystem.Models
                             depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
 
                             Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = false, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges };
-                            TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
+                            TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, IsOptimizationTestRun = false, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
                             testRunNumber++;
                             //добавляем форвардный тест в testBatch
                             testBatch.ForwardTestRun = testRun;
@@ -783,7 +783,7 @@ namespace ktradesystem.Models
                             depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
 
                             Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = true, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges };
-                            TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
+                            TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, IsOptimizationTestRun = false, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
                             testRunNumber++;
                             //добавляем форвардный тест с торговлей депозитом в testBatch
                             testBatch.ForwardTestRunDepositTrading = testRun;
@@ -963,7 +963,7 @@ namespace ktradesystem.Models
 
                             if (algorithmParameters.Count == 0) //если нет параметров, значит только 1 вариант значений индикатора для источника данных
                             {
-                                algorithmIndicatorCatalog.AlgorithmIndicatorCatalogElements.Add(new AlgorithmIndicatorCatalogElement { AlgorithmParameterValues = new List<AlgorithmParameterValue>(), FileName = "withoutParameters.dat" });
+                                algorithmIndicatorCatalog.AlgorithmIndicatorCatalogElements.Add(new AlgorithmIndicatorCatalogElement { AlgorithmParameterValues = new List<AlgorithmParameterValue>(), FileName = "withoutParameters.dat", IsComplete = false });
                             }
                             else
                             {
@@ -1019,7 +1019,7 @@ namespace ktradesystem.Models
                                         fileName += testing.Algorithm.AlgorithmParameters[value[0]].Name + "=" + parameterValue;
                                     }
                                     fileName += ".dat";
-                                    AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement = new AlgorithmIndicatorCatalogElement { AlgorithmParameterValues = new List<AlgorithmParameterValue>(), FileName = fileName };
+                                    AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement = new AlgorithmIndicatorCatalogElement { AlgorithmParameterValues = new List<AlgorithmParameterValue>(), FileName = fileName, IsComplete = false };
                                     for (int u = 0; u < algorithmParameterCombinations[k].Length; u++)
                                     {
                                         int intValue = testing.Algorithm.AlgorithmParameters[algorithmParameterCombinations[k][u][0]].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[algorithmParameterCombinations[k][u][0]][algorithmParameterCombinations[k][u][1]] : 0;
@@ -1035,82 +1035,277 @@ namespace ktradesystem.Models
                     }
 
                     //определяем количество значений всех индикаторов
-                    int AlgorithmIndicatorsValuesCount = 0; //количество значений всех индикаторов
-                    int CalculatedAlgorithmIndicatorsCount = 0; //количество вычисленных индикаторов
+                    int algorithmIndicatorsValuesCount = 0; //количество значений всех индикаторов
+                    int calculatedAlgorithmIndicatorsCount = 0; //количество вычисленных индикаторов
                     for (int i = 0; i < testing.DataSourcesCandles.Count; i++)
                     {
                         foreach (AlgorithmIndicatorCatalog algorithmIndicatorCatalog in testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs)
                         {
-                            AlgorithmIndicatorsValuesCount += algorithmIndicatorCatalog.AlgorithmIndicatorCatalogElements.Count;
+                            algorithmIndicatorsValuesCount += algorithmIndicatorCatalog.AlgorithmIndicatorCatalogElements.Count;
                         }
                     }
                     DispatcherInvoke((Action)(() => {
                         _mainCommunicationChannel.TestingProgress.Clear();
-                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/4:  Вычисление индикаторов", StepTasksCount = AlgorithmIndicatorsValuesCount, CompletedStepTasksCount = CalculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
+                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/4:  Вычисление индикаторов", StepTasksCount = algorithmIndicatorsValuesCount, CompletedStepTasksCount = calculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                     }));
 
-                    //вычисляем значения индикаторов для всех источников данных со всеми комбинациями оптимизационных параметров
+
+                    //определяем количество используемых потоков
+                    int processorCountAlgorithmIndicator = Environment.ProcessorCount;
+                    processorCountAlgorithmIndicator -= _modelData.Settings.Where(i => i.Id == 1).First().BoolValue ? 1 : 0; //если в настройках выбрано оставлять один поток, вычитаем из количества потоков
+                    if (algorithmIndicatorsValuesCount < processorCountAlgorithmIndicator) //если тестов меньше чем число доступных потоков, устанавливаем количество потоков на количество тестов, т.к. WaitAll ругается если задача в tasks null
+                    {
+                        processorCountAlgorithmIndicator = algorithmIndicatorsValuesCount;
+                    }
+                    //processorCountAlgorithmIndicator = 1; //эту строку я использую если нужно проследить рассчет индикатора, чтобы не переключаться между другими потоками
+
+                    Task[] tasksAlgorithmIndicatorCatalogElement = new Task[processorCountAlgorithmIndicator]; //задачи
+                    int[][] tasksExecutingAlgorithmIndicatorCatalogElement = new int[processorCountAlgorithmIndicator][]; //массив с выполняющимися индикаторами алгоритма, в 0-м элементе индекс DataSourcesCandles, в 1-м индекс AlgorithmIndicatorCatalogs, во 2-м индекс AlgorithmIndicatorCatalogElements
+                    int[][][] algorithmIndicatorsStatus = new int[testing.DataSourcesCandles.Count][][]; //статусы выполненности algorithmIndicatorCatalogElement-ов, первый массив - массив с DataSourcesCandles, второй - массив с AlgorithmIndicatorCatalogs, третий - массив с AlgorithmIndicatorCatalogElements. У невыполненного значение 0, у запущенного 1, а у выполненного 2
+                    int[][][] algorithmIndicatorsStatus2 = new int[testing.DataSourcesCandles.Count][][]; //индексы потока в tasksAlgorithmIndicatorCatalogElement в котором выполнялся algorithmIndicatorCatalogElement
+                    //заполняем статусы
                     for (int i = 0; i < testing.DataSourcesCandles.Count; i++)
                     {
-                        foreach (AlgorithmIndicatorCatalog algorithmIndicatorCatalog in testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs)
+                        algorithmIndicatorsStatus[i] = new int[testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs.Length][];
+                        algorithmIndicatorsStatus2[i] = new int[testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs.Length][];
+                        for (int k = 0; k < testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs.Length; k++)
                         {
-                            foreach (AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement in algorithmIndicatorCatalog.AlgorithmIndicatorCatalogElements)
+                            algorithmIndicatorsStatus[i][k] = Enumerable.Repeat(0, testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs[k].AlgorithmIndicatorCatalogElements.Count).ToArray(); //заполняем нулями
+                            algorithmIndicatorsStatus2[i][k] = Enumerable.Repeat(-1, testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs[k].AlgorithmIndicatorCatalogElements.Count).ToArray(); //заполняем индексы задач в tasksAlgorithmIndicatorCatalogElement -1
+                        }
+                    }
+                    bool isAllAlgorithmIndicatorsComplete = false; //выполнены ли все AlgorithmIndicator-ы
+                    int num = 0; //номер задачи, нужен для начального заполнения массива tasks
+                    while (isAllAlgorithmIndicatorsComplete == false)
+                    {
+                        if (tasksAlgorithmIndicatorCatalogElement[tasksAlgorithmIndicatorCatalogElement.Length - 1] == null) //если пока еще не заполнен массив с задачами, заполняем его
+                        {
+                            //находим первый AlgorithmIndicator, который еще не запущен (имеет статус 0)
+                            int dsCandlesIndex = 0;
+                            int algorithmIndicatorCatalogsIndex = 0;
+                            int algorithmIndicatorCatalogElementIndex = 0;
+                            bool isFindAlgorithmIndicatorCatalogElement = false;
+                            while (isFindAlgorithmIndicatorCatalogElement == false)
                             {
-                                //вычисляем значения индикатора алгоритма
-                                algorithmIndicatorCatalogElement.AlgorithmIndicatorValues = AlgorithmIndicatorCalculate(testing, testing.DataSourcesCandles[i], algorithmIndicatorCatalog.AlgorithmIndicator, algorithmIndicatorCatalogElement.AlgorithmParameterValues);
-                                DispatcherInvoke((Action)(() => {
-                                    _mainCommunicationChannel.TestingProgress.Clear();
-                                    _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/4:  Вычисление индикаторов", StepTasksCount = AlgorithmIndicatorsValuesCount, CompletedStepTasksCount = CalculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
-                                }));
-                                CalculatedAlgorithmIndicatorsCount++;
-                                if (cancellationToken.IsCancellationRequested) //если был запрос на отмену операции, прекращем функцию
+                                if (algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] == 0)
                                 {
-                                    TestingEnding(false, testing);
-                                    return;
+                                    isFindAlgorithmIndicatorCatalogElement = true;
                                 }
+                                else
+                                {
+                                    algorithmIndicatorCatalogElementIndex++;
+                                    if (algorithmIndicatorCatalogElementIndex >= algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex].Length) //если вышли за границы индекса algorithmIndicatorCatalogElement, переходим на следующий algorithmIndicatorCatalog
+                                    {
+                                        algorithmIndicatorCatalogElementIndex = 0;
+                                        algorithmIndicatorCatalogsIndex++;
+                                        if (algorithmIndicatorCatalogsIndex >= algorithmIndicatorsStatus[dsCandlesIndex].Length) //если вышли за границы индекса algorithmIndicatorCatalogs, переходим на следующий dataSourcesCandles
+                                        {
+                                            algorithmIndicatorCatalogsIndex = 0;
+                                            dsCandlesIndex++;
+                                        }
+                                    }
+                                }
+                            }
+
+                            DataSourceCandles dataSourceCandles = testing.DataSourcesCandles[dsCandlesIndex];
+                            AlgorithmIndicator algorithmIndicator = testing.DataSourcesCandles[dsCandlesIndex].AlgorithmIndicatorCatalogs[algorithmIndicatorCatalogsIndex].AlgorithmIndicator;
+                            AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement = testing.DataSourcesCandles[dsCandlesIndex].AlgorithmIndicatorCatalogs[algorithmIndicatorCatalogsIndex].AlgorithmIndicatorCatalogElements[algorithmIndicatorCatalogElementIndex];
+
+                            Task task = Task.Run(() => AlgorithmIndicatorCatalogElementCalculate(testing, dataSourceCandles, algorithmIndicator, algorithmIndicatorCatalogElement));
+                            tasksAlgorithmIndicatorCatalogElement[num] = task;
+                            tasksExecutingAlgorithmIndicatorCatalogElement[num] = new int[3] { dsCandlesIndex, algorithmIndicatorCatalogsIndex, algorithmIndicatorCatalogElementIndex }; //запоминаем индексы algorithmIndicatorCatalogElement, который выполняется в текущей задачи (в элементе массива tasksExecutingAlgorithmIndicatorCatalogElement с индексом num)
+                            algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] = 1; //отмечаем что testRun имеет статус запущен
+                            algorithmIndicatorsStatus2[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] = num;
+                            num++; //увеличиваем индекс задачи
+                        }
+                        else //иначе ждем и обрабатываем выполненные задачи
+                        {
+                            bool isAnyComplete = false;
+                            //ждем пока один из выполняющихся algorithmIndicatorCatalogElement-ов не будет выполнен
+                            while (isAnyComplete == false)
+                            {
+                                Thread.Sleep(20);
+                                int taskIndex = 0;
+                                while (taskIndex < tasksExecutingAlgorithmIndicatorCatalogElement.Length && isAnyComplete == false) //проходим по всем задачам и смотрим на статусы выполненности algorithmIndicatorCatalogElement-ов
+                                {
+                                    //если в задаче находится algorithmIndicatorCatalogElement со статусом Запущен (если нет, то он уже выполнен, и не был заменен новым testRun-ом т.к. они закончились)
+                                    if(algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][0]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][1]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][2]] == 1)
+                                    {
+                                        if (testing.DataSourcesCandles[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][0]].AlgorithmIndicatorCatalogs[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][1]].AlgorithmIndicatorCatalogElements[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][2]].IsComplete)
+                                        {
+                                            isAnyComplete = true;
+                                        }
+                                    }
+                                    taskIndex++;
+                                }
+                            }
+
+                            if (cancellationToken.IsCancellationRequested) //если был запрос на отмену операции, прекращем функцию
+                            {
+                                Task.WaitAll(tasksAlgorithmIndicatorCatalogElement);
+                                TestingEnding(false, testing);
+                                return;
+                            }
+                            DispatcherInvoke((Action)(() => {
+                                _mainCommunicationChannel.TestingProgress.Clear();
+                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/4:  Вычисление индикаторов", StepTasksCount = algorithmIndicatorsValuesCount, CompletedStepTasksCount = calculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
+                            }));
+
+                            //обрабатываем выполненные algorithmIndicatorCatalogElement-ы
+                            int taskIndex1 = 0;
+                            while (taskIndex1 < tasksExecutingAlgorithmIndicatorCatalogElement.Length) //проходим по всем задачам и смотрим на статусы выполненности algorithmIndicatorCatalogElement-ов, у выполненных, которые имееют статус Запущен, отмечаем в статусе как выполнен
+                            {
+                                if (algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][0]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][1]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][2]] == 1) //если algorithmIndicatorCatalogElement в текущей задаче имеет статус Запущен
+                                {
+                                    if (testing.DataSourcesCandles[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][0]].AlgorithmIndicatorCatalogs[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][1]].AlgorithmIndicatorCatalogElements[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][2]].IsComplete)
+                                    {
+                                        algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][0]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][1]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][2]] = 2; //отмечаем в статусе algorithmIndicatorCatalogElement-а что он выполнен
+                                        calculatedAlgorithmIndicatorsCount++; //увеличиваем количество выполненных индикаторов на 1
+                                    }
+                                }
+                                taskIndex1++;
+                            }
+
+                            //проходим по всем задачам, и для каждой завершенной, ищем невыполненный и незапущенный тест, и если нашли, то запускаем его в задаче
+                            int indexTask = 0;
+                            while (indexTask < tasksExecutingAlgorithmIndicatorCatalogElement.Length)
+                            {
+                                //определяем, имеет ли algorithmIndicatorCatalogElement в данной задаче статус Выполнен
+                                if (algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[indexTask][0]][tasksExecutingAlgorithmIndicatorCatalogElement[indexTask][1]][tasksExecutingAlgorithmIndicatorCatalogElement[indexTask][2]] == 2)
+                                {
+                                    //ищем невыполненный и незапущенный тест среди всех тестов
+                                    AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement = new AlgorithmIndicatorCatalogElement();
+                                    int dsCandlesIndex = 0;
+                                    int algorithmIndicatorCatalogsIndex = 0;
+                                    int algorithmIndicatorCatalogElementIndex = 0;
+                                    bool isFindAlgorithmIndicatorCatalogElement = false;
+                                    //ищем algorithmIndicatorCatalogElement со статусом не запущен
+                                    while (isFindAlgorithmIndicatorCatalogElement == false && dsCandlesIndex < testing.DataSourcesCandles.Count)
+                                    {
+                                        if(algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] == 0)
+                                        {
+                                            isFindAlgorithmIndicatorCatalogElement = true;
+                                            algorithmIndicatorCatalogElement = testing.DataSourcesCandles[dsCandlesIndex].AlgorithmIndicatorCatalogs[algorithmIndicatorCatalogsIndex].AlgorithmIndicatorCatalogElements[algorithmIndicatorCatalogElementIndex];
+                                        }
+                                        else
+                                        {
+                                            algorithmIndicatorCatalogElementIndex++;
+                                            if (algorithmIndicatorCatalogElementIndex >= algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex].Length) //если вышли за границы индекса algorithmIndicatorCatalogElement, переходим на следующий algorithmIndicatorCatalog
+                                            {
+                                                algorithmIndicatorCatalogElementIndex = 0;
+                                                algorithmIndicatorCatalogsIndex++;
+                                                if (algorithmIndicatorCatalogsIndex >= algorithmIndicatorsStatus[dsCandlesIndex].Length) //если вышли за границы индекса algorithmIndicatorCatalogs, переходим на следующий dataSourcesCandles
+                                                {
+                                                    algorithmIndicatorCatalogsIndex = 0;
+                                                    dsCandlesIndex++;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    //если нашли не запущенный algorithmIndicatorCatalogElement, запускаем его в текущей задаче
+                                    if (isFindAlgorithmIndicatorCatalogElement)
+                                    {
+                                        DataSourceCandles dataSourceCandles = testing.DataSourcesCandles[dsCandlesIndex];
+                                        AlgorithmIndicator algorithmIndicator = testing.DataSourcesCandles[dsCandlesIndex].AlgorithmIndicatorCatalogs[algorithmIndicatorCatalogsIndex].AlgorithmIndicator;
+
+                                        Task task = Task.Run(() => AlgorithmIndicatorCatalogElementCalculate(testing, dataSourceCandles, algorithmIndicator, algorithmIndicatorCatalogElement));
+                                        tasksAlgorithmIndicatorCatalogElement[indexTask] = task;
+                                        tasksExecutingAlgorithmIndicatorCatalogElement[indexTask] = new int[3] { dsCandlesIndex, algorithmIndicatorCatalogsIndex, algorithmIndicatorCatalogElementIndex }; //запоминаем индексы algorithmIndicatorCatalogElement, который выполняется в текущей задачи (в элементе массива tasksExecutingAlgorithmIndicatorCatalogElement с индексом num)
+                                        algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] = 1; //отмечаем что testRun имеет статус запущен
+                                        algorithmIndicatorsStatus2[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] = indexTask; //запоминаем индекс task в котором выполняется данный algorithmIndicatorCatalogElement
+                                    }
+                                }
+                                indexTask++;
+                            }
+                            //смотрим на статусы algorithmIndicatorCatalogElement-ов в задачах, и если нет ни одного со статусом Запущен, значит все algorithmIndicatorCatalogElement-ы выполнены, тестирование окончено
+                            bool isAnyLaunched = false;
+                            for (int i = 0; i < tasksExecutingAlgorithmIndicatorCatalogElement.Length; i++)
+                            {
+                                if (algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[i][0]][tasksExecutingAlgorithmIndicatorCatalogElement[i][1]][tasksExecutingAlgorithmIndicatorCatalogElement[i][2]] == 1)
+                                {
+                                    isAnyLaunched = true;
+                                }
+                            }
+                            if (isAnyLaunched == false)
+                            {
+                                isAllAlgorithmIndicatorsComplete = true; //если ни один из algorithmIndicatorCatalogElement-ов в задачах не имеет статус Запущен, отмечаем что тестирование окончено
                             }
                         }
                     }
                     stopwatchCalculateIndicators.Stop();
-                    
-                    //вычисляем идеальную прибыль для каждого DataSourceCandles
-                    foreach (DataSourceCandles dataSourceCandles in testing.DataSourcesCandles)
+                    DispatcherInvoke((Action)(() => {
+                        _mainCommunicationChannel.TestingProgress.Clear();
+                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/4:  Вычисление индикаторов", StepTasksCount = algorithmIndicatorsValuesCount, CompletedStepTasksCount = calculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
+                    }));
+
+                    //вычисляем идеальную прибыль для всех тестовых связок
+                    foreach(TestBatch testBatch in testing.TestBatches)
                     {
-                        double pricesAmount = 0; //сумма разности цен закрытия, взятой по модулю
-                        int fileIndex = 0;
-                        int candleIndex = 0;
-                        bool isOverFileIndex = false; //вышел ли какой-либо из индексов файлов за границы массива файлов источника данных
-                        while (isOverFileIndex == false)
+                        //вычисляем идеальную прибыль для каждого DataSourceCandles
+                        DateTime startDateTime = testBatch.OptimizationTestRuns[0].StartPeriod; //дата начала подсчета идеальной прибыли
+                        DateTime endDateTime = testBatch.OptimizationTestRuns[0].EndPeriod; //дата окончания подсчета идеальной прибыли
+                        int iteration = 1;
+                        do
                         {
-                            DateTime currentDateTime = dataSourceCandles.Candles[fileIndex][candleIndex].DateTime;
-                            if (candleIndex > 0) //чтобы не обращаться к прошлой свечке при смене файла
+                            if (iteration == 2) //если это не первая итерация, значит нужно вычислить идеальную прибыль для форвардного периода, устанавливаем форвардные даты начала и окончания
                             {
-                                currentDateTime = dataSourceCandles.Candles[fileIndex][candleIndex].DateTime;
-                                pricesAmount += Math.Abs(dataSourceCandles.Candles[fileIndex][candleIndex].C - dataSourceCandles.Candles[fileIndex][candleIndex - 1].C); //прибавляем разность цен закрытия, взятую по модулю
+                                startDateTime = testBatch.ForwardTestRun.StartPeriod;
+                                endDateTime = testBatch.ForwardTestRun.EndPeriod;
                             }
-                            //переходим на следующую свечку, пока не дойдем до даты которая позже текущей или пока не выйдем за пределы файлов
-                            bool isOverDate = DateTime.Compare(dataSourceCandles.Candles[fileIndex][candleIndex].DateTime, currentDateTime) > 0; //дошли ли до даты которая позже текущей
-                            while (isOverDate == false && isOverFileIndex == false)
+                            List<PerfectProfit> perfectProfits = iteration == 1 ? testBatch.OptimizationPerfectProfits : testBatch.ForwardPerfectProfits; //для первой итерации, устанавливаем список с идеальными прибылями для оптимизационного периода, для второй итерации, для форвардного периода
+                            foreach (DataSourceCandles dataSourceCandles in testing.DataSourcesCandles)
                             {
-                                candleIndex++;
-                                //если массив со свечками файла подошел к концу, переходим на следующий файл
-                                if (candleIndex >= dataSourceCandles.Candles[fileIndex].Length)
+                                //проходим по всем свечкам источников данных, пока не достигнем времени окончания теста, не выйдем за границы имеющихся файлов, или не получим запрос на отмену тестирования
+                                PerfectProfit perfectProfit = new PerfectProfit { IdDataSource = dataSourceCandles.DataSource.Id };
+                                DateTime currentDateTime = startDateTime;
+                                double pricesAmount = 0; //сумма разности цен закрытия, взятой по модулю
+                                int fileIndex = 0;
+                                int candleIndex = 0;
+                                bool isOverFileIndex = false; //вышел ли какой-либо из индексов файлов за границы массива файлов источника данных
+                                while (DateTime.Compare(currentDateTime, endDateTime) < 0 && isOverFileIndex == false && cancellationToken.IsCancellationRequested == false)
                                 {
-                                    fileIndex++;
-                                    candleIndex = 0;
+                                    if (candleIndex > 0) //чтобы не обращаться к прошлой свечке при смене файла
+                                    {
+                                        currentDateTime = dataSourceCandles.Candles[fileIndex][candleIndex].DateTime;
+                                        pricesAmount += Math.Abs(dataSourceCandles.Candles[fileIndex][candleIndex].C - dataSourceCandles.Candles[fileIndex][candleIndex - 1].C); //прибавляем разность цен закрытия, взятую по модулю
+                                    }
+
+                                    //переходим на следующую свечку, пока не дойдем до даты которая позже текущей
+                                    bool isOverDate = DateTime.Compare(dataSourceCandles.Candles[fileIndex][candleIndex].DateTime, currentDateTime) > 0; //дошли ли до даты которая позже текущей
+
+                                    //переходим на следующую свечку, пока не дойдем до даты которая позже текущей или пока не выйдем за пределы файлов
+                                    while (isOverDate == false && isOverFileIndex == false)
+                                    {
+                                        candleIndex++;
+                                        //если массив со свечками файла подошел к концу, переходим на следующий файл
+                                        if (candleIndex >= dataSourceCandles.Candles[fileIndex].Length)
+                                        {
+                                            fileIndex++;
+                                            candleIndex = 0;
+                                        }
+                                        //если индекс файла не вышел за пределы массива, проверяем, дошли ли до даты которая позже текущей
+                                        if (fileIndex < dataSourceCandles.Candles.Length)
+                                        {
+                                            isOverDate = DateTime.Compare(dataSourceCandles.Candles[fileIndex][candleIndex].DateTime, currentDateTime) > 0;
+                                        }
+                                        else
+                                        {
+                                            isOverFileIndex = true;
+                                        }
+                                    }
+
+                                    //обновляем текущую дату
+                                    if (isOverFileIndex == false)
+                                    {
+                                        currentDateTime = dataSourceCandles.Candles[fileIndex][candleIndex].DateTime;
+                                    }
                                 }
-                                //если индекс файла не вышел за пределы массива, проверяем, дошли ли до даты которая позже текущей
-                                if (fileIndex < dataSourceCandles.Candles.Length)
-                                {
-                                    isOverDate = DateTime.Compare(dataSourceCandles.Candles[fileIndex][candleIndex].DateTime, currentDateTime) > 0;
-                                }
-                                else
-                                {
-                                    isOverFileIndex = true;
-                                }
+                                perfectProfit.Value = pricesAmount / dataSourceCandles.DataSource.PriceStep * dataSourceCandles.DataSource.CostPriceStep; //записываем идеальную прибыль
+                                perfectProfits.Add(perfectProfit);
                             }
+                            iteration++;
                         }
-                        dataSourceCandles.PerfectProfit = pricesAmount / dataSourceCandles.DataSource.PriceStep * dataSourceCandles.DataSource.CostPriceStep; //записываем идеальную прибыль
+                        while (testing.IsForwardTesting && iteration < 3);
                     }
 
 
@@ -1127,6 +1322,7 @@ namespace ktradesystem.Models
                         processorCount = 1;
                     }
                     //processorCount = 1; //эту строку я использую если нужно проследить выполнение тестового прогона, чтобы не переключаться между другими потоками
+
                     Task[] tasks = new Task[processorCount]; //задачи
                     Stopwatch stopwatchTestRunsExecution = new Stopwatch();
                     stopwatchTestRunsExecution.Start();
@@ -1819,6 +2015,7 @@ namespace ktradesystem.Models
                     }
                 }
             }
+
             //устанавливаем значение маржи
             testRun.Account.Margin = ModelFunctions.MarginCalculate(testRun);
             //рассчитываем критерии оценки для данного testRun
@@ -1844,10 +2041,10 @@ namespace ktradesystem.Models
                     " + script + @"
                     return new EvaluationCriteriaValue { DoubleValue = ResultDoubleValue, StringValue = ResultStringValue };
                 }*/
-        
+
 
                 //ModelFunctions.TestEvaluationCriteria(testRun); //так я отлаживаю критерии оценки
-
+                
                 //копируем объект скомпилированного критерия оценки, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
                 dynamic CompiledEvaluationCriteriaCopy = testing.CompiledEvaluationCriterias[i].Clone();
                 EvaluationCriteriaValue evaluationCriteriaValue = CompiledEvaluationCriteriaCopy.Calculate(dataSourceCandles, testRun, _modelData.Settings);
@@ -2858,8 +3055,9 @@ namespace ktradesystem.Models
             }));
         }
 
-        public AlgorithmIndicatorValues AlgorithmIndicatorCalculate(Testing testing, DataSourceCandles dataSourceCandles, AlgorithmIndicator algorithmIndicator, List<AlgorithmParameterValue> algorithmParameterValues) //возвращает вычисленные значения индикатора алгоритма для свечек из dataSourceCandles
+        public void AlgorithmIndicatorCatalogElementCalculate(Testing testing, DataSourceCandles dataSourceCandles, AlgorithmIndicator algorithmIndicator, AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement) //возвращает вычисленные значения индикатора алгоритма для свечек из dataSourceCandles
         {
+            List<AlgorithmParameterValue> algorithmParameterValues = algorithmIndicatorCatalogElement.AlgorithmParameterValues;
             AlgorithmIndicatorValues algorithmIndicatorValues = new AlgorithmIndicatorValues { AlgorithmIndicator = algorithmIndicator, Values = new AlgorithmIndicatorValue[dataSourceCandles.Candles.Length][] };
             int algorithmIndicatorIndex = testing.Algorithm.AlgorithmIndicators.IndexOf(algorithmIndicator); //индекс индикатора алгоритма
             for (int i = 0; i < dataSourceCandles.Candles.Length; i++)
@@ -2883,8 +3081,8 @@ namespace ktradesystem.Models
                     algorithmIndicatorValues.Values[i][k].Value = indicatorCalculateResult.Value;
                 }
             }
-
-            return algorithmIndicatorValues;
+            algorithmIndicatorCatalogElement.AlgorithmIndicatorValues = algorithmIndicatorValues;
+            algorithmIndicatorCatalogElement.IsComplete = true;
         }
     }
 }

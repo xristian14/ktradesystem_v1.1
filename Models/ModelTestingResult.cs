@@ -494,7 +494,7 @@ namespace ktradesystem.Models
                 BinaryFormatter binaryFormatter = new BinaryFormatter();
                 using (FileStream fileStream = new FileStream(testingDirectory + "\\testing.dat", FileMode.Open))
                 {
-                    testing = (Testing)binaryFormatter.Deserialize(fileStream); //десериализуем объект
+                testing = (Testing)binaryFormatter.Deserialize(fileStream); //десериализуем объект
                 }
 
                 /*string jsonTesting = File.ReadAllText(testingDirectory + "\\testing.dat");

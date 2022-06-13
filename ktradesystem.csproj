@@ -135,6 +135,7 @@
     <Compile Include="Models\ModelSimulation.cs" />
     <Compile Include="Models\ModelTestingResult.cs" />
     <Compile Include="Models\Order.cs" />
+    <Compile Include="Models\PerfectProfit.cs" />
     <Compile Include="Models\TestBatch.cs" />
     <Compile Include="Models\TestingHeader.cs" />
     <Compile Include="Models\TestRun.cs" />

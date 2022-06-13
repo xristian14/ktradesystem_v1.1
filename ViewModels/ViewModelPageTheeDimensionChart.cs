@@ -36,6 +36,7 @@ namespace ktradesystem.ViewModels
         private int _countScaleValues = 5; //количество отрезков на шкале значений по оси критерия оценки
         private double _offsetScaleValues = 0.08; //отступ от графика на котором продолжается отрисовываться линия шкалы значений/параметров алгоритма, и после которого начинают отображаться значения шаклы значений/параметров алгоритма. Значение относительно стороны куба, в который вписывается график
         private double _scaleValueLineWidth = 0.0036; //толщина линии на шкале занчений относительно стороны куба, в который вписывается график
+        private bool _isResetAxesSearchPlane = false; //происодит ли в данный момент сбрасывание параметров осей
 
         private bool _isMouseDown = false; //зажата ли левая клавиша мыши
         private Point _mouseDownPosition; //позиция мыши при нажатии мыши
@@ -1012,32 +1013,39 @@ namespace ktradesystem.ViewModels
         }
         public void AxesSearchPlanePageThreeDimensionChart_PropertyChanged(AxisSearchPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart, string propertyName) //обработчик изменения свойств у объектов в AxesSearchPlanePageThreeDimensionChart
         {
-            if (propertyName == "IsButtonResetChecked") //если была переключена кнопка: Сбросить
+            if(_isResetAxesSearchPlane == false) //если в данный момент не происходит сбрасывание осей
             {
-                if (axisSearchPlanePageThreeDimensionChart.IsButtonResetChecked)
+                if (propertyName == "IsButtonResetChecked") //если была переключена кнопка: Сбросить
                 {
-                    axisSearchPlanePageThreeDimensionChart.IsButtonResetChecked = false;
-                    if(AxesSearchPlanePageThreeDimensionChart.Count > 2)
+                    if (axisSearchPlanePageThreeDimensionChart.IsButtonResetChecked)
                     {
-                        AxesSearchPlanePageThreeDimensionChart[1].AlgorithmParameters = GetAlgorithmParameters();
-                        AxesSearchPlanePageThreeDimensionChart[2].AlgorithmParameters = GetAlgorithmParameters();
+                        axisSearchPlanePageThreeDimensionChart.IsButtonResetChecked = false;
+                        if (AxesSearchPlanePageThreeDimensionChart.Count > 2)
+                        {
+                            _isResetAxesSearchPlane = true;
+                            AxesSearchPlanePageThreeDimensionChart[1].AlgorithmParameters = GetAlgorithmParameters();
+                            AxesSearchPlanePageThreeDimensionChart[2].AlgorithmParameters = GetAlgorithmParameters();
 
-                        AxesSearchPlanePageThreeDimensionChart[1].SelectedAlgorithmParameter = AxesSearchPlanePageThreeDimensionChart[1].AlgorithmParameters.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter.Id).First();
-                        AxesSearchPlanePageThreeDimensionChart[2].SelectedAlgorithmParameter = AxesSearchPlanePageThreeDimensionChart[2].AlgorithmParameters.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter.Id).First();
+                            AxesSearchPlanePageThreeDimensionChart[1].SelectedAlgorithmParameter = AxesSearchPlanePageThreeDimensionChart[1].AlgorithmParameters.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter.Id).First();
+                            AxesSearchPlanePageThreeDimensionChart[2].SelectedAlgorithmParameter = AxesSearchPlanePageThreeDimensionChart[2].AlgorithmParameters.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter.Id).First();
+                            _isResetAxesSearchPlane = false;
+                            AxesSearchPlanePageThreeDimensionChart_PropertyChanged(AxesSearchPlanePageThreeDimensionChart[1], "SelectedAlgorithmParameter");
+                            AxesSearchPlanePageThreeDimensionChart_PropertyChanged(AxesSearchPlanePageThreeDimensionChart[2], "SelectedAlgorithmParameter");
+                        }
                     }
                 }
-            }
-            if (propertyName == "SelectedAlgorithmParameter") //если был выбран другой параметр алгоритма
-            {
-                if(AxesSearchPlanePageThreeDimensionChart.Count > 2) //если параметров 2 и более, для того который не был переключен обновляем доступные для выбора параметры алгоритма
+                if (propertyName == "SelectedAlgorithmParameter") //если был выбран другой параметр алгоритма
                 {
-                    AxisSearchPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart2 = axisSearchPlanePageThreeDimensionChart == AxesSearchPlanePageThreeDimensionChart[1] ? AxesSearchPlanePageThreeDimensionChart[2] : AxesSearchPlanePageThreeDimensionChart[1]; //получаем объект у которого не был изменен выбранный параметр
-                    axisSearchPlanePageThreeDimensionChart2.AlgorithmParameters = GetAlgorithmParameters();
-                    axisSearchPlanePageThreeDimensionChart2.AlgorithmParameters.Remove(axisSearchPlanePageThreeDimensionChart.SelectedAlgorithmParameter); //удаляем из доступных для выбора параметров, параметр который был выбран
+                    if (AxesSearchPlanePageThreeDimensionChart.Count > 2) //если параметров 2 и более, для того который не был переключен обновляем доступные для выбора параметры алгоритма
+                    {
+                        AxisSearchPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart2 = axisSearchPlanePageThreeDimensionChart == AxesSearchPlanePageThreeDimensionChart[1] ? AxesSearchPlanePageThreeDimensionChart[2] : AxesSearchPlanePageThreeDimensionChart[1]; //получаем объект у которого не был изменен выбранный параметр
+                        axisSearchPlanePageThreeDimensionChart2.AlgorithmParameters = GetAlgorithmParameters();
+                        axisSearchPlanePageThreeDimensionChart2.AlgorithmParameters.Remove(axisSearchPlanePageThreeDimensionChart.SelectedAlgorithmParameter); //удаляем из доступных для выбора параметров, параметр который был выбран
+                    }
+                    DeterminingAlgorithmParamtersAxes(); //определяем параметры алгоритма для левой и верхней оси матрицы тестовых прогонов
+                    CreateTestRunsMatrix(); //создаем двумерный массив с тестовыми прогонами на основе выбранных осей плоскости поиска
+                    BuildSurfaces(); //строим поверхности выбранных критериев оценки
                 }
-                DeterminingAlgorithmParamtersAxes(); //определяем параметры алгоритма для левой и верхней оси матрицы тестовых прогонов
-                CreateTestRunsMatrix(); //создаем двумерный массив с тестовыми прогонами на основе выбранных осей плоскости поиска
-                BuildSurfaces(); //строим поверхности выбранных критериев оценки
             }
         }
         private ObservableCollection<AlgorithmParameter> GetAlgorithmParameters() //возвращает параметры алгоритма

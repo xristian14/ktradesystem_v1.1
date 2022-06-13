@@ -19,6 +19,8 @@ namespace ktradesystem.Models
         public List<string[]> StatisticalSignificance { get; set; }
         public bool IsTopModelDetermining { get; set; } //определена топ-модель для данной тестовой связки
         public bool IsTopModelWasFind { get; set; } //была ли найдена топ-модель (из-за фильтров может не быть топ-модели)
+        public List<PerfectProfit> OptimizationPerfectProfits { get; set; } //идеальные прибыли для периода оптимизации, для всех источников данных группы
+        public List<PerfectProfit> ForwardPerfectProfits { get; set; } //идеальные прибыли для периода фораврдного теста, для всех источников данных группы
         public void SetTopModel(TestRun testRun)
         {
             TopModelTestRun = testRun;

@@ -690,7 +690,7 @@ namespace ktradesystem.Models
                         }
 
                         //создаем testBatch
-                        TestBatch testBatch = new TestBatch { DataSourceGroup = dataSourceGroup, DataSourceGroupIndex = testing.DataSourceGroups.IndexOf(dataSourceGroup), StatisticalSignificance = new List<string[]>(), IsTopModelDetermining = false, IsTopModelWasFind = false, OptimizationPerfectProfits = new List<PerfectProfit>(), ForwardPerfectProfits = new List<PerfectProfit>() };
+                        TestBatch testBatch = new TestBatch { Number = testing.TestBatches.Count + 1, DataSourceGroup = dataSourceGroup, DataSourceGroupIndex = testing.DataSourceGroups.IndexOf(dataSourceGroup), StatisticalSignificance = new List<string[]>(), IsTopModelDetermining = false, IsTopModelWasFind = false, OptimizationPerfectProfits = new List<PerfectProfit>(), ForwardPerfectProfits = new List<PerfectProfit>() };
 
                         int testRunNumber = 1; //номер тестового прогона
 
@@ -1049,194 +1049,196 @@ namespace ktradesystem.Models
                         _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/4:  Вычисление индикаторов", StepTasksCount = algorithmIndicatorsValuesCount, CompletedStepTasksCount = calculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                     }));
 
-
-                    //определяем количество используемых потоков
-                    int processorCountAlgorithmIndicator = Environment.ProcessorCount;
-                    processorCountAlgorithmIndicator -= _modelData.Settings.Where(i => i.Id == 1).First().BoolValue ? 1 : 0; //если в настройках выбрано оставлять один поток, вычитаем из количества потоков
-                    if (algorithmIndicatorsValuesCount < processorCountAlgorithmIndicator) //если тестов меньше чем число доступных потоков, устанавливаем количество потоков на количество тестов, т.к. WaitAll ругается если задача в tasks null
+                    if(algorithmIndicatorsValuesCount > 0) //имеются ли индикаторы для рассчета
                     {
-                        processorCountAlgorithmIndicator = algorithmIndicatorsValuesCount;
-                    }
-                    //processorCountAlgorithmIndicator = 1; //эту строку я использую если нужно проследить рассчет индикатора, чтобы не переключаться между другими потоками
-
-                    Task[] tasksAlgorithmIndicatorCatalogElement = new Task[processorCountAlgorithmIndicator]; //задачи
-                    int[][] tasksExecutingAlgorithmIndicatorCatalogElement = new int[processorCountAlgorithmIndicator][]; //массив с выполняющимися индикаторами алгоритма, в 0-м элементе индекс DataSourcesCandles, в 1-м индекс AlgorithmIndicatorCatalogs, во 2-м индекс AlgorithmIndicatorCatalogElements
-                    int[][][] algorithmIndicatorsStatus = new int[testing.DataSourcesCandles.Count][][]; //статусы выполненности algorithmIndicatorCatalogElement-ов, первый массив - массив с DataSourcesCandles, второй - массив с AlgorithmIndicatorCatalogs, третий - массив с AlgorithmIndicatorCatalogElements. У невыполненного значение 0, у запущенного 1, а у выполненного 2
-                    int[][][] algorithmIndicatorsStatus2 = new int[testing.DataSourcesCandles.Count][][]; //индексы потока в tasksAlgorithmIndicatorCatalogElement в котором выполнялся algorithmIndicatorCatalogElement
-                    //заполняем статусы
-                    for (int i = 0; i < testing.DataSourcesCandles.Count; i++)
-                    {
-                        algorithmIndicatorsStatus[i] = new int[testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs.Length][];
-                        algorithmIndicatorsStatus2[i] = new int[testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs.Length][];
-                        for (int k = 0; k < testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs.Length; k++)
+                        //определяем количество используемых потоков
+                        int processorCountAlgorithmIndicator = Environment.ProcessorCount;
+                        processorCountAlgorithmIndicator -= _modelData.Settings.Where(i => i.Id == 1).First().BoolValue ? 1 : 0; //если в настройках выбрано оставлять один поток, вычитаем из количества потоков
+                        if (algorithmIndicatorsValuesCount < processorCountAlgorithmIndicator) //если тестов меньше чем число доступных потоков, устанавливаем количество потоков на количество тестов, т.к. WaitAll ругается если задача в tasks null
                         {
-                            algorithmIndicatorsStatus[i][k] = Enumerable.Repeat(0, testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs[k].AlgorithmIndicatorCatalogElements.Count).ToArray(); //заполняем нулями
-                            algorithmIndicatorsStatus2[i][k] = Enumerable.Repeat(-1, testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs[k].AlgorithmIndicatorCatalogElements.Count).ToArray(); //заполняем индексы задач в tasksAlgorithmIndicatorCatalogElement -1
+                            processorCountAlgorithmIndicator = algorithmIndicatorsValuesCount;
                         }
-                    }
-                    bool isAllAlgorithmIndicatorsComplete = false; //выполнены ли все AlgorithmIndicator-ы
-                    int num = 0; //номер задачи, нужен для начального заполнения массива tasks
-                    while (isAllAlgorithmIndicatorsComplete == false)
-                    {
-                        if (tasksAlgorithmIndicatorCatalogElement[tasksAlgorithmIndicatorCatalogElement.Length - 1] == null) //если пока еще не заполнен массив с задачами, заполняем его
+                        //processorCountAlgorithmIndicator = 1; //эту строку я использую если нужно проследить рассчет индикатора, чтобы не переключаться между другими потоками
+
+                        Task[] tasksAlgorithmIndicatorCatalogElement = new Task[processorCountAlgorithmIndicator]; //задачи
+                        int[][] tasksExecutingAlgorithmIndicatorCatalogElement = new int[processorCountAlgorithmIndicator][]; //массив с выполняющимися индикаторами алгоритма, в 0-м элементе индекс DataSourcesCandles, в 1-м индекс AlgorithmIndicatorCatalogs, во 2-м индекс AlgorithmIndicatorCatalogElements
+                        int[][][] algorithmIndicatorsStatus = new int[testing.DataSourcesCandles.Count][][]; //статусы выполненности algorithmIndicatorCatalogElement-ов, первый массив - массив с DataSourcesCandles, второй - массив с AlgorithmIndicatorCatalogs, третий - массив с AlgorithmIndicatorCatalogElements. У невыполненного значение 0, у запущенного 1, а у выполненного 2
+                        int[][][] algorithmIndicatorsStatus2 = new int[testing.DataSourcesCandles.Count][][]; //индексы потока в tasksAlgorithmIndicatorCatalogElement в котором выполнялся algorithmIndicatorCatalogElement
+                                                                                                              //заполняем статусы
+                        for (int i = 0; i < testing.DataSourcesCandles.Count; i++)
                         {
-                            //находим первый AlgorithmIndicator, который еще не запущен (имеет статус 0)
-                            int dsCandlesIndex = 0;
-                            int algorithmIndicatorCatalogsIndex = 0;
-                            int algorithmIndicatorCatalogElementIndex = 0;
-                            bool isFindAlgorithmIndicatorCatalogElement = false;
-                            while (isFindAlgorithmIndicatorCatalogElement == false)
+                            algorithmIndicatorsStatus[i] = new int[testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs.Length][];
+                            algorithmIndicatorsStatus2[i] = new int[testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs.Length][];
+                            for (int k = 0; k < testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs.Length; k++)
                             {
-                                if (algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] == 0)
-                                {
-                                    isFindAlgorithmIndicatorCatalogElement = true;
-                                }
-                                else
-                                {
-                                    algorithmIndicatorCatalogElementIndex++;
-                                    if (algorithmIndicatorCatalogElementIndex >= algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex].Length) //если вышли за границы индекса algorithmIndicatorCatalogElement, переходим на следующий algorithmIndicatorCatalog
-                                    {
-                                        algorithmIndicatorCatalogElementIndex = 0;
-                                        algorithmIndicatorCatalogsIndex++;
-                                        if (algorithmIndicatorCatalogsIndex >= algorithmIndicatorsStatus[dsCandlesIndex].Length) //если вышли за границы индекса algorithmIndicatorCatalogs, переходим на следующий dataSourcesCandles
-                                        {
-                                            algorithmIndicatorCatalogsIndex = 0;
-                                            dsCandlesIndex++;
-                                        }
-                                    }
-                                }
+                                algorithmIndicatorsStatus[i][k] = Enumerable.Repeat(0, testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs[k].AlgorithmIndicatorCatalogElements.Count).ToArray(); //заполняем нулями
+                                algorithmIndicatorsStatus2[i][k] = Enumerable.Repeat(-1, testing.DataSourcesCandles[i].AlgorithmIndicatorCatalogs[k].AlgorithmIndicatorCatalogElements.Count).ToArray(); //заполняем индексы задач в tasksAlgorithmIndicatorCatalogElement -1
                             }
-
-                            DataSourceCandles dataSourceCandles = testing.DataSourcesCandles[dsCandlesIndex];
-                            AlgorithmIndicator algorithmIndicator = testing.DataSourcesCandles[dsCandlesIndex].AlgorithmIndicatorCatalogs[algorithmIndicatorCatalogsIndex].AlgorithmIndicator;
-                            AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement = testing.DataSourcesCandles[dsCandlesIndex].AlgorithmIndicatorCatalogs[algorithmIndicatorCatalogsIndex].AlgorithmIndicatorCatalogElements[algorithmIndicatorCatalogElementIndex];
-
-                            Task task = Task.Run(() => AlgorithmIndicatorCatalogElementCalculate(testing, dataSourceCandles, algorithmIndicator, algorithmIndicatorCatalogElement));
-                            tasksAlgorithmIndicatorCatalogElement[num] = task;
-                            tasksExecutingAlgorithmIndicatorCatalogElement[num] = new int[3] { dsCandlesIndex, algorithmIndicatorCatalogsIndex, algorithmIndicatorCatalogElementIndex }; //запоминаем индексы algorithmIndicatorCatalogElement, который выполняется в текущей задачи (в элементе массива tasksExecutingAlgorithmIndicatorCatalogElement с индексом num)
-                            algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] = 1; //отмечаем что testRun имеет статус запущен
-                            algorithmIndicatorsStatus2[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] = num;
-                            num++; //увеличиваем индекс задачи
                         }
-                        else //иначе ждем и обрабатываем выполненные задачи
+                        bool isAllAlgorithmIndicatorsComplete = false; //выполнены ли все AlgorithmIndicator-ы
+                        int num = 0; //номер задачи, нужен для начального заполнения массива tasks
+                        while (isAllAlgorithmIndicatorsComplete == false)
                         {
-                            bool isAnyComplete = false;
-                            //ждем пока один из выполняющихся algorithmIndicatorCatalogElement-ов не будет выполнен
-                            while (isAnyComplete == false)
+                            if (tasksAlgorithmIndicatorCatalogElement[tasksAlgorithmIndicatorCatalogElement.Length - 1] == null) //если пока еще не заполнен массив с задачами, заполняем его
                             {
-                                Thread.Sleep(20);
-                                int taskIndex = 0;
-                                while (taskIndex < tasksExecutingAlgorithmIndicatorCatalogElement.Length && isAnyComplete == false) //проходим по всем задачам и смотрим на статусы выполненности algorithmIndicatorCatalogElement-ов
+                                //находим первый AlgorithmIndicator, который еще не запущен (имеет статус 0)
+                                int dsCandlesIndex = 0;
+                                int algorithmIndicatorCatalogsIndex = 0;
+                                int algorithmIndicatorCatalogElementIndex = 0;
+                                bool isFindAlgorithmIndicatorCatalogElement = false;
+                                while (isFindAlgorithmIndicatorCatalogElement == false)
                                 {
-                                    //если в задаче находится algorithmIndicatorCatalogElement со статусом Запущен (если нет, то он уже выполнен, и не был заменен новым testRun-ом т.к. они закончились)
-                                    if(algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][0]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][1]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][2]] == 1)
+                                    if (algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] == 0)
                                     {
-                                        if (testing.DataSourcesCandles[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][0]].AlgorithmIndicatorCatalogs[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][1]].AlgorithmIndicatorCatalogElements[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][2]].IsComplete)
-                                        {
-                                            isAnyComplete = true;
-                                        }
+                                        isFindAlgorithmIndicatorCatalogElement = true;
                                     }
-                                    taskIndex++;
-                                }
-                            }
-
-                            if (cancellationToken.IsCancellationRequested) //если был запрос на отмену операции, прекращем функцию
-                            {
-                                Task.WaitAll(tasksAlgorithmIndicatorCatalogElement);
-                                TestingEnding(false, testing);
-                                return;
-                            }
-                            DispatcherInvoke((Action)(() => {
-                                _mainCommunicationChannel.TestingProgress.Clear();
-                                _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/4:  Вычисление индикаторов", StepTasksCount = algorithmIndicatorsValuesCount, CompletedStepTasksCount = calculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
-                            }));
-
-                            //обрабатываем выполненные algorithmIndicatorCatalogElement-ы
-                            int taskIndex1 = 0;
-                            while (taskIndex1 < tasksExecutingAlgorithmIndicatorCatalogElement.Length) //проходим по всем задачам и смотрим на статусы выполненности algorithmIndicatorCatalogElement-ов, у выполненных, которые имееют статус Запущен, отмечаем в статусе как выполнен
-                            {
-                                if (algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][0]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][1]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][2]] == 1) //если algorithmIndicatorCatalogElement в текущей задаче имеет статус Запущен
-                                {
-                                    if (testing.DataSourcesCandles[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][0]].AlgorithmIndicatorCatalogs[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][1]].AlgorithmIndicatorCatalogElements[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][2]].IsComplete)
+                                    else
                                     {
-                                        algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][0]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][1]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][2]] = 2; //отмечаем в статусе algorithmIndicatorCatalogElement-а что он выполнен
-                                        calculatedAlgorithmIndicatorsCount++; //увеличиваем количество выполненных индикаторов на 1
-                                    }
-                                }
-                                taskIndex1++;
-                            }
-
-                            //проходим по всем задачам, и для каждой завершенной, ищем невыполненный и незапущенный тест, и если нашли, то запускаем его в задаче
-                            int indexTask = 0;
-                            while (indexTask < tasksExecutingAlgorithmIndicatorCatalogElement.Length)
-                            {
-                                //определяем, имеет ли algorithmIndicatorCatalogElement в данной задаче статус Выполнен
-                                if (algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[indexTask][0]][tasksExecutingAlgorithmIndicatorCatalogElement[indexTask][1]][tasksExecutingAlgorithmIndicatorCatalogElement[indexTask][2]] == 2)
-                                {
-                                    //ищем невыполненный и незапущенный тест среди всех тестов
-                                    AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement = new AlgorithmIndicatorCatalogElement();
-                                    int dsCandlesIndex = 0;
-                                    int algorithmIndicatorCatalogsIndex = 0;
-                                    int algorithmIndicatorCatalogElementIndex = 0;
-                                    bool isFindAlgorithmIndicatorCatalogElement = false;
-                                    //ищем algorithmIndicatorCatalogElement со статусом не запущен
-                                    while (isFindAlgorithmIndicatorCatalogElement == false && dsCandlesIndex < testing.DataSourcesCandles.Count)
-                                    {
-                                        if(algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] == 0)
+                                        algorithmIndicatorCatalogElementIndex++;
+                                        if (algorithmIndicatorCatalogElementIndex >= algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex].Length) //если вышли за границы индекса algorithmIndicatorCatalogElement, переходим на следующий algorithmIndicatorCatalog
                                         {
-                                            isFindAlgorithmIndicatorCatalogElement = true;
-                                            algorithmIndicatorCatalogElement = testing.DataSourcesCandles[dsCandlesIndex].AlgorithmIndicatorCatalogs[algorithmIndicatorCatalogsIndex].AlgorithmIndicatorCatalogElements[algorithmIndicatorCatalogElementIndex];
-                                        }
-                                        else
-                                        {
-                                            algorithmIndicatorCatalogElementIndex++;
-                                            if (algorithmIndicatorCatalogElementIndex >= algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex].Length) //если вышли за границы индекса algorithmIndicatorCatalogElement, переходим на следующий algorithmIndicatorCatalog
+                                            algorithmIndicatorCatalogElementIndex = 0;
+                                            algorithmIndicatorCatalogsIndex++;
+                                            if (algorithmIndicatorCatalogsIndex >= algorithmIndicatorsStatus[dsCandlesIndex].Length) //если вышли за границы индекса algorithmIndicatorCatalogs, переходим на следующий dataSourcesCandles
                                             {
-                                                algorithmIndicatorCatalogElementIndex = 0;
-                                                algorithmIndicatorCatalogsIndex++;
-                                                if (algorithmIndicatorCatalogsIndex >= algorithmIndicatorsStatus[dsCandlesIndex].Length) //если вышли за границы индекса algorithmIndicatorCatalogs, переходим на следующий dataSourcesCandles
-                                                {
-                                                    algorithmIndicatorCatalogsIndex = 0;
-                                                    dsCandlesIndex++;
-                                                }
+                                                algorithmIndicatorCatalogsIndex = 0;
+                                                dsCandlesIndex++;
                                             }
                                         }
                                     }
-                                    //если нашли не запущенный algorithmIndicatorCatalogElement, запускаем его в текущей задаче
-                                    if (isFindAlgorithmIndicatorCatalogElement)
-                                    {
-                                        DataSourceCandles dataSourceCandles = testing.DataSourcesCandles[dsCandlesIndex];
-                                        AlgorithmIndicator algorithmIndicator = testing.DataSourcesCandles[dsCandlesIndex].AlgorithmIndicatorCatalogs[algorithmIndicatorCatalogsIndex].AlgorithmIndicator;
+                                }
 
-                                        Task task = Task.Run(() => AlgorithmIndicatorCatalogElementCalculate(testing, dataSourceCandles, algorithmIndicator, algorithmIndicatorCatalogElement));
-                                        tasksAlgorithmIndicatorCatalogElement[indexTask] = task;
-                                        tasksExecutingAlgorithmIndicatorCatalogElement[indexTask] = new int[3] { dsCandlesIndex, algorithmIndicatorCatalogsIndex, algorithmIndicatorCatalogElementIndex }; //запоминаем индексы algorithmIndicatorCatalogElement, который выполняется в текущей задачи (в элементе массива tasksExecutingAlgorithmIndicatorCatalogElement с индексом num)
-                                        algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] = 1; //отмечаем что testRun имеет статус запущен
-                                        algorithmIndicatorsStatus2[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] = indexTask; //запоминаем индекс task в котором выполняется данный algorithmIndicatorCatalogElement
+                                DataSourceCandles dataSourceCandles = testing.DataSourcesCandles[dsCandlesIndex];
+                                AlgorithmIndicator algorithmIndicator = testing.DataSourcesCandles[dsCandlesIndex].AlgorithmIndicatorCatalogs[algorithmIndicatorCatalogsIndex].AlgorithmIndicator;
+                                AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement = testing.DataSourcesCandles[dsCandlesIndex].AlgorithmIndicatorCatalogs[algorithmIndicatorCatalogsIndex].AlgorithmIndicatorCatalogElements[algorithmIndicatorCatalogElementIndex];
+
+                                Task task = Task.Run(() => AlgorithmIndicatorCatalogElementCalculate(testing, dataSourceCandles, algorithmIndicator, algorithmIndicatorCatalogElement));
+                                tasksAlgorithmIndicatorCatalogElement[num] = task;
+                                tasksExecutingAlgorithmIndicatorCatalogElement[num] = new int[3] { dsCandlesIndex, algorithmIndicatorCatalogsIndex, algorithmIndicatorCatalogElementIndex }; //запоминаем индексы algorithmIndicatorCatalogElement, который выполняется в текущей задачи (в элементе массива tasksExecutingAlgorithmIndicatorCatalogElement с индексом num)
+                                algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] = 1; //отмечаем что testRun имеет статус запущен
+                                algorithmIndicatorsStatus2[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] = num;
+                                num++; //увеличиваем индекс задачи
+                            }
+                            else //иначе ждем и обрабатываем выполненные задачи
+                            {
+                                bool isAnyComplete = false;
+                                //ждем пока один из выполняющихся algorithmIndicatorCatalogElement-ов не будет выполнен
+                                while (isAnyComplete == false)
+                                {
+                                    Thread.Sleep(20);
+                                    int taskIndex = 0;
+                                    while (taskIndex < tasksExecutingAlgorithmIndicatorCatalogElement.Length && isAnyComplete == false) //проходим по всем задачам и смотрим на статусы выполненности algorithmIndicatorCatalogElement-ов
+                                    {
+                                        //если в задаче находится algorithmIndicatorCatalogElement со статусом Запущен (если нет, то он уже выполнен, и не был заменен новым testRun-ом т.к. они закончились)
+                                        if (algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][0]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][1]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][2]] == 1)
+                                        {
+                                            if (testing.DataSourcesCandles[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][0]].AlgorithmIndicatorCatalogs[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][1]].AlgorithmIndicatorCatalogElements[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex][2]].IsComplete)
+                                            {
+                                                isAnyComplete = true;
+                                            }
+                                        }
+                                        taskIndex++;
                                     }
                                 }
-                                indexTask++;
-                            }
-                            //смотрим на статусы algorithmIndicatorCatalogElement-ов в задачах, и если нет ни одного со статусом Запущен, значит все algorithmIndicatorCatalogElement-ы выполнены, тестирование окончено
-                            bool isAnyLaunched = false;
-                            for (int i = 0; i < tasksExecutingAlgorithmIndicatorCatalogElement.Length; i++)
-                            {
-                                if (algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[i][0]][tasksExecutingAlgorithmIndicatorCatalogElement[i][1]][tasksExecutingAlgorithmIndicatorCatalogElement[i][2]] == 1)
+
+                                if (cancellationToken.IsCancellationRequested) //если был запрос на отмену операции, прекращем функцию
                                 {
-                                    isAnyLaunched = true;
+                                    Task.WaitAll(tasksAlgorithmIndicatorCatalogElement);
+                                    TestingEnding(false, testing);
+                                    return;
+                                }
+                                DispatcherInvoke((Action)(() => {
+                                    _mainCommunicationChannel.TestingProgress.Clear();
+                                    _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/4:  Вычисление индикаторов", StepTasksCount = algorithmIndicatorsValuesCount, CompletedStepTasksCount = calculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
+                                }));
+
+                                //обрабатываем выполненные algorithmIndicatorCatalogElement-ы
+                                int taskIndex1 = 0;
+                                while (taskIndex1 < tasksExecutingAlgorithmIndicatorCatalogElement.Length) //проходим по всем задачам и смотрим на статусы выполненности algorithmIndicatorCatalogElement-ов, у выполненных, которые имееют статус Запущен, отмечаем в статусе как выполнен
+                                {
+                                    if (algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][0]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][1]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][2]] == 1) //если algorithmIndicatorCatalogElement в текущей задаче имеет статус Запущен
+                                    {
+                                        if (testing.DataSourcesCandles[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][0]].AlgorithmIndicatorCatalogs[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][1]].AlgorithmIndicatorCatalogElements[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][2]].IsComplete)
+                                        {
+                                            algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][0]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][1]][tasksExecutingAlgorithmIndicatorCatalogElement[taskIndex1][2]] = 2; //отмечаем в статусе algorithmIndicatorCatalogElement-а что он выполнен
+                                            calculatedAlgorithmIndicatorsCount++; //увеличиваем количество выполненных индикаторов на 1
+                                        }
+                                    }
+                                    taskIndex1++;
+                                }
+
+                                //проходим по всем задачам, и для каждой завершенной, ищем невыполненный и незапущенный тест, и если нашли, то запускаем его в задаче
+                                int indexTask = 0;
+                                while (indexTask < tasksExecutingAlgorithmIndicatorCatalogElement.Length)
+                                {
+                                    //определяем, имеет ли algorithmIndicatorCatalogElement в данной задаче статус Выполнен
+                                    if (algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[indexTask][0]][tasksExecutingAlgorithmIndicatorCatalogElement[indexTask][1]][tasksExecutingAlgorithmIndicatorCatalogElement[indexTask][2]] == 2)
+                                    {
+                                        //ищем невыполненный и незапущенный тест среди всех тестов
+                                        AlgorithmIndicatorCatalogElement algorithmIndicatorCatalogElement = new AlgorithmIndicatorCatalogElement();
+                                        int dsCandlesIndex = 0;
+                                        int algorithmIndicatorCatalogsIndex = 0;
+                                        int algorithmIndicatorCatalogElementIndex = 0;
+                                        bool isFindAlgorithmIndicatorCatalogElement = false;
+                                        //ищем algorithmIndicatorCatalogElement со статусом не запущен
+                                        while (isFindAlgorithmIndicatorCatalogElement == false && dsCandlesIndex < testing.DataSourcesCandles.Count)
+                                        {
+                                            if (algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] == 0)
+                                            {
+                                                isFindAlgorithmIndicatorCatalogElement = true;
+                                                algorithmIndicatorCatalogElement = testing.DataSourcesCandles[dsCandlesIndex].AlgorithmIndicatorCatalogs[algorithmIndicatorCatalogsIndex].AlgorithmIndicatorCatalogElements[algorithmIndicatorCatalogElementIndex];
+                                            }
+                                            else
+                                            {
+                                                algorithmIndicatorCatalogElementIndex++;
+                                                if (algorithmIndicatorCatalogElementIndex >= algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex].Length) //если вышли за границы индекса algorithmIndicatorCatalogElement, переходим на следующий algorithmIndicatorCatalog
+                                                {
+                                                    algorithmIndicatorCatalogElementIndex = 0;
+                                                    algorithmIndicatorCatalogsIndex++;
+                                                    if (algorithmIndicatorCatalogsIndex >= algorithmIndicatorsStatus[dsCandlesIndex].Length) //если вышли за границы индекса algorithmIndicatorCatalogs, переходим на следующий dataSourcesCandles
+                                                    {
+                                                        algorithmIndicatorCatalogsIndex = 0;
+                                                        dsCandlesIndex++;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        //если нашли не запущенный algorithmIndicatorCatalogElement, запускаем его в текущей задаче
+                                        if (isFindAlgorithmIndicatorCatalogElement)
+                                        {
+                                            DataSourceCandles dataSourceCandles = testing.DataSourcesCandles[dsCandlesIndex];
+                                            AlgorithmIndicator algorithmIndicator = testing.DataSourcesCandles[dsCandlesIndex].AlgorithmIndicatorCatalogs[algorithmIndicatorCatalogsIndex].AlgorithmIndicator;
+
+                                            Task task = Task.Run(() => AlgorithmIndicatorCatalogElementCalculate(testing, dataSourceCandles, algorithmIndicator, algorithmIndicatorCatalogElement));
+                                            tasksAlgorithmIndicatorCatalogElement[indexTask] = task;
+                                            tasksExecutingAlgorithmIndicatorCatalogElement[indexTask] = new int[3] { dsCandlesIndex, algorithmIndicatorCatalogsIndex, algorithmIndicatorCatalogElementIndex }; //запоминаем индексы algorithmIndicatorCatalogElement, который выполняется в текущей задачи (в элементе массива tasksExecutingAlgorithmIndicatorCatalogElement с индексом num)
+                                            algorithmIndicatorsStatus[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] = 1; //отмечаем что testRun имеет статус запущен
+                                            algorithmIndicatorsStatus2[dsCandlesIndex][algorithmIndicatorCatalogsIndex][algorithmIndicatorCatalogElementIndex] = indexTask; //запоминаем индекс task в котором выполняется данный algorithmIndicatorCatalogElement
+                                        }
+                                    }
+                                    indexTask++;
+                                }
+                                //смотрим на статусы algorithmIndicatorCatalogElement-ов в задачах, и если нет ни одного со статусом Запущен, значит все algorithmIndicatorCatalogElement-ы выполнены, тестирование окончено
+                                bool isAnyLaunched = false;
+                                for (int i = 0; i < tasksExecutingAlgorithmIndicatorCatalogElement.Length; i++)
+                                {
+                                    if (algorithmIndicatorsStatus[tasksExecutingAlgorithmIndicatorCatalogElement[i][0]][tasksExecutingAlgorithmIndicatorCatalogElement[i][1]][tasksExecutingAlgorithmIndicatorCatalogElement[i][2]] == 1)
+                                    {
+                                        isAnyLaunched = true;
+                                    }
+                                }
+                                if (isAnyLaunched == false)
+                                {
+                                    isAllAlgorithmIndicatorsComplete = true; //если ни один из algorithmIndicatorCatalogElement-ов в задачах не имеет статус Запущен, отмечаем что тестирование окончено
                                 }
                             }
-                            if (isAnyLaunched == false)
-                            {
-                                isAllAlgorithmIndicatorsComplete = true; //если ни один из algorithmIndicatorCatalogElement-ов в задачах не имеет статус Запущен, отмечаем что тестирование окончено
-                            }
                         }
+                        stopwatchCalculateIndicators.Stop();
+                        DispatcherInvoke((Action)(() => {
+                            _mainCommunicationChannel.TestingProgress.Clear();
+                            _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/4:  Вычисление индикаторов", StepTasksCount = algorithmIndicatorsValuesCount, CompletedStepTasksCount = calculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
+                        }));
                     }
-                    stopwatchCalculateIndicators.Stop();
-                    DispatcherInvoke((Action)(() => {
-                        _mainCommunicationChannel.TestingProgress.Clear();
-                        _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 2/4:  Вычисление индикаторов", StepTasksCount = algorithmIndicatorsValuesCount, CompletedStepTasksCount = calculatedAlgorithmIndicatorsCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchCalculateIndicators.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
-                    }));
 
                     //вычисляем идеальную прибыль для всех тестовых связок
                     foreach(TestBatch testBatch in testing.TestBatches)

@@ -138,12 +138,46 @@ namespace ktradesystem.Models
             string jsonTestingHeader = JsonSerializer.Serialize(testingHeader); //сериализуем
             File.WriteAllText(testingDirectoryPath + "\\testingHeader.json", jsonTestingHeader); //записываем в файл
 
+            Stopwatch stopwatch1 = new Stopwatch();
+            stopwatch1.Start();
             BinaryFormatter binaryFormatter = new BinaryFormatter();
             using (FileStream fileStream = new FileStream(testingDirectoryPath + "\\testing.dat", FileMode.Create))
             {
                 binaryFormatter.Serialize(fileStream, testing); //сериализуем объект тестирования в файл
             }
-
+            
+            //записываем все testRun
+            foreach (TestBatch testBatch in testing.TestBatches)
+            {
+                string testBatchFolder = testingDirectoryPath + "\\testBatches\\" + testBatch.Number.ToString();
+                Directory.CreateDirectory(testBatchFolder); //создаем папку с тестовыми прогонами текущего testBatch
+                //проходим по всем оптимизационным тестовым прогонам
+                foreach(TestRun testRun in testBatch.OptimizationTestRuns)
+                {
+                    using (FileStream fileStream = new FileStream(testBatchFolder + "\\" + testRun.Number.ToString() + ".dat", FileMode.Create))
+                    {
+                        binaryFormatter.Serialize(fileStream, testRun); //сериализуем тестовый прогон в файл
+                    }
+                }
+                if (testing.IsForwardTesting && testBatch.IsTopModelWasFind)
+                {
+                    //сериализуем форвардный тест
+                    using (FileStream fileStream = new FileStream(testBatchFolder + "\\forwardTestRun.dat", FileMode.Create))
+                    {
+                        binaryFormatter.Serialize(fileStream, testBatch.ForwardTestRun); //сериализуем тестовый прогон в файл
+                    }
+                    if (testing.IsForwardDepositTrading)
+                    {
+                        //сериализуем форвардный тест с торговлей депозитом
+                        using (FileStream fileStream = new FileStream(testBatchFolder + "\\forwardTestRunDepositTrading.dat", FileMode.Create))
+                        {
+                            binaryFormatter.Serialize(fileStream, testBatch.ForwardTestRunDepositTrading); //сериализуем тестовый прогон в файл
+                        }
+                    }
+                }
+            }
+            stopwatch1.Stop();
+            DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Время записи результата тестирования: " + testingHeader.TestingName + " заняло " + stopwatch1.ElapsedMilliseconds + " милисекунд"); }));
             /*
             string jsonTesting = JsonSerializer.Serialize(testing); //сериализуем объект тестирования
             File.WriteAllText(testingDirectoryPath + "\\testing.json", jsonTesting); //записываем в файл
@@ -484,6 +518,8 @@ namespace ktradesystem.Models
 
         public Testing LoadTesting(TestingHeader testingHeader) //считывает и возвращает testing в случае успешного считывания, и null в случае ошибки
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             string testingDirectory = Directory.GetCurrentDirectory(); //папка с тестированием
             testingDirectory += testingHeader.IsHistory ? _historyRealivePath : _savesRealivePath;
             testingDirectory += "\\" + testingHeader.TestingName;
@@ -494,18 +530,53 @@ namespace ktradesystem.Models
                 BinaryFormatter binaryFormatter = new BinaryFormatter();
                 using (FileStream fileStream = new FileStream(testingDirectory + "\\testing.dat", FileMode.Open))
                 {
-                testing = (Testing)binaryFormatter.Deserialize(fileStream); //десериализуем объект
+                    testing = (Testing)binaryFormatter.Deserialize(fileStream); //десериализуем объект
                 }
-
-                /*string jsonTesting = File.ReadAllText(testingDirectory + "\\testing.dat");
-                testing = JsonSerializer.Deserialize<Testing>(jsonTesting);*/
+                //считываем все testRun
+                foreach (TestBatch testBatch in testing.TestBatches)
+                {
+                    testBatch.OptimizationTestRuns = new List<TestRun>();
+                    string testBatchFolder = testingDirectory + "\\testBatches\\" + testBatch.Number.ToString();
+                    //считываем все оптимизационные тестовые прогоны
+                    int testRunNumber = 1;
+                    while(File.Exists(testBatchFolder + "\\" + testRunNumber.ToString() + ".dat"))
+                    {
+                        using (FileStream fileStream = new FileStream(testBatchFolder + "\\" + testRunNumber.ToString() + ".dat", FileMode.Open))
+                        {
+                            testBatch.OptimizationTestRuns.Add((TestRun)binaryFormatter.Deserialize(fileStream)); //десериализуем объект
+                        }
+                        testRunNumber++;
+                    }
+                    if(testBatch.OptimizationTestRuns.Where(a => a.Number == testBatch.TopModelTestRunNumber).Any())
+                    {
+                        testBatch.TopModelTestRun = testBatch.OptimizationTestRuns.Where(a => a.Number == testBatch.TopModelTestRunNumber).First();
+                    }
+                    if(testing.IsForwardTesting && testBatch.IsTopModelWasFind)
+                    {
+                        //считываем форвардный тест
+                        using (FileStream fileStream = new FileStream(testBatchFolder + "\\forwardTestRun.dat", FileMode.Open))
+                        {
+                            testBatch.ForwardTestRun = (TestRun)binaryFormatter.Deserialize(fileStream); //десериализуем объект
+                        }
+                        if (testing.IsForwardDepositTrading)
+                        {
+                            //считываем форвардный тест с торговлей депозитом
+                            using (FileStream fileStream = new FileStream(testBatchFolder + "\\forwardTestRunDepositTrading.dat", FileMode.Open))
+                            {
+                                testBatch.ForwardTestRunDepositTrading = (TestRun)binaryFormatter.Deserialize(fileStream); //десериализуем объект
+                            }
+                        }
+                    }
+                }
             }
             catch
             {
                 isException = true;
             }
+            stopwatch.Stop();
             if (isException == false) //если считывание прошло успешно
             {
+                DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Время считывания результата тестирования: " + testingHeader.TestingName + " заняло " + stopwatch.ElapsedMilliseconds + " милисекунд"); }));
                 return testing;
             }
             else //если было исключение при считывании, удаляем результат тестирования

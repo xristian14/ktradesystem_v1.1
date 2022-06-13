@@ -9,13 +9,19 @@ namespace ktradesystem.Models
     [Serializable]
     public class TestBatch //тестовая связка
     {
+        public int Number { get; set; } //номер
         public DataSourceGroup DataSourceGroup;
         public int DataSourceGroupIndex { get; set; } //индекс текущей группы источников данных в testing.DataSourceGroups
-        public List<TestRun> OptimizationTestRuns { get; set; }
+        [NonSerialized]
+        public List<TestRun> OptimizationTestRuns;
         public List<AxesParameter> AxesTopModelSearchPlane { get; set; } //оси плоскости для поиска топ-модели с соседями
-        public TestRun TopModelTestRun { get; set; } //ссылка на testRun, определенный как лучшая модель
-        public TestRun ForwardTestRun { get; set; }
-        public TestRun ForwardTestRunDepositTrading { get; set; }
+        public int TopModelTestRunNumber { get; set; } //номер тестового прогона, определенного как лучшая модель
+        [NonSerialized]
+        public TestRun TopModelTestRun; //ссылка на testRun, определенный как лучшая модель
+        [NonSerialized]
+        public TestRun ForwardTestRun;
+        [NonSerialized]
+        public TestRun ForwardTestRunDepositTrading;
         public List<string[]> StatisticalSignificance { get; set; }
         public bool IsTopModelDetermining { get; set; } //определена топ-модель для данной тестовой связки
         public bool IsTopModelWasFind { get; set; } //была ли найдена топ-модель (из-за фильтров может не быть топ-модели)
@@ -23,6 +29,7 @@ namespace ktradesystem.Models
         public List<PerfectProfit> ForwardPerfectProfits { get; set; } //идеальные прибыли для периода фораврдного теста, для всех источников данных группы
         public void SetTopModel(TestRun testRun)
         {
+            TopModelTestRunNumber = testRun.Number;
             TopModelTestRun = testRun;
             IsTopModelWasFind = true; //отмечаем что была найдена топ-модель
         }

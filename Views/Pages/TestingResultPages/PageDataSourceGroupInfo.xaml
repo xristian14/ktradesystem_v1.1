@@ -5,10 +5,10 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:ktradesystem.Views.Pages.TestingResultPages"
       mc:Ignorable="d" 
-      d:DesignHeight="600" d:DesignWidth="730"
+      d:DesignHeight="600" d:DesignWidth="794"
       Title="PageDataSourceGroupInfo">
 
-    <Grid Width="730" Height="600" Background="#FFF9F9F9">
+    <Grid Width="794" Height="600" Background="#FFF9F9F9">
         <Grid Margin="5" Background="White">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
@@ -24,121 +24,50 @@
             </StackPanel>
             <Grid Grid.Row="1">
                 <StackPanel Orientation="Vertical">
-                    <ScrollViewer>
-                        <StackPanel Orientation="Vertical">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2*"/>
-                                    <ColumnDefinition Width="1.3*"/>
-                                    <ColumnDefinition Width="1.5*"/>
-                                    <ColumnDefinition Width="1.2*"/>
-                                    <ColumnDefinition Width="1.2*"/>
-                                    <ColumnDefinition Width="1.9*"/>
-                                    <ColumnDefinition Width="1*"/>
-                                    <ColumnDefinition Width="0.95*"/>
-                                    <ColumnDefinition Width="0.8*"/>
-                                    <ColumnDefinition Width="1"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid Grid.Column="0" x:Name="helper0"/>
-                                <Grid Grid.Column="1" x:Name="helper1"/>
-                                <Grid Grid.Column="2" x:Name="helper2"/>
-                                <Grid Grid.Column="3" x:Name="helper3"/>
-                                <Grid Grid.Column="4" x:Name="helper4"/>
-                                <Grid Grid.Column="5" x:Name="helper5"/>
-                                <Grid Grid.Column="6" x:Name="helper6"/>
-                                <Grid Grid.Column="7" x:Name="helper7"/>
-                                <Grid Grid.Column="8" x:Name="helper8"/>
-                            </Grid>
-                            <TextBlock Text="Форвардные тесты:"/>
-                            <Border BorderThickness="1 1 0 0" BorderBrush="#FF939393">
-                                <StackPanel Orientation="Horizontal">
-                                    <Border Width="{Binding ElementName=helper0, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                        <TextBlock Text="Торговое окно" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                    </Border>
-                                    <Border Width="{Binding ElementName=helper1, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                        <TextBlock Text="Прибыль и убытки" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                    </Border>
-                                    <Border Width="{Binding ElementName=helper2, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                        <TextBlock Text="Максимальное проседание" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                    </Border>
-                                    <Border Width="{Binding ElementName=helper3, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                        <TextBlock Text="Количество трейдов" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                    </Border>
-                                    <Border Width="{Binding ElementName=helper4, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                        <TextBlock Text="Процент выигрышей" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                    </Border>
-                                    <Border Width="{Binding ElementName=helper5, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                        <TextBlock Text="Средняя прибыль/средний убыток" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                    </Border>
-                                    <Border Width="{Binding ElementName=helper6, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                        <TextBlock Text="Средний трейд" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                    </Border>
-                                    <Border Width="{Binding ElementName=helper7, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                        <TextBlock Text="Доходность/риск" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                    </Border>
-                                    <Border Width="{Binding ElementName=helper8, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                        <TextBlock Text="PROM" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                    </Border>
-                                </StackPanel>
-                            </Border>
-                            <Border BorderThickness="0 0 0 0" BorderBrush="#FFB4B4B4">
-                                <ItemsControl ItemsSource="{Binding ForwardTestsInfo}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Vertical"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border BorderThickness="1 0 0 0" BorderBrush="#FF939393">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Border Width="{Binding ElementName=helper0, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                                        <TextBlock Text="{Binding TradeWindow}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                                    </Border>
-                                                    <Border Width="{Binding ElementName=helper1, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                                        <TextBlock Text="{Binding NetProfitLoss}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                                    </Border>
-                                                    <Border Width="{Binding ElementName=helper2, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                                        <TextBlock Text="{Binding MaxDropdown}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                                    </Border>
-                                                    <Border Width="{Binding ElementName=helper3, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                                        <TextBlock Text="{Binding NumberTrades}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                                    </Border>
-                                                    <Border Width="{Binding ElementName=helper4, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                                        <TextBlock Text="{Binding PercentWin}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                                    </Border>
-                                                    <Border Width="{Binding ElementName=helper5, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                                        <TextBlock Text="{Binding AveWinDivAveLoss}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                                    </Border>
-                                                    <Border Width="{Binding ElementName=helper6, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                                        <TextBlock Text="{Binding AverageTrade}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                                    </Border>
-                                                    <Border Width="{Binding ElementName=helper7, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                                        <TextBlock Text="{Binding ProfitRisk}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                                    </Border>
-                                                    <Border Width="{Binding ElementName=helper8, Path=ActualWidth}" BorderThickness="0 0 1 1" BorderBrush="#FF939393">
-                                                        <TextBlock Text="{Binding Prom}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="2"/>
-                                                    </Border>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </Border>
-                        </StackPanel>
-                    </ScrollViewer>
-
+                    <TextBlock Text="Форвардные тесты группы источников данных:"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2.2*"/>
+                            <ColumnDefinition Width="1.2*"/>
+                            <ColumnDefinition Width="1.42*"/>
+                            <ColumnDefinition Width="1.13*"/>
+                            <ColumnDefinition Width="1.15*"/>
+                            <ColumnDefinition Width="1.5*"/>
+                            <ColumnDefinition Width="0.9*"/>
+                            <ColumnDefinition Width="0.95*"/>
+                            <ColumnDefinition Width="0.85*"/>
+                            <ColumnDefinition Width="0.85*"/>
+                            <ColumnDefinition Width="33"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0" x:Name="helper0"/>
+                        <Grid Grid.Column="1" x:Name="helper1"/>
+                        <Grid Grid.Column="2" x:Name="helper2"/>
+                        <Grid Grid.Column="3" x:Name="helper3"/>
+                        <Grid Grid.Column="4" x:Name="helper4"/>
+                        <Grid Grid.Column="5" x:Name="helper5"/>
+                        <Grid Grid.Column="6" x:Name="helper6"/>
+                        <Grid Grid.Column="7" x:Name="helper7"/>
+                        <Grid Grid.Column="8" x:Name="helper8"/>
+                        <Grid Grid.Column="9" x:Name="helper9"/>
+                    </Grid>
                     <ListView Grid.Row="1" ItemsSource="{Binding ForwardTestsInfo}">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="Focusable" Value="False"/>
+                            </Style>
+                        </ListView.ItemContainerStyle>
                         <ListView.View>
                             <GridView>
                                 <GridViewColumn DisplayMemberBinding="{Binding TradeWindow}" Header="Торговое окно" Width="{Binding ElementName=helper0, Path=ActualWidth}"/>
                                 <GridViewColumn DisplayMemberBinding="{Binding NetProfitLoss}" Header="Прибыль&#x0a;и убытки" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding TypeOrder.Name}" Header="Тип заявки" Width="{Binding ElementName=helper2, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding Price}" Header="Цена" Width="{Binding ElementName=helper4, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding StartCount}" Header="Начальное&#x0a;количество" Width="{Binding ElementName=helper5, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding Count}" Header="Неисполненный&#x0a;остаток" Width="{Binding ElementName=helper6, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding DateTimeSubmit, StringFormat='dd.MM.yyyy HH:mm'}" Header="Дата&#x0a;выставления" Width="{Binding ElementName=helper7, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding DateTimeRemove, StringFormat='dd.MM.yyyy HH:mm'}" Header="Дата&#x0a;снятия" Width="{Binding ElementName=helper8, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding MaxDropdown}" Header="Максимальное&#x0a;проседание" Width="{Binding ElementName=helper2, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding NumberTrades}" Header="Количество&#x0a;трейдов" Width="{Binding ElementName=helper3, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding PercentWin}" Header="Процент&#x0a;выигрышей" Width="{Binding ElementName=helper4, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding AveWinDivAveLoss}" Header="Средн. прибыль&#x0a;/средн. убыток" Width="{Binding ElementName=helper5, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding AverageTrade}" Header="Средний&#x0a;трейд" Width="{Binding ElementName=helper6, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding ProfitRisk}" Header="Прибыль&#x0a;/риск" Width="{Binding ElementName=helper7, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding Wfe}" Header="WFE" Width="{Binding ElementName=helper8, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding Prom}" Header="PROM" Width="{Binding ElementName=helper9, Path=ActualWidth}"/>
                             </GridView>
                         </ListView.View>
                     </ListView>

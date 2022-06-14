@@ -31,7 +31,7 @@ namespace ktradesystem.ViewModels
         private void CreateForwardTestsInfo() //создает информацию о форвардных тестах
         {
             ForwardTestsInfo.Clear();
-            ForwardTestsInfo.Add(new ForwardTestInfo { TradeWindow = "20.02.2020-20.08.2020", NetProfitLoss = "20 000", MaxDropdown = "5000", NumberTrades = "352", PercentWin = "55.20", AveWinDivAveLoss = "2.03", AverageTrade = "262", ProfitRisk = "11.23", Prom = "52.03%" });
+            ForwardTestsInfo.Add(new ForwardTestInfo { TradeWindow = "20.02.2020-20.08.2020", NetProfitLoss = "20 000", MaxDropdown = "5000", NumberTrades = "352", PercentWin = "55.20", AveWinDivAveLoss = "2.03", AverageTrade = "262", ProfitRisk = "11.23", Wfe = "80.22%", Prom = "52.03%" });
         }
 
         public void UpdatePage()

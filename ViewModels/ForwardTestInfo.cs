@@ -16,6 +16,7 @@ namespace ktradesystem.ViewModels
         public string AveWinDivAveLoss { get; set; } //отношение среднего выигрыша к среднему проигрышу
         public string AverageTrade { get; set; } //средний трейд
         public string ProfitRisk { get; set; } //отношение доходность/риск
+        public string Wfe { get; set; } //форвардный показатель эффективности
         public string Prom { get; set; } //пессимистическая доходность на маржу
     }
 }

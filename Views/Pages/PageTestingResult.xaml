@@ -8,17 +8,12 @@
       d:DesignHeight="310" d:DesignWidth="800"
       Title="PageTestingResult" Background="White">
 
-    <Grid>
-        <Grid Visibility="Visible">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="74"/>
-                <RowDefinition Height="1*"/>
-            </Grid.RowDefinitions>
-            <Grid Grid.Row="0"/>
-            <Grid Grid.Row="1"/>
-            <Grid Grid.Row="2" x:Name="helperTabControlHeight"/>
-        </Grid>
-        <StackPanel Orientation="Vertical" Margin="10 5 10 10">
+    <Grid Margin="10 5 10 10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Vertical">
             <StackPanel Orientation="Horizontal" Margin="10 0 0 0">
                 <TextBlock Text="Результат тестирования:" Width="144"/>
                 <ComboBox ItemsSource="{Binding ResultTestingMenu}" SelectedItem="{Binding SelectedResultTestingMenu, Mode=TwoWay}"/>
@@ -46,8 +41,6 @@
                 <ComboBox ItemsSource="{Binding TestBatchesTestingResultCombobox}" SelectedItem="{Binding SelectedTestBatchTestingResultCombobox, Mode=TwoWay}" DisplayMemberPath="NameTestBatch" Height="22" VerticalAlignment="Center"/>
                 <TextBlock Text="Тестовый прогон:" Width="105" Margin="13 0 0 0" Height="22" VerticalAlignment="Bottom"/>
                 <ComboBox ItemsSource="{Binding TestRunsTestingResultCombobox}" SelectedItem="{Binding SelectedTestRunTestingResultCombobox, Mode=TwoWay}" DisplayMemberPath="NameTestRun" MaxWidth="{Binding ElementName=helperResTestCombobox1, Path=ActualWidth}" Height="22" VerticalAlignment="Bottom"/>
-                <Button Content="Button test" Command="{Binding ButtonTest_Click}" Width="65" Height="22" Margin="10 0 0 0"/>
-                <TextBlock Text="{Binding TestText}"/>
             </StackPanel>
             <Grid Visibility="Visible">
                 <Grid.ColumnDefinitions>
@@ -59,7 +52,44 @@
                 <Grid Grid.Column="1" x:Name="helperResTestCombobox1"/>
                 <Grid Grid.Column="2"/>
             </Grid>
-            <TabControl Height="{Binding ElementName=helperTabControlHeight, Path=ActualHeight}" ItemsSource="{Binding TabControlTestingResultItems}" Margin="0 5 0 0">
+        </StackPanel>
+        <TabControl Grid.Row="1" Margin="0 5 0 0">
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock Text="Тестовая связка"/>
+                </TabItem.Header>
+                <TabItem.Content>
+                    <ScrollViewer Height="auto" Width="auto" HorizontalAlignment="Left" VerticalAlignment="Top" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Vertical">
+                            <Frame Content="{Binding PageTheeDimensionChart}" NavigationUIVisibility="Hidden"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem.Content>
+            </TabItem>
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock Text="Тестовый прогон"/>
+                </TabItem.Header>
+                <TabItem.Content>
+                    <ScrollViewer Height="auto" Width="auto" HorizontalAlignment="Left" VerticalAlignment="Top" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel Orientation="Vertical">
+                                <Frame Content="{Binding PageTradeChart}" NavigationUIVisibility="Hidden"/>
+                                <Frame Content="{Binding PageTestRunInfo}" NavigationUIVisibility="Hidden"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Vertical">
+                                <Frame Content="{Binding PageOrders}" NavigationUIVisibility="Hidden"/>
+                                <Frame Content="{Binding PageDeals}" NavigationUIVisibility="Hidden"/>
+                                <Frame Content="{Binding PageProfitChart}" NavigationUIVisibility="Hidden"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem.Content>
+            </TabItem>
+        </TabControl>
+
+
+        <!--<TabControl Height="{Binding ElementName=helperTabControlHeight, Path=ActualHeight}" ItemsSource="{Binding TabControlTestingResultItems}" Margin="0 5 0 0">
                 <TabControl.ItemTemplate>
                     <DataTemplate>
                         <TextBlock Text="{Binding Header}"/>
@@ -69,11 +99,10 @@
                     <DataTemplate>
                         <ScrollViewer Height="auto" Width="auto" HorizontalAlignment="Left" VerticalAlignment="Top" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                             <StackPanel>
-                                <!-- Ряды со страницами -->
                                 <ItemsControl ItemsSource="{Binding HorizontalStackPanels}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Vertical"/>
+                                            <StackPanel Orientation="Vertical" HorizontalAlignment="Left"/>
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
@@ -93,12 +122,10 @@
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                                <!-- /Ряды со страницами -->
-                                <!-- Колонки со страницами -->
                                 <ItemsControl ItemsSource="{Binding VerticalStackPanels}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal"/>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Top"/>
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
@@ -118,12 +145,10 @@
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                                <!-- /Колонки со страницами -->
                             </StackPanel>
                         </ScrollViewer>
                     </DataTemplate>
                 </TabControl.ContentTemplate>
-            </TabControl>
-        </StackPanel>
+            </TabControl>-->
     </Grid>
 </Page>

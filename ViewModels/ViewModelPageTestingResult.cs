@@ -12,6 +12,7 @@ using System.Collections.Specialized;
 using ktradesystem.Views;
 using ktradesystem.Models;
 using ktradesystem.Models.Datatables;
+using ktradesystem.Views.Pages.TestingResultPages;
 using System.IO;
 
 using System.Reflection;
@@ -425,15 +426,76 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        private Page _pageTradeChart = new PageTradeChart();
+        public Page PageTradeChart //страница с графиком котировок
+        {
+            get { return _pageTradeChart; }
+            private set
+            {
+                _pageTradeChart = value;
+                OnPropertyChanged();
+            }
+        }
+        private Page _pageTheeDimensionChart = new PageTheeDimensionChart();
+        public Page PageTheeDimensionChart //страница с трехмерным графиком
+        {
+            get { return _pageTheeDimensionChart; }
+            private set
+            {
+                _pageTheeDimensionChart = value;
+                OnPropertyChanged();
+            }
+        }
+        private Page _pageOrders = new PageOrders();
+        public Page PageOrders //страница с заявками
+        {
+            get { return _pageOrders; }
+            private set
+            {
+                _pageOrders = value;
+                OnPropertyChanged();
+            }
+        }
+        private Page _pageDeals = new PageDeals();
+        public Page PageDeals //страница с сделками
+        {
+            get { return _pageDeals; }
+            private set
+            {
+                _pageDeals = value;
+                OnPropertyChanged();
+            }
+        }
+        private Page _pageTestRunInfo = new PageTestRunInfo();
+        public Page PageTestRunInfo //страница с информацией о тестовом прогоне
+        {
+            get { return _pageTestRunInfo; }
+            private set
+            {
+                _pageTestRunInfo = value;
+                OnPropertyChanged();
+            }
+        }
+        private Page _pageProfitChart = new PageProfitChart();
+        public Page PageProfitChart //страница с графиком доходности
+        {
+            get { return _pageProfitChart; }
+            private set
+            {
+                _pageProfitChart = value;
+                OnPropertyChanged();
+            }
+        }
+
         private void CreateTabControlTestingResultItems()
         {
-            TabControlTestingResultItem tabControlTestingResultItem1 = new TabControlTestingResultItem { Header = "Тестовая связка", HorizontalStackPanels = new List<StackPanelTestingResult>(), VerticalStackPanels = new List<StackPanelTestingResult>() };
+            /*TabControlTestingResultItem tabControlTestingResultItem1 = new TabControlTestingResultItem { Header = "Тестовая связка", HorizontalStackPanels = new List<StackPanelTestingResult>(), VerticalStackPanels = new List<StackPanelTestingResult>() };
             tabControlTestingResultItem1.HorizontalStackPanels.Add(new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.TestingResultPages.PageTheeDimensionChart() } } });
             TabControlTestingResultItems.Add(tabControlTestingResultItem1);
             TabControlTestingResultItem tabControlTestingResultItem2 = new TabControlTestingResultItem { Header = "Тестовый прогон", HorizontalStackPanels = new List<StackPanelTestingResult>(), VerticalStackPanels = new List<StackPanelTestingResult>() };
             tabControlTestingResultItem2.VerticalStackPanels.Add(new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.TestingResultPages.PageTradeChart() } } });
-            tabControlTestingResultItem2.VerticalStackPanels.Add(new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.TestingResultPages.PageOrders() }, new PageItem { Page = new Views.Pages.TestingResultPages.PageDeals() }, new PageItem { Page = new Views.Pages.TestingResultPages.PageProfitChart() } } });
-            TabControlTestingResultItems.Add(tabControlTestingResultItem2);
+            tabControlTestingResultItem2.VerticalStackPanels.Add(new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.TestingResultPages.PageOrders() }, new PageItem { Page = new Views.Pages.TestingResultPages.PageDeals() }, new PageItem { Page = new Views.Pages.TestingResultPages.PageProfitChart() }, new PageItem { Page = new Views.Pages.TestingResultPages.PageTestRunInfo() } } });
+            TabControlTestingResultItems.Add(tabControlTestingResultItem2);*/
         }
 
         //делегаты, которые содержат методы страниц или ViewModel страниц которые обновляют информацию или график на странице в соответствии с новым выбранным элементом (TestingResult, или DataSourceGroup, или TestBatch, или TestRun
@@ -443,31 +505,5 @@ namespace ktradesystem.ViewModels
         public static UpdatePages DataSourceGroupsUpdatePages; //методы, обновляющие страницы, отображающие информацию о тестовых связках в рамках определенного источника данных
         public static UpdatePages TestBatchesUpdatePages; //методы, обновляющие страницы, отображающие информацию о конкретной тестовой связке. Обновление 3d графика находится здесь
         public static UpdatePages TestRunsUpdatePages; //методы, обновляющие страницы, отображающие информацию о конкретном тестовом прогоне
-
-        private string _testText;
-        public string TestText
-        {
-            get { return _testText; }
-            private set
-            {
-                _testText = value;
-                OnPropertyChanged();
-            }
-        }
-        public ICommand ButtonTest_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    TabControlTestingResultItem tabControlTestingResultItem2 = new TabControlTestingResultItem { Header = "Тестовый прогон", HorizontalStackPanels = new List<StackPanelTestingResult>(), VerticalStackPanels = new List<StackPanelTestingResult>() };
-                    StackPanelTestingResult stackPanelTestingResult1 = new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.PageDataSource() }, new PageItem { Page = new Views.Pages.PageTesting() } } };
-                    StackPanelTestingResult stackPanelTestingResult2 = new StackPanelTestingResult { PageItems = new List<PageItem>() { new PageItem { Page = new Views.Pages.PageTesting() }, new PageItem { Page = new Views.Pages.PageDataSource() } } };
-                    tabControlTestingResultItem2.VerticalStackPanels.Add(stackPanelTestingResult1);
-                    tabControlTestingResultItem2.VerticalStackPanels.Add(stackPanelTestingResult2);
-                    TabControlTestingResultItems.Add(tabControlTestingResultItem2);
-                }, (obj) => true);
-            }
-        }
     }
 }

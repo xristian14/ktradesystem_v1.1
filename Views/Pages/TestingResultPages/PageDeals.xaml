@@ -59,7 +59,7 @@
                     <ColumnDefinition Width="70"/>
                     <ColumnDefinition Width="41"/>
                     <ColumnDefinition Width="79"/>
-                    <ColumnDefinition Width="46"/>
+                    <ColumnDefinition Width="54"/>
                     <ColumnDefinition Width="70"/>
                     <ColumnDefinition Width="1*"/>
                     <ColumnDefinition Width="33"/>

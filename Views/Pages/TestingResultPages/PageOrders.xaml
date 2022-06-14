@@ -338,7 +338,7 @@
                     <ColumnDefinition Width="65"/>
                     <ColumnDefinition Width="65"/>
                     <ColumnDefinition Width="79"/>
-                    <ColumnDefinition Width="46"/>
+                    <ColumnDefinition Width="54"/>
                     <ColumnDefinition Width="65"/>
                     <ColumnDefinition Width="65"/>
                     <ColumnDefinition Width="1*"/>

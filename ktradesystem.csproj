@@ -203,6 +203,7 @@
     </Compile>
     <Compile Include="ViewModels\ViewModelPageTestingNavigation.cs" />
     <Compile Include="ViewModels\ViewModelPageTestingResult.cs" />
+    <Compile Include="ViewModels\ViewModelPageTestRunInfo.cs" />
     <Compile Include="ViewModels\ViewModelPageTheeDimensionChart.cs" />
     <Compile Include="ViewModels\ViewModelPageTradeChart.cs" />
     <Compile Include="Views\AddAlgorithmParameter.xaml.cs">
@@ -237,6 +238,9 @@
     </Compile>
     <Compile Include="Views\Pages\TestingResultPages\PageProfitChart.xaml.cs">
       <DependentUpon>PageProfitChart.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Pages\TestingResultPages\PageTestRunInfo.xaml.cs">
+      <DependentUpon>PageTestRunInfo.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Pages\TestingResultPages\PageTheeDimensionChart.xaml.cs">
       <DependentUpon>PageTheeDimensionChart.xaml</DependentUpon>
@@ -359,6 +363,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Pages\TestingResultPages\PageProfitChart.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Pages\TestingResultPages\PageTestRunInfo.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -5,7 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:ktradesystem.Views.Pages.TestingResultPages"
       mc:Ignorable="d" 
-      d:DesignHeight="840" d:DesignWidth="1200"
+      d:DesignHeight="625" d:DesignWidth="1200"
       Title="PageTradeChart">
     <!-- Ресурс, который убирает отступ слева для элементов выпадающего меню -->
     <Page.Resources>
@@ -284,7 +284,7 @@
             </Style.Triggers>
         </Style>
     </Page.Resources>
-    <Grid Width="1200" Height="780" Background="#FFF9F9F9">
+    <Grid Width="1200" Height="625" Background="#FFF9F9F9">
         <Grid Margin="5" Background="White">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>

@@ -196,6 +196,7 @@
     <Compile Include="ViewModels\ViewModelPageDeals.cs" />
     <Compile Include="ViewModels\ViewModelPageOrders.cs" />
     <Compile Include="ViewModels\ViewModelPageProfitChart.cs" />
+    <Compile Include="ViewModels\ViewModelPageTestBatchInfo.cs" />
     <Compile Include="ViewModels\ViewModelPageTesting.cs" />
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
@@ -238,6 +239,9 @@
     </Compile>
     <Compile Include="Views\Pages\TestingResultPages\PageProfitChart.xaml.cs">
       <DependentUpon>PageProfitChart.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Pages\TestingResultPages\PageTestBatchInfo.xaml.cs">
+      <DependentUpon>PageTestBatchInfo.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Pages\TestingResultPages\PageTestRunInfo.xaml.cs">
       <DependentUpon>PageTestRunInfo.xaml</DependentUpon>
@@ -363,6 +367,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Pages\TestingResultPages\PageProfitChart.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Pages\TestingResultPages\PageTestBatchInfo.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

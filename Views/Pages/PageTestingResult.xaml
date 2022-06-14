@@ -60,8 +60,9 @@
                 </TabItem.Header>
                 <TabItem.Content>
                     <ScrollViewer Height="auto" Width="auto" HorizontalAlignment="Left" VerticalAlignment="Top" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                        <StackPanel Orientation="Vertical">
-                            <Frame Content="{Binding PageTheeDimensionChart}" NavigationUIVisibility="Hidden"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Frame Content="{Binding PageTheeDimensionChart}" NavigationUIVisibility="Hidden" VerticalAlignment="Top"/>
+                            <Frame Content="{Binding PageTestBatchInfo}" NavigationUIVisibility="Hidden" VerticalAlignment="Top"/>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem.Content>

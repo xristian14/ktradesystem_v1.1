@@ -690,7 +690,7 @@ namespace ktradesystem.Models
                         }
 
                         //создаем testBatch
-                        TestBatch testBatch = new TestBatch { Number = testing.TestBatches.Count + 1, DataSourceGroup = dataSourceGroup, DataSourceGroupIndex = testing.DataSourceGroups.IndexOf(dataSourceGroup), StatisticalSignificance = new List<string[]>(), IsTopModelDetermining = false, IsTopModelWasFind = false, OptimizationPerfectProfits = new List<PerfectProfit>(), ForwardPerfectProfits = new List<PerfectProfit>() };
+                        TestBatch testBatch = new TestBatch { Number = testing.TestBatches.Count + 1, DataSourceGroup = dataSourceGroup, DataSourceGroupIndex = testing.DataSourceGroups.IndexOf(dataSourceGroup), StatisticalSignificance = new List<double>(), IsTopModelDetermining = false, IsTopModelWasFind = false, OptimizationPerfectProfits = new List<PerfectProfit>(), ForwardPerfectProfits = new List<PerfectProfit>() };
 
                         int testRunNumber = 1; //номер тестового прогона
 
@@ -2436,21 +2436,10 @@ namespace ktradesystem.Models
                     }
                     else //если оси не указаны, находим оси двумерной плоскости поиска топ-модели с соседями, для которых волатильность критерия оценки минимальная
                     {
-                        //формируем список со всеми параметрами
-                        /*List<int[]> indicatorsAndAlgorithmParameters = new List<int[]>(); //список с параметрами (0-й элемент массива - тип параметра: 1-индикатор, 2-алгоритм, 1-й элемент массива - индекс параметра)
-                        for (int i = 0; i < IndicatorsParametersAllIntValues.Length; i++)
-                        {
-                            indicatorsAndAlgorithmParameters.Add(new int[2] { 1, i }); //запоминаем что параметр индикатор с индексом i
-                        }
-                        for (int i = 0; i < AlgorithmParametersAllIntValues.Length; i++)
-                        {
-                            indicatorsAndAlgorithmParameters.Add(new int[2] { 2, i }); //запоминаем что параметр индикатор с индексом i
-                        }*/
                         //находим максимальную площадь плоскости
                         int maxArea = 0;
                         int axisX = 0; //одна ось плоскости
                         int axisY = 0; //вторая ось плоскости
-                        //новое
                         for (int i = 0; i < testing.AlgorithmParametersAllIntValues.Length; i++)
                         {
                             for (int k = 0; k < testing.AlgorithmParametersAllIntValues.Length; k++)
@@ -2470,10 +2459,8 @@ namespace ktradesystem.Models
                                 }
                             }
                         }
-                        //формируем список с комбинациями параметров, которые имеют минимально допустимую площадь плоскости
-                        double minMaxArea = 0.6; //минимально допустимая площадь плоскости от максимального. Чтобы исключить выбор осей с небольшой площадью но большой средней волатильностью
-                        List<int[]> parametersCombination = new List<int[]>(); //комбинации из 2-х параметров, площадь которых в пределах допустимой
-                        //новое
+                        //формируем список с комбинациями параметров
+                        List<int[]> parametersCombination = new List<int[]>(); //комбинации из 2-х параметров
                         for (int i = 0; i < testing.AlgorithmParametersAllIntValues.Length; i++)
                         {
                             for (int k = 0; k < testing.AlgorithmParametersAllIntValues.Length; k++)
@@ -2484,14 +2471,11 @@ namespace ktradesystem.Models
                                     iCount = testing.AlgorithmParametersAllIntValues[i].Count > 0 ? testing.AlgorithmParametersAllIntValues[i].Count : testing.AlgorithmParametersAllDoubleValues[i].Count; //если количество элементов в int values больше нуля, присваивае
                                     int kCount = 0; //количество элементов в параметре с индексом k
                                     kCount = testing.AlgorithmParametersAllIntValues[i].Count > 0 ? testing.AlgorithmParametersAllIntValues[i].Count : testing.AlgorithmParametersAllDoubleValues[i].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                    if (iCount * kCount >= maxArea * minMaxArea) //если площадь данной комбинации в пределах минимальной, сохраняем комбинацию
+                                    //проверяем есть ли уже такая комбинация, чтобы не записать одну и ту же несколько раз
+                                    bool isFind = parametersCombination.Where(j => (j[0] == i && j[1] == k) || (j[0] == k && j[1] == i)).Any();
+                                    if (isFind == false)
                                     {
-                                        //проверяем есть ли уже такая комбинация, чтобы не записать одну и ту же несколько раз
-                                        bool isFind = parametersCombination.Where(j => (j[0] == i && j[1] == k) || (j[0] == k && j[1] == i)).Any();
-                                        if (isFind == false)
-                                        {
-                                            parametersCombination.Add(new int[2] { i, k }); //запоминаем комбинацию
-                                        }
+                                        parametersCombination.Add(new int[2] { i, k }); //запоминаем комбинацию
                                     }
                                 }
                             }
@@ -3003,13 +2987,10 @@ namespace ktradesystem.Models
                 }
             }
             //записываем статистическую значимость
-            string[] totalTests = new string[3] { ModelFunctions.SplitDigitsInt(lossCount + profitCount), "100.0%", ModelFunctions.SplitDigitsDouble(lossMoney + profitMoney) + " " + testing.DefaultCurrency.Name };
-            string[] lossTests = new string[3] { ModelFunctions.SplitDigitsInt(lossCount), Math.Round((double)lossCount / (lossCount + profitCount) * 100, 1).ToString() + "%", ModelFunctions.SplitDigitsDouble(lossMoney) + " " + testing.DefaultCurrency.Name };
-            string[] profitTests = new string[3] { ModelFunctions.SplitDigitsInt(profitCount), Math.Round((double)profitCount / (lossCount + profitCount) * 100, 1).ToString() + "%", ModelFunctions.SplitDigitsDouble(profitMoney) + " " + testing.DefaultCurrency.Name };
-
-            testBatch.StatisticalSignificance.Add(totalTests);
-            testBatch.StatisticalSignificance.Add(lossTests);
-            testBatch.StatisticalSignificance.Add(profitTests);
+            testBatch.StatisticalSignificance.Add(profitCount);
+            testBatch.StatisticalSignificance.Add(profitMoney);
+            testBatch.StatisticalSignificance.Add(lossCount);
+            testBatch.StatisticalSignificance.Add(lossMoney);
 
             testBatch.IsTopModelDetermining = true; //отмечаем что определили топ-модель для данного testBatch
 

@@ -22,7 +22,7 @@ namespace ktradesystem.Models
         public TestRun ForwardTestRun;
         [NonSerialized]
         public TestRun ForwardTestRunDepositTrading;
-        public List<string[]> StatisticalSignificance { get; set; }
+        public List<double> StatisticalSignificance { get; set; } //статистическая значимость. в 0-м элементе количество прибыльных тестов, в 1-м общая прибыль прибыльных тестов, во 2-м количество убыточных тестов, в 3-м общий убыток убыточных убыточных
         public bool IsTopModelDetermining { get; set; } //определена топ-модель для данной тестовой связки
         public bool IsTopModelWasFind { get; set; } //была ли найдена топ-модель (из-за фильтров может не быть топ-модели)
         public List<PerfectProfit> OptimizationPerfectProfits { get; set; } //идеальные прибыли для периода оптимизации, для всех источников данных группы

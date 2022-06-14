@@ -426,16 +426,6 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private Page _pageTradeChart = new PageTradeChart();
-        public Page PageTradeChart //страница с графиком котировок
-        {
-            get { return _pageTradeChart; }
-            private set
-            {
-                _pageTradeChart = value;
-                OnPropertyChanged();
-            }
-        }
         private Page _pageTheeDimensionChart = new PageTheeDimensionChart();
         public Page PageTheeDimensionChart //страница с трехмерным графиком
         {
@@ -443,6 +433,26 @@ namespace ktradesystem.ViewModels
             private set
             {
                 _pageTheeDimensionChart = value;
+                OnPropertyChanged();
+            }
+        }
+        private Page _pageTestBatchInfo = new PageTestBatchInfo();
+        public Page PageTestBatchInfo //страница информацией о тестовой связке
+        {
+            get { return _pageTestBatchInfo; }
+            private set
+            {
+                _pageTestBatchInfo = value;
+                OnPropertyChanged();
+            }
+        }
+        private Page _pageTradeChart = new PageTradeChart();
+        public Page PageTradeChart //страница с графиком котировок
+        {
+            get { return _pageTradeChart; }
+            private set
+            {
+                _pageTradeChart = value;
                 OnPropertyChanged();
             }
         }

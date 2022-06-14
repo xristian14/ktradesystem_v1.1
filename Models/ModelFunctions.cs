@@ -104,35 +104,22 @@ namespace ktradesystem.Models
 
         public static void TestEvaluationCriteria(TestRun testRun) //здесь я отлаживаю скрипты критериев оценки
         {
-            int countWin = 0;
-            double totalWin = 0;
-            int countLoss = 0;
-            double totalLoss = 0;
-            double lastDeposit = 0;
-            int iteration = 1;
-            foreach (List<DepositCurrency> depositCurrencies in testRun.Account.DepositCurrenciesChanges)
+            //наибольший выигрыш
+            double maxProfit = 0;
+            int defaulCurrencyIndex = testRun.Account.DepositCurrenciesChanges[0].FindIndex(a => a.Currency == testRun.Account.DefaultCurrency);
+            double currentDeposit = 0;
+            double lastDeposit = testRun.Account.DepositCurrenciesChanges[0][defaulCurrencyIndex].Deposit;
+            for (int i = 1; i < testRun.Account.DepositCurrenciesChanges.Count; i++)
             {
-                if (iteration > 1)
+                currentDeposit = testRun.Account.DepositCurrenciesChanges[i][defaulCurrencyIndex].Deposit;
+                if (currentDeposit - lastDeposit > maxProfit)
                 {
-                    double currentDeposit = depositCurrencies.Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit;
-                    if (currentDeposit > lastDeposit)
-                    {
-                        countWin++;
-                        totalWin += currentDeposit - lastDeposit;
-                    }
-                    else
-                    {
-                        countLoss++;
-                        totalLoss += currentDeposit - lastDeposit;
-                    }
+                    maxProfit = currentDeposit - lastDeposit;
                 }
-                lastDeposit = depositCurrencies.Where(j => j.Currency == testRun.Account.DefaultCurrency).First().Deposit;
-                iteration++;
+                lastDeposit = currentDeposit;
             }
-            double averageWin = countWin > 0 ? totalWin / countWin : 0;
-            double averageLoss = countLoss > 0 ? totalLoss / countLoss : 0;
-            double ResultDoubleValue = ((averageWin * (countWin - Math.Sqrt(countWin)) - averageLoss * (countLoss + Math.Sqrt(countLoss))) / ModelFunctions.MarginCalculate(testRun)) * 100;
-            string ResultStringValue = Math.Round(ResultDoubleValue, 1) + " %";
+            double ResultDoubleValue = maxProfit;
+            string ResultStringValue = Math.Round(ResultDoubleValue, 1) + " " + testRun.Account.DefaultCurrency.Name;
         }
     }
 }

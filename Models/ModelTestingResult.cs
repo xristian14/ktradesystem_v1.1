@@ -177,7 +177,7 @@ namespace ktradesystem.Models
                 }
             }
             stopwatch1.Stop();
-            DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Время записи результата тестирования: " + testingHeader.TestingName + " заняло " + stopwatch1.ElapsedMilliseconds + " милисекунд"); }));
+            //DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Время записи результата тестирования: " + testingHeader.TestingName + " заняло " + stopwatch1.ElapsedMilliseconds + " милисекунд"); }));
             /*
             string jsonTesting = JsonSerializer.Serialize(testing); //сериализуем объект тестирования
             File.WriteAllText(testingDirectoryPath + "\\testing.json", jsonTesting); //записываем в файл
@@ -576,7 +576,7 @@ namespace ktradesystem.Models
             stopwatch.Stop();
             if (isException == false) //если считывание прошло успешно
             {
-                DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Время считывания результата тестирования: " + testingHeader.TestingName + " заняло " + stopwatch.ElapsedMilliseconds + " милисекунд"); }));
+                //DispatcherInvoke((Action)(() => { _mainCommunicationChannel.AddMainMessage("Время считывания результата тестирования: " + testingHeader.TestingName + " заняло " + stopwatch.ElapsedMilliseconds + " милисекунд"); }));
                 return testing;
             }
             else //если было исключение при считывании, удаляем результат тестирования

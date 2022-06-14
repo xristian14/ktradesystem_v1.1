@@ -1754,6 +1754,9 @@ namespace ktradesystem.Models
                 }
             }
 
+            //копируем объект скомпилированного алгоритма, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
+            dynamic CompiledAlgorithmCopy = testing.CompiledAlgorithm.Clone();
+
             //проходим по всем свечкам источников данных, пока не достигнем времени окончания теста, не выйдем за границы имеющихся файлов, или не получим запрос на отмену тестирования
             while (DateTime.Compare(currentDateTime, testRun.EndPeriod) < 0 && isOverFileIndex == false && cancellationToken.IsCancellationRequested == false)
             {
@@ -1859,8 +1862,6 @@ namespace ktradesystem.Models
                         }
 
                         AccountForCalculate accountForCalculate = new AccountForCalculate { FreeRubleMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, FreeDollarMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit, TakenRubleMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, TakenDollarMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit, IsForwardDepositTrading = testRun.Account.IsForwardDepositTrading };
-                        //копируем объект скомпилированного алгоритма, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
-                        dynamic CompiledAlgorithmCopy = testing.CompiledAlgorithm.Clone();
                         AlgorithmCalculateResult algorithmCalculateResult = CompiledAlgorithmCopy.Calculate(accountForCalculate, dataSourcesForCalculate, algorithmParametersIntValues, algorithmParametersDoubleValues);
 
                         if (IsOverIndex == false) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
@@ -2027,32 +2028,16 @@ namespace ktradesystem.Models
                 {
                     break; //если был запрос на отмену тестирования, завершаем цикл
                 }
-                //определяем индекс источника данных, с наибольшей идеальной прибылью
-                /*int index = 0;
-                for(int k = 1; k < dataSourceCandles.Length; k++)
-                {
-                    if(dataSourceCandles[index].PerfectProfit < dataSourceCandles[k].PerfectProfit)
-                    {
-                        index = k;
-                    }
-                }*/
-                /*public EvaluationCriteriaValue Calculate(List<DataSourceCandles> dataSourcesCandles, TestRun testRun, ObservableCollection<Setting> settings)
-                {
-                    double ResultDoubleValue = 0;
-                    string ResultStringValue = """";
-                    " + script + @"
-                    return new EvaluationCriteriaValue { DoubleValue = ResultDoubleValue, StringValue = ResultStringValue };
-                }*/
 
-
-                //ModelFunctions.TestEvaluationCriteria(testRun); //так я отлаживаю критерии оценки
-                
                 //копируем объект скомпилированного критерия оценки, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
                 dynamic CompiledEvaluationCriteriaCopy = testing.CompiledEvaluationCriterias[i].Clone();
                 EvaluationCriteriaValue evaluationCriteriaValue = CompiledEvaluationCriteriaCopy.Calculate(dataSourceCandles, testRun, _modelData.Settings);
                 evaluationCriteriaValue.EvaluationCriteria = _modelData.EvaluationCriterias[i];
                 testRun.EvaluationCriteriaValues.Add(evaluationCriteriaValue);
             }
+
+            //ModelFunctions.TestEvaluationCriteria(testRun); //так я отлаживаю критерии оценки
+
             testRun.IsComplete = true;
         }
 

@@ -61,8 +61,11 @@
                 <TabItem.Content>
                     <ScrollViewer Height="auto" Width="auto" HorizontalAlignment="Left" VerticalAlignment="Top" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                         <StackPanel Orientation="Horizontal">
-                            <Frame Content="{Binding PageTheeDimensionChart}" NavigationUIVisibility="Hidden" VerticalAlignment="Top"/>
-                            <Frame Content="{Binding PageTestBatchInfo}" NavigationUIVisibility="Hidden" VerticalAlignment="Top"/>
+                            <StackPanel Orientation="Vertical" VerticalAlignment="Top">
+                                <Frame Content="{Binding PageTheeDimensionChart}" NavigationUIVisibility="Hidden"/>
+                                <Frame Content="{Binding PageTestBatchInfo}" NavigationUIVisibility="Hidden"/>
+                            </StackPanel>
+                            <Frame Content="{Binding PageDataSourceGroupInfo}" NavigationUIVisibility="Hidden" VerticalAlignment="Top"/>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem.Content>

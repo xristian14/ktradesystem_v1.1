@@ -1135,32 +1135,5 @@ namespace ktradesystem.ViewModels
                 }, (obj) => true);
             }
         }
-        public ICommand ShowInfo_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    double x = -0.5;
-                    double y = -0.5;
-                    double z = 0.5;
-                    double x2D = -z * Math.Sin(_cameraArcRotate) + x * Math.Cos(_cameraArcRotate);//-z*sin(a)+x*cos(a)  _cameraArcRotate _cameraInArcRotate
-                    double y2D = -(z * Math.Cos(_cameraArcRotate) + x * Math.Sin(_cameraArcRotate)) * Math.Sin(_cameraInArcRotate) + y * Math.Cos(_cameraInArcRotate); //-(z*cos(a)+x*sin(a))*sin(b)+y*Cos(b)
-                    double widthOffset = CameraWidth / 2; //смещение, которое покажет значение не в системе координат где левый край находится на -CameraWidth/2, а где левый край находится на 0 и любая точка находится от 0 до CameraWidth
-                    x2D = x2D + widthOffset;
-                    x2D = Viewport3DWidth * (x2D / CameraWidth); //умножаем ширину вьюпорта на ту часть, которую занимает координата от ширины вьюпорта, и получаем координату в пикселях
-                    double cameraHeight = Viewport3DHeight / Viewport3DWidth * CameraWidth; //получаем величину в высоту, которую покрывает камера вьюпорта
-                    double heightOffset = cameraHeight / 2;
-                    y2D = y2D + heightOffset;
-                    y2D = Viewport3DHeight * (1 - (y2D / cameraHeight));
-                    /*double x = 0;
-                    double y = 0;
-                    double z = 1;
-                    double x2D = -z * Math.Sin(1.571) + x * Math.Cos(1.571);
-                    double y2D = -(z * Math.Cos(1.571) + x * Math.Sin(1.571)) * Math.Sin(1.571) + y * Math.Cos(1.571);*/
-                    MessageBox.Show("Point3D(-0.5,-0.5,0.5) == x2D=" + x2D.ToString() + " y2D=" + y2D.ToString());
-                }, (obj) => true);
-            }
-        }
     }
 }

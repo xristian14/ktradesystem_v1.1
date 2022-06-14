@@ -446,6 +446,16 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
+        private Page _pageDataSourceGroupInfo = new PageDataSourceGroupInfo();
+        public Page PageDataSourceGroupInfo //страница информацией о группе источников данных
+        {
+            get { return _pageDataSourceGroupInfo; }
+            private set
+            {
+                _pageDataSourceGroupInfo = value;
+                OnPropertyChanged();
+            }
+        }
         private Page _pageTradeChart = new PageTradeChart();
         public Page PageTradeChart //страница с графиком котировок
         {

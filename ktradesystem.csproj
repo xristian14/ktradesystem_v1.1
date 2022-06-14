@@ -170,6 +170,7 @@
     <Compile Include="ViewModels\EvaluationCriteriaPageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\EvaluationCriteriaView.cs" />
     <Compile Include="ViewModels\FilterTopModelView.cs" />
+    <Compile Include="ViewModels\ForwardTestInfo.cs" />
     <Compile Include="ViewModels\IndicatorMenuItemPageTradeChart.cs" />
     <Compile Include="ViewModels\IndicatorParameterRangeView.cs" />
     <Compile Include="ViewModels\IndicatorParameterTemplateView.cs" />
@@ -193,6 +194,7 @@
     <Compile Include="ViewModels\ViewModelBase.cs" />
     <Compile Include="ViewModels\ViewModelData.cs" />
     <Compile Include="ViewModels\ViewModelPageDataSource.cs" />
+    <Compile Include="ViewModels\ViewModelPageDataSourceGroupInfo.cs" />
     <Compile Include="ViewModels\ViewModelPageDeals.cs" />
     <Compile Include="ViewModels\ViewModelPageOrders.cs" />
     <Compile Include="ViewModels\ViewModelPageProfitChart.cs" />
@@ -230,6 +232,9 @@
     </Compile>
     <Compile Include="Views\Pages\PageTestingResult.xaml.cs">
       <DependentUpon>PageTestingResult.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Pages\TestingResultPages\PageDataSourceGroupInfo.xaml.cs">
+      <DependentUpon>PageDataSourceGroupInfo.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Pages\TestingResultPages\PageDeals.xaml.cs">
       <DependentUpon>PageDeals.xaml</DependentUpon>
@@ -355,6 +360,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Pages\PageTestingResult.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Pages\TestingResultPages\PageDataSourceGroupInfo.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -5,10 +5,10 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:ktradesystem.Views.Pages.TestingResultPages"
       mc:Ignorable="d" 
-      d:DesignHeight="700" d:DesignWidth="794"
+      d:DesignHeight="700" d:DesignWidth="850"
       Title="PageDataSourceGroupInfo">
 
-    <Grid Width="794" Height="700" Background="#FFF9F9F9">
+    <Grid Width="850" Height="700" Background="#FFF9F9F9">
         <Grid Margin="5" Background="White">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
@@ -37,7 +37,7 @@
                     <TextBlock Text="Форвардные тесты группы источников данных:"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2.1*"/>
+                            <ColumnDefinition Width="3*"/>
                             <ColumnDefinition Width="1.2*"/>
                             <ColumnDefinition Width="1.42*"/>
                             <ColumnDefinition Width="1.13*"/>

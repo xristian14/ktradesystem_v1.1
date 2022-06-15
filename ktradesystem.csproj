@@ -177,6 +177,7 @@
     <Compile Include="ViewModels\IndicatorPolylinePageTradeChart.cs" />
     <Compile Include="ViewModels\LevelPageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\ObservableCollectionWithItemNotify.cs" />
+    <Compile Include="ViewModels\OptimizationTestsInfo.cs" />
     <Compile Include="ViewModels\OrderIndexPageTradeChart.cs" />
     <Compile Include="ViewModels\OrderPageTradeChart.cs" />
     <Compile Include="ViewModels\PageItem.cs" />
@@ -196,6 +197,7 @@
     <Compile Include="ViewModels\ViewModelPageDataSource.cs" />
     <Compile Include="ViewModels\ViewModelPageDataSourceGroupInfo.cs" />
     <Compile Include="ViewModels\ViewModelPageDeals.cs" />
+    <Compile Include="ViewModels\ViewModelPageOptimizationTestsInfo.cs" />
     <Compile Include="ViewModels\ViewModelPageOrders.cs" />
     <Compile Include="ViewModels\ViewModelPageProfitChart.cs" />
     <Compile Include="ViewModels\ViewModelPageTestBatchInfo.cs" />
@@ -238,6 +240,9 @@
     </Compile>
     <Compile Include="Views\Pages\TestingResultPages\PageDeals.xaml.cs">
       <DependentUpon>PageDeals.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Pages\TestingResultPages\PageOptimizationTestsInfo.xaml.cs">
+      <DependentUpon>PageOptimizationTestsInfo.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Pages\TestingResultPages\PageOrders.xaml.cs">
       <DependentUpon>PageOrders.xaml</DependentUpon>
@@ -368,6 +373,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Pages\TestingResultPages\PageDeals.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Pages\TestingResultPages\PageOptimizationTestsInfo.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

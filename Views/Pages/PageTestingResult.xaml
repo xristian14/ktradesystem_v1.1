@@ -65,7 +65,28 @@
                                 <Frame Content="{Binding PageTheeDimensionChart}" NavigationUIVisibility="Hidden"/>
                                 <Frame Content="{Binding PageTestBatchInfo}" NavigationUIVisibility="Hidden"/>
                             </StackPanel>
-                            <Frame Content="{Binding PageDataSourceGroupInfo}" NavigationUIVisibility="Hidden" VerticalAlignment="Top"/>
+                            <TabControl  VerticalAlignment="Top">
+                                <TabItem>
+                                    <TabItem.Header>
+                                        <TextBlock Text="Форвардные тесты"/>
+                                    </TabItem.Header>
+                                    <TabItem.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Frame Content="{Binding PageDataSourceGroupInfo}" NavigationUIVisibility="Hidden"/>
+                                        </StackPanel>
+                                    </TabItem.Content>
+                                </TabItem>
+                                <TabItem>
+                                    <TabItem.Header>
+                                        <TextBlock Text="Оптимизационные тесты"/>
+                                    </TabItem.Header>
+                                    <TabItem.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Frame Content="{Binding PageOptimizationTestsInfo}" NavigationUIVisibility="Hidden"/>
+                                        </StackPanel>
+                                    </TabItem.Content>
+                                </TabItem>
+                            </TabControl>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem.Content>

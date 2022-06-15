@@ -16,7 +16,7 @@
             </Grid.RowDefinitions>
             <StackPanel Orientation="Vertical" Grid.Row="0" Background="White">
                 <StackPanel Orientation="Vertical" Background="#FFEFEFEF">
-                    <TextBlock Text="Информация о группе источников данных" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Форвардные тесты группы источников данных" FontWeight="Bold" HorizontalAlignment="Center"/>
                 </StackPanel>
                 <StackPanel Margin="0 5 0 0" Orientation="Horizontal">
 
@@ -25,16 +25,11 @@
             <Grid Grid.Row="1">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="20"/>
-                        <RowDefinition Height="2*"/>
                         <RowDefinition Height="1*"/>
                     </Grid.RowDefinitions>
                     <Grid Grid.Row="0" x:Name="helperHeight0"/>
-                    <Grid Grid.Row="1" x:Name="helperHeight1"/>
-                    <Grid Grid.Row="2" x:Name="helperHeight2"/>
                 </Grid>
                 <StackPanel Orientation="Vertical">
-                    <TextBlock Text="Форвардные тесты группы источников данных:"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="3*"/>
@@ -60,7 +55,7 @@
                         <Grid Grid.Column="8" x:Name="helper8"/>
                         <Grid Grid.Column="9" x:Name="helper9"/>
                     </Grid>
-                    <ListView Grid.Row="1" Height="{Binding ElementName=helperHeight1, Path=ActualHeight}" ItemsSource="{Binding ForwardTestsInfo}">
+                    <ListView Grid.Row="1" Height="{Binding ElementName=helperHeight0, Path=ActualHeight}" ItemsSource="{Binding ForwardTestsInfo}">
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem">
                                 <Setter Property="Focusable" Value="False"/>

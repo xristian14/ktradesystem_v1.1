@@ -14,7 +14,7 @@ namespace ktradesystem.ViewModels
     {
         public ViewModelPageDataSourceGroupInfo()
         {
-            ViewModelPageTestingResult.TestBatchesUpdatePages += UpdatePage;
+            ViewModelPageTestingResult.DataSourceGroupsUpdatePages += UpdatePage;
         }
         private Testing _testing; //результат тестирования
         private DataSourceGroup _dataSourceGroup;

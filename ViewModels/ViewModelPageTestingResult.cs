@@ -456,6 +456,16 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
+        private Page _pageOptimizationTestsInfo = new PageOptimizationTestsInfo();
+        public Page PageOptimizationTestsInfo //страница информацией об оптимизационных тестах для всех источников данных
+        {
+            get { return _pageOptimizationTestsInfo; }
+            private set
+            {
+                _pageOptimizationTestsInfo = value;
+                OnPropertyChanged();
+            }
+        }
         private Page _pageTradeChart = new PageTradeChart();
         public Page PageTradeChart //страница с графиком котировок
         {

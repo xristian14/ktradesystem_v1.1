@@ -30,15 +30,23 @@ namespace ktradesystem.Models
         public static string SplitDigitsDouble(double value, int decimals = 15) //разделяет целые разряды числа пробелами, decimals - количество разрядов в дробной части
         {
             string result = "";
-            string str = Math.Round(value, decimals).ToString();
-            if(str.IndexOf('.') != -1)
+            if (value is double.NaN == false)
             {
-                string[] arr = str.Split('.');
-                result = SplitDigitsInt(int.Parse(arr[0])) + "." + arr[1];
+                string minus = value < 0 ? "-" : "";
+                string str = Math.Round(Math.Abs(value), decimals).ToString();
+                int commaIndex = str.IndexOf(',');
+                string beforeCommaStr = commaIndex != -1 ? str.Substring(0, commaIndex) : str;
+                string afterCommaStr = commaIndex != -1 ? str.Substring(commaIndex, str.Length - commaIndex) : "";
+                int beforeCommaStrLength = beforeCommaStr.Length;
+                for (int i = beforeCommaStrLength - 3; i > 0; i -= 3)
+                {
+                    beforeCommaStr = beforeCommaStr.Insert(i, " ");
+                }
+                result = minus + beforeCommaStr + afterCommaStr;
             }
             else
             {
-                result = SplitDigitsInt(int.Parse(str));
+                result = "NaN";
             }
             return result;
         }

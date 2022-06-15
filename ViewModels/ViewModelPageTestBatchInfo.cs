@@ -121,7 +121,7 @@ namespace ktradesystem.ViewModels
 
             TotalCount = totalCount.ToString();
             TotalCountPercent = "100,0 %";
-            TotalNet = ModelFunctions.SplitDigitsDouble(Math.Round(totalNet)).ToString() + " " + _testing.DefaultCurrency.Name;
+            TotalNet = ModelFunctions.SplitDigitsDouble(totalNet, 0).ToString() + " " + _testing.DefaultCurrency.Name;
 
             ProfitCount = profitCount.ToString();
             ProfitCountPercent = profitCountPercent.ToString();
@@ -130,7 +130,7 @@ namespace ktradesystem.ViewModels
                 ProfitCountPercent += ",0";
             }
             ProfitCountPercent += " %";
-            ProfitNet = ModelFunctions.SplitDigitsDouble(Math.Round(profitNet)).ToString() + " " + _testing.DefaultCurrency.Name;
+            ProfitNet = ModelFunctions.SplitDigitsDouble(profitNet, 0).ToString() + " " + _testing.DefaultCurrency.Name;
 
             LossCount = lossCount.ToString();
             LossCountPercent = lossCountPercent.ToString();
@@ -139,7 +139,7 @@ namespace ktradesystem.ViewModels
                 LossCountPercent += ",0";
             }
             LossCountPercent += " %";
-            LossNet = ModelFunctions.SplitDigitsDouble(Math.Round(lossNet)).ToString() + " " + _testing.DefaultCurrency.Name;
+            LossNet = ModelFunctions.SplitDigitsDouble(lossNet, 0).ToString() + " " + _testing.DefaultCurrency.Name;
         }
 
         public void UpdatePage()

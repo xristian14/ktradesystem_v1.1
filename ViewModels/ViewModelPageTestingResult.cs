@@ -356,7 +356,7 @@ namespace ktradesystem.ViewModels
                         dateTimeEndStr += dateTimeEnd.Month.ToString().Length == 1 ? ".0" + dateTimeEnd.Month.ToString() : "." + dateTimeEnd.Month.ToString();
                         dateTimeEndStr += "." + dateTimeEnd.Year.ToString();
 
-                        TestBatchesTestingResultCombobox.Add(new TestBatchTestingResultCombobox { TestBatch = testBatch, NameTestBatch = dateTimeStartStr + " - " + dateTimeEndStr });
+                        TestBatchesTestingResultCombobox.Add(new TestBatchTestingResultCombobox { TestBatch = testBatch, NameTestBatch = testBatch.Number.ToString() + " " + dateTimeStartStr + " - " + dateTimeEndStr });
                     }
                 }
             }

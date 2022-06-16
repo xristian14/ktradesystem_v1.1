@@ -103,7 +103,7 @@ namespace ktradesystem.ViewModels
                         double currentDropdown = totalTestRunDropdown / testBatch.OptimizationTestRuns.Count;
                         double currentNumberTrades = (double)totalTestRunNumberTrades / testBatch.OptimizationTestRuns.Count;
                         double currentPercentWin = totalTestRunPercentWin / testBatch.OptimizationTestRuns.Count;
-                        double currentNetTopModel = testBatch.TopModelTestRun.EvaluationCriteriaValues.Find(a => a.EvaluationCriteria.Id == 1).DoubleValue;
+                        double currentNetTopModel = testBatch.IsTopModelWasFind ? testBatch.TopModelTestRun.EvaluationCriteriaValues.Find(a => a.EvaluationCriteria.Id == 1).DoubleValue : 0;
 
                         totalNet += currentNet;
                         totalDropdown += currentDropdown;

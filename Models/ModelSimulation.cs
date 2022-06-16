@@ -619,74 +619,82 @@ namespace ktradesystem.Models
 
                 DateTime currentDate = testing.StartPeriod; //текущая дата
 
-                //определяем минимально допустимую длительность оптимизационного теста ((текущая дата + оптимизация  -  текущая) * % из настроек)
-                TimeSpan minimumAllowedOptimizationDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days) - currentDate).TotalDays * ((double)_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100)));
-                minimumAllowedOptimizationDuration = minimumAllowedOptimizationDuration.TotalDays < 1 ? TimeSpan.FromDays(1) : minimumAllowedOptimizationDuration; //если менее одного дня, устанавливаем в один день
-                //определяем минимально допустимую длительность форвардного теста ((текущая дата + оптимизация + форвардный  -  текущая + оптимизация) * % из настроек)
-                TimeSpan minimumAllowedForwardDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days) - currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days)).TotalDays * ((double)_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100)));
-                minimumAllowedForwardDuration = minimumAllowedForwardDuration.TotalDays < 1 && testing.IsForwardTesting ? TimeSpan.FromDays(1) : minimumAllowedForwardDuration; //если менее одного дня и это форвардное тестирование, устанавливаем в один день (при не форвардном будет 0)
-
-                //в цикле определяется минимально допустимая длительность для следующей проверки, исходя из разности дат текущей и текущей + требуемой
-                //цикл проверяет, помещается ли минимум в оставшийся период, так же в нем идет проверка на то, текущая раньше доступной или нет. Если да, то проверяется, помещается ли в период с доступной по текущая + промежуток, минимальная длительность. Если да, то текущая для расчетов устанавливается в начало доступной. Все даты определяются из текущей для расчетов, а не из текущей. Поэтому после установки текущей для расчетов в доступную, можно дальше расчитывать даты тем же алгоритмом что и для варианта когда текущая позже или равна доступной. Если же с доступной до текущей + промежуток минимальная длительность не помещается, цикл переходит на следующую итерацию.
-                while (DateTime.Compare(currentDate.Add(minimumAllowedOptimizationDuration).Add(minimumAllowedForwardDuration).Date, endDate) <= 0)
+                bool isMinDurationFit = true; //помещается ли минимальноая длительность в оставшийся промежуток
+                do
                 {
-                    DateTime currentDateForCalculate = currentDate; //текущая дата для расчетов, в неё будет попадать доступная дата начала, если текущая раньше доступной
-
-                    bool isSkipIteration = false; //пропустить итерацию или нет
-                    //проверяем, текущая дата раньше доступной даты начала или нет
-                    if (DateTime.Compare(currentDate, availableDateStart) < 0)
+                    DateTime earliestEndDate = new DateTime(); //самая ранняя дата окончания теста, исходя из минимальной длительности теста
+                    //проверяем, помещается ли минимальная длительность в доступный промежуток
+                    if (testing.IsForwardTesting) //для форвардного тестирования минимальная длительность состоит из полной оптимизационной длительности и минимальной форвардной
                     {
-                        //проверяем, помещается ли минимальная длительность оптимизационного и форвардного тестов в промежуток с доступной даты начала по текущая + промежуток
-                        if (DateTime.Compare(availableDateStart.Add(minimumAllowedOptimizationDuration).Add(minimumAllowedForwardDuration).Date, currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days)) < 0)
-                        {
-                            currentDateForCalculate = availableDateStart;
-                        }
-                        else
-                        {
-                            isSkipIteration = true; //т.к. минимально допустимая длительность не помещается в текущий промежуток, переходим на следующую итерацию цикла
-                        }
+                        earliestEndDate = currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days);
+                        TimeSpan minimumForwardDuration = TimeSpan.FromDays((earliestEndDate.AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days) - earliestEndDate).TotalDays * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100.0)); //минимальная длительность форвардного теста
+                        earliestEndDate = earliestEndDate.AddDays(Math.Round(minimumForwardDuration.TotalDays));
+                    }
+                    else //для оптимизационного тестирования минимальная длительность равна минимальной оптимизационной длительности
+                    {
+                        TimeSpan minimumOptimizationDuration = TimeSpan.FromDays((currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days) - currentDate).TotalDays * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100.0)); //минимальная длительность форвардного теста
+                        earliestEndDate = currentDate.AddDays(Math.Round(minimumOptimizationDuration.TotalDays));
+                    }
+                    if(DateTime.Compare(earliestEndDate, testing.EndPeriod) > 0) //если самая ранняя дата окончания позже даты окончания тестирования, значит тест не помещается в оставшийся период
+                    {
+                        isMinDurationFit = false;
                     }
 
-                    if (isSkipIteration == false) //если минимальная длительность помещается в доступную, создаем тесты
+                    if (isMinDurationFit)
                     {
                         //определяем начальные и конечные даты оптимизационного и форвардного тестов
-                        DateTime optimizationStartDate = new DateTime();
+                        DateTime optimizationStartDate = currentDate.Date;
                         DateTime optimizationEndDate = new DateTime(); //дата, на которой заканчивается тест, этот день не торговый
                         DateTime forwardStartDate = new DateTime();
                         DateTime forwardEndDate = new DateTime(); //дата, на которой заканчивается тест, этот день не торговый
 
                         //проверяем, помещается ли полная оптимизационная и форвардная длительность в доступный промежуток
-                        if (DateTime.Compare(currentDateForCalculate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days), currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days)) > 0) //если текущая дата для расчетов + полная длительность позже текущей даты + полная длительность, значит не помещается
+                        if (DateTime.Compare(currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days), testing.EndPeriod) > 0) //если текущая дата + полная длительность позже даты окончания тестирования, значит не помещается
                         {
                             //определяем максимальную длительность, которая помещается в доступный промежуток
-                            double currentDurationPercent = 99.75;
-                            TimeSpan currentOptimizationDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days) - currentDate).TotalDays * (currentDurationPercent / 100)));
-                            currentOptimizationDuration = currentOptimizationDuration.TotalDays < 1 ? TimeSpan.FromDays(1) : currentOptimizationDuration; //если менее одного дня, устанавливаем в один день
-                            TimeSpan currentForwardDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days) - currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days)).TotalDays * (currentDurationPercent / 100)));
-                            currentForwardDuration = currentForwardDuration.TotalDays < 1 && testing.IsForwardTesting ? TimeSpan.FromDays(1) : currentForwardDuration; //если менее одного дня и это форвардное тестирование, устанавливаем в один день (при не форвардном будет 0)
-                            //пока период с уменьшенной длительностью не поместится, уменьшаем длительность (пока текущая дата для расчетов + уменьшенная длительность больше текущей даты + полная длительность)
-                            while (DateTime.Compare(currentDateForCalculate.Add(currentOptimizationDuration).Add(currentForwardDuration).Date, currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days)) > 0)
+                            double currentDurationPercent = 100;
+                            DateTime endTestsDate = new DateTime(); //дата окончания тестов
+                            TimeSpan forwardDuration = TimeSpan.Zero;
+                            TimeSpan optimizationDuration = TimeSpan.Zero;
+
+                            do
                             {
                                 currentDurationPercent -= 0.25;
-                                currentOptimizationDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days) - currentDate).TotalDays * (currentDurationPercent / 100)));
-                                currentOptimizationDuration = currentOptimizationDuration.TotalDays < 1 ? TimeSpan.FromDays(1) : currentOptimizationDuration; //если менее одного дня, устанавливаем в один день
-                                currentForwardDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days) - currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days)).TotalDays * (currentDurationPercent / 100)));
-                                currentForwardDuration = currentForwardDuration.TotalDays < 1 && testing.IsForwardTesting ? TimeSpan.FromDays(1) : currentForwardDuration; //если менее одного дня и это форвардное тестирование, устанавливаем в один день (при не форвардном будет 0)
+                                if (testing.IsForwardTesting) //для форвардного тестирования
+                                {
+                                    endTestsDate = currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days);
+                                    forwardDuration = TimeSpan.FromDays((endTestsDate.AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days) - endTestsDate).TotalDays * (currentDurationPercent / 100.0)); //длительность форвардного теста
+                                    forwardDuration = forwardDuration.TotalDays < 1 ? TimeSpan.FromDays(1) : forwardDuration; //если менее одного дня, устанавливаем в один день
+                                    endTestsDate = endTestsDate.AddDays(Math.Round(forwardDuration.TotalDays));
+                                }
+                                else //для оптимизационного тестирования
+                                {
+                                    optimizationDuration = TimeSpan.FromDays((currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days) - currentDate).TotalDays * (currentDurationPercent / 100.0)); //длительность оптимизационных тестов
+                                    optimizationDuration = optimizationDuration.TotalDays < 1 ? TimeSpan.FromDays(1) : optimizationDuration; //если менее одного дня, устанавливаем в один день
+                                    endTestsDate = currentDate.AddDays(Math.Round(optimizationDuration.TotalDays));
+                                }
                             }
+                            while (DateTime.Compare(endTestsDate, testing.EndPeriod) > 0);
 
                             //устанавливаем начальные и конечные даты оптимизационного и форвардного тестов
-                            optimizationStartDate = currentDateForCalculate;
-                            optimizationEndDate = currentDateForCalculate.Add(currentOptimizationDuration).Date;
-                            forwardStartDate = optimizationEndDate;
-                            forwardEndDate = currentDateForCalculate.Add(currentOptimizationDuration).Add(currentForwardDuration).Date;
+                            if (testing.IsForwardTesting) //для форвардного тестирования
+                            {
+                                optimizationEndDate = currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).Date;
+                                forwardStartDate = optimizationEndDate.Date;
+                                forwardEndDate = endTestsDate.Date;
+                            }
+                            else //для оптимизационного тестирования
+                            {
+                                optimizationEndDate = endTestsDate.Date;
+                            }
                         }
                         else
                         {
                             //устанавливаем начальные и конечные даты оптимизационного и форвардного тестов
-                            optimizationStartDate = currentDateForCalculate;
-                            optimizationEndDate = currentDateForCalculate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).Date;
+                            optimizationStartDate = currentDate.Date;
+                            optimizationEndDate = currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).Date;
                             forwardStartDate = optimizationEndDate;
-                            forwardEndDate = currentDateForCalculate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days).Date;
+                            forwardEndDate = forwardStartDate.AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days).Date;
                         }
 
                         //создаем testBatch
@@ -790,18 +798,12 @@ namespace ktradesystem.Models
                         }
 
                         testing.TestBatches.Add(testBatch);
+
+                        //прибавляем к текущей дате временной промежуток между оптимизационными тестами
+                        currentDate = currentDate.AddYears(testing.OptimizationTestSpacing.Years).AddMonths(testing.OptimizationTestSpacing.Months).AddDays(testing.OptimizationTestSpacing.Days);
                     }
-
-                    //прибавляем к текущей дате временной промежуток между оптимизационными тестами
-                    currentDate = currentDate.AddYears(testing.OptimizationTestSpacing.Years).AddMonths(testing.OptimizationTestSpacing.Months).AddDays(testing.OptimizationTestSpacing.Days);
-
-                    //определяем минимально допустимую длительность оптимизационного теста ((текущая дата + оптимизация  -  текущая) * % из настроек)
-                    minimumAllowedOptimizationDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days) - currentDate).TotalDays * ((double)_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100)));
-                    minimumAllowedOptimizationDuration = minimumAllowedOptimizationDuration.TotalDays < 1 ? TimeSpan.FromDays(1) : minimumAllowedOptimizationDuration; //если менее одного дня, устанавливаем в один день
-                    //определяем минимально допустимую длительность форвардного теста ((текущая дата + оптимизация + форвардный  -  текущая + оптимизация) * % из настроек)
-                    minimumAllowedForwardDuration = TimeSpan.FromDays(Math.Round((currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days) - currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days)).TotalDays * ((double)_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100)));
-                    minimumAllowedForwardDuration = minimumAllowedForwardDuration.TotalDays < 1 && testing.IsForwardTesting ? TimeSpan.FromDays(1) : minimumAllowedForwardDuration; //если менее одного дня и это форвардное тестирование, устанавливаем в один день (при не форвардном будет 0)
                 }
+                while (isMinDurationFit);
             }
 
             //выполняем компиляцию индикаторов алгоритма, алгоритма и критериев оценки
@@ -934,6 +936,11 @@ namespace ktradesystem.Models
                                 _mainCommunicationChannel.TestingProgress.Clear();
                                 _mainCommunicationChannel.TestingProgress.Add(new TestingProgress { StepDescription = "Шаг 1/4:  Считывание файлов источников данных", StepTasksCount = filesCount, CompletedStepTasksCount = readFilesCount, TotalElapsedTime = ModelTesting.StopwatchTesting.Elapsed, StepElapsedTime = stopwatchReadDataSources.Elapsed, CancelPossibility = true, IsFinishSimulation = false, IsSuccessSimulation = false, IsFinish = false });
                             }));
+                            if (cancellationToken.IsCancellationRequested) //если был запрос на отмену операции, прекращем функцию
+                            {
+                                TestingEnding(false, testing);
+                                return;
+                            }
                         }
                     }
                     stopwatchReadDataSources.Stop();

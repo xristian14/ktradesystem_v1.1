@@ -51,6 +51,18 @@ namespace ktradesystem.Models
             }
         }
 
+
+        private ObservableCollection<bool> _isWritedTestingResult = new ObservableCollection<bool>(); //записывается ли в данный момент результат тестирования, на данную коллекцию подписан ViewModel, и при её обновлении, будет вызван метод по выбору последнего результата тестирования
+        public ObservableCollection<bool> IsWritedTestingResult
+        {
+            get { return _isWritedTestingResult; }
+            private set
+            {
+                _isWritedTestingResult = value;
+                OnPropertyChanged();
+            }
+        }
+
         private string _historyRealivePath = "\\applicationFiles\\testingResults\\history"; //относительный путь к истории результатов
         private string _savesRealivePath = "\\applicationFiles\\testingResults\\saves"; //относительный путь к сохраненным результатам
 
@@ -117,6 +129,9 @@ namespace ktradesystem.Models
 
         public void WriteTestingResult(Testing testing) //записывает результат тестирования в папку с историей результатов тестирования
         {
+            DispatcherInvoke((Action)(() => {
+                IsWritedTestingResult.Add(true); //отмечаем что запись результат тестирования закончена
+            }));
             CheckFileStructure(); //проверяем существование нужных папок
             string historyPath = Directory.GetCurrentDirectory() + _historyRealivePath; //путь к папке с историей результатов тестирования
             DateTime dateTime = testing.DateTimeSimulationEnding; //получаем дату и время завершения выполнения симуляции тестирования
@@ -257,6 +272,10 @@ namespace ktradesystem.Models
 
             //считываем результаты тестирования, проверяя просроченные и удаляя их
             ReadAndCheckTestingResults();
+            
+            DispatcherInvoke((Action)(() => {
+                IsWritedTestingResult.Add(true); //отмечаем что запись результат тестирования закончена
+            }));
         }
 
         public void ReadTestingResults() //считывает результаты тестирования

@@ -12,6 +12,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using ktradesystem.Models;
 using ktradesystem.CommunicationChannel;
+using System.Threading;
 
 namespace ktradesystem.ViewModels
 {
@@ -32,6 +33,7 @@ namespace ktradesystem.ViewModels
             _mainCommunicationChannel.MainMessages.CollectionChanged += MainCommunicationChannel_MainMessagesCollectionChanged;
             _mainCommunicationChannel.DataSourceAddingProgress.CollectionChanged += MainCommunicationChannel_DataSourceAddingProgressCollectionChanged;
             _mainCommunicationChannel.TestingProgress.CollectionChanged += MainCommunicationChannel_TestingProgressCollectionChanged;
+            _modelTestingResult.IsWritedTestingResult.CollectionChanged += ModelTestingResult_IsWritedTestingResultCollectionChanged;
 
             MainMessages = _mainCommunicationChannel.MainMessages;
 
@@ -427,6 +429,14 @@ namespace ktradesystem.ViewModels
             }
         }
 
+        private void SelectLastTestingResult() //переходит на вкладку тестирования и выбирает последний результат тестирования
+        {
+            ViewModelPageTestingNavigation.getInstance().SetPageTestingResult(); //переходим на вкладку результатов тестирования
+            ViewModelPageTestingResult viewModelPageTestingResult = ViewModelPageTestingResult.getInstance();
+            viewModelPageTestingResult.SetMenuHistory(); //выбираем меню результатов тестирования: История
+            viewModelPageTestingResult.SetLastHistoryTestingResult(); //выбираем последний результат тестирования в истории
+        }
+
         private void CreateStatusBarTestingContent()
         {
             if(TestingProgress.Count != 0)
@@ -437,14 +447,6 @@ namespace ktradesystem.ViewModels
                 }
                 if (TestingProgress[0].IsFinish) //если тестирование завершено
                 {
-                    if (TestingProgress[0].IsSuccessSimulation) //если симуляция была завершена успешно, переходим на вкладку результаты тестирования
-                    {
-                        ViewModelPageTestingNavigation.getInstance().SetPageTestingResult(); //переходим на вкладку результатов тестирования
-                        ViewModelPageTestingResult viewModelPageTestingResult = ViewModelPageTestingResult.getInstance();
-                        viewModelPageTestingResult.SetMenuHistory(); //выбираем меню результатов тестирования: История
-                        viewModelPageTestingResult.SetLastHistoryTestingResult(); //выбираем последний результат тестирования в истории
-                        //выбираем последнее тестирование, первый источник данных, первую тестовую связку и первый тестовый прогон
-                    }
                     //закрываем statusBarTesting, делаем форму активной
                     StatusBarTestingHide();
                     IsPagesAndMainMenuButtonsEnabled = true;
@@ -541,6 +543,28 @@ namespace ktradesystem.ViewModels
         private void MainCommunicationChannel_MainMessagesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             MainMessages = (ObservableCollection<Message>)sender;
+        }
+
+        private ObservableCollection<bool> _isWritedTestingResult = new ObservableCollection<bool>(); //записывается ли в данный момент результат тестирования, при её обновлении, будет вызван метод по выбору последнего результата тестирования
+        public ObservableCollection<bool> IsWritedTestingResult
+        {
+            get { return _isWritedTestingResult; }
+            private set
+            {
+                _isWritedTestingResult = value;
+                OnPropertyChanged();
+                if(value.Count > 0)
+                {
+                    if (value[0]) //если есть элемент, и он true
+                    {
+                        SelectLastTestingResult(); //переходим на вкладку тестирования и выбирает последний результат тестирования
+                    }
+                }
+            }
+        }
+        private void ModelTestingResult_IsWritedTestingResultCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            IsWritedTestingResult = (ObservableCollection<bool>)sender;
         }
 
         public ICommand MenuDataSource_Click

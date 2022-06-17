@@ -13,6 +13,7 @@ namespace ktradesystem.Models
     {
         public DataSource DataSource { get; set; }
         public Candle[][] Candles { get; set; } //массив со свечками на каждый файл источника данных
+        public List<int>[] GapIndexes { get; set; } //индексы свечек, которые считаются гэпами, для каждого файла источника данных. Массив на каждый файл, список с индексами свечек в файле
         [NonSerialized]
         public AlgorithmIndicatorValues[] AlgorithmIndicatorsValues; //массив со значениями индикаторов для отображения на графике
         public AlgorithmIndicatorCatalog[] AlgorithmIndicatorCatalogs { get; set; } //массив с каталогами индикаторов алгоритмов. Каталог содержит индикатор алгоритма и список с: комбинацией значений параметров индикатора алгоритма и название файла со значениями данного индикатора

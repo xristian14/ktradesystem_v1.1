@@ -891,7 +891,8 @@ namespace ktradesystem.Models
                     testing.DataSourcesCandles = new List<DataSourceCandles>(); //инициализируем список со всеми свечками источников данных
                     for(int i = 0; i < dataSources.Count; i++)
                     {
-                        testing.DataSourcesCandles.Add(new DataSourceCandles { DataSource = dataSources[i], Candles = new Candle[dataSources[i].DataSourceFiles.Count][], AlgorithmIndicatorsValues = new AlgorithmIndicatorValues[testing.Algorithm.AlgorithmIndicators.Count] });
+                        testing.DataSourcesCandles.Add(new DataSourceCandles { DataSource = dataSources[i], Candles = new Candle[dataSources[i].DataSourceFiles.Count][], GapIndexes = new List<int>[dataSources[i].DataSourceFiles.Count], AlgorithmIndicatorsValues = new AlgorithmIndicatorValues[testing.Algorithm.AlgorithmIndicators.Count] });
+                        bool isCandleIntervalMoreThanGapInterval = dataSources[i].Interval.Duration.TotalHours >= _modelData.Settings.Where(a => a.Id == 7).First().DoubleValue; //интервал свечки больше или равен временному промежутку для гэпа, или нет
                         //проходим по всем файлам источника данных
                         for (int k = 0; k < dataSources[i].DataSourceFiles.Count; k++)
                         {
@@ -912,6 +913,7 @@ namespace ktradesystem.Models
 
                             //создаем массив
                             Candle[] candles = new Candle[count];
+                            List<int> gaps = new List<int>();
                             //заполняем массив
                             fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
                             streamReader = new StreamReader(fileStream);
@@ -923,6 +925,23 @@ namespace ktradesystem.Models
                                 string[] lineArr = line.Split(',');
                                 string dateTimeFormated = lineArr[2].Insert(6, "-").Insert(4, "-") + " " + lineArr[3].Insert(4, ":").Insert(2, ":");
                                 candles[r] = new Candle { DateTime = DateTime.Parse(dateTimeFormated), O = double.Parse(lineArr[4], nfiDot), H = double.Parse(lineArr[5], nfiDot), L = double.Parse(lineArr[6], nfiDot), C = double.Parse(lineArr[7], nfiDot), V = double.Parse(lineArr[8], nfiDot) };
+                                if(r > 0) //если это не первая свечка, проверяем, является ли она гэпом
+                                {
+                                    if (isCandleIntervalMoreThanGapInterval) //если временной интервал свечки больше или равен временному интервалу гэпа, определяем гэп по 1.5 превышению временного интервала свечки
+                                    {
+                                        if((candles[r].DateTime - candles[r - 1].DateTime).TotalHours >= dataSources[i].Interval.Duration.TotalHours * 1.5) //если разница между датами текущей и прошлой свечек в 1.5 раз больше временного интервала свечки, значит эта свечка считается гэпом
+                                        {
+                                            gaps.Add(r); //запоминаем индекс свечки с гэпом
+                                        }
+                                    }
+                                    else //временной интервал свечки меньше временного интервала гэпа
+                                    {
+                                        if ((candles[r].DateTime - candles[r - 1].DateTime).TotalHours >= _modelData.Settings.Where(a => a.Id == 7).First().DoubleValue) //если разница между датами текущей и прошлой свечек больше или равна временному интервалу гэпа, значит эта свечка считается гэпом
+                                        {
+                                            gaps.Add(r); //запоминаем индекс свечки с гэпом
+                                        }
+                                    }
+                                }
                                 line = streamReader.ReadLine();
                                 r++;
                             }
@@ -930,6 +949,7 @@ namespace ktradesystem.Models
                             fileStream.Close();
 
                             testing.DataSourcesCandles[i].Candles[k] = candles;
+                            testing.DataSourcesCandles[i].GapIndexes[k] = gaps;
 
                             readFilesCount++;
                             DispatcherInvoke((Action)(() => {
@@ -1647,6 +1667,8 @@ namespace ktradesystem.Models
             }
             int[] fileIndexes = new int[testRun.TestBatch.DataSourceGroup.DataSourceAccordances.Count]; //индексы (для всех источников данных группы) элемента массива Candle[][] Candles в DataSourcesCandles, соответствующий файлу источника данных
             int[] candleIndexes = new int[testRun.TestBatch.DataSourceGroup.DataSourceAccordances.Count]; //индексы (для всех источников данных группы) элемента массива Candles[], сответствующий свечке
+            int[] gapIndexes = new int[testRun.TestBatch.DataSourceGroup.DataSourceAccordances.Count]; //индексы (для всех источников данных группы) элемента списка , содержащего индекс свечки с гэпом
+            bool[] gaps = new bool[gapIndexes.Length]; //является ли текущая свечка гэпом, для каждого источника данных группы
 
             //определяем индексы элемента каталога в AlgorithmIndicatorCatalog со значениями индикатора для всех индикаторов во всех источниках данных
             int[][] algorithmIndicatorCatalogElementIndexes = new int[dataSourceCandles.Length][]; //индексы элемента каталога в AlgorithmIndicatorCatalog со значениями индикатора для всех индикаторов во всех источниках данных
@@ -1697,6 +1719,8 @@ namespace ktradesystem.Models
             {
                 fileIndexes[i] = 0;
                 candleIndexes[i] = 0;
+                gapIndexes[i] = 0;
+                gaps[i] = false;
             }
 
             //находим индексы файлов и свечек, дата и время которых позже или равняется дате и времени начала тестирования
@@ -1767,9 +1791,22 @@ namespace ktradesystem.Models
             //проходим по всем свечкам источников данных, пока не достигнем времени окончания теста, не выйдем за границы имеющихся файлов, или не получим запрос на отмену тестирования
             while (DateTime.Compare(currentDateTime, testRun.EndPeriod) < 0 && isOverFileIndex == false && cancellationToken.IsCancellationRequested == false)
             {
+                //определяем гэпы для текущих свечек
+                for (int i = 0; i < dataSourceCandles.Length; i++)
+                {
+                    gaps[i] = false;
+                    if (gapIndexes[i] < dataSourceCandles[i].GapIndexes[fileIndexes[i]].Count) //проверяем, не вышли ли за границы списка с индексами свечек с гэпом
+                    {
+                        if (candleIndexes[i] == dataSourceCandles[i].GapIndexes[fileIndexes[i]][gapIndexes[i]]) //равняется ли индекс свечки, индексу свечки с гэпом
+                        {
+                            gaps[i] = true;
+                            gapIndexes[i]++; //переходим на следующий индекс свечки с гэпом
+                        }
+                    }
+                }
                 //обрабатываем текущие заявки (только тех источников данных, текущие свечки которых равняются текущей дате)
                 //формируем список источников данных для которых будут проверяться заявки на исполнение (те, даты которых равняются текущей дате)
-                List<DataSource> approvedDataSources = new List<DataSource>();
+                List <DataSource> approvedDataSources = new List<DataSource>();
                 for (int i = 0; i < dataSourceCandles.Length; i++)
                 {
                     if (DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) == 0)
@@ -1782,7 +1819,7 @@ namespace ktradesystem.Models
                     int y = 0;
                 }
                 //проверяем заявки на исполнение
-                bool isWereDeals = CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, true, true, true); //были ли совершены сделки при проверке исполнения заявок
+                bool isWereDeals = CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, gaps, true, true, true); //были ли совершены сделки при проверке исполнения заявок
 
                 //проверяем, равняются ли все свечки источников данных текущей дате
                 bool isCandlesDateTimeEqual = true;
@@ -1977,7 +2014,7 @@ namespace ktradesystem.Models
                             //если на текущей свечке были совершены сделки, проверяем стоп-заявки на исполнение (чтобы если на текущей свечке была открыта позиция, после выставления стоп-заявки проверить её на исполнение на текущей свечке)
                             if (isWereDeals && iteration == 1)
                             {
-                                isWereDealsStopLoss = CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, false, true, false); //были ли совершены сделки при проверке исполнения стоп-заявок
+                                isWereDealsStopLoss = CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, gaps, false, true, false); //были ли совершены сделки при проверке исполнения стоп-заявок
                             }
                         }
                     }
@@ -1999,6 +2036,7 @@ namespace ktradesystem.Models
                         {
                             fileIndexes[i]++;
                             candleIndexes[i] = 0;
+                            gapIndexes[i] = 0;
                         }
                         //если индекс файла не вышел за пределы массива, проверяем, дошли ли до даты которая позже текущей
                         if (fileIndexes[i] < dataSourceCandles[i].Candles.Length)
@@ -2048,7 +2086,7 @@ namespace ktradesystem.Models
             testRun.IsComplete = true;
         }
 
-        public bool CheckOrdersExecution(DataSourceCandles[] dataSourcesCandles, Account account, List<DataSource> approvedDataSources, int[] fileIndexes, int[] candleIndexes, bool isMarket, bool isStop, bool isLimit) //функция проверяет заявки на их исполнение в текущей свечке, возвращает false если не было сделок, и true если были совершены сделки. approvedDataSources - список с источниками данных, заявки которых будут проверяться на исполнение. isMarket, isStop, isLimit - если true, будут проверяться на исполнение эти заявки
+        public bool CheckOrdersExecution(DataSourceCandles[] dataSourcesCandles, Account account, List<DataSource> approvedDataSources, int[] fileIndexes, int[] candleIndexes, bool[] gaps, bool isMarket, bool isStop, bool isLimit) //функция проверяет заявки на их исполнение в текущей свечке, возвращает false если не было сделок, и true если были совершены сделки. approvedDataSources - список с источниками данных, заявки которых будут проверяться на исполнение. isMarket, isStop, isLimit - если true, будут проверяться на исполнение эти заявки
         {
             bool isMakeADeals = false; //были ли совершены сделки
             //исполняем рыночные заявки
@@ -2069,10 +2107,15 @@ namespace ktradesystem.Models
                                 dataSourcesCandlesIndex = i;
                             }
                         }
-                        int slippage = _modelData.Settings.Where(i => i.Id == 3).First().IntValue; //количество пунктов на которое цена исполнения рыночной заявки будет хуже
+                        int slippage = gaps[dataSourcesCandlesIndex] ? 0 : _modelData.Settings.Where(i => i.Id == 3).First().IntValue; //если текущая свечка - гэп, убираем базовое проскальзывание, и оставляем только вычисляемое, чтобы цена исполнения заявки была по худщей цене в свечке, и если объем большой то и проскальзывание было
                         slippage += Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //добавляем проскальзывание
                         slippage = order.Direction == true ? slippage : -slippage; //для покупки проскальзывание идет вверх, для продажи вниз
-                        isMakeADeals = MakeADeal(account, order, order.Count, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].C + slippage * dataSourcesCandles[dataSourcesCandlesIndex].DataSource.PriceStep, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime) ? true : isMakeADeals;
+                        double dealPrice = dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].C;
+                        if (gaps[dataSourcesCandlesIndex]) //если текущая свечка - гэп, устанавливаем худшую цену
+                        {
+                            dealPrice = order.Direction ? dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H : dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L;
+                        }
+                        isMakeADeals = MakeADeal(account, order, order.Count, dealPrice + slippage * dataSourcesCandles[dataSourcesCandlesIndex].DataSource.PriceStep, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime) ? true : isMakeADeals;
                         if (order.Count == 0)
                         {
                             ordersToRemove.Add(order);
@@ -2115,10 +2158,15 @@ namespace ktradesystem.Models
                         bool isStopExecute = (order.Direction == true && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H >= order.Price) || (order.Direction == false && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L <= order.Price); //заявка на покупку, и верхняя цена выше цены заявки или заявка на продажу, и нижняя цена ниже цены заявки
                         if (isStopExecute)
                         {
-                            int slippage = _modelData.Settings.Where(i => i.Id == 3).First().IntValue; //количество пунктов на которое цена исполнения рыночной заявки будет хуже
+                            int slippage = gaps[dataSourcesCandlesIndex] ? 0 : _modelData.Settings.Where(i => i.Id == 3).First().IntValue; //если текущая свечка - гэп, убираем базовое проскальзывание, и оставляем только вычисляемое, чтобы цена исполнения заявки была по худщей цене в свечке, и если объем большой то и проскальзывание было
                             slippage += Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //добавляем проскальзывание
                             slippage = order.Direction == true ? slippage : -slippage; //для покупки проскальзывание идет вверх, для продажи вниз
-                            isMakeADeals = MakeADeal(account, order, order.Count, order.Price + slippage * dataSourcesCandles[dataSourcesCandlesIndex].DataSource.PriceStep, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime) ? true : isMakeADeals;
+                            double dealPrice = order.Price;
+                            if (gaps[dataSourcesCandlesIndex]) //если текущая свечка - гэп, устанавливаем худшую цену
+                            {
+                                dealPrice = order.Direction ? dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H : dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L;
+                            }
+                            isMakeADeals = MakeADeal(account, order, order.Count, dealPrice + slippage * dataSourcesCandles[dataSourcesCandlesIndex].DataSource.PriceStep, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime) ? true : isMakeADeals;
                             if (order.Count == 0)
                             {
                                 ordersToRemove.Add(order);
@@ -2174,7 +2222,12 @@ namespace ktradesystem.Models
                             if (overLots > 0) //если есть лоты которые могли быть исполнены на текущей свечке, совершаем сделку
                             {
                                 decimal dealCount = order.Count <= overLots ? order.Count : overLots;
-                                isMakeADeals = MakeADeal(account, order, dealCount, order.Price, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime) ? true : isMakeADeals;
+                                double dealPrice = order.Price;
+                                if (gaps[dataSourcesCandlesIndex]) //если текущая свечка - гэп, устанавливаем худшую цену
+                                {
+                                    dealPrice = order.Direction ? dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H : dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L;
+                                }
+                                isMakeADeals = MakeADeal(account, order, dealCount, dealPrice, dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].DateTime) ? true : isMakeADeals;
                                 if (order.Count == 0)
                                 {
                                     ordersToRemove.Add(order);

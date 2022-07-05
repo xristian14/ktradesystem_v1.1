@@ -206,7 +206,7 @@ namespace ktradesystem.ViewModels
                 }
                 else
                 {
-                    comission = dsItem.Comission.ToString() + "%";
+                    comission = dsItem.Comission.ToString() + " %";
                 }
                 //формирует данные за период
                 string datePeriod = dsItem.StartDate.ToShortDateString() + " – " + dsItem.EndDate.ToShortDateString();

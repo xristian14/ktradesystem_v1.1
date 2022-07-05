@@ -2251,27 +2251,35 @@ namespace ktradesystem.Models
         private bool MakeADeal(Account account, Order order, decimal lotsCount, double price, DateTime dateTime) //совершает сделку, возвращает false если сделка не была совершена, и true если была совершена. Закрывает открытые позиции если они есть, и открывает новые если заявка не была исполнена полностью на закрытие позиций, высчитывает результат трейда, обновляет занятые и свободные средства во всех валютах, удаляет закрытые сделки в открытых позициях
         {
             bool isMakeADeal = false; //была ли совершена сделка
-            //определяем хватает ли средств на 1 лот, если да, определяем хватает ли средств на lotsCount, если нет устанавливаем минимально доступное количество
-            //стоимость 1 лота
-            double lotsCost = order.DataSource.Instrument.Id == 2 ? order.DataSource.Cost : price; //если инструмент источника данных - фьючерс, устанавливаем стоимость в стоимость фьючерса, иначе - устанавливаем стоимость 1 лота в стоимость с графика
-            double lotsComission = order.DataSource.Comissiontype.Id == 2 ? lotsCost * order.DataSource.Comission : order.DataSource.Comission; //комиссия на 1 лот
+            //определяем хватает ли средств на минимальное количество лотов, если да, определяем хватает ли средств на lotsCount, если нет устанавливаем минимально доступное количество
+            //стоимость минимального количества лотов
+            double minLotsCost = order.DataSource.MarginType.Id == 2 ? order.DataSource.MarginCost * (order.DataSource.MinLotMarginPrcentCost / 100) : price * (order.DataSource.MinLotMarginPrcentCost / 100); //для фиксированной маржи, устанавливаем фиксированную маржу источника данных, помноженную на процент стоимости минимального количества лотов относительно маржи, для маржи с графика, устанавливаем стоимость с график, помноженную на процент стоимости минимального количества лотов относительно маржи
+            double minLotsComission = order.DataSource.Comissiontype.Id == 2 ? minLotsCost * (order.DataSource.Comission / 100) : order.DataSource.Comission; //комиссия на минимальное количество лотов
             double freeDeposit = account.FreeForwardDepositCurrencies.Where(i => i.Currency == order.DataSource.Currency).First().Deposit; //свободный остаток в валюте источника данных
             double takenDeposit = account.TakenForwardDepositCurrencies.Where(i => i.Currency == order.DataSource.Currency).First().Deposit; //занятые средства на открытые позиции в валюте источника данных
             //определяем максимально доступное количество лотов
-            decimal maxLotsCount = Math.Truncate((decimal)freeDeposit / (decimal)(lotsCost + lotsComission));
-            decimal reverseLotsCount = 0;//количество лотов в открытой позиции с обратным направлением
+            decimal maxLotsCount = (decimal)ModelFunctions.TruncateToIncrement(freeDeposit / (minLotsCost + minLotsComission), (double)order.DataSource.MinLotCount);
+            decimal reverseDirectionLotsCount = 0;//количество лотов в открытой позиции с обратным направлением
+            decimal currentDirectionLotsCount = 0;//количество лотов в открытой позиции с текущим направлением
             foreach (Deal deal in account.CurrentPosition)
             {
                 if (deal.DataSource == order.DataSource && deal.Order.Direction != order.Direction) //если сделка совершена по тому же источнику данных что и заявка, но отличается с ней в направлении
                 {
-                    reverseLotsCount += deal.Count;
+                    if(deal.Order.Direction != order.Direction)
+                    {
+                        reverseDirectionLotsCount += deal.Count;
+                    }
+                    else
+                    {
+                        currentDirectionLotsCount += deal.Count;
+                    }
                 }
             }
-            maxLotsCount += reverseLotsCount; //прибавляем к максимально доступному количеству лотов, количество лотов в открытой позиции с обратным направлением
-            //если это не форвардное тестирование с торговлей депозитом, устанавливаем максимально доступное количество лотов в 1
+            maxLotsCount += reverseDirectionLotsCount; //прибавляем к максимально доступному количеству лотов, количество лотов в открытой позиции с обратным направлением
+            //если это не форвардное тестирование с торговлей депозитом, устанавливаем максимально доступное количество лотов в минимальное количество лотов
             if (account.IsForwardDepositTrading == false)
             {
-                maxLotsCount = 1;
+                maxLotsCount = currentDirectionLotsCount == 0 ? order.DataSource.MinLotCount : 0; //если количество лотов в открытых сделках с текущим направлением равно нулю, устанавливаем доступное количество лотов в минимальное, если же есть открытые позиции с текущим направлением, устанавливаем в ноль
             }
             if (maxLotsCount > 0) //если максимально доступное количество лотов для совершения сделки по заявке > 0, совершаем сделку
             {
@@ -2288,7 +2296,7 @@ namespace ktradesystem.Models
                 account.CurrentPosition.Add(currentDeal);
                 isMakeADeal = true; //запоминаем что была совершена сделка
                 //вычитаем комиссию на сделку из свободных средств
-                freeDeposit -= (double)((decimal)lotsComission * dealLotsCount);
+                freeDeposit -= (double)((decimal)minLotsComission * (dealLotsCount / order.DataSource.MinLotCount));
                 //закрываем открытые позиции которые были закрыты данной сделкой
                 int i = 0;
                 while (i < account.CurrentPosition.Count - 1 && currentDeal.Count > 0) //проходим по всем сделкам кроме последней (только что добавленной)

@@ -377,13 +377,7 @@ namespace ktradesystem.Models
                         order.DataSource = _modelData.DataSources.Where(j => j.Id == dataSourceForCalculate.idDataSource).First();
                         order.IdDataSource = order.DataSource.Id;
                         order.Price = price;
-
-                        decimal orderCount = count;
-                        if(order.DataSource.Instrument.Id != 3)
-                        {
-                            orderCount = Math.Truncate(orderCount);
-                        }
-                        order.Count = orderCount;
+                        order.Count = count;
                         order.StartCount = orderCount;
 
                         return order;
@@ -2307,7 +2301,7 @@ namespace ktradesystem.Models
                         //определяем денежный результат трейда и прибавляем его к свободным средствам
                         double priceSell = account.CurrentPosition[i].Order.Direction == false ? account.CurrentPosition[i].Price : currentDeal.Price; //цена продажи в трейде
                         double priceBuy = account.CurrentPosition[i].Order.Direction == true ? account.CurrentPosition[i].Price : currentDeal.Price; //цена покупки в трейде
-                        double resultMoney = (double)(decrementCount * (decimal)(((priceSell - priceBuy) / account.CurrentPosition[i].DataSource.PriceStep) * account.CurrentPosition[i].DataSource.CostPriceStep)); //определяю разность цен между проджей и покупкой, делю на шаг цены и умножаю на стоимость шага цены, получаю денежное значение для 1 лота, и умножаю на количество лотов
+                        double resultMoney = (double)((decimal)(priceSell - priceBuy) / (decimal)account.CurrentPosition[i].DataSource.PriceStep * (decimal)account.CurrentPosition[i].DataSource.CostPriceStep * (decrementCount / account.CurrentPosition[i].DataSource.MinLotCount)); //количество пунктов трейда * стоимость 1 пункта * количество минимального количества лотов
                         freeDeposit += resultMoney;
                         //определяем стоимость закрытых лотов в открытой позиции, вычитаем её из занятых средств и прибавляем к свободным
                         double closedCost = account.CurrentPosition[i].Order.DataSource.MarginType.Id == 2 ? account.CurrentPosition[i].Order.DataSource.MarginCost * (order.DataSource.MinLotMarginPrcentCost / 100) : account.CurrentPosition[i].Price * (order.DataSource.MinLotMarginPrcentCost / 100);
@@ -2321,8 +2315,8 @@ namespace ktradesystem.Models
                     i++;
                 }
                 //определяем стоимость занятых средств на оставшееся (незакрытое) количество лотов текущей сделки, вычитаем её из сободных средств и добавляем к занятым
-                double currentCost = currentDeal.DataSource.MarginType.Id == 2 ? currentDeal.DataSource.Cost : currentDeal.Price;
-                currentCost = (double)((decimal)currentCost * currentDeal.Count); //умножаем стоимость на количество
+                double currentCost = currentDeal.DataSource.MarginType.Id == 2 ? currentDeal.DataSource.MarginCost * (order.DataSource.MinLotMarginPrcentCost / 100) : currentDeal.Price * (order.DataSource.MinLotMarginPrcentCost / 100);
+                currentCost = (double)((decimal)currentCost * (currentDeal.Count / order.DataSource.MinLotCount)); //умножаем стоимость на количество
                 freeDeposit -= currentCost; //вычитаем из свободных средств
                 takenDeposit += currentCost; //добавляем к занятым на открытые позиции средствам
                 //удаляем из открытых позиций сделки с нулевым количеством

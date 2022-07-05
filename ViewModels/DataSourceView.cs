@@ -13,9 +13,9 @@ namespace ktradesystem.ViewModels
         public string Name { get; set; }
         public MarginType MarginType { get; set; }
         public string Interval { get; set; } //временной интервал
-        public string Currency { get; set; } //валюта
+        public Currency Currency { get; set; } //валюта
         public double MarginCost { get; set; } //стоимость маржи
-        public double MinLotCount { get; set; } //минимальное количество лотов
+        public decimal MinLotCount { get; set; } //минимальное количество лотов
         public double MinLotMarginPrcentCost { get; set; } //стоимость минимального количества лотов относительно маржи, в процентах
         public Comissiontype Comissiontype { get; set; } //тип комисси (денежный, процентный)
         public double Comission { get; set; } //комиссия на одну операцию, куплю или продажу

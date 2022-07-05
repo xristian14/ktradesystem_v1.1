@@ -338,7 +338,7 @@ namespace ktradesystem.Models
                         ds.Currency = currency;
                     }
                 }
-                ds.MinLotCount = row.Field<decimal>("minLotCount");
+                ds.MinLotCount = decimal.Parse(row.Field<string>("minLotCount"));
                 int idInterval = (int)row.Field<long>("idInterval");
                 foreach (Interval interval in Intervals)
                 {
@@ -405,7 +405,8 @@ namespace ktradesystem.Models
                         ds.Currency = currency;
                     }
                 }
-                ds.MinLotCount = row.Field<decimal>("minLotCount");
+
+                ds.MinLotCount = decimal.Parse(row.Field<string>("minLotCount"));
                 int idInterval = (int)row.Field<long>("idInterval");
                 foreach (Interval interval in Intervals)
                 {

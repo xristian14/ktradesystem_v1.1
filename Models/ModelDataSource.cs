@@ -48,7 +48,7 @@ namespace ktradesystem.Models
         }
 
         //создание объекта из данных которые набрал пользователь и добавление в DataSources
-        public void CreateDataSourceInsertUpdate(string name, MarginType marginType, Currency currency, double marginCost, double minLotCount, double minLotMarginPrcentCost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, List<DataSourceFile> dataSourceFiles, int id = -1) //метод проверяет присланные данные на корректность и вызывает метод добавления записи в бд или обновления существующей записи если был прислан id
+        public void CreateDataSourceInsertUpdate(string name, MarginType marginType, Currency currency, double marginCost, decimal minLotCount, double minLotMarginPrcentCost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, List<DataSourceFile> dataSourceFiles, int id = -1) //метод проверяет присланные данные на корректность и вызывает метод добавления записи в бд или обновления существующей записи если был прислан id
         {
             _cancellationTokenSourceDataSource = new CancellationTokenSource();
             CancellationToken cancellationToken = _cancellationTokenSourceDataSource.Token;

@@ -102,7 +102,6 @@ namespace ktradesystem.ViewModels
             {
                 _currencies = value;
                 OnPropertyChanged();
-                CreateCurrenciesView(); //вызвает метод формирования списка валют для отображения
             }
         }
 
@@ -137,7 +136,6 @@ namespace ktradesystem.ViewModels
             {
                 _comissiontypes = value;
                 OnPropertyChanged();
-                CreateComissiontypesView(); //вызвает метод формирования списка типов комиссии для отображения
             }
         }
         private void modelData_ComissiontypesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -180,15 +178,6 @@ namespace ktradesystem.ViewModels
             DataSourcesView.Clear();
             foreach(DataSource dsItem in DataSourcesForSubscribers)
             {
-                //определяет название валюты
-                string currencyName = "";
-                foreach(Currency currency in Currencies)
-                {
-                    if(currency.Id == dsItem.Currency.Id)
-                    {
-                        currencyName = currency.Name;
-                    }
-                }
                 //определяет название интервала
                 string intervalName = "";
                 foreach (Interval interval in Intervals)
@@ -202,11 +191,11 @@ namespace ktradesystem.ViewModels
                 string comission = "";
                 if(dsItem.Comissiontype.Id == 1)
                 {
-                    comission = dsItem.Comission.ToString() + currencyName;
+                    comission = dsItem.Comission.ToString() + dsItem.Currency.Name;
                 }
                 else
                 {
-                    comission = dsItem.Comission.ToString() + " %";
+                    comission = dsItem.Comission.ToString() + "%";
                 }
                 //формирует данные за период
                 string datePeriod = dsItem.StartDate.ToShortDateString() + " – " + dsItem.EndDate.ToShortDateString();
@@ -217,7 +206,7 @@ namespace ktradesystem.ViewModels
                     files.Add(dataSourceFile.Path);
                 }
 
-                DataSourceView dsView = new DataSourceView { Id = dsItem.Id, Name = dsItem.Name, Currency = currencyName, MinLotCount = dsItem.MinLotCount, Interval = intervalName, MarginType = MarginTypes.Where(a => a.Id == dsItem.MarginType.Id).First(), MarginCost = dsItem.MarginCost, Comissiontype = dsItem.Comissiontype, Comission = dsItem.Comission, ComissionView = comission, PriceStep = dsItem.PriceStep, CostPriceStep = dsItem.CostPriceStep, DatePeriod = datePeriod, Files = files };
+                DataSourceView dsView = new DataSourceView { Id = dsItem.Id, Name = dsItem.Name, Currency = dsItem.Currency, MarginCost = dsItem.MarginCost, MinLotCount = dsItem.MinLotCount, MinLotMarginPrcentCost = dsItem.MinLotMarginPrcentCost, Interval = intervalName, MarginType = MarginTypes.Where(a => a.Id == dsItem.MarginType.Id).First(), Comissiontype = dsItem.Comissiontype, Comission = dsItem.Comission, ComissionView = comission, PriceStep = dsItem.PriceStep, CostPriceStep = dsItem.CostPriceStep, DatePeriod = datePeriod, Files = files };
                 DataSourcesView.Add(dsView);
             }
         }
@@ -242,46 +231,6 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private ObservableCollection<string> _currenciesView = new ObservableCollection<string>(); //валюты в удобном для представления виде
-        public ObservableCollection<string> CurrenciesView
-        {
-            get { return _currenciesView; }
-            private set
-            {
-                _currenciesView = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private void CreateCurrenciesView() //создает CurrenciesView на основе Currencies
-        {
-            CurrenciesView.Clear();
-            foreach (Currency currency in Currencies)
-            {
-                CurrenciesView.Add(currency.Name);
-            }
-        }
-
-        private ObservableCollection<string> _comissiontypesView = new ObservableCollection<string>(); //типы комиссии в удобном для представления виде
-        public ObservableCollection<string> ComissiontypesView
-        {
-            get { return _comissiontypesView; }
-            private set
-            {
-                _comissiontypesView = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private void CreateComissiontypesView() //создает CurrenciesView на основе Currencies
-        {
-            ComissiontypesView.Clear();
-            foreach (Comissiontype comissiontype in Comissiontypes)
-            {
-                ComissiontypesView.Add(comissiontype.Name);
-            }
-        }
-
         public DataSourceView SelectedDataSource { get; set; }
 
         public ICommand AddDataSource_Click
@@ -293,8 +242,8 @@ namespace ktradesystem.ViewModels
                     IsAddDataSource = true;
                     AddDsName = "";
                     AddDsMarginType = null;
-                    AddDsCurrency = "";
-                    AddDsComissiontype = "";
+                    AddDsCurrency = null;
+                    AddDsComissiontype = null;
                     AddDsMarginCost = "";
                     AddDsMinLotCount = "";
                     AddDsMinLotMarginPrcentCost = "";
@@ -322,7 +271,7 @@ namespace ktradesystem.ViewModels
                     AddDsName = SelectedDataSource.Name;
                     AddDsMarginType = SelectedDataSource.MarginType;
                     AddDsCurrency = SelectedDataSource.Currency;
-                    AddDsComissiontype = SelectedDataSource.Comissiontype.Name;
+                    AddDsComissiontype = SelectedDataSource.Comissiontype;
                     AddDsMarginCost = SelectedDataSource.MarginCost.ToString();
                     AddDsMinLotCount = SelectedDataSource.MinLotCount.ToString();
                     AddDsMinLotMarginPrcentCost = SelectedDataSource.MinLotMarginPrcentCost.ToString();
@@ -390,7 +339,7 @@ namespace ktradesystem.ViewModels
         public bool IsAddDataSource //добавляется источник данных или редактируется
         {
             get { return _isAddDataSource; }
-            private set
+            set
             {
                 _isAddDataSource = value;
                 AddDataSourceButtonContent = value ? "Добавить'" : "Сохранить'";
@@ -403,7 +352,7 @@ namespace ktradesystem.ViewModels
         public string AddDataSourceButtonContent //текст кнопки добавить
         {
             get { return _addDataSourceButtonContent; }
-            private set
+            set
             {
                 _addDataSourceButtonContent = value;
                 OnPropertyChanged();
@@ -414,7 +363,7 @@ namespace ktradesystem.ViewModels
         public string AddDataSourceWindowName //название окна
         {
             get { return _addDataSourceWindowName; }
-            private set
+            set
             {
                 _addDataSourceWindowName = value;
                 OnPropertyChanged();
@@ -425,7 +374,7 @@ namespace ktradesystem.ViewModels
         public string AddDataSourceFolder
         {
             get { return _addDataSourceFolder; }
-            private set
+            set
             {
                 _addDataSourceFolder = value;
                 OnPropertyChanged();
@@ -436,7 +385,7 @@ namespace ktradesystem.ViewModels
         public ObservableCollection<string> FilesUnselected
         {
             get { return _filesUnselected; }
-            private set
+            set
             {
                 _filesUnselected = value;
                 OnPropertyChanged();
@@ -457,7 +406,7 @@ namespace ktradesystem.ViewModels
         public ObservableCollection<string> FilesSelected
         {
             get { return _filesSelected; }
-            private set
+            set
             {
                 _filesSelected = value;
                 OnPropertyChanged();
@@ -479,14 +428,32 @@ namespace ktradesystem.ViewModels
         public MarginType AddDsMarginType
         {
             get { return _addDsMarginType; }
-            private set
+            set
             {
                 _addDsMarginType = value;
                 OnPropertyChanged();
             }
         }
-        public string AddDsCurrency { get; set; }
-        public string AddDsComissiontype { get; set; }
+        private Currency _addDsCurrency;
+        public Currency AddDsCurrency
+        {
+            get { return _addDsCurrency; }
+            set
+            {
+                _addDsCurrency = value;
+                OnPropertyChanged();
+            }
+        }
+        private Comissiontype _addDsComissiontype;
+        public Comissiontype AddDsComissiontype
+        {
+            get { return _addDsComissiontype; }
+            set
+            {
+                _addDsComissiontype = value;
+                OnPropertyChanged();
+            }
+        }
         private string _addDsCost;
         public string AddDsMarginCost
         {
@@ -680,8 +647,13 @@ namespace ktradesystem.ViewModels
             bool result = true;
             TooltipAddAddDataSource.Clear(); //очищаем подсказку кнопки добавить
 
+            int marginTypeId = -1;
+            if(AddDsMarginType != null)
+            {
+                marginTypeId = AddDsMarginType.Id;
+            }
             //проверка на пустые поля
-            if (String.IsNullOrEmpty(AddDsName) || String.IsNullOrEmpty(AddDsMinLotCount) || (String.IsNullOrEmpty(AddDsMarginCost) && AddDsMarginType.Id == 2) || String.IsNullOrEmpty(AddDsComission) || String.IsNullOrEmpty(AddDsPriceStep) || String.IsNullOrEmpty(AddDsCostPriceStep) || FilesSelected.Count == 0)
+            if (String.IsNullOrEmpty(AddDsName) || AddDsMarginType == null || AddDsCurrency == null || (String.IsNullOrEmpty(AddDsMarginCost) && marginTypeId == 2) || String.IsNullOrEmpty(AddDsMinLotCount) || String.IsNullOrEmpty(AddDsMinLotMarginPrcentCost) || AddDsComissiontype == null || String.IsNullOrEmpty(AddDsComission) || String.IsNullOrEmpty(AddDsPriceStep) || String.IsNullOrEmpty(AddDsCostPriceStep) || FilesSelected.Count == 0)
             {
                 result = false;
                 TooltipAddAddDataSource.Add("Не заполнены все поля или не выбраны файлы с котировками.");
@@ -714,14 +686,14 @@ namespace ktradesystem.ViewModels
             }
 
             //проверка на возможность конвертации AddDsMarginCost в число с плавающей точкой
-            if(double.TryParse(AddDsMarginCost, out double res) == false && AddDsMarginType.Id == 2)
+            if(double.TryParse(AddDsMarginCost, out double res) == false && marginTypeId == 2)
             {
                 result = false;
-                TooltipAddAddDataSource.Add("Стоимость фьючерсного контракта должна быть числом.");
+                TooltipAddAddDataSource.Add("Значение фиксированной маржи должно быть числом.");
             }
 
             //проверка на возможность конвертации AddDsMinLotCount в число с плавающей точкой
-            if (double.TryParse(AddDsMinLotCount, out res) == false)
+            if (decimal.TryParse(AddDsMinLotCount, out decimal res2) == false)
             {
                 result = false;
                 TooltipAddAddDataSource.Add("Минимальное количество лотов должно быть числом.");
@@ -738,7 +710,7 @@ namespace ktradesystem.ViewModels
             if (double.TryParse(AddDsComission, out res) == false)
             {
                 result = false;
-                TooltipAddAddDataSource.Add("Комиссия за одну операцию должна быть числом.");
+                TooltipAddAddDataSource.Add("Комиссия на сделку для минимального количества лотов должна быть числом.");
             }
 
             //проверка на возможность конвертации AddDsPriceStep в число с плавающей точкой
@@ -771,24 +743,6 @@ namespace ktradesystem.ViewModels
                         DataSourceFile dataSourceFile = new DataSourceFile { Path = AddDataSourceFolder + "\\" + item };
                         dataSourceFiles.Add(dataSourceFile);
                     }
-                    //формирует addCurrency
-                    Currency addCurrency = null;
-                    foreach (Currency currency in Currencies)
-                    {
-                        if (currency.Name == AddDsCurrency)
-                        {
-                            addCurrency = currency;
-                        }
-                    }
-                    //форимрует addComissiontype
-                    Comissiontype addComissiontype = null;
-                    foreach (Comissiontype comissiontype in Comissiontypes)
-                    {
-                        if(comissiontype.Name == AddDsComissiontype)
-                        {
-                            addComissiontype = comissiontype;
-                        }
-                    }
                     //формирует стоимость
                     double marginCost = AddDsMarginType.Id == 2 ? double.Parse(AddDsMarginCost) : 0;
 
@@ -798,12 +752,12 @@ namespace ktradesystem.ViewModels
                     if (IsAddDataSource)
                     {
                         //запускаем добавление в отдельном потоке чтобы форма обновлялась
-                        Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, AddDsMarginType, addCurrency, marginCost, double.Parse(AddDsMinLotCount), double.Parse(AddDsMinLotMarginPrcentCost), addComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles));
+                        Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, AddDsMarginType, AddDsCurrency, marginCost, decimal.Parse(AddDsMinLotCount), double.Parse(AddDsMinLotMarginPrcentCost), AddDsComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles));
                     }
                     else
                     {
                         //запускаем редактирование в отдельном потоке чтобы форма обновлялась
-                        Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, AddDsMarginType, addCurrency, marginCost, double.Parse(AddDsMinLotCount), double.Parse(AddDsMinLotMarginPrcentCost), addComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles, EditDsId));
+                        Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, AddDsMarginType, AddDsCurrency, marginCost, decimal.Parse(AddDsMinLotCount), double.Parse(AddDsMinLotMarginPrcentCost), AddDsComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles, EditDsId));
                     }
 
                     CloseAddDataSourceAction?.Invoke();

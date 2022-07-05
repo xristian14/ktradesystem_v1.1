@@ -30,7 +30,7 @@
                 <Label Content="Эквивалент комиссии" Height="26"/>
                 <Label Content="Комиссия на сделку для минимального&#x0a;количества лотов" Height="42"/>
                 <Label Content="Шаг одного пункта цены" Height="26"/>
-                <Label Content="Стоимость одного пункта цены" Height="26"/>
+                <Label Content="Стоимость одного пункта цены для&#x0a;минимального количества лотов" Height="42"/>
             </StackPanel>
             <StackPanel Grid.Column="1">
                 <TextBox Text="{Binding AddDsName, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
@@ -42,7 +42,7 @@
                 <ComboBox ItemsSource="{Binding ComissiontypesView}" SelectedItem="{Binding AddDsComissiontype, Mode=TwoWay}" SelectedIndex="0" Height="22" Margin="0,2,0,2"/>
                 <TextBox Text="{Binding AddDsComission, Mode=TwoWay}" Height="20" Margin="0,3,0,19"/>
                 <TextBox Text="{Binding AddDsPriceStep, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
-                <TextBox Text="{Binding AddDsCostPriceStep, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
+                <TextBox Text="{Binding AddDsCostPriceStep, Mode=TwoWay}" Height="20" Margin="0,3,0,19"/>
             </StackPanel>
         </Grid>
         <StackPanel Grid.Row="1" Orientation="Horizontal">

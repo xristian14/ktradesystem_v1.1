@@ -2310,7 +2310,7 @@ namespace ktradesystem.Models
                         double resultMoney = (double)(decrementCount * (decimal)(((priceSell - priceBuy) / account.CurrentPosition[i].DataSource.PriceStep) * account.CurrentPosition[i].DataSource.CostPriceStep)); //определяю разность цен между проджей и покупкой, делю на шаг цены и умножаю на стоимость шага цены, получаю денежное значение для 1 лота, и умножаю на количество лотов
                         freeDeposit += resultMoney;
                         //определяем стоимость закрытых лотов в открытой позиции, вычитаем её из занятых средств и прибавляем к свободным
-                        double closedCost = account.CurrentPosition[i].Order.DataSource.Instrument.Id == 2 ? account.CurrentPosition[i].Order.DataSource.Cost : account.CurrentPosition[i].Price;
+                        double closedCost = account.CurrentPosition[i].Order.DataSource.MarginType.Id == 2 ? account.CurrentPosition[i].Order.DataSource.MarginCost * (order.DataSource.MinLotMarginPrcentCost / 100) : account.CurrentPosition[i].Price * (order.DataSource.MinLotMarginPrcentCost / 100);
                         closedCost = (double)((decimal)closedCost * decrementCount); //умножаем стоимость на количество
                         takenDeposit -= closedCost; //вычитаем из занятых на открытые позиции средств
                         freeDeposit += closedCost; //прибавляем к свободным средствам
@@ -2321,7 +2321,7 @@ namespace ktradesystem.Models
                     i++;
                 }
                 //определяем стоимость занятых средств на оставшееся (незакрытое) количество лотов текущей сделки, вычитаем её из сободных средств и добавляем к занятым
-                double currentCost = currentDeal.DataSource.Instrument.Id == 2 ? currentDeal.DataSource.Cost : currentDeal.Price;
+                double currentCost = currentDeal.DataSource.MarginType.Id == 2 ? currentDeal.DataSource.Cost : currentDeal.Price;
                 currentCost = (double)((decimal)currentCost * currentDeal.Count); //умножаем стоимость на количество
                 freeDeposit -= currentCost; //вычитаем из свободных средств
                 takenDeposit += currentCost; //добавляем к занятым на открытые позиции средствам

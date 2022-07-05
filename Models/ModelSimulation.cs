@@ -1894,7 +1894,7 @@ namespace ktradesystem.Models
                             dataSourcesForCalculate[i].IndicatorsValues = indicatorsValues[i];
                             dataSourcesForCalculate[i].PriceStep = dataSourceCandles[i].DataSource.PriceStep;
                             dataSourcesForCalculate[i].CostPriceStep = dataSourceCandles[i].DataSource.CostPriceStep;
-                            dataSourcesForCalculate[i].OneLotCost = dataSourceCandles[i].DataSource.Instrument.Id == 2 ? dataSourceCandles[i].DataSource.Cost : dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].C;
+                            dataSourcesForCalculate[i].MinLotsCost = dataSourceCandles[i].DataSource.MarginType.Id == 2 ? dataSourceCandles[i].DataSource.MarginCost * (dataSourceCandles[i].DataSource.MinLotMarginPrcentCost / 100) : dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].C * (dataSourceCandles[i].DataSource.MinLotMarginPrcentCost / 100);
                             dataSourcesForCalculate[i].Price = averagePricePosition;
                             dataSourcesForCalculate[i].CountBuy = isBuyDirection ? volumePosition : 0;
                             dataSourcesForCalculate[i].CountSell = isBuyDirection ? 0 : volumePosition;
@@ -2215,10 +2215,6 @@ namespace ktradesystem.Models
                             decimal stepLots = (decimal)dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].V / stepCount; //среднее количество лотов на 1 пункт цены
                             int stepsOver = order.Direction ? (int)Math.Round((order.Price - dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L) / order.DataSource.PriceStep) : (int)Math.Round((dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H - order.Price) / order.DataSource.PriceStep); //количество пунктов за ценой заявки
                             decimal overLots = stepLots * stepsOver / 2; //количество лотов которое могло быть куплено/продано на текущей свечке (делить на 2 т.к. лишь половина от лотов - это сделки в нужной нам операции (купить или продать))
-                            if (order.DataSource.Instrument.Id != 3) //если это не криптовалюта, округляем количество лотов до целого
-                            {
-                                overLots = Math.Round(overLots);
-                            }
                             if (overLots > 0) //если есть лоты которые могли быть исполнены на текущей свечке, совершаем сделку
                             {
                                 decimal dealCount = order.Count <= overLots ? order.Count : overLots;

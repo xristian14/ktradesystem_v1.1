@@ -423,7 +423,7 @@
                                             <Button Content="Источник данных" Command="{Binding AlgorithmPasteDatasourceTemplate_Click}" Width="110"/>
                                             <Button Content="Шаг одного пункта цены" Command="{Binding AlgorithmPasteDatasourcePriceStep_Click}" Width="146"/>
                                             <Button Content="Стоимость 1 пункта цены" Command="{Binding AlgorithmPasteDatasourceCostPriceStep_Click}" Width="150"/>
-                                            <Button Content="Стоимость 1 лота" Command="{Binding AlgorithmPasteDatasourceOneLotCost_Click}" Width="120"/>
+                                            <Button Content="Стоимость мин кол-ва лотов" Command="{Binding AlgorithmPasteDatasourceOneLotCost_Click}" Width="170"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <Button Content="Данные графика" Command="{Binding AlgorithmPasteDatasourceCandles_Click}" Width="110"/>

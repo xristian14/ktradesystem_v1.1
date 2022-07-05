@@ -14,7 +14,7 @@ namespace ktradesystem.Models
         public bool IsCurrencyRuble { get; set; } //валюта рубль, true - рубль, false - доллар
         public double PriceStep { get; set; } //шаг цены для 1 пункта
         public double CostPriceStep { get; set; } //стоимость шага цены в 1 пункт
-        public double OneLotCost { get; set; } //стоимость 1 лота
+        public double MinLotsCost { get; set; } //стоимость минимального количества лотов
         public double Price { get; set; } //средняя цена позиции для данного источника данных
         public decimal CountBuy { get; set; } //количество купленных лотов для данного источника данных
         public decimal CountSell { get; set; } //количество проданных лотов для данного источника данных

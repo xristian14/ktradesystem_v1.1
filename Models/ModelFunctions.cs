@@ -100,7 +100,7 @@ namespace ktradesystem.Models
                 if(Math.Abs(lastLotsCount) < Math.Abs(lotsCount[index])) //если прошлый модуль количества лотов меньше текущего, значит текущая сделка увеличила позицию
                 {
                     //определяем маржу
-                    double dealMargin = deal.DataSource.Instrument.Id == 2 ? deal.DataSource.Cost : deal.Price; //если это фьючерс, устанавливаем стоимость фьючерса, иначе цену с графика
+                    double dealMargin = deal.DataSource.MarginType.Id == 2 ? deal.DataSource.MarginCost * (deal.DataSource.MinLotMarginPrcentCost / 100) : deal.Price * (deal.DataSource.MinLotMarginPrcentCost / 100); //для фиксированной маржи, устанавливаем фиксированную маржу источника данных, помноженную на процент стоимости минимального количества лотов относительно маржи, для маржи с графика, устанавливаем стоимость с график, помноженную на процент стоимости минимального количества лотов относительно маржи
                     totalMargin += dealMargin;
                     countDeals++;
                 }

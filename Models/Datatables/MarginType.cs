@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ktradesystem.Models.Datatables
 {
     [Serializable]
-    public class Instrument
+    public class MarginType
     {
         public int Id { get; set; }
         public string Name { get; set; }

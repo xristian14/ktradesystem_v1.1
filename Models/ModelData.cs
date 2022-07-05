@@ -39,12 +39,12 @@ namespace ktradesystem.Models
                 Intervals.Add(interval);
             }
 
-            //считываем инструменты из базы данных
-            DataTable dataInstruments = _database.QuerySelect("SELECT * FROM Instruments");
-            foreach (DataRow row in dataInstruments.Rows)
+            //считываем типы маржи из базы данных
+            DataTable dataMarginTypes = _database.QuerySelect("SELECT * FROM MarginTypes");
+            foreach (DataRow row in dataMarginTypes.Rows)
             {
-                Instrument instrument = new Instrument { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name") };
-                Instruments.Add(instrument);
+                MarginType marginType = new MarginType { Id = (int)row.Field<long>("id"), Name = row.Field<string>("name") };
+                MarginTypes.Add(marginType);
             }
 
             //считываем валюты из базы данных
@@ -133,13 +133,13 @@ namespace ktradesystem.Models
             }
         }
 
-        private ObservableCollection<Instrument> _instruments = new ObservableCollection<Instrument>();
-        public ObservableCollection<Instrument> Instruments
+        private ObservableCollection<MarginType> _marginTypes = new ObservableCollection<MarginType>();
+        public ObservableCollection<MarginType> MarginTypes
         {
-            get { return _instruments; }
+            get { return _marginTypes; }
             set
             {
-                _instruments = value;
+                _marginTypes = value;
                 OnPropertyChanged();
             }
         }
@@ -338,6 +338,7 @@ namespace ktradesystem.Models
                         ds.Currency = currency;
                     }
                 }
+                ds.MinLotCount = row.Field<double>("minLotCount");
                 int idInterval = (int)row.Field<long>("idInterval");
                 foreach (Interval interval in Intervals)
                 {
@@ -346,15 +347,10 @@ namespace ktradesystem.Models
                         ds.Interval = interval;
                     }
                 }
-                int idInstrument = (int)row.Field<long>("idInstrument");
-                foreach (Instrument instrument in Instruments)
-                {
-                    if (instrument.Id == idInstrument)
-                    {
-                        ds.Instrument = instrument;
-                    }
-                }
-                ds.Cost = row.Field<double>("cost");
+                int idMarginType = (int)row.Field<long>("idMarginType");
+                ds.MarginType = MarginTypes.Where(a => a.Id == idMarginType).First();
+                ds.MarginCost = row.Field<double>("marginCost");
+                ds.MinLotMarginPrcentCost = row.Field<double>("minLotMarginPrcentCost");
                 int idComissiontype = (int)row.Field<long>("idComissiontype");
                 foreach (Comissiontype comissiontype in Comissiontypes)
                 {
@@ -409,6 +405,7 @@ namespace ktradesystem.Models
                         ds.Currency = currency;
                     }
                 }
+                ds.MinLotCount = row.Field<double>("minLotCount");
                 int idInterval = (int)row.Field<long>("idInterval");
                 foreach (Interval interval in Intervals)
                 {
@@ -417,15 +414,10 @@ namespace ktradesystem.Models
                         ds.Interval = interval;
                     }
                 }
-                int idInstrument = (int)row.Field<long>("idInstrument");
-                foreach (Instrument instrument in Instruments)
-                {
-                    if (instrument.Id == idInstrument)
-                    {
-                        ds.Instrument = instrument;
-                    }
-                }
-                ds.Cost = row.Field<double>("cost");
+                int idMarginType = (int)row.Field<long>("idMarginType");
+                ds.MarginType = MarginTypes.Where(a => a.Id == idMarginType).First();
+                ds.MarginCost = row.Field<double>("marginCost");
+                ds.MinLotMarginPrcentCost = row.Field<double>("minLotMarginPrcentCost");
                 int idComissiontype = (int)row.Field<long>("idComissiontype");
                 foreach (Comissiontype comissiontype in Comissiontypes)
                 {

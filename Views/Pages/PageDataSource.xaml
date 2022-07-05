@@ -26,14 +26,16 @@
                         <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="{Binding ElementName=helperDs0, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="{Binding ElementName=helperDs1, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding Interval}" Header="Интервал" Width="{Binding ElementName=helperDs2, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Instrument}" Header="Тип инструмента" Width="{Binding ElementName=helperDs3, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Currency}" Header="Валюта" Width="{Binding ElementName=helperDs4, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Cost}" Header="Стоимость 1 фьючерса" Width="{Binding ElementName=helperDs5, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding ComissionView}" Header="Комиссия за 1 операцию" Width="{Binding ElementName=helperDs6, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding PriceStep}" Header="Шаг 1 пункта цены" Width="{Binding ElementName=helperDs7, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding CostPriceStep}" Header="Стоимость 1 пункта цены" Width="{Binding ElementName=helperDs8, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding DatePeriod}" Header="Данные за период" Width="{Binding ElementName=helperDs9, Path=ActualWidth}"/>
-                        <GridViewColumn Header="Файлы с котировками" Width="{Binding ElementName=helperDs10, Path=ActualWidth}">
+                        <GridViewColumn DisplayMemberBinding="{Binding Currency}" Header="Валюта" Width="{Binding ElementName=helperDs3, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding MarginType.Name}" Header="Тип маржи" Width="{Binding ElementName=helperDs4, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding MarginCost}" Header="Фиксированная&#x0a;       маржа" Width="{Binding ElementName=helperDs5, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding MinLotCount}" Header="Минимальное&#x0a;кол-во лотов" Width="{Binding ElementName=helperDs6, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding MinLotMarginPrcentCost}" Header="Стоимость мин.&#x0a;кол-ва лотов&#x0a;относительно маржи" Width="{Binding ElementName=helperDs7, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding ComissionView}" Header="Комиссия за&#x0a;одну операцию" Width="{Binding ElementName=helperDs8, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding PriceStep}" Header="Шаг одного&#x0a;пункта цены" Width="{Binding ElementName=helperDs9, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding CostPriceStep}" Header="Стоимость&#x0a;одного&#x0a;пункта цены" Width="{Binding ElementName=helperDs10, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding DatePeriod}" Header="Данные за период" Width="{Binding ElementName=helperDs11, Path=ActualWidth}"/>
+                        <GridViewColumn Header="Файлы с котировками" Width="{Binding ElementName=helperDs11, Path=ActualWidth}">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <TreeView>
@@ -50,13 +52,14 @@
                     <ColumnDefinition Width="37"/>
                     <ColumnDefinition Width="1*"/>
                     <ColumnDefinition Width="70"/>
-                    <ColumnDefinition Width="100"/>
                     <ColumnDefinition Width="47"/>
-                    <ColumnDefinition Width="135"/>
-                    <ColumnDefinition Width="145"/>
-                    <ColumnDefinition Width="110"/>
-                    <ColumnDefinition Width="150"/>
-                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="80"/>
+                    <ColumnDefinition Width="90"/>
+                    <ColumnDefinition Width="83"/>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="92"/>
+                    <ColumnDefinition Width="74"/>
+                    <ColumnDefinition Width="80"/>
                     <ColumnDefinition Width="1.7*"/>
                     <ColumnDefinition Width="33"/>
                 </Grid.ColumnDefinitions>
@@ -71,6 +74,7 @@
                 <Grid Grid.Column="8" x:Name="helperDs8"/>
                 <Grid Grid.Column="9" x:Name="helperDs9"/>
                 <Grid Grid.Column="10" x:Name="helperDs10"/>
+                <Grid Grid.Column="11" x:Name="helperDs11"/>
             </Grid>
         </Grid>
     </Grid>

@@ -26,8 +26,8 @@ namespace ktradesystem.ViewModels
             _modelData = ModelData.getInstance();
             _modelData.PropertyChanged += Model_PropertyChanged;
 
-            _modelData.Instruments.CollectionChanged += modelData_InstrumenstCollectionChanged;
-            Instruments = _modelData.Instruments;
+            _modelData.MarginTypes.CollectionChanged += modelData_MarginTypesCollectionChanged;
+            MarginTypes = _modelData.MarginTypes;
 
             _modelData.Currencies.CollectionChanged += modelData_CurrenciesCollectionChanged;
             Currencies = _modelData.Currencies;
@@ -77,21 +77,20 @@ namespace ktradesystem.ViewModels
             fieldViewModel?.SetValue(this, fieldModel.GetValue(sender));
         }
 
-        private ObservableCollection<Instrument> _instruments;
-        public ObservableCollection<Instrument> Instruments
+        private ObservableCollection<MarginType> _marginTypes = new ObservableCollection<MarginType>();
+        public ObservableCollection<MarginType> MarginTypes
         {
-            get { return _instruments; }
+            get { return _marginTypes; }
             set
             {
-                _instruments = value;
+                _marginTypes = value;
                 OnPropertyChanged();
-                CreateInstrumentsView(); //вызвает метод формирования списка инструментов для отображения
             }
         }
 
-        private void modelData_InstrumenstCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        private void modelData_MarginTypesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            Instruments = (ObservableCollection<Instrument>)sender;
+            MarginTypes = (ObservableCollection<MarginType>)sender;
         }
 
         private ObservableCollection<Currency> _currencies = new ObservableCollection<Currency>();
@@ -199,15 +198,6 @@ namespace ktradesystem.ViewModels
                         intervalName = interval.Name;
                     }
                 }
-                //определяет название инструмента
-                string instrumentName = "";
-                foreach (Instrument instrument in Instruments)
-                {
-                    if (instrument.Id == dsItem.Instrument.Id)
-                    {
-                        instrumentName = instrument.Name;
-                    }
-                }
                 //формирует комиссию с типом комиссии
                 string comission = "";
                 if(dsItem.Comissiontype.Id == 1)
@@ -227,28 +217,8 @@ namespace ktradesystem.ViewModels
                     files.Add(dataSourceFile.Path);
                 }
 
-                DataSourceView dsView = new DataSourceView { Id = dsItem.Id, Name = dsItem.Name, Currency = currencyName, Interval = intervalName, Instrument = instrumentName, Cost = dsItem.Cost, Comissiontype = dsItem.Comissiontype, Comission = dsItem.Comission, ComissionView = comission, PriceStep = dsItem.PriceStep, CostPriceStep = dsItem.CostPriceStep, DatePeriod = datePeriod, Files = files };
+                DataSourceView dsView = new DataSourceView { Id = dsItem.Id, Name = dsItem.Name, Currency = currencyName, MinLotCount = dsItem.MinLotCount, Interval = intervalName, MarginType = MarginTypes.Where(a => a.Id == dsItem.MarginType.Id).First(), MarginCost = dsItem.MarginCost, Comissiontype = dsItem.Comissiontype, Comission = dsItem.Comission, ComissionView = comission, PriceStep = dsItem.PriceStep, CostPriceStep = dsItem.CostPriceStep, DatePeriod = datePeriod, Files = files };
                 DataSourcesView.Add(dsView);
-            }
-        }
-
-        private ObservableCollection<string> _instrumentsView = new ObservableCollection<string>(); //инструменты в удобном для представления виде
-        public ObservableCollection<string> InstrumentsView
-        {
-            get { return _instrumentsView; }
-            private set
-            {
-                _instrumentsView = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private void CreateInstrumentsView() //создает InstrumentsView на основе Instruments
-        {
-            InstrumentsView.Clear();
-            foreach(Instrument instrument in Instruments)
-            {
-                InstrumentsView.Add(instrument.Name);
             }
         }
 
@@ -320,8 +290,19 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    Comissiontype1 = true;
-                    Comissiontype2 = false;
+                    IsAddDataSource = true;
+                    AddDsName = "";
+                    AddDsMarginType = null;
+                    AddDsCurrency = "";
+                    AddDsComissiontype = "";
+                    AddDsMarginCost = "";
+                    AddDsMinLotCount = "";
+                    AddDsMinLotMarginPrcentCost = "";
+
+                    AddDsComission = "";
+                    AddDsPriceStep = "";
+                    AddDsCostPriceStep = "";
+                    AddDataSourceFolder = "";
 
                     ViewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
                     ViewAddDataSource viewAddDataSource = new ViewAddDataSource();
@@ -336,23 +317,15 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
+                    IsAddDataSource = false;
                     EditDsId = SelectedDataSource.Id;
                     AddDsName = SelectedDataSource.Name;
-                    AddDsInstrument = SelectedDataSource.Instrument;
+                    AddDsMarginType = SelectedDataSource.MarginType;
                     AddDsCurrency = SelectedDataSource.Currency;
                     AddDsComissiontype = SelectedDataSource.Comissiontype.Name;
-                    AddDsCost = SelectedDataSource.Cost.ToString();
-                    //выставляем radiobuttons
-                    if(SelectedDataSource.Comissiontype.Id == 1)
-                    {
-                        Comissiontype1 = true;
-                        Comissiontype2 = false;
-                    }
-                    else
-                    {
-                        Comissiontype1 = false;
-                        Comissiontype2 = true;
-                    }
+                    AddDsMarginCost = SelectedDataSource.MarginCost.ToString();
+                    AddDsMinLotCount = SelectedDataSource.MinLotCount.ToString();
+                    AddDsMinLotMarginPrcentCost = SelectedDataSource.MinLotMarginPrcentCost.ToString();
 
                     AddDsComission = SelectedDataSource.Comission.ToString();
                     AddDsPriceStep = SelectedDataSource.PriceStep.ToString();
@@ -385,9 +358,9 @@ namespace ktradesystem.ViewModels
                     }
 
                     ViewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
-                    ViewEditDataSource viewEditDataSource = new ViewEditDataSource();
-                    viewEditDataSource.Show();
-                    
+                    ViewAddDataSource viewAddDataSource = new ViewAddDataSource();
+                    viewAddDataSource.Show();
+
                 }, (obj) => SelectedDataSource != null );
             }
         }
@@ -412,6 +385,41 @@ namespace ktradesystem.ViewModels
         }
 
         #region add datasource
+
+        private bool _isAddDataSource;
+        public bool IsAddDataSource //добавляется источник данных или редактируется
+        {
+            get { return _isAddDataSource; }
+            private set
+            {
+                _isAddDataSource = value;
+                AddDataSourceButtonContent = value ? "Добавить'" : "Сохранить'";
+                AddDataSourceWindowName = value ? "Добавление источника данных'" : "Редактирование источника данных'";
+                OnPropertyChanged();
+            }
+        }
+
+        private string _addDataSourceButtonContent;
+        public string AddDataSourceButtonContent //текст кнопки добавить
+        {
+            get { return _addDataSourceButtonContent; }
+            private set
+            {
+                _addDataSourceButtonContent = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _addDataSourceWindowName;
+        public string AddDataSourceWindowName //название окна
+        {
+            get { return _addDataSourceWindowName; }
+            private set
+            {
+                _addDataSourceWindowName = value;
+                OnPropertyChanged();
+            }
+        }
 
         private string _addDataSourceFolder;
         public string AddDataSourceFolder
@@ -467,37 +475,45 @@ namespace ktradesystem.ViewModels
 
         public int EditDsId { get; set; }
         public string AddDsName{ get; set; }
-        public string AddDsInstrument { get; set; }
+        private MarginType _addDsMarginType;
+        public MarginType AddDsMarginType
+        {
+            get { return _addDsMarginType; }
+            private set
+            {
+                _addDsMarginType = value;
+                OnPropertyChanged();
+            }
+        }
         public string AddDsCurrency { get; set; }
         public string AddDsComissiontype { get; set; }
         private string _addDsCost;
-        public string AddDsCost
+        public string AddDsMarginCost
         {
             get { return _addDsCost; }
             set
             {
                 _addDsCost = value.Replace('.', ',');
-            }
-        }
-
-        private bool _comissiontype1;
-        public bool Comissiontype1 //выбран тип комиссии 1
-        {
-            get { return _comissiontype1; }
-            set
-            {
-                _comissiontype1 = value;
                 OnPropertyChanged();
             }
         }
-
-        private bool _comissiontype2;
-        public bool Comissiontype2 //выбран тип комиссии 2
+        private string _addDsMinLotCount;
+        public string AddDsMinLotCount
         {
-            get { return _comissiontype2; }
+            get { return _addDsMinLotCount; }
             set
             {
-                _comissiontype2 = value;
+                _addDsMinLotCount = value;
+                OnPropertyChanged();
+            }
+        }
+        private string _addDsMinLotMarginPrcentCost;
+        public string AddDsMinLotMarginPrcentCost
+        {
+            get { return _addDsMinLotMarginPrcentCost; }
+            set
+            {
+                _addDsMinLotMarginPrcentCost = value;
                 OnPropertyChanged();
             }
         }
@@ -665,7 +681,7 @@ namespace ktradesystem.ViewModels
             TooltipAddAddDataSource.Clear(); //очищаем подсказку кнопки добавить
 
             //проверка на пустые поля
-            if (String.IsNullOrEmpty(AddDsName) || (String.IsNullOrEmpty(AddDsCost) && AddDsInstrument == InstrumentsView[1]) || String.IsNullOrEmpty(AddDsComission) || String.IsNullOrEmpty(AddDsPriceStep) || String.IsNullOrEmpty(AddDsCostPriceStep) || FilesSelected.Count == 0)
+            if (String.IsNullOrEmpty(AddDsName) || String.IsNullOrEmpty(AddDsMinLotCount) || (String.IsNullOrEmpty(AddDsMarginCost) && AddDsMarginType.Id == 2) || String.IsNullOrEmpty(AddDsComission) || String.IsNullOrEmpty(AddDsPriceStep) || String.IsNullOrEmpty(AddDsCostPriceStep) || FilesSelected.Count == 0)
             {
                 result = false;
                 TooltipAddAddDataSource.Add("Не заполнены все поля или не выбраны файлы с котировками.");
@@ -673,11 +689,22 @@ namespace ktradesystem.ViewModels
 
             //проверка на уникальность названия
             bool isUnique = true;
+            
             foreach(DataSource itemDs in DataSourcesForSubscribers)
             {
-                if(AddDsName == itemDs.Name)
+                if (IsAddDataSource)
                 {
-                    isUnique = false;
+                    if (AddDsName == itemDs.Name)
+                    {
+                        isUnique = false;
+                    }
+                }
+                else
+                {
+                    if (AddDsName == itemDs.Name && itemDs.Id != EditDsId) //проверяем имя на уникальность среди всех записей кроме редактируемой
+                    {
+                        isUnique = false;
+                    }
                 }
             }
             if(isUnique == false)
@@ -686,11 +713,25 @@ namespace ktradesystem.ViewModels
                 TooltipAddAddDataSource.Add("Данное название уже используется.");
             }
 
-            //проверка на возможность конвертации AddDsCost в число с плавающей точкой
-            if(double.TryParse(AddDsCost, out double res) == false && AddDsInstrument == InstrumentsView[1])
+            //проверка на возможность конвертации AddDsMarginCost в число с плавающей точкой
+            if(double.TryParse(AddDsMarginCost, out double res) == false && AddDsMarginType.Id == 2)
             {
                 result = false;
                 TooltipAddAddDataSource.Add("Стоимость фьючерсного контракта должна быть числом.");
+            }
+
+            //проверка на возможность конвертации AddDsMinLotCount в число с плавающей точкой
+            if (double.TryParse(AddDsMinLotCount, out res) == false)
+            {
+                result = false;
+                TooltipAddAddDataSource.Add("Минимальное количество лотов должно быть числом.");
+            }
+
+            //проверка на возможность конвертации AddDsMinLotMarginPrcentCost в число с плавающей точкой
+            if (double.TryParse(AddDsMinLotMarginPrcentCost, out res) == false)
+            {
+                result = false;
+                TooltipAddAddDataSource.Add("Стоимость минимального количества лотов относительно маржи, в % должна быть числом.");
             }
 
             //проверка на возможность конвертации AddDsComission в число с плавающей точкой
@@ -730,15 +771,6 @@ namespace ktradesystem.ViewModels
                         DataSourceFile dataSourceFile = new DataSourceFile { Path = AddDataSourceFolder + "\\" + item };
                         dataSourceFiles.Add(dataSourceFile);
                     }
-                    //формирует addInstrument
-                    Instrument addInstrument = null;
-                    foreach (Instrument instrument in Instruments)
-                    {
-                        if (instrument.Name == AddDsInstrument)
-                        {
-                            addInstrument = instrument;
-                        }
-                    }
                     //формирует addCurrency
                     Currency addCurrency = null;
                     foreach (Currency currency in Currencies)
@@ -758,142 +790,24 @@ namespace ktradesystem.ViewModels
                         }
                     }
                     //формирует стоимость
-                    double cost = AddDsInstrument == InstrumentsView[1] ? double.Parse(AddDsCost) : 0;
+                    double marginCost = AddDsMarginType.Id == 2 ? double.Parse(AddDsMarginCost) : 0;
 
                     //показываем statusBarDataSource
                     ViewmodelData.StatusBarDataSourceShow();
 
-                    //запускаем добавление в отдельном потоке чтобы форма обновлялась
-                    Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, addInstrument, addCurrency, cost, addComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles));
+                    if (IsAddDataSource)
+                    {
+                        //запускаем добавление в отдельном потоке чтобы форма обновлялась
+                        Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, AddDsMarginType, addCurrency, marginCost, double.Parse(AddDsMinLotCount), double.Parse(AddDsMinLotMarginPrcentCost), addComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles));
+                    }
+                    else
+                    {
+                        //запускаем редактирование в отдельном потоке чтобы форма обновлялась
+                        Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, AddDsMarginType, addCurrency, marginCost, double.Parse(AddDsMinLotCount), double.Parse(AddDsMinLotMarginPrcentCost), addComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles, EditDsId));
+                    }
 
                     CloseAddDataSourceAction?.Invoke();
                 }, (obj) => IsFieldsAddDataSourceCurrect());
-            }
-        }
-        #endregion
-
-        #region edit datasource
-
-        private ObservableCollection<string> _tooltipSaveEditDataSource = new ObservableCollection<string>();
-        public ObservableCollection<string> TooltipSaveEditDataSource
-        {
-            get { return _tooltipSaveEditDataSource; }
-            set
-            {
-                _tooltipSaveEditDataSource = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private bool IsFieldsEditDataSourceCurrect()
-        {
-            bool result = true;
-            TooltipSaveEditDataSource.Clear(); //очищаем подсказку кнопки сохранить
-
-            //проверка на пустые поля
-            if (String.IsNullOrEmpty(AddDsName) || (String.IsNullOrEmpty(AddDsCost) && AddDsInstrument == InstrumentsView[1]) || String.IsNullOrEmpty(AddDsComission) || String.IsNullOrEmpty(AddDsPriceStep) || String.IsNullOrEmpty(AddDsCostPriceStep) || FilesSelected.Count == 0)
-            {
-                result = false;
-                TooltipSaveEditDataSource.Add("Не заполнены все поля или не выбраны файлы с котировками.");
-            }
-
-            //проверка на уникальность названия
-            bool isUnique = true;
-            foreach (DataSource itemDs in DataSourcesForSubscribers)
-            {
-                if (AddDsName == itemDs.Name && itemDs.Id != EditDsId) //проверяем имя на уникальность среди всех записей кроме редактируемой
-                {
-                    isUnique = false;
-                }
-            }
-            if (isUnique == false)
-            {
-                result = false;
-                TooltipSaveEditDataSource.Add("Данное название уже используется.");
-            }
-
-            //проверка на возможность конвертации AddDsCost в число с плавающей точкой
-            if (double.TryParse(AddDsCost, out double res) == false && AddDsInstrument == InstrumentsView[1])
-            {
-                result = false;
-                TooltipSaveEditDataSource.Add("Стоимость фьючерсного контракта должна быть числом.");
-            }
-
-            //проверка на возможность конвертации AddDsComission в число с плавающей точкой
-            if (double.TryParse(AddDsComission, out res) == false)
-            {
-                result = false;
-                TooltipSaveEditDataSource.Add("Комиссия за одну операцию должна быть числом.");
-            }
-
-            //проверка на возможность конвертации AddDsPriceStep в число с плавающей точкой
-            if (double.TryParse(AddDsPriceStep, out res) == false)
-            {
-                result = false;
-                TooltipSaveEditDataSource.Add("Шаг одного пункта цены должен быть числом.");
-            }
-
-            //проверка на возможность конвертации AddDsCostPriceStep в число с плавающей точкой
-            if (double.TryParse(AddDsCostPriceStep, out res) == false)
-            {
-                result = false;
-                TooltipSaveEditDataSource.Add("Стоимость одного пункта цены должна быть числом.");
-            }
-
-            return result;
-        }
-
-        public ICommand SaveEditDataSource_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    //формирует список с файлами
-                    List<DataSourceFile> dataSourceFiles = new List<DataSourceFile>();
-                    foreach (string item in FilesSelected)
-                    {
-                        DataSourceFile dataSourceFile = new DataSourceFile { Path = AddDataSourceFolder + "\\" + item };
-                        dataSourceFiles.Add(dataSourceFile);
-                    }
-                    //формирует addInstrument
-                    Instrument addInstrument = null;
-                    foreach (Instrument instrument in Instruments)
-                    {
-                        if (instrument.Name == AddDsInstrument)
-                        {
-                            addInstrument = instrument;
-                        }
-                    }
-                    //формирует addCurrency
-                    Currency addCurrency = null;
-                    foreach (Currency currency in Currencies)
-                    {
-                        if (currency.Name == AddDsCurrency)
-                        {
-                            addCurrency = currency;
-                        }
-                    }
-                    //форимрует addComissiontype
-                    Comissiontype addComissiontype = null;
-                    foreach (Comissiontype comissiontype in Comissiontypes)
-                    {
-                        if (comissiontype.Name == AddDsComissiontype)
-                        {
-                            addComissiontype = comissiontype;
-                        }
-                    }
-                    //формирует стоимость
-                    double cost = AddDsInstrument == InstrumentsView[1] ? double.Parse(AddDsCost) : 0;
-
-                    //показываем statusBarDataSource
-                    ViewmodelData.StatusBarDataSourceShow();
-
-                    //запускаем добавление в отдельном потоке чтобы форма обновлялась
-                    Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, addInstrument, addCurrency, cost, addComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles, EditDsId));
-
-                    CloseAddDataSourceAction?.Invoke();
-                }, (obj) => IsFieldsEditDataSourceCurrect());
             }
         }
         #endregion

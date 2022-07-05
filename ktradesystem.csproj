@@ -124,6 +124,7 @@
     <Compile Include="Models\DataSourceCandles.cs" />
     <Compile Include="Models\DataSourceForCalculate.cs" />
     <Compile Include="Models\Datatables\AlgorithmIndicator.cs" />
+    <Compile Include="Models\Datatables\MarginType.cs" />
     <Compile Include="Models\Datatables\ParameterValueType.cs" />
     <Compile Include="Models\DateTimeDuration.cs" />
     <Compile Include="Models\Deal.cs" />
@@ -277,9 +278,6 @@
     <Compile Include="Views\ViewEditAlgorithmIndicator.xaml.cs">
       <DependentUpon>ViewEditAlgorithmIndicator.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\ViewEditDataSource.xaml.cs">
-      <DependentUpon>ViewEditDataSource.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Views\ViewEditDataSourceTemplate.xaml.cs">
       <DependentUpon>ViewEditDataSourceTemplate.xaml</DependentUpon>
     </Compile>
@@ -295,7 +293,6 @@
     <Compile Include="Models\Datatables\Currency.cs" />
     <Compile Include="Models\Datatables\DataSource.cs" />
     <Compile Include="Models\Datatables\Indicator.cs" />
-    <Compile Include="Models\Datatables\Instrument.cs" />
     <Compile Include="Models\Datatables\Interval.cs" />
     <Compile Include="Models\Datatables\Setting.cs" />
     <Compile Include="CommunicationChannel\Message.cs" />
@@ -423,10 +420,6 @@
     <Page Include="Views\ViewEditAlgorithmIndicator.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\ViewEditDataSource.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\ViewEditDataSourceTemplate.xaml">
       <SubType>Designer</SubType>

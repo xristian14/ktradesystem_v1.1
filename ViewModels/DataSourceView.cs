@@ -11,10 +11,12 @@ namespace ktradesystem.ViewModels
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public string Instrument { get; set; } //тип инстрмента: фьючерс, акция
+        public MarginType MarginType { get; set; }
         public string Interval { get; set; } //временной интервал
         public string Currency { get; set; } //валюта
-        public double Cost { get; set; } //стоимость 1 фьючерса (для акций стоимость берется с графика)
+        public double MarginCost { get; set; } //стоимость маржи
+        public double MinLotCount { get; set; } //минимальное количество лотов
+        public double MinLotMarginPrcentCost { get; set; } //стоимость минимального количества лотов относительно маржи, в процентах
         public Comissiontype Comissiontype { get; set; } //тип комисси (денежный, процентный)
         public double Comission { get; set; } //комиссия на одну операцию, куплю или продажу
         public string ComissionView { get; set; } //комиссия с типом комиссии для показа пользователю

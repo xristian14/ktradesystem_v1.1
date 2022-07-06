@@ -362,6 +362,7 @@ namespace ktradesystem.Models
                 ds.Comission = row.Field<double>("comission");
                 ds.PriceStep = row.Field<double>("priceStep");
                 ds.CostPriceStep = row.Field<double>("costPriceStep");
+                ds.PointsSlippage = (int)row.Field<long>("pointsSlippage");
                 ds.StartDate = DateTime.Parse(row.Field<string>("startDate"));
                 ds.EndDate = DateTime.Parse(row.Field<string>("endDate"));
 
@@ -430,6 +431,7 @@ namespace ktradesystem.Models
                 ds.Comission = row.Field<double>("comission");
                 ds.PriceStep = row.Field<double>("priceStep");
                 ds.CostPriceStep = row.Field<double>("costPriceStep");
+                ds.PointsSlippage = (int)row.Field<long>("pointsSlippage");
                 ds.StartDate = DateTime.Parse(row.Field<string>("startDate"));
                 ds.EndDate = DateTime.Parse(row.Field<string>("endDate"));
 

@@ -206,7 +206,7 @@ namespace ktradesystem.ViewModels
                     files.Add(dataSourceFile.Path);
                 }
 
-                DataSourceView dsView = new DataSourceView { Id = dsItem.Id, Name = dsItem.Name, Currency = dsItem.Currency, MarginCost = dsItem.MarginCost, MinLotCount = dsItem.MinLotCount, MinLotMarginPartCost = (decimal)dsItem.MinLotMarginPartCost, Interval = intervalName, MarginType = MarginTypes.Where(a => a.Id == dsItem.MarginType.Id).First(), Comissiontype = dsItem.Comissiontype, Comission = (decimal)dsItem.Comission, ComissionView = comission, PriceStep = (decimal)dsItem.PriceStep, CostPriceStep = (decimal)dsItem.CostPriceStep, DatePeriod = datePeriod, Files = files };
+                DataSourceView dsView = new DataSourceView { Id = dsItem.Id, Name = dsItem.Name, Currency = dsItem.Currency, MarginCost = dsItem.MarginCost, MinLotCount = dsItem.MinLotCount, MinLotMarginPartCost = (decimal)dsItem.MinLotMarginPartCost, Interval = intervalName, MarginType = MarginTypes.Where(a => a.Id == dsItem.MarginType.Id).First(), Comissiontype = dsItem.Comissiontype, Comission = (decimal)dsItem.Comission, ComissionView = comission, PriceStep = (decimal)dsItem.PriceStep, CostPriceStep = (decimal)dsItem.CostPriceStep, PointsSlippage = dsItem.PointsSlippage, DatePeriod = datePeriod, Files = files };
                 DataSourcesView.Add(dsView);
             }
         }
@@ -251,6 +251,7 @@ namespace ktradesystem.ViewModels
                     AddDsComission = "";
                     AddDsPriceStep = "";
                     AddDsCostPriceStep = "";
+                    AddDsPointsSlippage = "";
                     AddDataSourceFolder = "";
 
                     ViewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
@@ -279,6 +280,7 @@ namespace ktradesystem.ViewModels
                     AddDsComission = SelectedDataSource.Comission.ToString();
                     AddDsPriceStep = SelectedDataSource.PriceStep.ToString();
                     AddDsCostPriceStep = SelectedDataSource.CostPriceStep.ToString();
+                    AddDsPointsSlippage = SelectedDataSource.PointsSlippage.ToString();
                     AddDataSourceFolder = SelectedDataSource.Files[0].Substring(0, SelectedDataSource.Files[0].LastIndexOf('\\'));
                     if (Directory.Exists(AddDataSourceFolder)) //если директория существует, добавляем файлы из нее
                     {
@@ -512,6 +514,15 @@ namespace ktradesystem.ViewModels
                 _addDsCostPriceStep = value;
             }
         }
+        private string _addDsPointsSlippage;
+        public string AddDsPointsSlippage
+        {
+            get { return _addDsPointsSlippage; }
+            set
+            {
+                _addDsPointsSlippage = value;
+            }
+        }
 
         public void AddDataSource_Closing(object sender, CancelEventArgs e)
         {
@@ -653,7 +664,7 @@ namespace ktradesystem.ViewModels
                 marginTypeId = AddDsMarginType.Id;
             }
             //проверка на пустые поля
-            if (String.IsNullOrEmpty(AddDsName) || AddDsMarginType == null || AddDsCurrency == null || (String.IsNullOrEmpty(AddDsMarginCost) && marginTypeId == 2) || String.IsNullOrEmpty(AddDsMinLotCount) || String.IsNullOrEmpty(AddDsMinLotMarginPartCost) || AddDsComissiontype == null || String.IsNullOrEmpty(AddDsComission) || String.IsNullOrEmpty(AddDsPriceStep) || String.IsNullOrEmpty(AddDsCostPriceStep) || FilesSelected.Count == 0)
+            if (String.IsNullOrEmpty(AddDsName) || AddDsMarginType == null || AddDsCurrency == null || (String.IsNullOrEmpty(AddDsMarginCost) && marginTypeId == 2) || String.IsNullOrEmpty(AddDsMinLotCount) || String.IsNullOrEmpty(AddDsMinLotMarginPartCost) || AddDsComissiontype == null || String.IsNullOrEmpty(AddDsComission) || String.IsNullOrEmpty(AddDsPriceStep) || String.IsNullOrEmpty(AddDsCostPriceStep) || String.IsNullOrEmpty(AddDsPointsSlippage) || FilesSelected.Count == 0)
             {
                 result = false;
                 TooltipAddAddDataSource.Add("Не заполнены все поля или не выбраны файлы с котировками.");
@@ -727,6 +738,13 @@ namespace ktradesystem.ViewModels
                 TooltipAddAddDataSource.Add("Стоимость одного пункта цены должна быть числом.");
             }
 
+            //проверка на возможность конвертации AddDsPointsSlippage в целое число
+            if (int.TryParse(AddDsPointsSlippage, out int res3) == false)
+            {
+                result = false;
+                TooltipAddAddDataSource.Add("Базовое поскальзывание в пунктах должно быть целым числом.");
+            }
+
             return result;
         }
 
@@ -752,12 +770,12 @@ namespace ktradesystem.ViewModels
                     if (IsAddDataSource)
                     {
                         //запускаем добавление в отдельном потоке чтобы форма обновлялась
-                        Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, AddDsMarginType, AddDsCurrency, marginCost, decimal.Parse(AddDsMinLotCount), double.Parse(AddDsMinLotMarginPartCost), AddDsComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles));
+                        Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, AddDsMarginType, AddDsCurrency, marginCost, decimal.Parse(AddDsMinLotCount), double.Parse(AddDsMinLotMarginPartCost), AddDsComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), int.Parse(AddDsPointsSlippage), dataSourceFiles));
                     }
                     else
                     {
                         //запускаем редактирование в отдельном потоке чтобы форма обновлялась
-                        Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, AddDsMarginType, AddDsCurrency, marginCost, decimal.Parse(AddDsMinLotCount), double.Parse(AddDsMinLotMarginPartCost), AddDsComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles, EditDsId));
+                        Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, AddDsMarginType, AddDsCurrency, marginCost, decimal.Parse(AddDsMinLotCount), double.Parse(AddDsMinLotMarginPartCost), AddDsComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), int.Parse(AddDsPointsSlippage), dataSourceFiles, EditDsId));
                     }
 
                     CloseAddDataSourceAction?.Invoke();

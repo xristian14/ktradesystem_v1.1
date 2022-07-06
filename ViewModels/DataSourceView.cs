@@ -22,6 +22,7 @@ namespace ktradesystem.ViewModels
         public string ComissionView { get; set; } //комиссия с типом комиссии для показа пользователю
         public decimal PriceStep { get; set; } //шаг цены для 1 пункта
         public decimal CostPriceStep { get; set; } //стоимость шага цены в 1 пункт
+        public int PointsSlippage { get; set; } //проскальзывание в пунктах
         public string DatePeriod { get; set; }
         public List<string> Files { get; set; } //пути к файлам источника данных
     }

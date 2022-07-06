@@ -2101,7 +2101,7 @@ namespace ktradesystem.Models
                                 dataSourcesCandlesIndex = i;
                             }
                         }
-                        int slippage = gaps[dataSourcesCandlesIndex] ? 0 : _modelData.Settings.Where(i => i.Id == 3).First().IntValue; //если текущая свечка - гэп, убираем базовое проскальзывание, и оставляем только вычисляемое, чтобы цена исполнения заявки была по худщей цене в свечке, и если объем большой то и проскальзывание было
+                        int slippage = gaps[dataSourcesCandlesIndex] ? 0 : dataSourcesCandles[dataSourcesCandlesIndex].DataSource.PointsSlippage; //если текущая свечка - гэп, убираем базовое проскальзывание, и оставляем только вычисляемое, чтобы цена исполнения заявки была по худщей цене в свечке, и если объем большой то и проскальзывание было
                         slippage += Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //добавляем проскальзывание
                         slippage = order.Direction == true ? slippage : -slippage; //для покупки проскальзывание идет вверх, для продажи вниз
                         double dealPrice = dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].C;
@@ -2152,7 +2152,7 @@ namespace ktradesystem.Models
                         bool isStopExecute = (order.Direction == true && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H >= order.Price) || (order.Direction == false && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L <= order.Price); //заявка на покупку, и верхняя цена выше цены заявки или заявка на продажу, и нижняя цена ниже цены заявки
                         if (isStopExecute)
                         {
-                            int slippage = gaps[dataSourcesCandlesIndex] ? 0 : _modelData.Settings.Where(i => i.Id == 3).First().IntValue; //если текущая свечка - гэп, убираем базовое проскальзывание, и оставляем только вычисляемое, чтобы цена исполнения заявки была по худщей цене в свечке, и если объем большой то и проскальзывание было
+                            int slippage = gaps[dataSourcesCandlesIndex] ? 0 : dataSourcesCandles[dataSourcesCandlesIndex].DataSource.PointsSlippage; //если текущая свечка - гэп, убираем базовое проскальзывание, и оставляем только вычисляемое, чтобы цена исполнения заявки была по худщей цене в свечке, и если объем большой то и проскальзывание было
                             slippage += Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //добавляем проскальзывание
                             slippage = order.Direction == true ? slippage : -slippage; //для покупки проскальзывание идет вверх, для продажи вниз
                             double dealPrice = order.Price;

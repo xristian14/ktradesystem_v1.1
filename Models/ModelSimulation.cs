@@ -378,7 +378,7 @@ namespace ktradesystem.Models
                         order.IdDataSource = order.DataSource.Id;
                         order.Price = price;
                         order.Count = count;
-                        order.StartCount = orderCount;
+                        order.StartCount = count;
 
                         return order;
                     }
@@ -1888,7 +1888,7 @@ namespace ktradesystem.Models
                             dataSourcesForCalculate[i].IndicatorsValues = indicatorsValues[i];
                             dataSourcesForCalculate[i].PriceStep = dataSourceCandles[i].DataSource.PriceStep;
                             dataSourcesForCalculate[i].CostPriceStep = dataSourceCandles[i].DataSource.CostPriceStep;
-                            dataSourcesForCalculate[i].MinLotsCost = dataSourceCandles[i].DataSource.MarginType.Id == 2 ? dataSourceCandles[i].DataSource.MarginCost * (dataSourceCandles[i].DataSource.MinLotMarginPrcentCost / 100) : dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].C * (dataSourceCandles[i].DataSource.MinLotMarginPrcentCost / 100);
+                            dataSourcesForCalculate[i].MinLotsCost = dataSourceCandles[i].DataSource.MarginType.Id == 2 ? dataSourceCandles[i].DataSource.MarginCost * dataSourceCandles[i].DataSource.MinLotMarginPartCost : dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].C * dataSourceCandles[i].DataSource.MinLotMarginPartCost;
                             dataSourcesForCalculate[i].Price = averagePricePosition;
                             dataSourcesForCalculate[i].CountBuy = isBuyDirection ? volumePosition : 0;
                             dataSourcesForCalculate[i].CountSell = isBuyDirection ? 0 : volumePosition;
@@ -2247,7 +2247,7 @@ namespace ktradesystem.Models
             bool isMakeADeal = false; //была ли совершена сделка
             //определяем хватает ли средств на минимальное количество лотов, если да, определяем хватает ли средств на lotsCount, если нет устанавливаем минимально доступное количество
             //стоимость минимального количества лотов
-            double minLotsCost = order.DataSource.MarginType.Id == 2 ? order.DataSource.MarginCost * (order.DataSource.MinLotMarginPrcentCost / 100) : price * (order.DataSource.MinLotMarginPrcentCost / 100); //для фиксированной маржи, устанавливаем фиксированную маржу источника данных, помноженную на процент стоимости минимального количества лотов относительно маржи, для маржи с графика, устанавливаем стоимость с график, помноженную на процент стоимости минимального количества лотов относительно маржи
+            double minLotsCost = order.DataSource.MarginType.Id == 2 ? order.DataSource.MarginCost * order.DataSource.MinLotMarginPartCost : price * order.DataSource.MinLotMarginPartCost; //для фиксированной маржи, устанавливаем фиксированную маржу источника данных, помноженную на часть стоимости минимального количества лотов относительно маржи, для маржи с графика, устанавливаем стоимость с график, помноженную на часть стоимости минимального количества лотов относительно маржи
             double minLotsComission = order.DataSource.Comissiontype.Id == 2 ? minLotsCost * (order.DataSource.Comission / 100) : order.DataSource.Comission; //комиссия на минимальное количество лотов
             double freeDeposit = account.FreeForwardDepositCurrencies.Where(i => i.Currency == order.DataSource.Currency).First().Deposit; //свободный остаток в валюте источника данных
             double takenDeposit = account.TakenForwardDepositCurrencies.Where(i => i.Currency == order.DataSource.Currency).First().Deposit; //занятые средства на открытые позиции в валюте источника данных
@@ -2304,7 +2304,7 @@ namespace ktradesystem.Models
                         double resultMoney = (double)((decimal)(priceSell - priceBuy) / (decimal)account.CurrentPosition[i].DataSource.PriceStep * (decimal)account.CurrentPosition[i].DataSource.CostPriceStep * (decrementCount / account.CurrentPosition[i].DataSource.MinLotCount)); //количество пунктов трейда * стоимость 1 пункта * количество минимального количества лотов
                         freeDeposit += resultMoney;
                         //определяем стоимость закрытых лотов в открытой позиции, вычитаем её из занятых средств и прибавляем к свободным
-                        double closedCost = account.CurrentPosition[i].Order.DataSource.MarginType.Id == 2 ? account.CurrentPosition[i].Order.DataSource.MarginCost * (order.DataSource.MinLotMarginPrcentCost / 100) : account.CurrentPosition[i].Price * (order.DataSource.MinLotMarginPrcentCost / 100);
+                        double closedCost = account.CurrentPosition[i].Order.DataSource.MarginType.Id == 2 ? account.CurrentPosition[i].Order.DataSource.MarginCost * order.DataSource.MinLotMarginPartCost : account.CurrentPosition[i].Price * order.DataSource.MinLotMarginPartCost;
                         closedCost = (double)((decimal)closedCost * decrementCount); //умножаем стоимость на количество
                         takenDeposit -= closedCost; //вычитаем из занятых на открытые позиции средств
                         freeDeposit += closedCost; //прибавляем к свободным средствам
@@ -2315,7 +2315,7 @@ namespace ktradesystem.Models
                     i++;
                 }
                 //определяем стоимость занятых средств на оставшееся (незакрытое) количество лотов текущей сделки, вычитаем её из сободных средств и добавляем к занятым
-                double currentCost = currentDeal.DataSource.MarginType.Id == 2 ? currentDeal.DataSource.MarginCost * (order.DataSource.MinLotMarginPrcentCost / 100) : currentDeal.Price * (order.DataSource.MinLotMarginPrcentCost / 100);
+                double currentCost = currentDeal.DataSource.MarginType.Id == 2 ? currentDeal.DataSource.MarginCost * order.DataSource.MinLotMarginPartCost : currentDeal.Price * order.DataSource.MinLotMarginPartCost;
                 currentCost = (double)((decimal)currentCost * (currentDeal.Count / order.DataSource.MinLotCount)); //умножаем стоимость на количество
                 freeDeposit -= currentCost; //вычитаем из свободных средств
                 takenDeposit += currentCost; //добавляем к занятым на открытые позиции средствам

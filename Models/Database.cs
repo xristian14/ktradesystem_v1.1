@@ -108,10 +108,10 @@ namespace ktradesystem.Models
             return data;
         }
 
-        public void InsertDataSource(string name, MarginType marginType, Interval interval, Currency currency, double marginCost, decimal minLotCount, double minLotMarginPrcentCost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, DateTime startDate, DateTime endDate)
+        public void InsertDataSource(string name, MarginType marginType, Interval interval, Currency currency, double marginCost, decimal minLotCount, double minLotMarginPartCost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, DateTime startDate, DateTime endDate)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            string query = "INSERT INTO Datasources (name, idMarginType, idInterval, idCurrency, marginCost, minLotCount, minLotMarginPrcentCost, idComissiontype, comission, priceStep, costPriceStep, startDate, endDate) VALUES (:name, :idMarginType, :idInterval, :idCurrency, :marginCost, :minLotCount, :minLotMarginPrcentCost, :idComissiontype, :comission, :priceStep, :costPriceStep, :startDate, :endDate)";
+            string query = "INSERT INTO Datasources (name, idMarginType, idInterval, idCurrency, marginCost, minLotCount, minLotMarginPartCost, idComissiontype, comission, priceStep, costPriceStep, startDate, endDate) VALUES (:name, :idMarginType, :idInterval, :idCurrency, :marginCost, :minLotCount, :minLotMarginPartCost, :idComissiontype, :comission, :priceStep, :costPriceStep, :startDate, :endDate)";
             command.CommandText = query;
             command.Parameters.AddWithValue("name", name);
             command.Parameters.AddWithValue("idMarginType", marginType.Id);
@@ -119,7 +119,7 @@ namespace ktradesystem.Models
             command.Parameters.AddWithValue("idCurrency", currency.Id);
             command.Parameters.AddWithValue("marginCost", marginCost);
             command.Parameters.AddWithValue("minLotCount", minLotCount);
-            command.Parameters.AddWithValue("minLotMarginPrcentCost", minLotMarginPrcentCost);
+            command.Parameters.AddWithValue("minLotMarginPartCost", minLotMarginPartCost);
             command.Parameters.AddWithValue("idComissiontype", comissiontype.Id);
             command.Parameters.AddWithValue("comission", comission);
             command.Parameters.AddWithValue("priceStep", priceStep);
@@ -130,10 +130,10 @@ namespace ktradesystem.Models
             command.ExecuteNonQuery();
         }
 
-        public void UpdateDataSource(string name, MarginType marginType, Interval interval, Currency currency, double marginCost, decimal minLotCount, double minLotMarginPrcentCost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, DateTime startDate, DateTime endDate, int id)
+        public void UpdateDataSource(string name, MarginType marginType, Interval interval, Currency currency, double marginCost, decimal minLotCount, double minLotMarginPartCost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, DateTime startDate, DateTime endDate, int id)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
-            string query = "UPDATE Datasources SET name = :name, idMarginType = :idMarginType, idInterval = :idInterval, idCurrency = :idCurrency, marginCost = :marginCost, minLotCount = :minLotCount, minLotMarginPrcentCost = :minLotMarginPrcentCost, idComissiontype = :idComissiontype, comission = :comission, priceStep = :priceStep, costPriceStep = :costPriceStep, startDate = :startDate, endDate = :endDate WHERE id = :id";
+            string query = "UPDATE Datasources SET name = :name, idMarginType = :idMarginType, idInterval = :idInterval, idCurrency = :idCurrency, marginCost = :marginCost, minLotCount = :minLotCount, minLotMarginPartCost = :minLotMarginPartCost, idComissiontype = :idComissiontype, comission = :comission, priceStep = :priceStep, costPriceStep = :costPriceStep, startDate = :startDate, endDate = :endDate WHERE id = :id";
             command.CommandText = query;
             command.Parameters.AddWithValue("name", name);
             command.Parameters.AddWithValue("idMarginType", marginType.Id);
@@ -141,7 +141,7 @@ namespace ktradesystem.Models
             command.Parameters.AddWithValue("idCurrency", currency.Id);
             command.Parameters.AddWithValue("marginCost", marginCost);
             command.Parameters.AddWithValue("minLotCount", minLotCount);
-            command.Parameters.AddWithValue("minLotMarginPrcentCost", minLotMarginPrcentCost);
+            command.Parameters.AddWithValue("minLotMarginPartCost", minLotMarginPartCost);
             command.Parameters.AddWithValue("idComissiontype", comissiontype.Id);
             command.Parameters.AddWithValue("comission", comission);
             command.Parameters.AddWithValue("priceStep", priceStep);

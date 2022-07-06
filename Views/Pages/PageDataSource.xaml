@@ -30,7 +30,7 @@
                         <GridViewColumn DisplayMemberBinding="{Binding MarginType.Name}" Header="Тип маржи" Width="{Binding ElementName=helperDs4, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding MarginCost}" Header="Фиксированная&#x0a;       маржа" Width="{Binding ElementName=helperDs5, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding MinLotCount}" Header="Минимальное&#x0a;кол-во лотов" Width="{Binding ElementName=helperDs6, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding MinLotMarginPrcentCost, StringFormat='\{0\}%'}" Header="Стоимость мин.&#x0a;кол-ва лотов&#x0a;относительно маржи" Width="{Binding ElementName=helperDs7, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding MinLotMarginPartCost}" Header="Стоимость мин.&#x0a;кол-ва лотов&#x0a;относительно маржи" Width="{Binding ElementName=helperDs7, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding ComissionView}" Header="Комиссия за&#x0a;одну операцию" Width="{Binding ElementName=helperDs8, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding PriceStep}" Header="Шаг одного&#x0a;пункта цены" Width="{Binding ElementName=helperDs9, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding CostPriceStep}" Header="Стоимость&#x0a;одного&#x0a;пункта цены" Width="{Binding ElementName=helperDs10, Path=ActualWidth}"/>

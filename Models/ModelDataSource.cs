@@ -48,7 +48,7 @@ namespace ktradesystem.Models
         }
 
         //создание объекта из данных которые набрал пользователь и добавление в DataSources
-        public void CreateDataSourceInsertUpdate(string name, MarginType marginType, Currency currency, double marginCost, decimal minLotCount, double minLotMarginPrcentCost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, List<DataSourceFile> dataSourceFiles, int id = -1) //метод проверяет присланные данные на корректность и вызывает метод добавления записи в бд или обновления существующей записи если был прислан id
+        public void CreateDataSourceInsertUpdate(string name, MarginType marginType, Currency currency, double marginCost, decimal minLotCount, double minLotMarginPartCost, Comissiontype comissiontype, double comission, double priceStep, double costPriceStep, List<DataSourceFile> dataSourceFiles, int id = -1) //метод проверяет присланные данные на корректность и вызывает метод добавления записи в бд или обновления существующей записи если был прислан id
         {
             _cancellationTokenSourceDataSource = new CancellationTokenSource();
             CancellationToken cancellationToken = _cancellationTokenSourceDataSource.Token;
@@ -235,7 +235,7 @@ namespace ktradesystem.Models
                 {
                     if (id == -1)
                     {
-                        _database.InsertDataSource(name, marginType, intervalsInFiles[0], currency, marginCost, minLotCount, minLotMarginPrcentCost, comissiontype, comission, priceStep, costPriceStep, startDate, endDate);
+                        _database.InsertDataSource(name, marginType, intervalsInFiles[0], currency, marginCost, minLotCount, minLotMarginPartCost, comissiontype, comission, priceStep, costPriceStep, startDate, endDate);
                         _modelData.ReadDataSources();
 
                         int a = 1;
@@ -422,7 +422,7 @@ namespace ktradesystem.Models
                         }
 
                         //обновляю DataSource
-                        _database.UpdateDataSource(name, marginType, intervalsInFiles[0], currency, marginCost, minLotCount, minLotMarginPrcentCost, comissiontype, comission, priceStep, costPriceStep, startDate, endDate, id);
+                        _database.UpdateDataSource(name, marginType, intervalsInFiles[0], currency, marginCost, minLotCount, minLotMarginPartCost, comissiontype, comission, priceStep, costPriceStep, startDate, endDate, id);
                     };
 
                     _modelData.ReadDataSources();

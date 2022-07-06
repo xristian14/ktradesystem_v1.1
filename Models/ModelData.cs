@@ -338,7 +338,7 @@ namespace ktradesystem.Models
                         ds.Currency = currency;
                     }
                 }
-                ds.MinLotCount = decimal.Parse(row.Field<string>("minLotCount"));
+                ds.MinLotCount = decimal.Parse(row.Field<string>("minLotCount").Replace('.', ','));
                 int idInterval = (int)row.Field<long>("idInterval");
                 foreach (Interval interval in Intervals)
                 {
@@ -350,7 +350,7 @@ namespace ktradesystem.Models
                 int idMarginType = (int)row.Field<long>("idMarginType");
                 ds.MarginType = MarginTypes.Where(a => a.Id == idMarginType).First();
                 ds.MarginCost = row.Field<double>("marginCost");
-                ds.MinLotMarginPrcentCost = row.Field<double>("minLotMarginPrcentCost");
+                ds.MinLotMarginPartCost = row.Field<double>("minLotMarginPartCost");
                 int idComissiontype = (int)row.Field<long>("idComissiontype");
                 foreach (Comissiontype comissiontype in Comissiontypes)
                 {
@@ -406,7 +406,7 @@ namespace ktradesystem.Models
                     }
                 }
 
-                ds.MinLotCount = decimal.Parse(row.Field<string>("minLotCount"));
+                ds.MinLotCount = decimal.Parse(row.Field<string>("minLotCount").Replace('.', ','));
                 int idInterval = (int)row.Field<long>("idInterval");
                 foreach (Interval interval in Intervals)
                 {
@@ -418,7 +418,7 @@ namespace ktradesystem.Models
                 int idMarginType = (int)row.Field<long>("idMarginType");
                 ds.MarginType = MarginTypes.Where(a => a.Id == idMarginType).First();
                 ds.MarginCost = row.Field<double>("marginCost");
-                ds.MinLotMarginPrcentCost = row.Field<double>("minLotMarginPrcentCost");
+                ds.MinLotMarginPartCost = row.Field<double>("minLotMarginPartCost");
                 int idComissiontype = (int)row.Field<long>("idComissiontype");
                 foreach (Comissiontype comissiontype in Comissiontypes)
                 {

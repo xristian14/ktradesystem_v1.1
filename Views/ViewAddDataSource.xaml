@@ -26,7 +26,7 @@
                 <Label Content="Тип маржи" Height="26"/>
                 <Label Content="Значение фиксированной маржи" Height="26"/>
                 <Label Content="Минимальное количество лотов" Height="26"/>
-                <Label Content="Стоимость минимального количества&#x0a;лотов относительно маржи, в %" Height="42"/>
+                <Label Content="Стоимость минимального количества&#x0a;лотов относительно маржи" Height="42"/>
                 <Label Content="Эквивалент комиссии" Height="26"/>
                 <Label Content="Комиссия на сделку для минимального&#x0a;количества лотов" Height="42"/>
                 <Label Content="Шаг одного пункта цены" Height="26"/>
@@ -38,7 +38,7 @@
                 <ComboBox ItemsSource="{Binding MarginTypes}" DisplayMemberPath="Name" SelectedItem="{Binding AddDsMarginType, Mode=TwoWay}" SelectedIndex="0" Height="22" Margin="0,2,0,2"/>
                 <TextBox Text="{Binding AddDsMarginCost, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
                 <TextBox Text="{Binding AddDsMinLotCount, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>
-                <TextBox Text="{Binding AddDsMinLotMarginPrcentCost, Mode=TwoWay}" Height="20" Margin="0,3,0,19"/>
+                <TextBox Text="{Binding AddDsMinLotMarginPartCost, Mode=TwoWay}" Height="20" Margin="0,3,0,19"/>
                 <ComboBox ItemsSource="{Binding Comissiontypes}" DisplayMemberPath="Name" SelectedItem="{Binding AddDsComissiontype, Mode=TwoWay}" SelectedIndex="0" Height="22" Margin="0,2,0,2"/>
                 <TextBox Text="{Binding AddDsComission, Mode=TwoWay}" Height="20" Margin="0,3,0,19"/>
                 <TextBox Text="{Binding AddDsPriceStep, Mode=TwoWay}" Height="20" Margin="0,3,0,3"/>

@@ -206,7 +206,7 @@ namespace ktradesystem.ViewModels
                     files.Add(dataSourceFile.Path);
                 }
 
-                DataSourceView dsView = new DataSourceView { Id = dsItem.Id, Name = dsItem.Name, Currency = dsItem.Currency, MarginCost = dsItem.MarginCost, MinLotCount = dsItem.MinLotCount, MinLotMarginPrcentCost = dsItem.MinLotMarginPrcentCost, Interval = intervalName, MarginType = MarginTypes.Where(a => a.Id == dsItem.MarginType.Id).First(), Comissiontype = dsItem.Comissiontype, Comission = dsItem.Comission, ComissionView = comission, PriceStep = dsItem.PriceStep, CostPriceStep = dsItem.CostPriceStep, DatePeriod = datePeriod, Files = files };
+                DataSourceView dsView = new DataSourceView { Id = dsItem.Id, Name = dsItem.Name, Currency = dsItem.Currency, MarginCost = dsItem.MarginCost, MinLotCount = dsItem.MinLotCount, MinLotMarginPartCost = (decimal)dsItem.MinLotMarginPartCost, Interval = intervalName, MarginType = MarginTypes.Where(a => a.Id == dsItem.MarginType.Id).First(), Comissiontype = dsItem.Comissiontype, Comission = (decimal)dsItem.Comission, ComissionView = comission, PriceStep = (decimal)dsItem.PriceStep, CostPriceStep = (decimal)dsItem.CostPriceStep, DatePeriod = datePeriod, Files = files };
                 DataSourcesView.Add(dsView);
             }
         }
@@ -246,7 +246,7 @@ namespace ktradesystem.ViewModels
                     AddDsComissiontype = null;
                     AddDsMarginCost = "";
                     AddDsMinLotCount = "";
-                    AddDsMinLotMarginPrcentCost = "";
+                    AddDsMinLotMarginPartCost = "";
 
                     AddDsComission = "";
                     AddDsPriceStep = "";
@@ -274,7 +274,7 @@ namespace ktradesystem.ViewModels
                     AddDsComissiontype = SelectedDataSource.Comissiontype;
                     AddDsMarginCost = SelectedDataSource.MarginCost.ToString();
                     AddDsMinLotCount = SelectedDataSource.MinLotCount.ToString();
-                    AddDsMinLotMarginPrcentCost = SelectedDataSource.MinLotMarginPrcentCost.ToString();
+                    AddDsMinLotMarginPartCost = SelectedDataSource.MinLotMarginPartCost.ToString();
 
                     AddDsComission = SelectedDataSource.Comission.ToString();
                     AddDsPriceStep = SelectedDataSource.PriceStep.ToString();
@@ -460,7 +460,7 @@ namespace ktradesystem.ViewModels
             get { return _addDsCost; }
             set
             {
-                _addDsCost = value.Replace('.', ',');
+                _addDsCost = value;
                 OnPropertyChanged();
             }
         }
@@ -474,13 +474,13 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        private string _addDsMinLotMarginPrcentCost;
-        public string AddDsMinLotMarginPrcentCost
+        private string _addDsMinLotMarginPartCost;
+        public string AddDsMinLotMarginPartCost
         {
-            get { return _addDsMinLotMarginPrcentCost; }
+            get { return _addDsMinLotMarginPartCost; }
             set
             {
-                _addDsMinLotMarginPrcentCost = value;
+                _addDsMinLotMarginPartCost = value;
                 OnPropertyChanged();
             }
         }
@@ -491,7 +491,7 @@ namespace ktradesystem.ViewModels
             get { return _addDsComission; }
             set
             {
-                _addDsComission = value.Replace('.', ',');
+                _addDsComission = value;
             }
         }
         private string _addDsPriceStep;
@@ -500,7 +500,7 @@ namespace ktradesystem.ViewModels
             get { return _addDsPriceStep; }
             set
             {
-                _addDsPriceStep = value.Replace('.', ',');
+                _addDsPriceStep = value;
             }
         }
         private string _addDsCostPriceStep;
@@ -509,7 +509,7 @@ namespace ktradesystem.ViewModels
             get { return _addDsCostPriceStep; }
             set
             {
-                _addDsCostPriceStep = value.Replace('.', ',');
+                _addDsCostPriceStep = value;
             }
         }
 
@@ -653,7 +653,7 @@ namespace ktradesystem.ViewModels
                 marginTypeId = AddDsMarginType.Id;
             }
             //проверка на пустые поля
-            if (String.IsNullOrEmpty(AddDsName) || AddDsMarginType == null || AddDsCurrency == null || (String.IsNullOrEmpty(AddDsMarginCost) && marginTypeId == 2) || String.IsNullOrEmpty(AddDsMinLotCount) || String.IsNullOrEmpty(AddDsMinLotMarginPrcentCost) || AddDsComissiontype == null || String.IsNullOrEmpty(AddDsComission) || String.IsNullOrEmpty(AddDsPriceStep) || String.IsNullOrEmpty(AddDsCostPriceStep) || FilesSelected.Count == 0)
+            if (String.IsNullOrEmpty(AddDsName) || AddDsMarginType == null || AddDsCurrency == null || (String.IsNullOrEmpty(AddDsMarginCost) && marginTypeId == 2) || String.IsNullOrEmpty(AddDsMinLotCount) || String.IsNullOrEmpty(AddDsMinLotMarginPartCost) || AddDsComissiontype == null || String.IsNullOrEmpty(AddDsComission) || String.IsNullOrEmpty(AddDsPriceStep) || String.IsNullOrEmpty(AddDsCostPriceStep) || FilesSelected.Count == 0)
             {
                 result = false;
                 TooltipAddAddDataSource.Add("Не заполнены все поля или не выбраны файлы с котировками.");
@@ -699,11 +699,11 @@ namespace ktradesystem.ViewModels
                 TooltipAddAddDataSource.Add("Минимальное количество лотов должно быть числом.");
             }
 
-            //проверка на возможность конвертации AddDsMinLotMarginPrcentCost в число с плавающей точкой
-            if (double.TryParse(AddDsMinLotMarginPrcentCost, out res) == false)
+            //проверка на возможность конвертации AddDsMinLotMarginPartCost в число с плавающей точкой
+            if (double.TryParse(AddDsMinLotMarginPartCost, out res) == false)
             {
                 result = false;
-                TooltipAddAddDataSource.Add("Стоимость минимального количества лотов относительно маржи, в % должна быть числом.");
+                TooltipAddAddDataSource.Add("Стоимость минимального количества лотов относительно маржи должна быть числом.");
             }
 
             //проверка на возможность конвертации AddDsComission в число с плавающей точкой
@@ -752,12 +752,12 @@ namespace ktradesystem.ViewModels
                     if (IsAddDataSource)
                     {
                         //запускаем добавление в отдельном потоке чтобы форма обновлялась
-                        Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, AddDsMarginType, AddDsCurrency, marginCost, decimal.Parse(AddDsMinLotCount), double.Parse(AddDsMinLotMarginPrcentCost), AddDsComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles));
+                        Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, AddDsMarginType, AddDsCurrency, marginCost, decimal.Parse(AddDsMinLotCount), double.Parse(AddDsMinLotMarginPartCost), AddDsComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles));
                     }
                     else
                     {
                         //запускаем редактирование в отдельном потоке чтобы форма обновлялась
-                        Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, AddDsMarginType, AddDsCurrency, marginCost, decimal.Parse(AddDsMinLotCount), double.Parse(AddDsMinLotMarginPrcentCost), AddDsComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles, EditDsId));
+                        Task.Run(() => _modelDataSource.CreateDataSourceInsertUpdate(AddDsName, AddDsMarginType, AddDsCurrency, marginCost, decimal.Parse(AddDsMinLotCount), double.Parse(AddDsMinLotMarginPartCost), AddDsComissiontype, double.Parse(AddDsComission), double.Parse(AddDsPriceStep), double.Parse(AddDsCostPriceStep), dataSourceFiles, EditDsId));
                     }
 
                     CloseAddDataSourceAction?.Invoke();

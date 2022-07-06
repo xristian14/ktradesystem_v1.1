@@ -1477,7 +1477,7 @@ namespace ktradesystem.ViewModels
         public List<double> GetDateRatesDepositCurrenciesChanges() //возвращает список с значениями от 0 до 1, для элементов DepositCurrenciesChanges, где 0 - начало тестового прогона, а 1 - окончание, значение отражает положение даты изменения депозита в диапазоне от начала периода теста до окончания
         {
             List<double> dateRatesDepositCurrenciesChanges = new List<double>();
-            int defaultCurrencyIndex = _testRun.Account.DepositCurrenciesChanges.FindIndex(a => a[0].Currency.Id == _testRun.Account.DefaultCurrency.Id); //индекс элемента, с валютой по умолчанию
+            int defaultCurrencyIndex = _testRun.Account.DepositCurrenciesChanges[0].FindIndex(a => a.Currency.Id == _testRun.Account.DefaultCurrency.Id); //индекс элемента, с валютой по умолчанию
             int depositCurrenciesChangesIndex = 1; //индекс изменения депозита, устанавливаем в 1, чтобы пропустить начальное состояние депозита
             int segmentsNumber = 0; //количество пройденных сегментов
             dateRatesDepositCurrenciesChanges.Add(segmentsNumber); //добавляем первое изменение депозита, которое добавляется по умолчанию, как начальный депозит

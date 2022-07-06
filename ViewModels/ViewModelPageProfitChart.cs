@@ -98,7 +98,7 @@ namespace ktradesystem.ViewModels
             TimeLinesPageProfitChart.Clear();
             int availableHeight = (int)Math.Truncate(СanvasProfitChartHeight - _topMargin - _timeLineHeight);
             int availableChartWidth = (int)Math.Truncate(СanvasProfitChartWidth - _scaleValuesWidth);
-            int defaultCurrencyIndex = _testRun.Account.DepositCurrenciesChanges.FindIndex(a => a[0].Currency.Id == _testRun.Account.DefaultCurrency.Id); //индекс элемента, с валютой по умолчанию
+            int defaultCurrencyIndex = _testRun.Account.DepositCurrenciesChanges[0].FindIndex(a => a.Currency.Id == _testRun.Account.DefaultCurrency.Id); //индекс элемента, с валютой по умолчанию
             double minDeposit = 0;
             double maxDeposit = 0;
             //определяем минимальный и максимальный размер депозита

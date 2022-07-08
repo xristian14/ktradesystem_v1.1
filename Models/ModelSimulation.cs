@@ -2390,7 +2390,6 @@ namespace ktradesystem.Models
                     }
                 }
                 double requiredGroupSize = testBatch.OptimizationTestRuns.Count * (testing.SizeNeighboursGroupPercent / 100); //требуемый размер группы
-                List<int> nonSingleAlgorithmParameterGroupSize = new List<int>(); //размеры группы для каждого параметра (сколько значений каждого параметра находится в одной группе)
                 int lastGroupSize = 0;
                 int currentGroupSize = 0;
                 int groupWidth = 1; //размер группы во всех осях
@@ -2399,6 +2398,7 @@ namespace ktradesystem.Models
                 do
                 {
                     groupWidth++;
+                    lastGroupSize = currentGroupSize;
                     currentGroupSize = 1;
                     //проходим по всем неединичным параметрам, и определяем размер группы для текущего размера групы по всем осям
                     for (int i = 0; i < nonSingleAlgorithmParameterIndexes.Count; i++)
@@ -2418,6 +2418,37 @@ namespace ktradesystem.Models
                     isLastGroupSizeNearThanCurrent = groupWidth == 2 ? false : Math.Abs(requiredGroupSize - currentGroupSize) > Math.Abs(requiredGroupSize - lastGroupSize); //для первой итерации устанавливаем false, для следующих, если прошлый размер группы ближе к требуемому устанавливаем в true
                 } while (isGroupWidthEqualMaxParameterCountValues == false && isLastGroupSizeNearThanCurrent);
                 groupWidth = isLastGroupSizeNearThanCurrent ? groupWidth-- : groupWidth;
+                List<int> nonSingleAlgorithmParameterGroupSize = new List<int>(); //размеры группы для каждого параметра (сколько значений каждого параметра находится в одной группе)
+                for (int i = 0; i < testing.Algorithm.AlgorithmParameters.Count; i++)
+                {
+                    int currentParameterCountValues = testing.AlgorithmParametersAllIntValues[i].Count > 0 ? testing.AlgorithmParametersAllIntValues[i].Count : testing.AlgorithmParametersAllDoubleValues[i].Count; //количество значений у текущего параметра
+                    nonSingleAlgorithmParameterGroupSize.Add(currentParameterCountValues > groupWidth ? groupWidth : currentParameterCountValues);
+                }
+                //формируем группы
+                List<List<int>> groupsIndexes = new List<List<int>>(); //группы, каждая группа содержит индексы тестовых прогонов группы
+                List<int> nonSingleAlgorithmParameterOffsets = new List<int>(); //список со смещениями для каждого неединичного параметра относительно начального значения. Например (0,0,0) означает что текущая группа начинается с первых значений у каждого параметра, (0,0,1) означает что текущая группа начинается с первого значения для первых двух параметров, а третий параметр начинается со второго значения, то есть если группа 3х3х3, то значения параметров будут с индексами: (0-2,0-2,1-3) Так же при переходе на следующую группу, будет прибавлено 1 к последнему параметру, и если размер группы не помещается в нем, то будет переход на следующем параметре, то есть с (0,0,1) перейдет на (0,1,0)
+                nonSingleAlgorithmParameterOffsets.AddRange(Enumerable.Repeat(0, nonSingleAlgorithmParameterGroupSize.Count)); //заполняем нулями
+                bool isGroupsEnd = false; //кончились ли группы
+                do
+                {
+                    List<int> groupIndexes = new List<int>(); //индексы тестовых прогонов группы
+                    List<int> parameterIndexesCombination = new List<int>(nonSingleAlgorithmParameterOffsets); //индексы параметров комбинаций. Копируем начальные индексы текущей группы, и перебираем все комбинации
+                    bool isCombinationsEnd = false; //кончились ли комбинации параметров текущей группы
+                    do
+                    {
+                        //формируем список с текущей комбинацией значений параметров
+                        List<AlgorithmParameterValue> algorithmParameterValues = new List<AlgorithmParameterValue>();
+                        for(int i = 0; i < nonSingleAlgorithmParameterIndexes.Count; i++)
+                        {
+                            int parameterIndex = nonSingleAlgorithmParameterIndexes[i]; //индекс параметра
+                            int valueIndex = parameterIndexesCombination[parameterIndex]; //индекс значения параметра
+                            algorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parameterIndex], IntValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[parameterIndex][valueIndex] : 0, DoubleValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 2 ? testing.AlgorithmParametersAllDoubleValues[parameterIndex][valueIndex] : 0 });
+                        }
+                        groupIndexes.Add(ModelFunctions.FindTestRunIndexByAlgorithmParameterValues(testBatch.OptimizationTestRuns, algorithmParameterValues)); //записываем индекс тестового прогона с текущей комбинацией значений параметров
+                        //переходим на следующую комбинацию значений параметров
+
+                    }
+                }
             }
             else if (testing.IsConsiderNeighbours) //если поиск топ-модели учитывает соседей, то для двух и более параметров - определяем оси двумерной плоскости поиска топ-модели с соседями и размер осей группы и определяем список с лучшими группами в порядке убывания и ищем топ-модель в группе, а для одного параметра - определяем размер группы и определяем список с лучшими группами в порядке убывания и ищем топ-модель (если из-за фильтров не найдена модель, ищем топ-модель в следующей лучшей группе, пока не кончатся группы)
             {

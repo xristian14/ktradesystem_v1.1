@@ -119,20 +119,20 @@ namespace ktradesystem.Models
         {
             //ищем тестовый прогон с комбинацией значений параметров
             int index = -1;
-            bool isAllEqual = true; //совпадают ли все значения параметров текущего тестового прогона с комбинацией значений параметров
+            bool isAllEqual = true; //совпадают ли все значения присланных параметров со значениями параметров текущего тестового прогона
             do
             {
                 index++; //увеличиваем индекс здесь, чтобы когда тестовый прогон будет найден, после выхода из цикла индекс сохранился на найденном тестовом прогоне
                 isAllEqual = true;
-                for (int i = 0; i < testRuns[index].AlgorithmParameterValues.Count; i++)
+                foreach(AlgorithmParameterValue algorithmParameterValue in algorithmParameterValues)
                 {
-                    if (testRuns[index].AlgorithmParameterValues[i].AlgorithmParameter.ParameterValueType.Id == 1) //параметр типа int
+                    if(algorithmParameterValue.AlgorithmParameter.ParameterValueType.Id == 1) //параметр типа int
                     {
-                        isAllEqual = testRuns[index].AlgorithmParameterValues[i].IntValue == algorithmParameterValues.Where(a => a.AlgorithmParameter.Id == testRuns[index].AlgorithmParameterValues[i].AlgorithmParameter.Id).First().IntValue ? isAllEqual : false; //если параметры не равны, устанавливаем isAllEqual в false
+                        isAllEqual = testRuns[index].AlgorithmParameterValues.Find(a => a.AlgorithmParameter.Id == algorithmParameterValue.AlgorithmParameter.Id).IntValue == algorithmParameterValue.IntValue ? isAllEqual : false;
                     }
                     else //параметр типа double
                     {
-                        isAllEqual = testRuns[index].AlgorithmParameterValues[i].DoubleValue == algorithmParameterValues.Where(a => a.AlgorithmParameter.Id == testRuns[index].AlgorithmParameterValues[i].AlgorithmParameter.Id).First().DoubleValue ? isAllEqual : false; //если параметры не равны, устанавливаем isAllEqual в false
+                        isAllEqual = testRuns[index].AlgorithmParameterValues.Find(a => a.AlgorithmParameter.Id == algorithmParameterValue.AlgorithmParameter.Id).DoubleValue == algorithmParameterValue.DoubleValue ? isAllEqual : false;
                     }
                 }
             }

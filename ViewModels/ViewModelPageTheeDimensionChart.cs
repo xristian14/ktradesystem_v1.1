@@ -348,27 +348,7 @@ namespace ktradesystem.ViewModels
                     currentAlgorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = _topAxisParameters[i], IntValue = _topAxisParameters[i].ParameterValueType.Id == 1 ? _testing.AlgorithmParametersAllIntValues[index][valueIndex] : 0, DoubleValue = _topAxisParameters[i].ParameterValueType.Id == 1 ? 0 : _testing.AlgorithmParametersAllDoubleValues[index][valueIndex] }); //записали значение текущего параметра
                 }
 
-                //ищем тестовый прогон с текущей комбинацией значений параметров
-                bool isAllEqual = true; //совпадают ли все значения параметров текущего тестового прогона с текущей комбинацией значений параметров
-
-                int testRunIndex = -1; //индекс тестового прогона
-                do
-                {
-                    testRunIndex++; //увеличиваем индекс здесь, чтобы когда тестовый прогон будет найден, после выхода из цикла индекс сохранился на найденном тестовом прогоне
-                    isAllEqual = true;
-                    for (int i = 0; i < _testBatch.OptimizationTestRuns[testRunIndex].AlgorithmParameterValues.Count; i++)
-                    {
-                        if(_testBatch.OptimizationTestRuns[testRunIndex].AlgorithmParameterValues[i].AlgorithmParameter.ParameterValueType.Id == 1) //параметр типа int
-                        {
-                            isAllEqual = _testBatch.OptimizationTestRuns[testRunIndex].AlgorithmParameterValues[i].IntValue == currentAlgorithmParameterValues.Where(j => j.AlgorithmParameter.Id == _testBatch.OptimizationTestRuns[testRunIndex].AlgorithmParameterValues[i].AlgorithmParameter.Id).First().IntValue ? isAllEqual : false; //если параметры не равны, устанавливаем isAllEqual в false
-                        }
-                        else //параметр типа double
-                        {
-                            isAllEqual = _testBatch.OptimizationTestRuns[testRunIndex].AlgorithmParameterValues[i].DoubleValue == currentAlgorithmParameterValues.Where(j => j.AlgorithmParameter.Id == _testBatch.OptimizationTestRuns[testRunIndex].AlgorithmParameterValues[i].AlgorithmParameter.Id).First().DoubleValue ? isAllEqual : false; //если параметры не равны, устанавливаем isAllEqual в false
-                        }
-                    }
-                }
-                while (isAllEqual == false);
+                int testRunIndex = ModelFunctions.FindTestRunIndexByAlgorithmParameterValues(_testBatch.OptimizationTestRuns, currentAlgorithmParameterValues); //получаем индекс тестового прогона с текущей комбинацией значений параметров
                 _testRunsMatrix[matrixLineIndex, matrixColumnIndex] = _testBatch.OptimizationTestRuns[testRunIndex]; //записываем тестовый прогон в матрицу
 
                 //переход на следующую колонку матрицы

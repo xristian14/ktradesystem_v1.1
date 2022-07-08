@@ -2378,6 +2378,47 @@ namespace ktradesystem.Models
             {
                 testBatch.TopModelTestRun = testBatch.OptimizationTestRuns[0];
             }
+            else if (testing.IsConsiderNeighbours) //если поиск топ-модели учитывает соседей, определяем размер группы по всем неединичным осям, затем формируем список с группами, находим самую лучшую группу и ищем топ-модель (если из-за фильтров не найдена модель, ищем топ-модель в следующей лучшей группе, пока не кончатся группы)
+            {
+                List<int> nonSingleAlgorithmParameterIndexes = new List<int>(); //индексы параметров алгоритма, которые имеют два и более значений
+                for(int i = 0; i < testing.Algorithm.AlgorithmParameters.Count; i++)
+                {
+                    int currentParameterCountValues = testing.AlgorithmParametersAllIntValues[i].Count > 0 ? testing.AlgorithmParametersAllIntValues[i].Count : testing.AlgorithmParametersAllDoubleValues[i].Count; //количество значений у текущего параметра
+                    if(currentParameterCountValues >= 2)
+                    {
+                        nonSingleAlgorithmParameterIndexes.Add(i);
+                    }
+                }
+                double requiredGroupSize = testBatch.OptimizationTestRuns.Count * (testing.SizeNeighboursGroupPercent / 100); //требуемый размер группы
+                List<int> nonSingleAlgorithmParameterGroupSize = new List<int>(); //размеры группы для каждого параметра (сколько значений каждого параметра находится в одной группе)
+                int lastGroupSize = 0;
+                int currentGroupSize = 0;
+                int groupWidth = 1; //размер группы во всех осях
+                bool isLastGroupSizeNearThanCurrent = false; //прошлый размер ближе к требуемому размеру чем текущий
+                bool isGroupWidthEqualMaxParameterCountValues = false; //равняется ли текущий размер группы во всех осях максимальному количеству значений параметров
+                do
+                {
+                    groupWidth++;
+                    currentGroupSize = 1;
+                    //проходим по всем неединичным параметрам, и определяем размер группы для текущего размера групы по всем осям
+                    for (int i = 0; i < nonSingleAlgorithmParameterIndexes.Count; i++)
+                    {
+                        isGroupWidthEqualMaxParameterCountValues = true;
+                        int currentParameterCountValues = testing.AlgorithmParametersAllIntValues[nonSingleAlgorithmParameterIndexes[i]].Count > 0 ? testing.AlgorithmParametersAllIntValues[nonSingleAlgorithmParameterIndexes[i]].Count : testing.AlgorithmParametersAllDoubleValues[nonSingleAlgorithmParameterIndexes[i]].Count; //количество значений у текущего параметра
+                        if (currentParameterCountValues > groupWidth)
+                        {
+                            currentGroupSize *= groupWidth;
+                            isGroupWidthEqualMaxParameterCountValues = false; //отмечаем что размер группы во всех осях еще не равняется максимальному количеству значений параметров
+                        }
+                        else //если текущий размер группы во всех осях превышает количество значений текущего параметра, считаем что размер группы по текущей оси равняется количеству значений текущего параметра
+                        {
+                            currentGroupSize *= currentParameterCountValues;
+                        }
+                    }
+                    isLastGroupSizeNearThanCurrent = groupWidth == 2 ? false : Math.Abs(requiredGroupSize - currentGroupSize) > Math.Abs(requiredGroupSize - lastGroupSize); //для первой итерации устанавливаем false, для следующих, если прошлый размер группы ближе к требуемому устанавливаем в true
+                } while (isGroupWidthEqualMaxParameterCountValues == false && isLastGroupSizeNearThanCurrent);
+                groupWidth = isLastGroupSizeNearThanCurrent ? groupWidth-- : groupWidth;
+            }
             else if (testing.IsConsiderNeighbours) //если поиск топ-модели учитывает соседей, то для двух и более параметров - определяем оси двумерной плоскости поиска топ-модели с соседями и размер осей группы и определяем список с лучшими группами в порядке убывания и ищем топ-модель в группе, а для одного параметра - определяем размер группы и определяем список с лучшими группами в порядке убывания и ищем топ-модель (если из-за фильтров не найдена модель, ищем топ-модель в следующей лучшей группе, пока не кончатся группы)
             {
                 if (testing.AlgorithmParametersAllIntValues.Length == 1) //если параметр всего один

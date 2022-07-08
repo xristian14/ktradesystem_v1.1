@@ -115,6 +115,31 @@ namespace ktradesystem.Models
             return margin;
         }
 
+        public static int FindTestRunIndexByAlgorithmParameterValues(List<TestRun> testRuns, List<AlgorithmParameterValue> algorithmParameterValues) //возвращает индекс первого тестового прогона с указанными значениями параметров алгоритма, если элемент не найден вернет -1
+        {
+            //ищем тестовый прогон с комбинацией значений параметров
+            int index = -1;
+            bool isAllEqual = true; //совпадают ли все значения параметров текущего тестового прогона с комбинацией значений параметров
+            do
+            {
+                index++; //увеличиваем индекс здесь, чтобы когда тестовый прогон будет найден, после выхода из цикла индекс сохранился на найденном тестовом прогоне
+                isAllEqual = true;
+                for (int i = 0; i < testRuns[index].AlgorithmParameterValues.Count; i++)
+                {
+                    if (testRuns[index].AlgorithmParameterValues[i].AlgorithmParameter.ParameterValueType.Id == 1) //параметр типа int
+                    {
+                        isAllEqual = testRuns[index].AlgorithmParameterValues[i].IntValue == algorithmParameterValues.Where(a => a.AlgorithmParameter.Id == testRuns[index].AlgorithmParameterValues[i].AlgorithmParameter.Id).First().IntValue ? isAllEqual : false; //если параметры не равны, устанавливаем isAllEqual в false
+                    }
+                    else //параметр типа double
+                    {
+                        isAllEqual = testRuns[index].AlgorithmParameterValues[i].DoubleValue == algorithmParameterValues.Where(a => a.AlgorithmParameter.Id == testRuns[index].AlgorithmParameterValues[i].AlgorithmParameter.Id).First().DoubleValue ? isAllEqual : false; //если параметры не равны, устанавливаем isAllEqual в false
+                    }
+                }
+            }
+            while (isAllEqual == false && index < testRuns.Count);
+            return isAllEqual ? index : -1; //если найден тестовый прогон с значениями параметров, возвращаем его индекс, иначе -1
+        }
+
         public static void TestEvaluationCriteria(TestRun testRun) //здесь я отлаживаю скрипты критериев оценки
         {
             //наибольший выигрыш

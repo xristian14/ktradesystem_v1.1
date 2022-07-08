@@ -130,7 +130,7 @@ namespace ktradesystem.Models
         public void WriteTestingResult(Testing testing) //записывает результат тестирования в папку с историей результатов тестирования
         {
             DispatcherInvoke((Action)(() => {
-                IsWritedTestingResult.Add(true); //отмечаем что запись результат тестирования закончена
+                IsWritedTestingResult.Clear();
             }));
             CheckFileStructure(); //проверяем существование нужных папок
             string historyPath = Directory.GetCurrentDirectory() + _historyRealivePath; //путь к папке с историей результатов тестирования

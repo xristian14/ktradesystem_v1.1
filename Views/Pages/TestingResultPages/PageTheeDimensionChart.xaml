@@ -331,26 +331,25 @@
                             </MenuItem.ItemTemplate>
                         </MenuItem>
                     </Menu>
-                    <Menu Width="218" Margin="5 0 0 0">
+                    <!--<Menu Width="218" Margin="5 0 0 0">
                         <MenuItem ItemsSource="{Binding AxesSearchPlanePageThreeDimensionChart}" Header="Оси плоскости поиска топ-модели ⯆" Style="{DynamicResource MenuItemStyle1}" StaysOpenOnClick="True">
                             <MenuItem.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Vertical">
                                         <StackPanel Orientation="Horizontal" Visibility="{Binding ButtonResetVisibility}">
                                             <ToggleButton Content="Сбросить выбор" IsChecked="{Binding IsButtonResetChecked, Mode=TwoWay}" HorizontalAlignment="Left"/>
-                                            <CheckBox Content="Выделить плоскости поиска" IsChecked="{Binding IsShowAxisChecked, Mode=TwoWay}" Margin="10 0 0 0"/>
-                                            <TextBlock Text="Прозрачность:" Margin="7 0 0 0"/>
-                                            <Slider Minimum="0" Maximum="100" Value="{Binding OpacityValue, Mode=TwoWay}" Margin="2 0 0 0" Width="70"/>
-                                            <TextBlock Text="{Binding OpacityValue, StringFormat={}{0}%, Mode=OneWay}" Margin="2 0 2 0"/>
                                         </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Visibility="{Binding DataAxesSearchPlaneVisibility}" HorizontalAlignment="Left">
+                                        <StackPanel Orientation="Horizontal" Visibility="{Binding ComboBoxAxesPlaneVisibility}" HorizontalAlignment="Left">
                                             <ComboBox ItemsSource="{Binding AlgorithmParameters}" SelectedItem="{Binding SelectedAlgorithmParameter, Mode=TwoWay}" DisplayMemberPath="Name" Height="20" Padding="3 1 3 3"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Visibility="{Binding TextBlockAxesPlaneVisibility}" HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding SelectedAlgorithmParameter.Name, Mode=TwoWay}" Height="20" Padding="3 1 3 3"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </DataTemplate>
                             </MenuItem.ItemTemplate>
                         </MenuItem>
-                    </Menu>
+                    </Menu>-->
                 </StackPanel>
                 <StackPanel Margin="0 5 0 0" Orientation="Horizontal">
                     <Button Content="Сбросить вращение" Command="{Binding ResetCamera_Click}" Width="122"/>

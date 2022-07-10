@@ -1809,10 +1809,6 @@ namespace ktradesystem.Models
                         approvedDataSources.Add(dataSourceCandles[i].DataSource);
                     }
                 }
-                if(testRun.Number == 101 && testRun.Account.Orders.Where(a => a.Number == 21).Any() && currentDateTime.Hour == 17 && currentDateTime.Minute == 43)
-                {
-                    int y = 0;
-                }
                 //проверяем заявки на исполнение
                 bool isWereDeals = CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, gaps, true, true, true); //были ли совершены сделки при проверке исполнения заявок
 

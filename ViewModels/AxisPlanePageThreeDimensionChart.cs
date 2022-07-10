@@ -10,34 +10,44 @@ using System.Collections.ObjectModel;
 namespace ktradesystem.ViewModels
 {
     //класс содержит оси плоскости поиска топ-модели. Используется в трехмерном графике для определяния осей полскости поиска топ-модели
-    class AxisSearchPlanePageThreeDimensionChart : ViewModelBase
+    class AxisPlanePageThreeDimensionChart : ViewModelBase
     {
-        private AxisSearchPlanePageThreeDimensionChart()
+        private AxisPlanePageThreeDimensionChart()
         {
 
         }
-        public static AxisSearchPlanePageThreeDimensionChart CreateButtonReset(PropertyChangedAction propertyChangedAction) //возвращает объект, содержащий кнопку: сбросить оси плоскоти поиска топ-модели
+        public static AxisPlanePageThreeDimensionChart CreateButtonReset(PropertyChangedAction propertyChangedAction) //возвращает объект, содержащий кнопку: сбросить оси плоскоти поиска топ-модели
         {
-            AxisSearchPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart = new AxisSearchPlanePageThreeDimensionChart();
+            AxisPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart = new AxisPlanePageThreeDimensionChart();
             axisSearchPlanePageThreeDimensionChart.ButtonResetVisibility = Visibility.Visible;
-            axisSearchPlanePageThreeDimensionChart.DataAxesSearchPlaneVisibility = Visibility.Visible;
+            axisSearchPlanePageThreeDimensionChart.ComboBoxAxesPlaneVisibility = Visibility.Collapsed;
+            axisSearchPlanePageThreeDimensionChart.TextBlockAxesPlaneVisibility = Visibility.Collapsed;
             axisSearchPlanePageThreeDimensionChart.IsButtonResetChecked = false;
-            axisSearchPlanePageThreeDimensionChart.IsShowAxisChecked = false;
-            axisSearchPlanePageThreeDimensionChart.OpacityValue = 30;
             axisSearchPlanePageThreeDimensionChart.UpdatePropertyAction += propertyChangedAction;
             return axisSearchPlanePageThreeDimensionChart;
         }
-        public static AxisSearchPlanePageThreeDimensionChart CreateAxisSearchPlane(PropertyChangedAction propertyChangedAction, ObservableCollection<AlgorithmParameter> algorithmParameters, int indexSelectedAlgorithmParameter) //возвращает объект: ось плоскости поиска топ-модели
+        public static AxisPlanePageThreeDimensionChart CreateAxisPlaneComboBox(PropertyChangedAction propertyChangedAction, ObservableCollection<AlgorithmParameter> algorithmParameters, int indexSelectedAlgorithmParameter) //возвращает объект: ось плоскости с комбобоксом для выбора оси
         {
-            AxisSearchPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart = new AxisSearchPlanePageThreeDimensionChart();
+            AxisPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart = new AxisPlanePageThreeDimensionChart();
             axisSearchPlanePageThreeDimensionChart.ButtonResetVisibility = Visibility.Collapsed;
-            axisSearchPlanePageThreeDimensionChart.DataAxesSearchPlaneVisibility = Visibility.Visible;
+            axisSearchPlanePageThreeDimensionChart.ComboBoxAxesPlaneVisibility = Visibility.Visible;
+            axisSearchPlanePageThreeDimensionChart.TextBlockAxesPlaneVisibility = Visibility.Collapsed;
             axisSearchPlanePageThreeDimensionChart.AlgorithmParameters = algorithmParameters;
             axisSearchPlanePageThreeDimensionChart.SelectedAlgorithmParameter = algorithmParameters[indexSelectedAlgorithmParameter];
             axisSearchPlanePageThreeDimensionChart.UpdatePropertyAction += propertyChangedAction;
             return axisSearchPlanePageThreeDimensionChart;
         }
-        public delegate void PropertyChangedAction(AxisSearchPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart, string propertyName);
+        public static AxisPlanePageThreeDimensionChart CreateAxisPlaneTextBlock(PropertyChangedAction propertyChangedAction, AlgorithmParameter algorithmParameter) //возвращает объект: ось плоскости с текстовым блоком без возможности выбора для параметра с одним значением
+        {
+            AxisPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart = new AxisPlanePageThreeDimensionChart();
+            axisSearchPlanePageThreeDimensionChart.ButtonResetVisibility = Visibility.Collapsed;
+            axisSearchPlanePageThreeDimensionChart.ComboBoxAxesPlaneVisibility = Visibility.Collapsed;
+            axisSearchPlanePageThreeDimensionChart.TextBlockAxesPlaneVisibility = Visibility.Visible;
+            axisSearchPlanePageThreeDimensionChart.SelectedAlgorithmParameter = algorithmParameter;
+            axisSearchPlanePageThreeDimensionChart.UpdatePropertyAction += propertyChangedAction;
+            return axisSearchPlanePageThreeDimensionChart;
+        }
+        public delegate void PropertyChangedAction(AxisPlanePageThreeDimensionChart axisSearchPlanePageThreeDimensionChart, string propertyName);
         public PropertyChangedAction UpdatePropertyAction; //метод, обрабатывающий обновления в свойствах объекта
         public Visibility ButtonResetVisibility { get; set; } //видимость кнопки сбросить критерии оценки
         private bool _isButtonResetChecked;
@@ -51,29 +61,8 @@ namespace ktradesystem.ViewModels
                 UpdatePropertyAction?.Invoke(this, "IsButtonResetChecked"); //вызываем метод, обрабатывающий обновления в свойствах объекта
             }
         }
-        private bool _isShowAxisChecked;
-        public bool IsShowAxisChecked //выбран ли чекбокс показать оси
-        {
-            get { return _isShowAxisChecked; }
-            set
-            {
-                _isShowAxisChecked = value;
-                OnPropertyChanged();
-                UpdatePropertyAction?.Invoke(this, "IsChecked"); //вызываем метод, обрабатывающий обновления в свойствах объекта
-            }
-        }
-        private int _opacityValue;
-        public int OpacityValue
-        {
-            get { return _opacityValue; }
-            set
-            {
-                _opacityValue = value;
-                OnPropertyChanged();
-                UpdatePropertyAction?.Invoke(this, "OpacityValue"); //вызываем метод, обрабатывающий обновления в свойствах объекта
-            }
-        }
-        public Visibility DataAxesSearchPlaneVisibility { get; set; } //видимость комбобоксов с выбранным параметром для оси
+        public Visibility ComboBoxAxesPlaneVisibility { get; set; } //видимость комбобоксов с выбранным параметром для оси
+        public Visibility TextBlockAxesPlaneVisibility { get; set; } //видимость текстового поля с названием параметра
         private ObservableCollection<AlgorithmParameter> _algorithmParameters;
         public ObservableCollection<AlgorithmParameter> AlgorithmParameters //список с параметрами для combobox
         {

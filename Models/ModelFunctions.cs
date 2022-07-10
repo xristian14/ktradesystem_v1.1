@@ -115,6 +115,28 @@ namespace ktradesystem.Models
             return margin;
         }
 
+        public static void CreatePermutation(int count, bool[] used, List<int> prefix, List<List<int>> outList) //создает перестановки для количества элементов в count, used - масив с count количеством элементов, который должен быть заполнен false, формирует перестиновки в список outList
+        {
+            if (prefix.Count != count)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    if (used[i] == false)
+                    {
+                        used[i] = true;
+                        prefix.Add(i);
+                        CreatePermutation(count, used, prefix, outList);
+                        used[i] = false;
+                        prefix.RemoveAt(prefix.Count - 1);
+                    }
+                }
+            }
+            else
+            {
+                outList.Add(prefix);
+            }
+        }
+
         public static int FindTestRunIndexByAlgorithmParameterValues(List<TestRun> testRuns, List<AlgorithmParameterValue> algorithmParameterValues) //возвращает индекс первого тестового прогона с указанными значениями параметров алгоритма, если элемент не найден вернет -1
         {
             //ищем тестовый прогон с комбинацией значений параметров

@@ -11,5 +11,6 @@ namespace ktradesystem.Models
     public class AxesParameter //ось параметра, определяет оси двумерной плоскости для поиска топ модели с соседями
     {
         public AlgorithmParameter AlgorithmParameter { get; set; }
+        public bool IsSingle { get; set; } //параметр имеет одно значение или несколько
     }
 }

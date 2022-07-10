@@ -14,7 +14,8 @@ namespace ktradesystem.Models
         public int DataSourceGroupIndex { get; set; } //индекс текущей группы источников данных в testing.DataSourceGroups
         [NonSerialized]
         public List<TestRun> OptimizationTestRuns;
-        public List<AxesParameter> AxesTopModelSearchPlane { get; set; } //оси плоскости для поиска топ-модели с соседями
+        public List<AxesParameter> FirstSurfaceAxes { get; set; } //первая ось с параметрами
+        public List<AxesParameter> SecondSurfaceAxes { get; set; } //вторая ось с параметрами. На основании этих осей будет строиться поверхность трехмерного графика оптимизационных тестов. Первые параметры в списке - самые близкие к графику, последние - дальние
         public int TopModelTestRunNumber { get; set; } //номер тестового прогона, определенного как лучшая модель
         [NonSerialized]
         public TestRun TopModelTestRun; //ссылка на testRun, определенный как лучшая модель

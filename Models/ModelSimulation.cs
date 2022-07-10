@@ -2489,7 +2489,7 @@ namespace ktradesystem.Models
                     //переходим на следующую группу
                     nonSingleAlgorithmParameterOffsets[nonSingleAlgorithmParameterOffsets.Count - 1]++; //увеличиваем индекс значения последнего параметра
                     int indexPar = nonSingleAlgorithmParameterOffsets.Count - 1;
-                    //пока индекс значения параметра плюс размер группы у данного параметра превышет размер группы для данного параметра, сбрасываем индекс значения в начальный, и переходим у предыдущего параметра на следующий индекс значения
+                    //пока индекс значения параметра плюс размер группы у данного параметра превышет количество значений данного параметра, сбрасываем индекс значения в начальный, и переходим у предыдущего параметра на следующий индекс значения
                     while (nonSingleAlgorithmParameterOffsets[indexPar] + nonSingleAlgorithmParameterGroupSize[indexPar] > nonSingleAlgorithmParameterCountValues[indexPar])
                     {
                         nonSingleAlgorithmParameterOffsets[indexPar] = 0; //сбрасываем индекс значения в начальный
@@ -3271,6 +3271,124 @@ namespace ktradesystem.Models
                 {
                     testBatch.ForwardTestRunDepositTrading.AlgorithmParameterValues = testBatch.TopModelTestRun.AlgorithmParameterValues;
                 }
+            }
+        }
+
+        private void FindSurfaceAxes(TestBatch testBatch, Testing testing) //находит оси для тремхмерной поверхности
+        {
+            List<int> nonSingleAlgorithmParameterIndexes = new List<int>(); //индексы параметров алгоритма, которые имеют два и более значений
+            List<int> singleAlgorithmParameterIndexes = new List<int>(); //индексы параметров алгоритма, которые имеют одно значение
+            for (int i = 0; i < testing.Algorithm.AlgorithmParameters.Count; i++)
+            {
+                int currentParameterCountValues = testing.AlgorithmParametersAllIntValues[i].Count > 0 ? testing.AlgorithmParametersAllIntValues[i].Count : testing.AlgorithmParametersAllDoubleValues[i].Count; //количество значений у текущего параметра
+                if (currentParameterCountValues >= 2)
+                {
+                    nonSingleAlgorithmParameterIndexes.Add(i);
+                }
+                else
+                {
+                    singleAlgorithmParameterIndexes.Add(i);
+                }
+            }
+            int[] currentParametersCombination = Enumerable.Repeat(0, nonSingleAlgorithmParameterIndexes.Count).ToArray(); //текущая комбинация параметров (осей), заполнили массив нулями
+            double softlyVolatilityValue = 0; //самое гладкое значение волатильности
+            int[] softlyParametersCombination = new int[nonSingleAlgorithmParameterIndexes.Count]; //комбинация с самым гладким значением волатильности
+            int iteration = 0;
+            bool isEndCombinations = false;
+            do
+            {
+                //формируем левую и верхнюю оси плоскости
+                List<int> leftAxisAlgorithmParameterIndexes = new List<int>(); //индексы параметров алгоритма левой оси
+                List<int> topAxisAlgorithmParameterIndexes = new List<int>(); //индексы параметров алгоритма верхней оси
+                List<int> leftAxisAlgorithmParameterCountValues = new List<int>(); //количество значений параметров алгоритма левой оси
+                List<int> topAxisAlgorithmParameterCountValues = new List<int>(); //количество значений параметров алгоритма верхней оси
+                for (int i = 0; i < nonSingleAlgorithmParameterIndexes.Count; i++)
+                {
+                    if(i < nonSingleAlgorithmParameterIndexes.Count / 2.0)
+                    {
+                        int parameterIndex = nonSingleAlgorithmParameterIndexes[i]; //индекс параметра
+                        int currentParameterCountValues = testing.AlgorithmParametersAllIntValues[parameterIndex].Count > 0 ? testing.AlgorithmParametersAllIntValues[parameterIndex].Count : testing.AlgorithmParametersAllDoubleValues[parameterIndex].Count; //количество значений у текущего параметра
+                        leftAxisAlgorithmParameterIndexes.Add(parameterIndex); //в левую ось добавляем первую половину параметров
+                        leftAxisAlgorithmParameterCountValues.Add(currentParameterCountValues); //запоминаем количество значений у параметра
+                    }
+                    else
+                    {
+                        int parameterIndex = nonSingleAlgorithmParameterIndexes[i]; //индекс параметра
+                        int currentParameterCountValues = testing.AlgorithmParametersAllIntValues[parameterIndex].Count > 0 ? testing.AlgorithmParametersAllIntValues[parameterIndex].Count : testing.AlgorithmParametersAllDoubleValues[parameterIndex].Count; //количество значений у текущего параметра
+                        topAxisAlgorithmParameterIndexes.Add(parameterIndex); //в верхнюю ось добавляем вторую половину параметров
+                        topAxisAlgorithmParameterCountValues.Add(currentParameterCountValues); //запоминаем количество значений у параметра
+                    }
+                }
+                int[] leftAxisAlgorithmParameterValuesCurrentCombination = Enumerable.Repeat(0, leftAxisAlgorithmParameterIndexes.Count).ToArray(); //текущая комбинация значений параметров левой оси
+                int[] topAxisAlgorithmParameterValuesCurrentCombination = Enumerable.Repeat(0, topAxisAlgorithmParameterIndexes.Count).ToArray(); //текущая комбинация значений параметров верхней оси
+
+                bool isAlgorithmParameterValuesCombinationEnd = false;
+                double totalVolatility = 0; //суммарная волатильность
+                double currentDoubleValue = 0; //значение текущего теста
+                double lastDoubleValue = 0;//значение прошлого теста
+                int numberInOneLine = 0; //номер теста в одной линии (в строке или колонке, в зависимости от направления движения слева-направо и сверху-вниз или сверху-вниз и слева-направо)
+                int directionIteration = 1; //номер итерации, которые определяет направление прохода по тестовым прогонам. 1 - слева-направо и сверху-вниз, 2 - сверху-вниз и слева-направо
+                //дважды делаем проход по всем тестовым прогонам, на первой итерации по колонкам с переходом по строкам (слева-направо и сверху-вниз), на второй итерации по строкам с переходом по колонкам (сверху-вниз и слева-направо)
+                do
+                {
+                    //проходим по всем тестовым прогонам и вычисляем волатильность
+                    while (isAlgorithmParameterValuesCombinationEnd == false)
+                    {
+                        //формируем список с текущей комбинацией значений параметров
+                        List<AlgorithmParameterValue> algorithmParameterValues = new List<AlgorithmParameterValue>();
+                        for (int i = 0; i < leftAxisAlgorithmParameterIndexes.Count; i++) //добавляем параметры левой оси
+                        {
+                            int parameterIndex = leftAxisAlgorithmParameterIndexes[i]; //индекс параметра
+                            int valueIndex = leftAxisAlgorithmParameterValuesCurrentCombination[parameterIndex]; //индекс значения параметра
+                            algorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parameterIndex], IntValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[parameterIndex][valueIndex] : 0, DoubleValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 2 ? testing.AlgorithmParametersAllDoubleValues[parameterIndex][valueIndex] : 0 });
+                        }
+                        for (int i = 0; i < topAxisAlgorithmParameterIndexes.Count; i++) //добавляем параметры лверхнейевой оси
+                        {
+                            int parameterIndex = topAxisAlgorithmParameterIndexes[i]; //индекс параметра
+                            int valueIndex = topAxisAlgorithmParameterValuesCurrentCombination[parameterIndex]; //индекс значения параметра
+                            algorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parameterIndex], IntValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[parameterIndex][valueIndex] : 0, DoubleValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 2 ? testing.AlgorithmParametersAllDoubleValues[parameterIndex][valueIndex] : 0 });
+                        }
+                        currentDoubleValue = testBatch.OptimizationTestRuns[ModelFunctions.FindTestRunIndexByAlgorithmParameterValues(testBatch.OptimizationTestRuns, algorithmParameterValues)].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue;
+
+                        if (numberInOneLine > 0) //если на линии с тестами был уже до этого хотя бы один тест, вычисляем разницу между текущим и прошлым тестом
+                        {
+                            totalVolatility += Math.Abs(currentDoubleValue - lastDoubleValue);
+                        }
+                        lastDoubleValue = currentDoubleValue;
+                        numberInOneLine++;
+
+                        //переходим на следующую комбинацию значений параметров
+                        bool isNewLine = false; //нужно ли переходить на следующую линию (строку или столбец в зависимости от направления)
+                        if (directionIteration == 1) //если это проход слева-направо и сверху-вниз
+                        {
+                            topAxisAlgorithmParameterValuesCurrentCombination[0]++; //поскольку первый параметр - самый близкий к поверхности, увеличиваем его
+                        }
+                        else //иначе это проход сверху-вниз и слева-направо
+                        {
+                            leftAxisAlgorithmParameterValuesCurrentCombination[0]++; //поскольку первый параметр - самый близкий к поверхности, увеличиваем его
+                        }
+                        
+                        int indexPar = 0;
+                        //int indexPar = topAxisAlgorithmParameterValuesCurrentCombination.Count - 1;
+                        //пока индекс значения параметра превышет количество значений у данного параметра, сбрасываем индекс значения в начальный, и переходим у следующего параметра на следующий индекс значения
+                        while (topAxisAlgorithmParameterValuesCurrentCombination[indexPar] > nonSingleAlgorithmParameterCountValues[indexPar])
+                        {
+                            nonSingleAlgorithmParameterOffsets[indexPar] = 0; //сбрасываем индекс значения в начальный
+                            if (indexPar > 0)
+                            {
+                                indexPar--;
+                                nonSingleAlgorithmParameterOffsets[indexPar]++; //переходим у предыдущего параметра на следующий индекс значения
+                            }
+                            else //если индекс занчения текущего параметра вышел за границы размера группы для текущего параметра, и этот параметр имеет индекс 0, значит мы перебрали все группы
+                            {
+                                isGroupsEnd = true;
+                            }
+                        }
+
+                    }
+                    directionIteration++;
+                } while (directionIteration < 3);
+                
             }
         }
 

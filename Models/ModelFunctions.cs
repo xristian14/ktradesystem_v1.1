@@ -133,7 +133,7 @@ namespace ktradesystem.Models
             }
             else
             {
-                outList.Add(prefix);
+                outList.Add(new List<int>(prefix));
             }
         }
 

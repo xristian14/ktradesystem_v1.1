@@ -1481,6 +1481,7 @@ namespace ktradesystem.Models
                                                 //определяем топ-модель и статистичекую значимость
                                                 TestBatch testBatch = testing.TestBatches[tasksExecutingTestRuns[taskIndex1][0]]; //tasksExecutingTestRuns[taskIndex1][0] - testBatchIndex
                                                 TestBatchTopModelDetermining(testBatch, testing); //определяем топ-модель
+                                                FindSurfaceAxes(testBatch, testing); //находим оси для тремхмерной поверхности
                                                 //если это форвардное тестирование, и топ-модель не найдена, отмечаем что форвардный тест имеет статус выполнен
                                                 if (testing.IsForwardTesting && testBatch.IsTopModelWasFind == false)
                                                 {
@@ -3303,33 +3304,29 @@ namespace ktradesystem.Models
 
             List<List<int>> allAxisCombinations = new List<List<int>>(); //все комбинации осей
             bool[] used = Enumerable.Repeat(false, nonSingleAlgorithmParameterIndexes.Count).ToArray();
-            ModelFunctions.CreatePermutation(nonSingleAlgorithmParameterIndexes.Count, used, new List<int>(), allAxisCombinations);
+            ModelFunctions.CreatePermutation(nonSingleAlgorithmParameterIndexes.Count, used, new List<int>(), allAxisCombinations); //создаем перестановки
 
-
-            int[] currentParametersCombination = Enumerable.Repeat(0, nonSingleAlgorithmParameterIndexes.Count).ToArray(); //текущая комбинация параметров (осей), заполнили массив нулями
             double softlyVolatilityValue = 0; //самое гладкое значение волатильности
-            int[] softlyParametersCombination = new int[nonSingleAlgorithmParameterIndexes.Count]; //комбинация с самым гладким значением волатильности
-            int iteration = 0;
-            bool isAxisCombinationsEnd = false;
-            while (isAxisCombinationsEnd == false)
+            List<int> softlyParametersCombination = new List<int>(); //комбинация с самым гладким значением волатильности
+            for(int combinationIndex = 0; combinationIndex < allAxisCombinations.Count; combinationIndex++) //проходим по всем комбинациям
             {
                 //формируем левую и верхнюю оси плоскости
                 List<int> leftAxisAlgorithmParameterIndexes = new List<int>(); //индексы параметров алгоритма левой оси
                 List<int> topAxisAlgorithmParameterIndexes = new List<int>(); //индексы параметров алгоритма верхней оси
                 List<int> leftAxisAlgorithmParameterCountValues = new List<int>(); //количество значений параметров алгоритма левой оси
                 List<int> topAxisAlgorithmParameterCountValues = new List<int>(); //количество значений параметров алгоритма верхней оси
-                for (int i = 0; i < nonSingleAlgorithmParameterIndexes.Count; i++)
+                for (int i = 0; i < allAxisCombinations[combinationIndex].Count; i++)
                 {
-                    if(i < nonSingleAlgorithmParameterIndexes.Count / 2.0)
+                    if (i < allAxisCombinations[combinationIndex].Count / 2.0)
                     {
-                        int parameterIndex = nonSingleAlgorithmParameterIndexes[i]; //индекс параметра
+                        int parameterIndex = nonSingleAlgorithmParameterIndexes[allAxisCombinations[combinationIndex][i]]; //индекс параметра
                         int currentParameterCountValues = testing.AlgorithmParametersAllIntValues[parameterIndex].Count > 0 ? testing.AlgorithmParametersAllIntValues[parameterIndex].Count : testing.AlgorithmParametersAllDoubleValues[parameterIndex].Count; //количество значений у текущего параметра
                         leftAxisAlgorithmParameterIndexes.Add(parameterIndex); //в левую ось добавляем первую половину параметров
                         leftAxisAlgorithmParameterCountValues.Add(currentParameterCountValues); //запоминаем количество значений у параметра
                     }
                     else
                     {
-                        int parameterIndex = nonSingleAlgorithmParameterIndexes[i]; //индекс параметра
+                        int parameterIndex = nonSingleAlgorithmParameterIndexes[allAxisCombinations[combinationIndex][i]]; //индекс параметра
                         int currentParameterCountValues = testing.AlgorithmParametersAllIntValues[parameterIndex].Count > 0 ? testing.AlgorithmParametersAllIntValues[parameterIndex].Count : testing.AlgorithmParametersAllDoubleValues[parameterIndex].Count; //количество значений у текущего параметра
                         topAxisAlgorithmParameterIndexes.Add(parameterIndex); //в верхнюю ось добавляем вторую половину параметров
                         topAxisAlgorithmParameterCountValues.Add(currentParameterCountValues); //запоминаем количество значений у параметра
@@ -3355,13 +3352,13 @@ namespace ktradesystem.Models
                         for (int i = 0; i < leftAxisAlgorithmParameterIndexes.Count; i++) //добавляем параметры левой оси
                         {
                             int parameterIndex = leftAxisAlgorithmParameterIndexes[i]; //индекс параметра
-                            int valueIndex = leftAxisAlgorithmParameterValuesCurrentCombination[parameterIndex]; //индекс значения параметра
+                            int valueIndex = leftAxisAlgorithmParameterValuesCurrentCombination[i]; //индекс значения параметра
                             algorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parameterIndex], IntValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[parameterIndex][valueIndex] : 0, DoubleValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 2 ? testing.AlgorithmParametersAllDoubleValues[parameterIndex][valueIndex] : 0 });
                         }
-                        for (int i = 0; i < topAxisAlgorithmParameterIndexes.Count; i++) //добавляем параметры лверхнейевой оси
+                        for (int i = 0; i < topAxisAlgorithmParameterIndexes.Count; i++) //добавляем параметры верхней оси
                         {
                             int parameterIndex = topAxisAlgorithmParameterIndexes[i]; //индекс параметра
-                            int valueIndex = topAxisAlgorithmParameterValuesCurrentCombination[parameterIndex]; //индекс значения параметра
+                            int valueIndex = topAxisAlgorithmParameterValuesCurrentCombination[i]; //индекс значения параметра
                             algorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parameterIndex], IntValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[parameterIndex][valueIndex] : 0, DoubleValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 2 ? testing.AlgorithmParametersAllDoubleValues[parameterIndex][valueIndex] : 0 });
                         }
                         currentDoubleValue = testBatch.OptimizationTestRuns[ModelFunctions.FindTestRunIndexByAlgorithmParameterValues(testBatch.OptimizationTestRuns, algorithmParameterValues)].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue;
@@ -3389,10 +3386,10 @@ namespace ktradesystem.Models
                         //пока индекс значения параметра превышет количество значений у данного параметра, сбрасываем индекс значения в начальный, и переходим у следующего параметра на следующий индекс значения
                         while (inLineMoveCondition)
                         {
-                            if(directionIteration == 1) //если это проход слева-направо и сверху-вниз
+                            if (directionIteration == 1) //если это проход слева-направо и сверху-вниз
                             {
                                 topAxisAlgorithmParameterValuesCurrentCombination[indexPar] = 0;
-                                if (indexPar < topAxisAlgorithmParameterValuesCurrentCombination.Length)
+                                if (indexPar < topAxisAlgorithmParameterValuesCurrentCombination.Length - 1)
                                 {
                                     indexPar++;
                                     topAxisAlgorithmParameterValuesCurrentCombination[indexPar]++; //переходим у следующего параметра на следующий индекс значения
@@ -3405,7 +3402,7 @@ namespace ktradesystem.Models
                             else //иначе это проход сверху-вниз и слева-направо
                             {
                                 leftAxisAlgorithmParameterValuesCurrentCombination[indexPar] = 0;
-                                if (indexPar < leftAxisAlgorithmParameterValuesCurrentCombination.Length)
+                                if (indexPar < leftAxisAlgorithmParameterValuesCurrentCombination.Length - 1)
                                 {
                                     indexPar++;
                                     leftAxisAlgorithmParameterValuesCurrentCombination[indexPar]++; //переходим у следующего параметра на следующий индекс значения
@@ -3415,6 +3412,8 @@ namespace ktradesystem.Models
                                     isNewLine = true;
                                 }
                             }
+
+                            inLineMoveCondition = directionIteration == 1 ? topAxisAlgorithmParameterValuesCurrentCombination[indexPar] >= topAxisAlgorithmParameterCountValues[indexPar] : leftAxisAlgorithmParameterValuesCurrentCombination[indexPar] >= leftAxisAlgorithmParameterCountValues[indexPar];
                         }
 
                         //переходим на следующую линию
@@ -3437,7 +3436,7 @@ namespace ktradesystem.Models
                                 if (directionIteration == 2) //если это проход сверху-вниз и слева-направо
                                 {
                                     topAxisAlgorithmParameterValuesCurrentCombination[indexPar] = 0;
-                                    if (indexPar < topAxisAlgorithmParameterValuesCurrentCombination.Length)
+                                    if (indexPar < topAxisAlgorithmParameterValuesCurrentCombination.Length - 1)
                                     {
                                         indexPar++;
                                         topAxisAlgorithmParameterValuesCurrentCombination[indexPar]++; //переходим у следующего параметра на следующий индекс значения
@@ -3450,7 +3449,7 @@ namespace ktradesystem.Models
                                 else //иначе это проход слева-направо и сверху-вниз
                                 {
                                     leftAxisAlgorithmParameterValuesCurrentCombination[indexPar] = 0;
-                                    if (indexPar < leftAxisAlgorithmParameterValuesCurrentCombination.Length)
+                                    if (indexPar < leftAxisAlgorithmParameterValuesCurrentCombination.Length - 1)
                                     {
                                         indexPar++;
                                         leftAxisAlgorithmParameterValuesCurrentCombination[indexPar]++; //переходим у следующего параметра на следующий индекс значения
@@ -3460,6 +3459,8 @@ namespace ktradesystem.Models
                                         isAlgorithmParameterValuesCombinationEnd = true;
                                     }
                                 }
+
+                                outLineMoveCondition = directionIteration == 2 ? topAxisAlgorithmParameterValuesCurrentCombination[indexPar] >= topAxisAlgorithmParameterCountValues[indexPar] : leftAxisAlgorithmParameterValuesCurrentCombination[indexPar] >= leftAxisAlgorithmParameterCountValues[indexPar];
                             }
                         }
                     }
@@ -3468,21 +3469,47 @@ namespace ktradesystem.Models
 
                 //получили значение суммарной волатильности для текущей комбинации осей
                 //сравниваем текущее значение волатильности с самым гладким
-                if(iteration > 0)
+                if (combinationIndex > 0)
                 {
-                    if(totalVolatility < softlyVolatilityValue)
+                    if (totalVolatility < softlyVolatilityValue)
                     {
                         softlyVolatilityValue = totalVolatility;
-                        currentParametersCombination.CopyTo(softlyParametersCombination, 0);
+                        softlyParametersCombination = allAxisCombinations[combinationIndex];
                     }
                 }
                 else
                 {
                     softlyVolatilityValue = totalVolatility;
-                    currentParametersCombination.CopyTo(softlyParametersCombination, 0);
+                    softlyParametersCombination = allAxisCombinations[combinationIndex];
                 }
-                
-                iteration++;
+            }
+            //формируем и записываем оси поверхности
+            testBatch.FirstSurfaceAxes = new List<AxesParameter>();
+            testBatch.SecondSurfaceAxes = new List<AxesParameter>();
+            for (int i = 0; i < softlyParametersCombination.Count; i++)
+            {
+                int parameterIndex = nonSingleAlgorithmParameterIndexes[softlyParametersCombination[i]]; //индекс параметра
+                if (i < softlyParametersCombination.Count / 2.0)
+                {
+                    testBatch.FirstSurfaceAxes.Add(new AxesParameter { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parameterIndex], IsSingle = false }); //в первую ось добавляем первую половину параметров
+                }
+                else
+                {
+                    testBatch.SecondSurfaceAxes.Add(new AxesParameter { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parameterIndex], IsSingle = false }); //во вторую ось добавляем вторую половину параметров
+                }
+            }
+            //добавляем в оси параметры, которые имеют одно значение
+            for (int i = 0; i < singleAlgorithmParameterIndexes.Count; i++)
+            {
+                int parameterIndex = singleAlgorithmParameterIndexes[i]; //индекс параметра
+                if(testBatch.FirstSurfaceAxes.Count <= testBatch.SecondSurfaceAxes.Count) //добавляем равномерно во все оси
+                {
+                    testBatch.FirstSurfaceAxes.Add(new AxesParameter { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parameterIndex], IsSingle = false });
+                }
+                else
+                {
+                    testBatch.SecondSurfaceAxes.Add(new AxesParameter { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parameterIndex], IsSingle = false });
+                }
             }
         }
 

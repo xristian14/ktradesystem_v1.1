@@ -1006,8 +1006,8 @@ namespace ktradesystem.ViewModels
                             AxesSearchPlanePageThreeDimensionChart[1].AlgorithmParameters = GetAlgorithmParameters();
                             AxesSearchPlanePageThreeDimensionChart[2].AlgorithmParameters = GetAlgorithmParameters();
 
-                            AxesSearchPlanePageThreeDimensionChart[1].SelectedAlgorithmParameter = AxesSearchPlanePageThreeDimensionChart[1].AlgorithmParameters.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter.Id).First();
-                            AxesSearchPlanePageThreeDimensionChart[2].SelectedAlgorithmParameter = AxesSearchPlanePageThreeDimensionChart[2].AlgorithmParameters.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter.Id).First();
+                            //AxesSearchPlanePageThreeDimensionChart[1].SelectedAlgorithmParameter = AxesSearchPlanePageThreeDimensionChart[1].AlgorithmParameters.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter.Id).First();
+                            //AxesSearchPlanePageThreeDimensionChart[2].SelectedAlgorithmParameter = AxesSearchPlanePageThreeDimensionChart[2].AlgorithmParameters.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter.Id).First();
                             _isResetAxesSearchPlane = false;
                             AxesSearchPlanePageThreeDimensionChart_PropertyChanged(AxesSearchPlanePageThreeDimensionChart[1], "SelectedAlgorithmParameter");
                             AxesSearchPlanePageThreeDimensionChart_PropertyChanged(AxesSearchPlanePageThreeDimensionChart[2], "SelectedAlgorithmParameter");
@@ -1053,11 +1053,11 @@ namespace ktradesystem.ViewModels
             else if(_testing.Algorithm.AlgorithmParameters.Count >= 2) //иначе, если их два или более
             {
                 //определяем индекс первого параметра оси плоскости поиска
-                int indexFirstParameter = algorithmParametersFirst.IndexOf(algorithmParametersFirst.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter.Id).First());
-                AxesSearchPlanePageThreeDimensionChart.Add(AxisSearchPlanePageThreeDimensionChart.CreateAxisSearchPlane(AxesSearchPlanePageThreeDimensionChart_PropertyChanged, algorithmParametersFirst, indexFirstParameter)); //добавляем чекбокс первой оси в меню выбора осей плоскости поиска
+                //int indexFirstParameter = algorithmParametersFirst.IndexOf(algorithmParametersFirst.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter.Id).First());
+                //AxesSearchPlanePageThreeDimensionChart.Add(AxisSearchPlanePageThreeDimensionChart.CreateAxisSearchPlane(AxesSearchPlanePageThreeDimensionChart_PropertyChanged, algorithmParametersFirst, indexFirstParameter)); //добавляем чекбокс первой оси в меню выбора осей плоскости поиска
                 //определяем индекс второго параметра оси плоскости поиска
-                int indexSecondParameter = algorithmParametersSecond.IndexOf(algorithmParametersSecond.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter.Id).First());
-                AxesSearchPlanePageThreeDimensionChart.Add(AxisSearchPlanePageThreeDimensionChart.CreateAxisSearchPlane(AxesSearchPlanePageThreeDimensionChart_PropertyChanged, algorithmParametersSecond, indexSecondParameter)); //добавляем чекбокс второй оси в меню выбора осей плоскости поиска
+                //int indexSecondParameter = algorithmParametersSecond.IndexOf(algorithmParametersSecond.Where(j => j.Id == _testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter.Id).First());
+                //AxesSearchPlanePageThreeDimensionChart.Add(AxisSearchPlanePageThreeDimensionChart.CreateAxisSearchPlane(AxesSearchPlanePageThreeDimensionChart_PropertyChanged, algorithmParametersSecond, indexSecondParameter)); //добавляем чекбокс второй оси в меню выбора осей плоскости поиска
 
                 //удаляем из списков с параметрами те что выбраны  в другом списке
                 AxesSearchPlanePageThreeDimensionChart[1].AlgorithmParameters.Remove(AxesSearchPlanePageThreeDimensionChart[2].SelectedAlgorithmParameter);

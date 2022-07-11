@@ -359,41 +359,48 @@ namespace ktradesystem.ViewModels
                 int testRunIndex = ModelFunctions.FindTestRunIndexByAlgorithmParameterValues(_testBatch.OptimizationTestRuns, currentAlgorithmParameterValues); //получаем индекс тестового прогона с текущей комбинацией значений параметров
                 _testRunsMatrix[matrixLineIndex, matrixColumnIndex] = _testBatch.OptimizationTestRuns[testRunIndex]; //записываем тестовый прогон в матрицу
 
+                string algorithmParameterValuesString = "";
+                foreach (AlgorithmParameterValue algorithmParameterValue in currentAlgorithmParameterValues)
+                {
+                    algorithmParameterValuesString += algorithmParameterValue.AlgorithmParameter.Name + "=";
+                    algorithmParameterValuesString += algorithmParameterValue.AlgorithmParameter.ParameterValueType.Id == 1 ? algorithmParameterValue.IntValue.ToString() : algorithmParameterValue.DoubleValue.ToString();
+                    algorithmParameterValuesString += ", ";
+                }
+                algorithmParameterValuesString = algorithmParameterValuesString.Substring(0, algorithmParameterValuesString.Length - 2);
+
+
                 //переход на следующую колонку матрицы
                 matrixColumnIndex++;
-                topAxisCurrentParameterValues[topAxisCurrentParameterValues.Length - 1]++; //увеличиваем индекс значения последнего параметра в комбинации
-                for (int i = topAxisCurrentParameterValues.Length - 2; i >= 0; i--)
+                topAxisCurrentParameterValues[0]++; //увеличиваем индекс значения первого параметра в комбинации, поскольку первый параметр - самый близкий к поверхности
+                for (int i = 0; i < topAxisCurrentParameterValues.Length - 1; i++)
                 {
-                    if(topAxisCurrentParameterValues[i + 1] > topAxisCountParameterValues[i + 1] - 1) //если индекс следующего в комбинации значений параметра превышает допустимый, обнуляем индекс следующего и увеличиваем на 1 индекс текущего
+                    if(topAxisCurrentParameterValues[i] >= topAxisCountParameterValues[i]) //если индекс значения параметра в комбинации превышает допустимый, обнуляем его индекс, и увеличиваем индекс следующего на один
                     {
-                        topAxisCurrentParameterValues[i + 1] = 0;
-                        topAxisCurrentParameterValues[i]++;
+                        topAxisCurrentParameterValues[i] = 0;
+                        topAxisCurrentParameterValues[i + 1]++;
                     }
                 }
 
                 //переход на следующую строку матрицы
-                if(topAxisCurrentParameterValues[0] > topAxisCountParameterValues[0] - 1) //если индекс первого значения параметра, отражающего номер колонки первышает допустимый, значит нужно обнулить индексы колонок и перейти на следующую строку
+                if(topAxisCurrentParameterValues[topAxisCurrentParameterValues.Length - 1] >= topAxisCountParameterValues[topAxisCurrentParameterValues.Length - 1]) //если индекс значения последнего параметра в строке первышает допустимый, значит нужно обнулить его индекс и перейти на следующую строку
                 {
                     //обнуляем индексы колонки
                     matrixColumnIndex = 0;
-                    for (int i = 0; i < topAxisCurrentParameterValues.Length; i++)
-                    {
-                        topAxisCurrentParameterValues[i] = 0;
-                    }
+                    topAxisCurrentParameterValues[topAxisCurrentParameterValues.Length - 1] = 0;
                     //переходим на следующую строку матрицы
                     matrixLineIndex++;
-                    leftAxisCurrentParameterValues[leftAxisCurrentParameterValues.Length - 1]++; //увеличиваем индекс значения последнего параметра, отражающего индекс строки в комбинации
-                    for (int i = leftAxisCurrentParameterValues.Length - 2; i >= 0; i--)
+                    leftAxisCurrentParameterValues[0]++; //увеличиваем индекс значения первого параметра в комбинации, поскольку первый параметр - самый близкий к поверхности
+                    for (int i = 0; i < leftAxisCurrentParameterValues.Length - 1; i++)
                     {
-                        if (leftAxisCurrentParameterValues[i + 1] > leftAxisCountParameterValues[i + 1] - 1) //если индекс следующего в комбинации значений параметра превышает допустимый, обнуляем индекс следующего и увеличиваем на 1 индекс текущего
+                        if (leftAxisCurrentParameterValues[i] >= leftAxisCountParameterValues[i]) //если индекс значения параметра в комбинации превышает допустимый, обнуляем его индекс, и увеличиваем индекс следующего на один
                         {
-                            leftAxisCurrentParameterValues[i + 1] = 0;
-                            leftAxisCurrentParameterValues[i]++;
+                            leftAxisCurrentParameterValues[i] = 0;
+                            leftAxisCurrentParameterValues[i + 1]++;
                         }
                     }
 
-                    //если индекс первого параметра в комбинации первышает допустимый, значит мы вышли за пределы матрицы, выходим из цикла
-                    if(leftAxisCurrentParameterValues[0] > leftAxisCountParameterValues[0] - 1)
+                    //если индекс значения последнего параметра первышает допустимый, значит мы вышли за пределы матрицы, выходим из цикла
+                    if (leftAxisCurrentParameterValues[topAxisCurrentParameterValues.Length - 1] >= leftAxisCountParameterValues[topAxisCurrentParameterValues.Length - 1])
                     {
                         isEndLines = true;
                     }
@@ -1088,6 +1095,10 @@ namespace ktradesystem.ViewModels
                 BuildSurfaces(); //строим поверхности выбранных критериев оценки
                 isLoadingTestResultComplete = true;
                 Draw2D(); //отрисовываем 2D информацию
+
+                ModelFunctions.CreatePermutation(4, Enumerable.Repeat(false, 4).ToArray(), new List<int>(), combination);
+                indexCombination = -1;
+                //testFunc2();
             }
         }
         public ICommand ResetEvaluationCriterias_Click
@@ -1107,8 +1118,60 @@ namespace ktradesystem.ViewModels
                 return new DelegateCommand((obj) =>
                 {
                     ResetCameraPosition();
+                    testFunc2();
                 }, (obj) => true);
             }
         }
+
+        private void testFunc2()
+        {
+            _leftAxisParameters.Clear();
+            _topAxisParameters.Clear();
+            indexCombination++;
+            for(int i = 0; i < _testing.Algorithm.AlgorithmParameters.Count; i++)
+            {
+                if(i < _testing.Algorithm.AlgorithmParameters.Count / 2.0)
+                {
+                    _leftAxisParameters.Add(_testing.Algorithm.AlgorithmParameters[combination[indexCombination][i]]);
+                }
+                else
+                {
+                    _topAxisParameters.Add(_testing.Algorithm.AlgorithmParameters[combination[indexCombination][i]]);
+                }
+            }
+
+            CreateTestRunsMatrix(); //создаем двумерный массив с тестовыми прогонами на основе выбранных осей плоскости поиска
+            BuildScaleValues(); //строим шкалы значений
+            BuildSurfaces(); //строим поверхности выбранных критериев оценки
+            isLoadingTestResultComplete = true;
+            Draw2D(); //отрисовываем 2D информацию
+
+            testFunc();
+        }
+        private void testFunc()
+        {
+            string message = "indexCombination=" + indexCombination.ToString() + ",  combination={";
+            foreach(int value in combination[indexCombination])
+            {
+                message += value.ToString() + ", ";
+            }
+            message = message.Substring(0, message.Length - 2);
+            message += "},  _leftAxisParameters={";
+            foreach (AlgorithmParameter algorithmParameter in _leftAxisParameters)
+            {
+                message += algorithmParameter.Name + ", ";
+            }
+            message = message.Substring(0, message.Length - 2);
+            message += "},  _topAxisParameters={";
+            foreach (AlgorithmParameter algorithmParameter in _topAxisParameters)
+            {
+                message += algorithmParameter.Name + ", ";
+            }
+            message = message.Substring(0, message.Length - 2);
+            message += "}";
+            MessageBox.Show(message);
+        }
+        int indexCombination = 0;
+        private List<List<int>> combination = new List<List<int>>();
     }
 }

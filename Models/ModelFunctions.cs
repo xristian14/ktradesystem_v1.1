@@ -164,22 +164,25 @@ namespace ktradesystem.Models
 
         public static void TestEvaluationCriteria(TestRun testRun) //здесь я отлаживаю скрипты критериев оценки
         {
-            //наибольший выигрыш
-            double maxProfit = 0;
-            int defaulCurrencyIndex = testRun.Account.DepositCurrenciesChanges[0].FindIndex(a => a.Currency == testRun.Account.DefaultCurrency);
-            double currentDeposit = 0;
-            double lastDeposit = testRun.Account.DepositCurrenciesChanges[0][defaulCurrencyIndex].Deposit;
-            for (int i = 1; i < testRun.Account.DepositCurrenciesChanges.Count; i++)
+            //Коэффициент полезного действия модели
+            double totalNet = testRun.EvaluationCriteriaValues.Find(a => a.EvaluationCriteria.Id == 1).DoubleValue;
+            int maxPerfectProfitIdDataSource = testRun.TestBatch.OptimizationPerfectProfits[0].IdDataSource;
+            double maxPerfectProfitValue = testRun.IsOptimizationTestRun ? testRun.TestBatch.OptimizationPerfectProfits[0].Value : testRun.TestBatch.ForwardPerfectProfits[0].Value;
+            for (int i = 1; i < testRun.TestBatch.OptimizationPerfectProfits.Count; i++)
             {
-                currentDeposit = testRun.Account.DepositCurrenciesChanges[i][defaulCurrencyIndex].Deposit;
-                if (currentDeposit - lastDeposit > maxProfit)
+                int idDataSource = testRun.IsOptimizationTestRun ? testRun.TestBatch.OptimizationPerfectProfits[i].IdDataSource : testRun.TestBatch.ForwardPerfectProfits[i].IdDataSource;
+                double value = testRun.IsOptimizationTestRun ? testRun.TestBatch.OptimizationPerfectProfits[i].Value : testRun.TestBatch.ForwardPerfectProfits[i].Value;
+                if (value > maxPerfectProfitValue)
                 {
-                    maxProfit = currentDeposit - lastDeposit;
+                    maxPerfectProfitIdDataSource = idDataSource;
+                    maxPerfectProfitValue = value;
                 }
-                lastDeposit = currentDeposit;
             }
-            double ResultDoubleValue = maxProfit;
-            string ResultStringValue = Math.Round(ResultDoubleValue, 1) + " " + testRun.Account.DefaultCurrency.Name;
+
+            double dollarCostValue = maxPerfectProfitValue / testRun.TestBatch.DataSourceGroup.DataSourceAccordances.Find(a => a.DataSource.Id == maxPerfectProfitIdDataSource).DataSource.Currency.DollarCost;
+            double defaultCurrencyMaxPerfectProfitValue = Math.Round(dollarCostValue * testRun.Account.DefaultCurrency.DollarCost, 2);
+            double ResultDoubleValue = totalNet / defaultCurrencyMaxPerfectProfitValue * 100;
+            string ResultStringValue = Math.Round(ResultDoubleValue, 2) + " %";
         }
     }
 }

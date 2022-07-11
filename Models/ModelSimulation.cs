@@ -2064,7 +2064,10 @@ namespace ktradesystem.Models
                 {
                     break; //если был запрос на отмену тестирования, завершаем цикл
                 }
-
+                if(i == 1)
+                {
+                    ModelFunctions.TestEvaluationCriteria(testRun);
+                }
                 //копируем объект скомпилированного критерия оценки, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
                 dynamic CompiledEvaluationCriteriaCopy = testing.CompiledEvaluationCriterias[i].Clone();
                 EvaluationCriteriaValue evaluationCriteriaValue = CompiledEvaluationCriteriaCopy.Calculate(dataSourceCandles, testRun, _modelData.Settings);
@@ -3271,16 +3274,6 @@ namespace ktradesystem.Models
             }
         }
 
-        private List<List<int>> CreateNumbersCombinations(List<int> numbers)
-        {
-            List<List<int>> combination = new List<List<int>>();
-            for(int i = 0; i < numbers.Count; i++)
-            {
-
-            }
-            return combination;
-        }
-
         private void FindSurfaceAxes(TestBatch testBatch, Testing testing) //находит оси для тремхмерной поверхности
         {
             List<int> nonSingleAlgorithmParameterIndexes = new List<int>(); //индексы параметров алгоритма, которые имеют два и более значений
@@ -3358,6 +3351,15 @@ namespace ktradesystem.Models
                             algorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parameterIndex], IntValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[parameterIndex][valueIndex] : 0, DoubleValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 2 ? testing.AlgorithmParametersAllDoubleValues[parameterIndex][valueIndex] : 0 });
                         }
                         currentDoubleValue = testBatch.OptimizationTestRuns[ModelFunctions.FindTestRunIndexByAlgorithmParameterValues(testBatch.OptimizationTestRuns, algorithmParameterValues)].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue;
+
+                        string algorithmParameterValuesString = "";
+                        foreach(AlgorithmParameterValue algorithmParameterValue in algorithmParameterValues)
+                        {
+                            algorithmParameterValuesString += algorithmParameterValue.AlgorithmParameter.Name + "=";
+                            algorithmParameterValuesString += algorithmParameterValue.AlgorithmParameter.ParameterValueType.Id == 1 ? algorithmParameterValue.IntValue.ToString() : algorithmParameterValue.DoubleValue.ToString();
+                            algorithmParameterValuesString += ", ";
+                        }
+                        algorithmParameterValuesString = algorithmParameterValuesString.Substring(0, algorithmParameterValuesString.Length - 2);
 
                         if (numberInOneLine > 0) //если на линии с тестами был уже до этого хотя бы один тест, вычисляем разницу между текущим и прошлым тестом
                         {

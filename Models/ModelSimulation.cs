@@ -1278,53 +1278,56 @@ namespace ktradesystem.Models
                             List<PerfectProfit> perfectProfits = iteration == 1 ? testBatch.OptimizationPerfectProfits : testBatch.ForwardPerfectProfits; //для первой итерации, устанавливаем список с идеальными прибылями для оптимизационного периода, для второй итерации, для форвардного периода
                             foreach (DataSourceCandles dataSourceCandles in testing.DataSourcesCandles)
                             {
-                                //проходим по всем свечкам источников данных, пока не достигнем времени окончания теста, не выйдем за границы имеющихся файлов, или не получим запрос на отмену тестирования
-                                PerfectProfit perfectProfit = new PerfectProfit { IdDataSource = dataSourceCandles.DataSource.Id };
-                                DateTime currentDateTime = startDateTime;
-                                double pricesAmount = 0; //сумма разности цен закрытия, взятой по модулю
-                                int fileIndex = 0;
-                                int candleIndex = 0;
-                                bool isOverFileIndex = false; //вышел ли какой-либо из индексов файлов за границы массива файлов источника данных
-                                while (DateTime.Compare(currentDateTime, endDateTime) < 0 && isOverFileIndex == false && cancellationToken.IsCancellationRequested == false)
+                                if(testBatch.DataSourceGroup.DataSourceAccordances.Where(a=>a.DataSource.Id== dataSourceCandles.DataSource.Id).Any()) //вычисляем идеальную прибыль только для источников данных группы тестовой связки
                                 {
-                                    if (candleIndex > 0) //чтобы не обращаться к прошлой свечке при смене файла
+                                    //проходим по всем свечкам источников данных, пока не достигнем времени окончания теста, не выйдем за границы имеющихся файлов, или не получим запрос на отмену тестирования
+                                    PerfectProfit perfectProfit = new PerfectProfit { IdDataSource = dataSourceCandles.DataSource.Id };
+                                    DateTime currentDateTime = startDateTime;
+                                    double pricesAmount = 0; //сумма разности цен закрытия, взятой по модулю
+                                    int fileIndex = 0;
+                                    int candleIndex = 0;
+                                    bool isOverFileIndex = false; //вышел ли какой-либо из индексов файлов за границы массива файлов источника данных
+                                    while (DateTime.Compare(currentDateTime, endDateTime) < 0 && isOverFileIndex == false && cancellationToken.IsCancellationRequested == false)
                                     {
-                                        currentDateTime = dataSourceCandles.Candles[fileIndex][candleIndex].DateTime;
-                                        pricesAmount += Math.Abs(dataSourceCandles.Candles[fileIndex][candleIndex].C - dataSourceCandles.Candles[fileIndex][candleIndex - 1].C); //прибавляем разность цен закрытия, взятую по модулю
-                                    }
-
-                                    //переходим на следующую свечку, пока не дойдем до даты которая позже текущей
-                                    bool isOverDate = DateTime.Compare(dataSourceCandles.Candles[fileIndex][candleIndex].DateTime, currentDateTime) > 0; //дошли ли до даты которая позже текущей
-
-                                    //переходим на следующую свечку, пока не дойдем до даты которая позже текущей или пока не выйдем за пределы файлов
-                                    while (isOverDate == false && isOverFileIndex == false)
-                                    {
-                                        candleIndex++;
-                                        //если массив со свечками файла подошел к концу, переходим на следующий файл
-                                        if (candleIndex >= dataSourceCandles.Candles[fileIndex].Length)
+                                        if (candleIndex > 0) //чтобы не обращаться к прошлой свечке при смене файла
                                         {
-                                            fileIndex++;
-                                            candleIndex = 0;
+                                            currentDateTime = dataSourceCandles.Candles[fileIndex][candleIndex].DateTime;
+                                            pricesAmount += Math.Abs(dataSourceCandles.Candles[fileIndex][candleIndex].C - dataSourceCandles.Candles[fileIndex][candleIndex - 1].C); //прибавляем разность цен закрытия, взятую по модулю
                                         }
-                                        //если индекс файла не вышел за пределы массива, проверяем, дошли ли до даты которая позже текущей
-                                        if (fileIndex < dataSourceCandles.Candles.Length)
-                                        {
-                                            isOverDate = DateTime.Compare(dataSourceCandles.Candles[fileIndex][candleIndex].DateTime, currentDateTime) > 0;
-                                        }
-                                        else
-                                        {
-                                            isOverFileIndex = true;
-                                        }
-                                    }
 
-                                    //обновляем текущую дату
-                                    if (isOverFileIndex == false)
-                                    {
-                                        currentDateTime = dataSourceCandles.Candles[fileIndex][candleIndex].DateTime;
+                                        //переходим на следующую свечку, пока не дойдем до даты которая позже текущей
+                                        bool isOverDate = DateTime.Compare(dataSourceCandles.Candles[fileIndex][candleIndex].DateTime, currentDateTime) > 0; //дошли ли до даты которая позже текущей
+
+                                        //переходим на следующую свечку, пока не дойдем до даты которая позже текущей или пока не выйдем за пределы файлов
+                                        while (isOverDate == false && isOverFileIndex == false)
+                                        {
+                                            candleIndex++;
+                                            //если массив со свечками файла подошел к концу, переходим на следующий файл
+                                            if (candleIndex >= dataSourceCandles.Candles[fileIndex].Length)
+                                            {
+                                                fileIndex++;
+                                                candleIndex = 0;
+                                            }
+                                            //если индекс файла не вышел за пределы массива, проверяем, дошли ли до даты которая позже текущей
+                                            if (fileIndex < dataSourceCandles.Candles.Length)
+                                            {
+                                                isOverDate = DateTime.Compare(dataSourceCandles.Candles[fileIndex][candleIndex].DateTime, currentDateTime) > 0;
+                                            }
+                                            else
+                                            {
+                                                isOverFileIndex = true;
+                                            }
+                                        }
+
+                                        //обновляем текущую дату
+                                        if (isOverFileIndex == false)
+                                        {
+                                            currentDateTime = dataSourceCandles.Candles[fileIndex][candleIndex].DateTime;
+                                        }
                                     }
+                                    perfectProfit.Value = pricesAmount / dataSourceCandles.DataSource.PriceStep * dataSourceCandles.DataSource.CostPriceStep; //записываем идеальную прибыль
+                                    perfectProfits.Add(perfectProfit);
                                 }
-                                perfectProfit.Value = pricesAmount / dataSourceCandles.DataSource.PriceStep * dataSourceCandles.DataSource.CostPriceStep; //записываем идеальную прибыль
-                                perfectProfits.Add(perfectProfit);
                             }
                             iteration++;
                         }

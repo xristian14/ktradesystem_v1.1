@@ -52,6 +52,14 @@ namespace ktradesystem.ViewModels
         public Canvas CanvasOn3D { get; set; }
         private List<Point3D> ScaleValuesLeftPoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать значение на шкале значений
         private List<Point3D> ScaleValuesRightPoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать значение на шкале значений
+        private List<Point3D> ScaleValuesLeftParametersNamePoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать название параметра на шкале левой оси параметров
+        private List<Point3D> ScaleValuesTopParametersNamePoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать название параметра на шкале верхней оси параметров
+        private List<string> ScaleValuesLeftParametersNames = new List<string>(); //список с названиями параметров, соответствующие точкам
+        private List<string> ScaleValuesTopParametersNames = new List<string>(); //список с названиями параметров, соответствующие точкам
+        private List<Point3D> ScaleValuesLeftParametersValuePoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать значение параметра на шкале левой оси параметров
+        private List<Point3D> ScaleValuesTopParametersValuePoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать значение параметра на шкале верхней оси параметров
+        private List<double> ScaleValuesLeftParametersValues = new List<double>(); //список со значениями параметров, соответствующие точкам
+        private List<double> ScaleValuesTopParametersValues = new List<double>(); //список со значениями параметров, соответствующие точкам
 
         private ScaleTransform3D _scaleTransform3DLeftParameters; //преобразование масштаба для плоскости с параметрами левой оси
         private TranslateTransform3D _translateTransform3DLeftParameters; //преобразование смещения для плоскости с параметрами левой оси
@@ -482,6 +490,16 @@ namespace ktradesystem.ViewModels
         {
             ScaleValuesRightPoints.Clear();
             ScaleValuesLeftPoints.Clear();
+
+            ScaleValuesLeftParametersNamePoints.Clear();
+            ScaleValuesTopParametersNamePoints.Clear();
+            ScaleValuesLeftParametersNames.Clear();
+            ScaleValuesTopParametersNames.Clear();
+            ScaleValuesLeftParametersValuePoints.Clear();
+            ScaleValuesTopParametersValuePoints.Clear();
+            ScaleValuesLeftParametersValues.Clear();
+            ScaleValuesTopParametersValues.Clear();
+
             byte parametersLineAlpha = 170;
             DiffuseMaterial evenLiteLineParametersDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(parametersLineAlpha, 226, 239, 218))); //светлый цвет для линии четных параметров
             DiffuseMaterial evenMediumLiteLineParametersDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(parametersLineAlpha, 198, 224, 180))); //средне светлый цвет для линии четных параметров
@@ -792,6 +810,8 @@ namespace ktradesystem.ViewModels
                     }
                     model3DGroupLeftParameters.Children.Add(geometryModel3DPlanes);
                 }
+                ScaleValuesLeftParametersNamePoints.Add(new Point3D(0, -currentLineOffset + _scaleValueLineWidth, 0));
+                ScaleValuesLeftParametersNames.Add(_leftAxisParameters[i].Name);
                 //строим линию со значениями параметра
                 int numberParameterValue = 0;
                 double rectangleValueLength = _cubeSideSize / (totalCountParameterValues * countParameterValues); //длина прямоугольника со значениями параметра, из которых будет состоять линия
@@ -843,6 +863,10 @@ namespace ktradesystem.ViewModels
                             geometryModel3DPlanes.Material = numberParameterValue % 2 == 0 ? oddMediumLiteLineParametersDiffuseMaterial : oddLiteLineParametersDiffuseMaterial;
                         }
                         model3DGroupLeftParameters.Children.Add(geometryModel3DPlanes);
+
+                        ScaleValuesLeftParametersValuePoints.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, (lineXRight - lineXLeft) / 2));
+                        ScaleValuesLeftParametersValues.Add(_leftAxisParameters[i].ParameterValueType.Id == 1 ? _testing.AlgorithmParametersAllIntValues[parameterIndex][u] : _testing.AlgorithmParametersAllDoubleValues[parameterIndex][u]);
+
                         numberParameterValue++;
                     }
                 }
@@ -908,6 +932,8 @@ namespace ktradesystem.ViewModels
                     }
                     model3DGroupTopParameters.Children.Add(geometryModel3DPlanes);
                 }
+                ScaleValuesTopParametersNamePoints.Add(new Point3D(0, -currentLineOffset + _scaleValueLineWidth, 0));
+                ScaleValuesTopParametersNames.Add(_topAxisParameters[i].Name);
                 //строим линию со значениями параметра
                 int numberParameterValue = 0;
                 double rectangleValueLength = _cubeSideSize / (totalCountParameterValues * countParameterValues); //длина прямоугольника со значениями параметра, из которых будет состоять линия
@@ -959,6 +985,10 @@ namespace ktradesystem.ViewModels
                             geometryModel3DPlanes.Material = numberParameterValue % 2 == 0 ? oddMediumLiteLineParametersDiffuseMaterial : oddLiteLineParametersDiffuseMaterial;
                         }
                         model3DGroupTopParameters.Children.Add(geometryModel3DPlanes);
+
+                        ScaleValuesTopParametersValuePoints.Add(new Point3D((lineXRight - lineXLeft) / 2, lineYBottom + _scaleValueLineWidth, 0));
+                        ScaleValuesTopParametersValues.Add(_topAxisParameters[i].ParameterValueType.Id == 1 ? _testing.AlgorithmParametersAllIntValues[parameterIndex][u] : _testing.AlgorithmParametersAllDoubleValues[parameterIndex][u]);
+
                         numberParameterValue++;
                     }
                 }
@@ -997,15 +1027,15 @@ namespace ktradesystem.ViewModels
                     digits++;
                 }
 
-                double textHeight = 9;
-                double marginByScaleValues = 5; //отступ влево от левой шкалы и вправо от правой
-                double symbolMinusWidth = 5; //ширина сивола -
-                double symbolCommaWidth = 3; //ширина символа ,
-                double symbolDigitWidth = 6; //ширина символа цифры
-
                 //отрисовываем значения шкал значений
                 for (int i = 0; i < ScaleValuesLeftPoints.Count; i++)
                 {
+                    double textHeight = 9;
+                    double marginByScaleValues = 5; //отступ влево от левой шкалы и вправо от правой
+                    double symbolMinusWidth = 5; //ширина сивола -
+                    double symbolCommaWidth = 3; //ширина символа ,
+                    double symbolDigitWidth = 6; //ширина символа цифры
+
                     double value = _min + range * i / (ScaleValuesLeftPoints.Count - 1.0);
                     string text = Math.Round(value, digits).ToString();
                     //определяем ширину теста
@@ -1043,6 +1073,106 @@ namespace ktradesystem.ViewModels
                     Point coordinate2DRight = Convert3DPointTo2D(point3DRightTransformed);
                     textBlockRight.Margin = new Thickness(coordinate2DRight.X + marginByScaleValues, coordinate2DRight.Y - textHeight, 0, 0);
                     CanvasOn3D.Children.Add(textBlockRight);
+                }
+
+                //отрисовываем названия параметров левой оси
+                for(int i = 0; i < ScaleValuesLeftParametersNamePoints.Count; i++)
+                {
+                    double textHeight = 15;
+                    double symbolDigitWidth = 5.9; //ширина символа цифры
+                    double symbolUppercaseLongLetter = 7.1;
+                    double symbolUppercaseShortLetter = 2.9;
+                    double symbolLowercaseLongLetter = 5.6;
+                    double symbolLowercaseShortLetter = 2.8;
+
+                    double fontSize = 11;
+
+                    //определяем ширину теста
+                    double textWidth = 0;
+                    foreach (char c in ScaleValuesLeftParametersNames[i])
+                    {
+                        if ("1234567890".Contains(c))
+                        {
+                            textWidth += symbolDigitWidth;
+                        }
+                        if ("ABCDEFGHKLMNOPQRSTUVWXYZ".Contains(c))
+                        {
+                            textWidth += symbolUppercaseLongLetter;
+                        }
+                        if ("IJ".Contains(c))
+                        {
+                            textWidth += symbolUppercaseShortLetter;
+                        }
+                        if ("abcdeghkmnopqrsuvwxyz".Contains(c))
+                        {
+                            textWidth += symbolLowercaseLongLetter;
+                        }
+                        if ("ijlft".Contains(c))
+                        {
+                            textWidth += symbolLowercaseShortLetter;
+                        }
+                    }
+
+                    TextBlock textBlock = new TextBlock();
+                    textBlock.Text = ScaleValuesLeftParametersNames[i];
+                    textBlock.FontSize = fontSize;
+                    Transform3DGroup transform3DGroup = new Transform3DGroup();
+                    transform3DGroup.Children.Add(ScaleValuesLeftParametersModel3D.Transform);
+
+                    Point3D point3DtTransformed = transform3DGroup.Transform(ScaleValuesLeftParametersNamePoints[i]); //поворачиваем координату
+                    Point coordinate2D = Convert3DPointTo2D(point3DtTransformed);
+                    textBlock.Margin = new Thickness(coordinate2D.X - Math.Round(textWidth / 2), coordinate2D.Y - textHeight, 0, 0);
+                    CanvasOn3D.Children.Add(textBlock);
+                }
+
+                //отрисовываем названия параметров верхней оси
+                for(int i = 0; i < ScaleValuesTopParametersNamePoints.Count; i++)
+                {
+                    double textHeight = 15;
+                    double symbolDigitWidth = 5.9; //ширина символа цифры
+                    double symbolUppercaseLongLetter = 7.1;
+                    double symbolUppercaseShortLetter = 2.9;
+                    double symbolLowercaseLongLetter = 5.6;
+                    double symbolLowercaseShortLetter = 2.8;
+
+                    double fontSize = 11;
+
+                    //определяем ширину теста
+                    double textWidth = 0;
+                    foreach (char c in ScaleValuesTopParametersNames[i])
+                    {
+                        if ("1234567890".Contains(c))
+                        {
+                            textWidth += symbolDigitWidth;
+                        }
+                        if ("ABCDEFGHKLMNOPQRSTUVWXYZ".Contains(c))
+                        {
+                            textWidth += symbolUppercaseLongLetter;
+                        }
+                        if ("IJ".Contains(c))
+                        {
+                            textWidth += symbolUppercaseShortLetter;
+                        }
+                        if ("abcdeghkmnopqrsuvwxyz".Contains(c))
+                        {
+                            textWidth += symbolLowercaseLongLetter;
+                        }
+                        if ("ijlft".Contains(c))
+                        {
+                            textWidth += symbolLowercaseShortLetter;
+                        }
+                    }
+
+                    TextBlock textBlock = new TextBlock();
+                    textBlock.Text = ScaleValuesTopParametersNames[i];
+                    textBlock.FontSize = fontSize;
+                    Transform3DGroup transform3DGroup = new Transform3DGroup();
+                    transform3DGroup.Children.Add(ScaleValuesTopParametersModel3D.Transform);
+
+                    Point3D point3DtTransformed = transform3DGroup.Transform(ScaleValuesTopParametersNamePoints[i]); //поворачиваем координату
+                    Point coordinate2D = Convert3DPointTo2D(point3DtTransformed);
+                    textBlock.Margin = new Thickness(coordinate2D.X - Math.Round(textWidth / 2), coordinate2D.Y - textHeight, 0, 0);
+                    CanvasOn3D.Children.Add(textBlock);
                 }
             }
         }

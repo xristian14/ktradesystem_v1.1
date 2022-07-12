@@ -34,6 +34,7 @@ namespace ktradesystem.ViewModels
         private double _cubeSideSize = 1; //размер стороны куба, в который вписывается график
         private float _cameraDistance = 1; //растояние от центра куба до камеры
         private int _countScaleValues = 5; //количество отрезков на шкале значений по оси критерия оценки
+        private double _parametersScaleValuesWidth = 0.05; //толщина линии для параметра, относительно размера стороны куба
         private double _offsetScaleValues = 0.08; //отступ от графика на котором продолжается отрисовываться линия шкалы значений/параметров алгоритма, и после которого начинают отображаться значения шаклы значений/параметров алгоритма. Значение относительно стороны куба, в который вписывается график
         private double _scaleValueLineWidth = 0.0036; //толщина линии на шкале занчений относительно стороны куба, в который вписывается график
         private bool _isResetAxesSearchPlane = false; //происодит ли в данный момент сбрасывание параметров осей
@@ -113,6 +114,28 @@ namespace ktradesystem.ViewModels
             private set
             {
                 _scaleValuesRightModel3D = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Model3D _scaleValuesLeftParametersModel3D;
+        public Model3D ScaleValuesLeftParametersModel3D //плоскости, на которых отображаются шкалы значений с параметрами левой оси
+        {
+            get { return _scaleValuesLeftParametersModel3D; }
+            private set
+            {
+                _scaleValuesLeftParametersModel3D = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Model3D _scaleValuesTopParametersModel3D;
+        public Model3D ScaleValuesTopParametersModel3D //плоскости, на которых отображаются шкалы значений с параметрами верхней оси
+        {
+            get { return _scaleValuesTopParametersModel3D; }
+            private set
+            {
+                _scaleValuesTopParametersModel3D = value;
                 OnPropertyChanged();
             }
         }
@@ -207,6 +230,7 @@ namespace ktradesystem.ViewModels
                 double angle = Math.Truncate(cameraArcRotatePositive / 1.57079633) * 90;
                 ScaleValuesLeftModel3D.Transform = GetRotateTransform3D(new Vector3D(0, 1, 0), angle - 90);
                 ScaleValuesRightModel3D.Transform = GetRotateTransform3D(new Vector3D(0, 1, 0), angle - 180);
+                ScaleValuesLeftParametersModel3D.Transform = GetRotateTransform3D(new Vector3D(0, 1, 0), angle - 45);
             }
         }
 
@@ -412,8 +436,14 @@ namespace ktradesystem.ViewModels
         {
             ScaleValuesRightPoints.Clear();
             ScaleValuesLeftPoints.Clear();
-            /*DiffuseMaterial secondLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(226, 239, 218)));
-            DiffuseMaterial firstLineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(198, 224, 180)));*/
+            byte parametersLineAlpha = 170;
+            DiffuseMaterial evenLiteLineParametersDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(parametersLineAlpha, 226, 239, 218))); //светлый цвет для линии четных параметров
+            DiffuseMaterial evenMediumLiteLineParametersDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(parametersLineAlpha, 198, 224, 180))); //средне светлый цвет для линии четных параметров
+            DiffuseMaterial evenDarkLineParametersDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(parametersLineAlpha, 169, 208, 142))); //темный цвет для линии четных параметров
+            DiffuseMaterial oddLiteLineParametersDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(parametersLineAlpha, 221, 235, 247))); //светлый цвет для линии нечетных параметров
+            DiffuseMaterial oddMediumLiteLineParametersDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(parametersLineAlpha, 189, 215, 238))); //средне светлый цвет для линии нечетных параметров
+            DiffuseMaterial oddDarkLineParametersDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(parametersLineAlpha, 155, 194, 230))); //темный цвет для линии нечетных параметров
+
             DiffuseMaterial lineDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(0, 0, 0)));
             DiffuseMaterial planeDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(72, 255, 255, 255)));
             Model3DGroup model3DGroupLeft = new Model3DGroup();
@@ -657,6 +687,238 @@ namespace ktradesystem.ViewModels
                 ScaleValuesLeftPoints.Add(new Point3D(_cubeSideSize / 2 + _cubeSideSize * _offsetScaleValues, lineYBottom + _scaleValueLineWidth / 2, _cubeSideSize / 2));
             }
             ScaleValuesLeftModel3D = model3DGroupRight;
+
+            //шкала с параметрами левой оси
+            Model3DGroup model3DGroupLeftParameters = new Model3DGroup(); //ScaleValuesLeftParametersModel3D
+            int totalCountParameterValues = 1; //суммарное количество значений параметров
+            for(int i = _leftAxisParameters.Count - 1; i >= 0 ; i--)
+            {
+                bool isEvenParameter = i % 2 == 0 ? true : false; //четный параметр или нечетный
+                double currentLineOffset = _cubeSideSize * _parametersScaleValuesWidth * ((i + 1) * 2); //отступ текущей линии от графика
+                int parameterIndex = _testing.Algorithm.AlgorithmParameters.FindIndex(a => a.Id == _leftAxisParameters[i].Id);
+                int countParameterValues = _leftAxisParameters[i].ParameterValueType.Id == 1 ? _testing.AlgorithmParametersAllIntValues[parameterIndex].Count : _testing.AlgorithmParametersAllDoubleValues[parameterIndex].Count;
+                //строим линию с названием параметра
+                double rectangleLength = _cubeSideSize / totalCountParameterValues; //длина прямоугольника из которых будет состоять линия
+                for(int k = 0; k < totalCountParameterValues; k++)
+                {
+                    GeometryModel3D geometryModel3DLines = new GeometryModel3D();
+                    MeshGeometry3D meshGeometry3DLines = new MeshGeometry3D();
+                    Point3DCollection positionsCollectionLines = new Point3DCollection();
+                    Int32Collection triangleIndicesCollectionLines = new Int32Collection();
+                    GeometryModel3D geometryModel3DPlanes = new GeometryModel3D();
+                    MeshGeometry3D meshGeometry3DPlanes = new MeshGeometry3D();
+                    Point3DCollection positionsCollectionPlanes = new Point3DCollection();
+                    Int32Collection triangleIndicesCollectionPlanes = new Int32Collection();
+
+                    double lineXLeft = -_cubeSideSize / 2 + rectangleLength * k; //левая координата X для линии
+                    double lineXRight = lineXLeft + rectangleLength; //правая координата X для линии
+                    double lineYTop = -_cubeSideSize / 2 - currentLineOffset + _cubeSideSize * _parametersScaleValuesWidth; //верхняя координата Y для линии
+                    double lineYBottom = -_cubeSideSize / 2 - currentLineOffset; //нижняя координата Y для линии
+
+                    positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, _cubeSideSize / 2));
+                    positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                    positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                    positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, _cubeSideSize / 2));
+                    positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                    positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYTop, _cubeSideSize / 2));
+                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+
+                    meshGeometry3DLines.Positions = positionsCollectionLines;
+                    meshGeometry3DLines.TriangleIndices = triangleIndicesCollectionLines;
+                    geometryModel3DLines.Geometry = meshGeometry3DLines;
+                    geometryModel3DLines.Material = lineDiffuseMaterial;
+                    model3DGroupRight.Children.Add(geometryModel3DLines);
+                    meshGeometry3DPlanes.Positions = positionsCollectionPlanes;
+                    meshGeometry3DPlanes.TriangleIndices = triangleIndicesCollectionPlanes;
+                    geometryModel3DPlanes.Geometry = meshGeometry3DPlanes;
+                    if (isEvenParameter)
+                    {
+                        geometryModel3DPlanes.Material = k % 2 == 0 ? evenDarkLineParametersDiffuseMaterial : evenMediumLiteLineParametersDiffuseMaterial;
+                    }
+                    else
+                    {
+                        geometryModel3DPlanes.Material = k % 2 == 0 ? oddDarkLineParametersDiffuseMaterial : oddMediumLiteLineParametersDiffuseMaterial;
+                    }
+                    model3DGroupLeftParameters.Children.Add(geometryModel3DPlanes);
+                }
+                //строим линию со значениями параметра
+                int numberParameterValue = 0;
+                double rectangleValueLength = _cubeSideSize / (totalCountParameterValues * countParameterValues); //длина прямоугольника со значениями параметра, из которых будет состоять линия
+                for (int k = 0; k < totalCountParameterValues; k++)
+                {
+                    for(int u = 0; u < countParameterValues; u++)
+                    {
+                        GeometryModel3D geometryModel3DLines = new GeometryModel3D();
+                        MeshGeometry3D meshGeometry3DLines = new MeshGeometry3D();
+                        Point3DCollection positionsCollectionLines = new Point3DCollection();
+                        Int32Collection triangleIndicesCollectionLines = new Int32Collection();
+                        GeometryModel3D geometryModel3DPlanes = new GeometryModel3D();
+                        MeshGeometry3D meshGeometry3DPlanes = new MeshGeometry3D();
+                        Point3DCollection positionsCollectionPlanes = new Point3DCollection();
+                        Int32Collection triangleIndicesCollectionPlanes = new Int32Collection();
+
+                        double lineXLeft = -_cubeSideSize / 2 + rectangleValueLength * numberParameterValue; //левая координата X для линии
+                        double lineXRight = lineXLeft + rectangleValueLength; //правая координата X для линии
+                        double lineYTop = -_cubeSideSize / 2 - currentLineOffset + (_cubeSideSize * _parametersScaleValuesWidth) * 2; //верхняя координата Y для линии
+                        double lineYBottom = -_cubeSideSize / 2 - currentLineOffset + _cubeSideSize * _parametersScaleValuesWidth; //нижняя координата Y для линии
+
+                        positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, _cubeSideSize / 2));
+                        positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                        positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                        positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, _cubeSideSize / 2));
+                        positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                        positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYTop, _cubeSideSize / 2));
+                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+
+                        meshGeometry3DLines.Positions = positionsCollectionLines;
+                        meshGeometry3DLines.TriangleIndices = triangleIndicesCollectionLines;
+                        geometryModel3DLines.Geometry = meshGeometry3DLines;
+                        geometryModel3DLines.Material = lineDiffuseMaterial;
+                        model3DGroupRight.Children.Add(geometryModel3DLines);
+                        meshGeometry3DPlanes.Positions = positionsCollectionPlanes;
+                        meshGeometry3DPlanes.TriangleIndices = triangleIndicesCollectionPlanes;
+                        geometryModel3DPlanes.Geometry = meshGeometry3DPlanes;
+                        if (isEvenParameter)
+                        {
+                            geometryModel3DPlanes.Material = numberParameterValue % 2 == 0 ? evenMediumLiteLineParametersDiffuseMaterial : evenLiteLineParametersDiffuseMaterial;
+                        }
+                        else
+                        {
+                            geometryModel3DPlanes.Material = numberParameterValue % 2 == 0 ? oddMediumLiteLineParametersDiffuseMaterial : oddLiteLineParametersDiffuseMaterial;
+                        }
+                        model3DGroupLeftParameters.Children.Add(geometryModel3DPlanes);
+                        numberParameterValue++;
+                    }
+                }
+                totalCountParameterValues *= countParameterValues;
+            }
+            ScaleValuesLeftParametersModel3D = model3DGroupLeftParameters;
+
+            //шкала с параметрами верхней оси
+            Model3DGroup model3DGroupTopParameters = new Model3DGroup();
+            totalCountParameterValues = 1; //суммарное количество значений параметров
+            for(int i = _topAxisParameters.Count - 1; i >= 0 ; i--)
+            {
+                bool isEvenParameter = i % 2 == 0 ? true : false; //четный параметр или нечетный
+                double currentLineOffset = _cubeSideSize * _parametersScaleValuesWidth * ((i + 1) * 2); //отступ текущей линии от графика
+                int parameterIndex = _testing.Algorithm.AlgorithmParameters.FindIndex(a => a.Id == _topAxisParameters[i].Id);
+                int countParameterValues = _topAxisParameters[i].ParameterValueType.Id == 1 ? _testing.AlgorithmParametersAllIntValues[parameterIndex].Count : _testing.AlgorithmParametersAllDoubleValues[parameterIndex].Count;
+                //строим линию с названием параметра
+                double rectangleLength = _cubeSideSize / totalCountParameterValues; //длина прямоугольника из которых будет состоять линия
+                for(int k = 0; k < totalCountParameterValues; k++)
+                {
+                    GeometryModel3D geometryModel3DLines = new GeometryModel3D();
+                    MeshGeometry3D meshGeometry3DLines = new MeshGeometry3D();
+                    Point3DCollection positionsCollectionLines = new Point3DCollection();
+                    Int32Collection triangleIndicesCollectionLines = new Int32Collection();
+                    GeometryModel3D geometryModel3DPlanes = new GeometryModel3D();
+                    MeshGeometry3D meshGeometry3DPlanes = new MeshGeometry3D();
+                    Point3DCollection positionsCollectionPlanes = new Point3DCollection();
+                    Int32Collection triangleIndicesCollectionPlanes = new Int32Collection();
+
+                    double lineXLeft = -_cubeSideSize / 2 + rectangleLength * k; //левая координата X для линии
+                    double lineXRight = lineXLeft + rectangleLength; //правая координата X для линии
+                    double lineYTop = -_cubeSideSize / 2 - currentLineOffset + _cubeSideSize * _parametersScaleValuesWidth; //верхняя координата Y для линии
+                    double lineYBottom = -_cubeSideSize / 2 - currentLineOffset; //нижняя координата Y для линии
+
+                    positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, _cubeSideSize / 2));
+                    positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                    positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                    positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, _cubeSideSize / 2));
+                    positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                    positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYTop, _cubeSideSize / 2));
+                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+
+                    meshGeometry3DLines.Positions = positionsCollectionLines;
+                    meshGeometry3DLines.TriangleIndices = triangleIndicesCollectionLines;
+                    geometryModel3DLines.Geometry = meshGeometry3DLines;
+                    geometryModel3DLines.Material = lineDiffuseMaterial;
+                    model3DGroupRight.Children.Add(geometryModel3DLines);
+                    meshGeometry3DPlanes.Positions = positionsCollectionPlanes;
+                    meshGeometry3DPlanes.TriangleIndices = triangleIndicesCollectionPlanes;
+                    geometryModel3DPlanes.Geometry = meshGeometry3DPlanes;
+                    if (isEvenParameter)
+                    {
+                        geometryModel3DPlanes.Material = k % 2 == 0 ? evenDarkLineParametersDiffuseMaterial : evenMediumLiteLineParametersDiffuseMaterial;
+                    }
+                    else
+                    {
+                        geometryModel3DPlanes.Material = k % 2 == 0 ? oddDarkLineParametersDiffuseMaterial : oddMediumLiteLineParametersDiffuseMaterial;
+                    }
+                    model3DGroupTopParameters.Children.Add(geometryModel3DPlanes);
+                }
+                //строим линию со значениями параметра
+                int numberParameterValue = 0;
+                double rectangleValueLength = _cubeSideSize / (totalCountParameterValues * countParameterValues); //длина прямоугольника со значениями параметра, из которых будет состоять линия
+                for (int k = 0; k < totalCountParameterValues; k++)
+                {
+                    for(int u = 0; u < countParameterValues; u++)
+                    {
+                        GeometryModel3D geometryModel3DLines = new GeometryModel3D();
+                        MeshGeometry3D meshGeometry3DLines = new MeshGeometry3D();
+                        Point3DCollection positionsCollectionLines = new Point3DCollection();
+                        Int32Collection triangleIndicesCollectionLines = new Int32Collection();
+                        GeometryModel3D geometryModel3DPlanes = new GeometryModel3D();
+                        MeshGeometry3D meshGeometry3DPlanes = new MeshGeometry3D();
+                        Point3DCollection positionsCollectionPlanes = new Point3DCollection();
+                        Int32Collection triangleIndicesCollectionPlanes = new Int32Collection();
+
+                        double lineXLeft = -_cubeSideSize / 2 + rectangleValueLength * numberParameterValue; //левая координата X для линии
+                        double lineXRight = lineXLeft + rectangleValueLength; //правая координата X для линии
+                        double lineYTop = -_cubeSideSize / 2 - currentLineOffset + (_cubeSideSize * _parametersScaleValuesWidth) * 2; //верхняя координата Y для линии
+                        double lineYBottom = -_cubeSideSize / 2 - currentLineOffset + _cubeSideSize * _parametersScaleValuesWidth; //нижняя координата Y для линии
+
+                        positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, _cubeSideSize / 2));
+                        positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                        positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                        positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, _cubeSideSize / 2));
+                        positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
+                        positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYTop, _cubeSideSize / 2));
+                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+
+                        meshGeometry3DLines.Positions = positionsCollectionLines;
+                        meshGeometry3DLines.TriangleIndices = triangleIndicesCollectionLines;
+                        geometryModel3DLines.Geometry = meshGeometry3DLines;
+                        geometryModel3DLines.Material = lineDiffuseMaterial;
+                        model3DGroupRight.Children.Add(geometryModel3DLines);
+                        meshGeometry3DPlanes.Positions = positionsCollectionPlanes;
+                        meshGeometry3DPlanes.TriangleIndices = triangleIndicesCollectionPlanes;
+                        geometryModel3DPlanes.Geometry = meshGeometry3DPlanes;
+                        if (isEvenParameter)
+                        {
+                            geometryModel3DPlanes.Material = numberParameterValue % 2 == 0 ? evenMediumLiteLineParametersDiffuseMaterial : evenLiteLineParametersDiffuseMaterial;
+                        }
+                        else
+                        {
+                            geometryModel3DPlanes.Material = numberParameterValue % 2 == 0 ? oddMediumLiteLineParametersDiffuseMaterial : oddLiteLineParametersDiffuseMaterial;
+                        }
+                        model3DGroupTopParameters.Children.Add(geometryModel3DPlanes);
+                        numberParameterValue++;
+                    }
+                }
+                totalCountParameterValues *= countParameterValues;
+            }
+            ScaleValuesTopParametersModel3D = model3DGroupTopParameters;
 
             UpdateScaleValuesRotation(); //обновляем угол вращения шкал значений, чтобы они были напротив камеры
         }

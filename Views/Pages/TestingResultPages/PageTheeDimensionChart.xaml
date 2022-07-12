@@ -353,6 +353,7 @@
                 </StackPanel>
                 <StackPanel Margin="0 5 0 0" Orientation="Horizontal">
                     <Button Content="Сбросить вращение" Command="{Binding ResetCamera_Click}" Width="122"/>
+                    <Button Content="button test" Command="{Binding ButtonTest_Click}" Width="122"/>
                 </StackPanel>
             </StackPanel>
             <Viewport3D x:Name="viewport3D" Grid.Row="1">

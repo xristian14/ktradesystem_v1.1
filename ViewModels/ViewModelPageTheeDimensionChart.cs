@@ -53,6 +53,10 @@ namespace ktradesystem.ViewModels
         private List<Point3D> ScaleValuesLeftPoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать значение на шкале значений
         private List<Point3D> ScaleValuesRightPoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать значение на шкале значений
 
+        private ScaleTransform3D _scaleTransform3DLeftParameters; //преобразование масштаба для плоскости с параметрами левой оси
+        private TranslateTransform3D _translateTransform3DLeftParameters; //преобразование смещения для плоскости с параметрами левой оси
+        private ScaleTransform3D _scaleTransform3DTopParameters; //преобразование масштаба для плоскости с параметрами верхней оси
+        private TranslateTransform3D _translateTransform3DTopParameters; //преобразование смещения для плоскости с параметрами верхней оси
 
         private Point3D _cameraPosition;
         public Point3D CameraPosition
@@ -222,15 +226,51 @@ namespace ktradesystem.ViewModels
             Draw2D(); //отрисовываем 2D информацию
         }
 
+        private void UpdateTranslateScaleTransformLeftTopAxis() //обновляет транформацию смещения шкал занчений с параметрами
+        {
+            double angle = _cameraArcRotate * 57.29577951308;
+            double translateLeft = 0;
+            double translateTop = 0;
+            double scaleLeft = 1;
+            double scaleTop = 1;
+            if (angle > 90 && angle <= 180)
+            {
+                scaleTop = -1;
+            }
+            else if(angle > 180 && angle <= 270)
+            {
+                scaleLeft = -1;
+                scaleTop = -1;
+            }
+            else if(angle > 270 && angle <= 360)
+            {
+                scaleLeft = -1;
+            }
+            _translateTransform3DLeftParameters = new TranslateTransform3D(0, 0, translateLeft);
+            _translateTransform3DTopParameters = new TranslateTransform3D(0, 0, translateTop);
+            _scaleTransform3DLeftParameters = new ScaleTransform3D(scaleLeft, 1, 1);
+            _scaleTransform3DTopParameters = new ScaleTransform3D(1, 1, scaleTop);
+        }
+
         private void UpdateScaleValuesRotation() //обновляет угол вращения шкал значений, чтобы они всегда были напротив камеры
         {
             if (ScaleValuesLeftModel3D != null)
             {
+                UpdateTranslateScaleTransformLeftTopAxis();
                 double cameraArcRotatePositive = _cameraArcRotate < 0 ? _cameraArcRotate + 6.28318530718 : _cameraArcRotate; //угол в положительном значении
                 double angle = Math.Truncate(cameraArcRotatePositive / 1.57079633) * 90;
                 ScaleValuesLeftModel3D.Transform = GetRotateTransform3D(new Vector3D(0, 1, 0), angle - 90);
                 ScaleValuesRightModel3D.Transform = GetRotateTransform3D(new Vector3D(0, 1, 0), angle - 180);
-                ScaleValuesLeftParametersModel3D.Transform = GetRotateTransform3D(new Vector3D(0, 1, 0), angle - 45);
+                Transform3DGroup transform3DGroupLeftParameters = new Transform3DGroup();
+                transform3DGroupLeftParameters.Children.Add(_translateTransform3DLeftParameters);
+                transform3DGroupLeftParameters.Children.Add(_scaleTransform3DLeftParameters);
+                transform3DGroupLeftParameters.Children.Add(GetRotateTransform3D(new Vector3D(1, 0, 0), 0));
+                ScaleValuesLeftParametersModel3D.Transform = transform3DGroupLeftParameters;
+                Transform3DGroup transform3DGroupTopParameters = new Transform3DGroup();
+                transform3DGroupTopParameters.Children.Add(_translateTransform3DTopParameters);
+                transform3DGroupTopParameters.Children.Add(_scaleTransform3DTopParameters);
+                transform3DGroupTopParameters.Children.Add(GetRotateTransform3D(new Vector3D(1, 0, 0), 0));
+                ScaleValuesTopParametersModel3D.Transform = transform3DGroupTopParameters;
             }
         }
 
@@ -715,12 +755,12 @@ namespace ktradesystem.ViewModels
                     double lineYTop = -_cubeSideSize / 2 - currentLineOffset + _cubeSideSize * _parametersScaleValuesWidth; //верхняя координата Y для линии
                     double lineYBottom = -_cubeSideSize / 2 - currentLineOffset; //нижняя координата Y для линии
 
-                    positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, _cubeSideSize / 2));
-                    positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
-                    positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
-                    positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, _cubeSideSize / 2));
-                    positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
-                    positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYTop, _cubeSideSize / 2));
+                    positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2, lineYTop, lineXLeft));
+                    positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2, lineYBottom + _scaleValueLineWidth, lineXRight));
+                    positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2, lineYBottom + _scaleValueLineWidth, lineXLeft));
+                    positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2, lineYTop, lineXLeft));
+                    positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2, lineYTop, lineXRight));
+                    positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2, lineYBottom + _scaleValueLineWidth, lineXRight));
                     triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
                     triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
                     triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
@@ -767,12 +807,12 @@ namespace ktradesystem.ViewModels
                         double lineYTop = -_cubeSideSize / 2 - currentLineOffset + (_cubeSideSize * _parametersScaleValuesWidth) * 2; //верхняя координата Y для линии
                         double lineYBottom = -_cubeSideSize / 2 - currentLineOffset + _cubeSideSize * _parametersScaleValuesWidth; //нижняя координата Y для линии
 
-                        positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, _cubeSideSize / 2));
-                        positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
-                        positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
-                        positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, _cubeSideSize / 2));
-                        positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, _cubeSideSize / 2));
-                        positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYTop, _cubeSideSize / 2));
+                        positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2, lineYTop, lineXLeft));
+                        positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2, lineYBottom + _scaleValueLineWidth, lineXRight));
+                        positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2, lineYBottom + _scaleValueLineWidth, lineXLeft));
+                        positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2, lineYTop, lineXLeft));
+                        positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2, lineYTop, lineXRight));
+                        positionsCollectionPlanes.Add(new Point3D(_cubeSideSize / 2, lineYBottom + _scaleValueLineWidth, lineXRight));
                         triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
                         triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
                         triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
@@ -1381,6 +1421,16 @@ namespace ktradesystem.ViewModels
                 {
                     ResetCameraPosition();
                     testFunc2();
+                }, (obj) => true);
+            }
+        }
+        public ICommand ButtonTest_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    MessageBox.Show("_cameraArcRotate=" + (_cameraArcRotate * 57.29577951308).ToString());
                 }, (obj) => true);
             }
         }

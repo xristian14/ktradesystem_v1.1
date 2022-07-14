@@ -146,7 +146,7 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        private int _scaleValuesWidth = 32;
+        private int _scaleValuesWidth = 45;
         public int ScaleValuesWidth //ширина правой области со шкалой значений
         {
             get { return _scaleValuesWidth; }

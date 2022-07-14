@@ -17,6 +17,7 @@ namespace ktradesystem.Models
         public List<AxesParameter> FirstSurfaceAxes { get; set; } //первая ось с параметрами
         public List<AxesParameter> SecondSurfaceAxes { get; set; } //вторая ось с параметрами. На основании этих осей будет строиться поверхность трехмерного графика оптимизационных тестов. Первые параметры в списке - самые близкие к графику, последние - дальние
         public int TopModelTestRunNumber { get; set; } //номер тестового прогона, определенного как лучшая модель
+        public List<int> NeighboursTestRunNumbers { get; set; } //номера тестовых прогонов, котоыре являются соседями топ-модели
         [NonSerialized]
         public TestRun TopModelTestRun; //ссылка на testRun, определенный как лучшая модель
         [NonSerialized]

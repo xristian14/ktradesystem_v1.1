@@ -19,6 +19,7 @@ namespace ktradesystem.Models
         public List<DepositCurrency> TakenForwardDepositCurrencies { get; set; } //занятые средства (в открытых позициях)
         public List<List<DepositCurrency>> DepositCurrenciesChanges { get; set; } //изменения депозита в разных валютах
         public Currency DefaultCurrency { get; set; } //валюта по умолчанию
+        public double Totalcomission { get; set; } //суммарная комиссия
         public double Margin { get; set; } //значение маржи. Вычисляется в конце выполнения тестового прогона, и используется для вычисления критериев оценки. Т.к. вычислять каждый раз в критериях оценки займет больше времени
     }
 }

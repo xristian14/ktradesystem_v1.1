@@ -32,11 +32,17 @@ namespace ktradesystem.ViewModels
         private List<AlgorithmParameter> _topAxisParameters = new List<AlgorithmParameter>(); //параметры алгоритма, которые будут на верхней стороне квадрата. В каждой клетке квадрата будет комбинация из параметров, в этой клетке должен находится тестовый прогон с данной комбинацией параметров
         private TestRun[,] _testRunsMatrix; //двумерный массив с тестовыми прогонами. График будет строиться по этому массиву
         private double _cubeSideSize = 1; //размер стороны куба, в который вписывается график
+        private double _torusRadius = 0.025; //радиус тора относительно стороны куба, который будет нарисован у точки топ-модели и соседей
+        private double _torusLineRadius = 0.015; //радиус сечения линии тора относительно стороны куба
+        private int _torusSegmentCount = 6; //количество сегментов тора
+        private int _torusLineSegmntCount = 6; //количество сегментов линии тора
+        DiffuseMaterial _torTopModelDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(255, 255, 0))); //материал тора топ-модели
+        DiffuseMaterial _torNeighbourDiffuseMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(255, 255, 255))); //материал тора соседей
         private float _cameraDistance = 1; //растояние от центра куба до камеры
         private int _countScaleValues = 5; //количество отрезков на шкале значений по оси критерия оценки
         private double _parametersScaleValuesWidth = 0.05; //толщина линии для параметра, относительно размера стороны куба
         private double _offsetScaleValues = 0.08; //отступ от графика на котором продолжается отрисовываться линия шкалы значений/параметров алгоритма, и после которого начинают отображаться значения шаклы значений/параметров алгоритма. Значение относительно стороны куба, в который вписывается график
-        private double _scaleValueLineWidth = 0.0036; //толщина линии на шкале занчений относительно стороны куба, в который вписывается график
+        private double _scaleValueLineWidth = 0.0036; //толщина линии на шкале значений относительно стороны куба, в который вписывается график
         private bool _isResetAxesSearchPlane = false; //происодит ли в данный момент сбрасывание параметров осей
 
         private bool _isMouseDown = false; //зажата ли левая клавиша мыши
@@ -58,8 +64,8 @@ namespace ktradesystem.ViewModels
         private List<string> ScaleValuesTopParametersNames = new List<string>(); //список с названиями параметров, соответствующие точкам
         private List<Point3D> ScaleValuesLeftParametersValuePoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать значение параметра на шкале левой оси параметров
         private List<Point3D> ScaleValuesTopParametersValuePoints = new List<Point3D>(); //список с коллекцией точек, которые соответствуют месту в котором нужно отрисовывать значение параметра на шкале верхней оси параметров
-        private List<double> ScaleValuesLeftParametersValues = new List<double>(); //список со значениями параметров, соответствующие точкам
-        private List<double> ScaleValuesTopParametersValues = new List<double>(); //список со значениями параметров, соответствующие точкам
+        private List<string> ScaleValuesLeftParametersValues = new List<string>(); //список со значениями параметров, соответствующие точкам
+        private List<string> ScaleValuesTopParametersValues = new List<string>(); //список со значениями параметров, соответствующие точкам
 
         private ScaleTransform3D _scaleTransform3DLeftParameters; //преобразование масштаба для плоскости с параметрами левой оси
         private TranslateTransform3D _translateTransform3DLeftParameters; //преобразование смещения для плоскости с параметрами левой оси
@@ -162,6 +168,17 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        private Model3D _torusModel3D;
+        public Model3D TorusModel3D //торы, отображающие топ-модель и соседей
+        {
+            get { return _torusModel3D; }
+            private set
+            {
+                _torusModel3D = value;
+                OnPropertyChanged();
+            }
+        }
         
         private Model3D _levelsModel3D;
         public Model3D LevelsModel3D //уровни
@@ -170,17 +187,6 @@ namespace ktradesystem.ViewModels
             private set
             {
                 _levelsModel3D = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private Model3D _searchPlanesModel3D;
-        public Model3D SearchPlanesModel3D //плоскости поиска
-        {
-            get { return _searchPlanesModel3D; }
-            private set
-            {
-                _searchPlanesModel3D = value;
                 OnPropertyChanged();
             }
         }
@@ -379,11 +385,7 @@ namespace ktradesystem.ViewModels
             int leftAxisTotalCountParameterValues = 1; //произведение всех элементов массива leftAxisCountParameterValues
             for (int i = 0; i < _leftAxisParameters.Count; i++)
             {
-                int index = 0; //индекс текущего параметра в _testing.Algorithm.AlgorithmParameters
-                while (_testing.Algorithm.AlgorithmParameters[index].Id != _leftAxisParameters[i].Id)
-                {
-                    index++;
-                }
+                int index = _testing.Algorithm.AlgorithmParameters.FindIndex(a => a.Id == _leftAxisParameters[i].Id); //индекс текущего параметра в _testing.Algorithm.AlgorithmParameters
                 leftAxisCountParameterValues[i] = _testing.AlgorithmParametersAllIntValues[index].Count == 0 ? _testing.AlgorithmParametersAllDoubleValues[index].Count : _testing.AlgorithmParametersAllIntValues[index].Count;
                 leftAxisTotalCountParameterValues *= leftAxisCountParameterValues[i];
             }
@@ -393,11 +395,7 @@ namespace ktradesystem.ViewModels
             int topAxisTotalCountParameterValues = 1; //произведение всех элементов массива topAxisCountParameterValues
             for (int i = 0; i < _topAxisParameters.Count; i++)
             {
-                int index = 0; //индекс текущего параметра в _testing.Algorithm.AlgorithmParameters
-                while (_testing.Algorithm.AlgorithmParameters[index].Id != _topAxisParameters[i].Id)
-                {
-                    index++;
-                }
+                int index = _testing.Algorithm.AlgorithmParameters.FindIndex(a => a.Id == _topAxisParameters[i].Id); //индекс текущего параметра в _testing.Algorithm.AlgorithmParameters
                 topAxisCountParameterValues[i] = _testing.AlgorithmParametersAllIntValues[index].Count == 0 ? _testing.AlgorithmParametersAllDoubleValues[index].Count : _testing.AlgorithmParametersAllIntValues[index].Count;
                 topAxisTotalCountParameterValues *= topAxisCountParameterValues[i];
             }
@@ -415,21 +413,13 @@ namespace ktradesystem.ViewModels
                 List<AlgorithmParameterValue> currentAlgorithmParameterValues = new List<AlgorithmParameterValue>(); //текущая комбинация значений параметров
                 for(int i = 0; i < _leftAxisParameters.Count; i++) //проходим по параметрам _leftAxisParameters
                 {
-                    int index = 0; //индекс текущего параметра в _testing.Algorithm.AlgorithmParameters
-                    while (_testing.Algorithm.AlgorithmParameters[index].Id != _leftAxisParameters[i].Id)
-                    {
-                        index++;
-                    }
+                    int index = _testing.Algorithm.AlgorithmParameters.FindIndex(a => a.Id == _leftAxisParameters[i].Id); //индекс текущего параметра в _testing.Algorithm.AlgorithmParameters
                     int valueIndex = leftAxisCurrentParameterValues[i]; //индекс значения параметра
                     currentAlgorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = _leftAxisParameters[i], IntValue = _leftAxisParameters[i].ParameterValueType.Id == 1 ? _testing.AlgorithmParametersAllIntValues[index][valueIndex] : 0, DoubleValue = _leftAxisParameters[i].ParameterValueType.Id == 1 ? 0 : _testing.AlgorithmParametersAllDoubleValues[index][valueIndex] }); //записали значение текущего параметра
                 }
                 for(int i = 0; i < _topAxisParameters.Count; i++) //проходим по параметрам _leftAxisParameters
                 {
-                    int index = 0; //индекс текущего параметра в _testing.Algorithm.AlgorithmParameters
-                    while (_testing.Algorithm.AlgorithmParameters[index].Id != _topAxisParameters[i].Id)
-                    {
-                        index++;
-                    }
+                    int index = _testing.Algorithm.AlgorithmParameters.FindIndex(a => a.Id == _topAxisParameters[i].Id); //индекс текущего параметра в _testing.Algorithm.AlgorithmParameters
                     int valueIndex = topAxisCurrentParameterValues[i]; //индекс значения параметра
                     currentAlgorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = _topAxisParameters[i], IntValue = _topAxisParameters[i].ParameterValueType.Id == 1 ? _testing.AlgorithmParametersAllIntValues[index][valueIndex] : 0, DoubleValue = _topAxisParameters[i].ParameterValueType.Id == 1 ? 0 : _testing.AlgorithmParametersAllDoubleValues[index][valueIndex] }); //записали значение текущего параметра
                 }
@@ -478,7 +468,7 @@ namespace ktradesystem.ViewModels
                     }
 
                     //если индекс значения последнего параметра первышает допустимый, значит мы вышли за пределы матрицы, выходим из цикла
-                    if (leftAxisCurrentParameterValues[topAxisCurrentParameterValues.Length - 1] >= leftAxisCountParameterValues[topAxisCurrentParameterValues.Length - 1])
+                    if (leftAxisCurrentParameterValues[leftAxisCurrentParameterValues.Length - 1] >= leftAxisCountParameterValues[leftAxisCurrentParameterValues.Length - 1])
                     {
                         isEndLines = true;
                     }
@@ -765,50 +755,41 @@ namespace ktradesystem.ViewModels
                 double rectangleLength = _cubeSideSize / totalCountParameterValues; //длина прямоугольника из которых будет состоять линия
                 for(int k = 0; k < totalCountParameterValues; k++)
                 {
-                    GeometryModel3D geometryModel3DLines = new GeometryModel3D();
-                    MeshGeometry3D meshGeometry3DLines = new MeshGeometry3D();
-                    Point3DCollection positionsCollectionLines = new Point3DCollection();
-                    Int32Collection triangleIndicesCollectionLines = new Int32Collection();
-                    GeometryModel3D geometryModel3DPlanes = new GeometryModel3D();
-                    MeshGeometry3D meshGeometry3DPlanes = new MeshGeometry3D();
-                    Point3DCollection positionsCollectionPlanes = new Point3DCollection();
-                    Int32Collection triangleIndicesCollectionPlanes = new Int32Collection();
+                    GeometryModel3D geometryModel3D = new GeometryModel3D();
+                    MeshGeometry3D meshGeometry3D = new MeshGeometry3D();
+                    Point3DCollection positionsCollection = new Point3DCollection();
+                    Int32Collection triangleIndicesCollection = new Int32Collection();
 
                     double lineXLeft = -_cubeSideSize / 2 + rectangleLength * k; //левая координата X для линии
                     double lineXRight = lineXLeft + rectangleLength; //правая координата X для линии
                     double lineYTop = -currentLineOffset + _cubeSideSize * _parametersScaleValuesWidth; //верхняя координата Y для линии
                     double lineYBottom = -currentLineOffset;//нижняя координата Y для линии
 
-                    positionsCollectionPlanes.Add(new Point3D(0, lineYTop, lineXLeft));
-                    positionsCollectionPlanes.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, lineXRight));
-                    positionsCollectionPlanes.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, lineXLeft));
-                    positionsCollectionPlanes.Add(new Point3D(0, lineYTop, lineXLeft));
-                    positionsCollectionPlanes.Add(new Point3D(0, lineYTop, lineXRight));
-                    positionsCollectionPlanes.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, lineXRight));
-                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                    positionsCollection.Add(new Point3D(0, lineYTop, lineXLeft));
+                    positionsCollection.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, lineXRight));
+                    positionsCollection.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, lineXLeft));
+                    positionsCollection.Add(new Point3D(0, lineYTop, lineXLeft));
+                    positionsCollection.Add(new Point3D(0, lineYTop, lineXRight));
+                    positionsCollection.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, lineXRight));
+                    triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                    triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                    triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                    triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                    triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                    triangleIndicesCollection.Add(triangleIndicesCollection.Count);
 
-                    meshGeometry3DLines.Positions = positionsCollectionLines;
-                    meshGeometry3DLines.TriangleIndices = triangleIndicesCollectionLines;
-                    geometryModel3DLines.Geometry = meshGeometry3DLines;
-                    geometryModel3DLines.Material = lineDiffuseMaterial;
-                    model3DGroupRight.Children.Add(geometryModel3DLines);
-                    meshGeometry3DPlanes.Positions = positionsCollectionPlanes;
-                    meshGeometry3DPlanes.TriangleIndices = triangleIndicesCollectionPlanes;
-                    geometryModel3DPlanes.Geometry = meshGeometry3DPlanes;
+                    meshGeometry3D.Positions = positionsCollection;
+                    meshGeometry3D.TriangleIndices = triangleIndicesCollection;
+                    geometryModel3D.Geometry = meshGeometry3D;
                     if (isEvenParameter)
                     {
-                        geometryModel3DPlanes.Material = k % 2 == 0 ? evenDarkLineParametersDiffuseMaterial : evenMediumLiteLineParametersDiffuseMaterial;
+                        geometryModel3D.Material = k % 2 == 0 ? evenDarkLineParametersDiffuseMaterial : evenMediumLiteLineParametersDiffuseMaterial;
                     }
                     else
                     {
-                        geometryModel3DPlanes.Material = k % 2 == 0 ? oddDarkLineParametersDiffuseMaterial : oddMediumLiteLineParametersDiffuseMaterial;
+                        geometryModel3D.Material = k % 2 == 0 ? oddDarkLineParametersDiffuseMaterial : oddMediumLiteLineParametersDiffuseMaterial;
                     }
-                    model3DGroupLeftParameters.Children.Add(geometryModel3DPlanes);
+                    model3DGroupLeftParameters.Children.Add(geometryModel3D);
                 }
                 ScaleValuesLeftParametersNamePoints.Add(new Point3D(0, -currentLineOffset + _scaleValueLineWidth, 0));
                 ScaleValuesLeftParametersNames.Add(_leftAxisParameters[i].Name);
@@ -819,53 +800,44 @@ namespace ktradesystem.ViewModels
                 {
                     for(int u = 0; u < countParameterValues; u++)
                     {
-                        GeometryModel3D geometryModel3DLines = new GeometryModel3D();
-                        MeshGeometry3D meshGeometry3DLines = new MeshGeometry3D();
-                        Point3DCollection positionsCollectionLines = new Point3DCollection();
-                        Int32Collection triangleIndicesCollectionLines = new Int32Collection();
-                        GeometryModel3D geometryModel3DPlanes = new GeometryModel3D();
-                        MeshGeometry3D meshGeometry3DPlanes = new MeshGeometry3D();
-                        Point3DCollection positionsCollectionPlanes = new Point3DCollection();
-                        Int32Collection triangleIndicesCollectionPlanes = new Int32Collection();
+                        GeometryModel3D geometryModel3D = new GeometryModel3D();
+                        MeshGeometry3D meshGeometry3D = new MeshGeometry3D();
+                        Point3DCollection positionsCollection = new Point3DCollection();
+                        Int32Collection triangleIndicesCollection = new Int32Collection();
 
                         double lineXLeft = -_cubeSideSize / 2 + rectangleValueLength * numberParameterValue; //левая координата X для линии
                         double lineXRight = lineXLeft + rectangleValueLength; //правая координата X для линии
                         double lineYTop = -currentLineOffset + (_cubeSideSize * _parametersScaleValuesWidth) * 2; //верхняя координата Y для линии
                         double lineYBottom = -currentLineOffset + _cubeSideSize * _parametersScaleValuesWidth; //нижняя координата Y для линии
 
-                        positionsCollectionPlanes.Add(new Point3D(0, lineYTop, lineXLeft));
-                        positionsCollectionPlanes.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, lineXRight));
-                        positionsCollectionPlanes.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, lineXLeft));
-                        positionsCollectionPlanes.Add(new Point3D(0, lineYTop, lineXLeft));
-                        positionsCollectionPlanes.Add(new Point3D(0, lineYTop, lineXRight));
-                        positionsCollectionPlanes.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, lineXRight));
-                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                        positionsCollection.Add(new Point3D(0, lineYTop, lineXLeft));
+                        positionsCollection.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, lineXRight));
+                        positionsCollection.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, lineXLeft));
+                        positionsCollection.Add(new Point3D(0, lineYTop, lineXLeft));
+                        positionsCollection.Add(new Point3D(0, lineYTop, lineXRight));
+                        positionsCollection.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, lineXRight));
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
 
-                        meshGeometry3DLines.Positions = positionsCollectionLines;
-                        meshGeometry3DLines.TriangleIndices = triangleIndicesCollectionLines;
-                        geometryModel3DLines.Geometry = meshGeometry3DLines;
-                        geometryModel3DLines.Material = lineDiffuseMaterial;
-                        model3DGroupRight.Children.Add(geometryModel3DLines);
-                        meshGeometry3DPlanes.Positions = positionsCollectionPlanes;
-                        meshGeometry3DPlanes.TriangleIndices = triangleIndicesCollectionPlanes;
-                        geometryModel3DPlanes.Geometry = meshGeometry3DPlanes;
+                        meshGeometry3D.Positions = positionsCollection;
+                        meshGeometry3D.TriangleIndices = triangleIndicesCollection;
+                        geometryModel3D.Geometry = meshGeometry3D;
                         if (isEvenParameter)
                         {
-                            geometryModel3DPlanes.Material = numberParameterValue % 2 == 0 ? evenMediumLiteLineParametersDiffuseMaterial : evenLiteLineParametersDiffuseMaterial;
+                            geometryModel3D.Material = numberParameterValue % 2 == 0 ? evenMediumLiteLineParametersDiffuseMaterial : evenLiteLineParametersDiffuseMaterial;
                         }
                         else
                         {
-                            geometryModel3DPlanes.Material = numberParameterValue % 2 == 0 ? oddMediumLiteLineParametersDiffuseMaterial : oddLiteLineParametersDiffuseMaterial;
+                            geometryModel3D.Material = numberParameterValue % 2 == 0 ? oddMediumLiteLineParametersDiffuseMaterial : oddLiteLineParametersDiffuseMaterial;
                         }
-                        model3DGroupLeftParameters.Children.Add(geometryModel3DPlanes);
+                        model3DGroupLeftParameters.Children.Add(geometryModel3D);
 
-                        ScaleValuesLeftParametersValuePoints.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, (lineXRight - lineXLeft) / 2));
-                        ScaleValuesLeftParametersValues.Add(_leftAxisParameters[i].ParameterValueType.Id == 1 ? _testing.AlgorithmParametersAllIntValues[parameterIndex][u] : _testing.AlgorithmParametersAllDoubleValues[parameterIndex][u]);
+                        ScaleValuesLeftParametersValuePoints.Add(new Point3D(0, lineYBottom + _scaleValueLineWidth, lineXLeft + (lineXRight - lineXLeft) / 2));
+                        ScaleValuesLeftParametersValues.Add(_leftAxisParameters[i].ParameterValueType.Id == 1 ? _testing.AlgorithmParametersAllIntValues[parameterIndex][u].ToString() : Math.Round(_testing.AlgorithmParametersAllDoubleValues[parameterIndex][u], 1).ToString());
 
                         numberParameterValue++;
                     }
@@ -887,50 +859,41 @@ namespace ktradesystem.ViewModels
                 double rectangleLength = _cubeSideSize / totalCountParameterValues; //длина прямоугольника из которых будет состоять линия
                 for(int k = 0; k < totalCountParameterValues; k++)
                 {
-                    GeometryModel3D geometryModel3DLines = new GeometryModel3D();
-                    MeshGeometry3D meshGeometry3DLines = new MeshGeometry3D();
-                    Point3DCollection positionsCollectionLines = new Point3DCollection();
-                    Int32Collection triangleIndicesCollectionLines = new Int32Collection();
-                    GeometryModel3D geometryModel3DPlanes = new GeometryModel3D();
-                    MeshGeometry3D meshGeometry3DPlanes = new MeshGeometry3D();
-                    Point3DCollection positionsCollectionPlanes = new Point3DCollection();
-                    Int32Collection triangleIndicesCollectionPlanes = new Int32Collection();
+                    GeometryModel3D geometryModel3D = new GeometryModel3D();
+                    MeshGeometry3D meshGeometry3D = new MeshGeometry3D();
+                    Point3DCollection positionsCollection = new Point3DCollection();
+                    Int32Collection triangleIndicesCollection = new Int32Collection();
 
                     double lineXLeft = -_cubeSideSize / 2 + rectangleLength * k; //левая координата X для линии
                     double lineXRight = lineXLeft + rectangleLength; //правая координата X для линии
                     double lineYTop = -currentLineOffset + _cubeSideSize * _parametersScaleValuesWidth; //верхняя координата Y для линии
                     double lineYBottom = -currentLineOffset; //нижняя координата Y для линии
 
-                    positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, 0));
-                    positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYBottom + _scaleValueLineWidth, 0));
-                    positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, 0));
-                    positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, 0));
-                    positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, 0));
-                    positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYTop, 0));
-                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                    triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                    positionsCollection.Add(new Point3D(lineXLeft, lineYTop, 0));
+                    positionsCollection.Add(new Point3D(lineXLeft, lineYBottom + _scaleValueLineWidth, 0));
+                    positionsCollection.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, 0));
+                    positionsCollection.Add(new Point3D(lineXLeft, lineYTop, 0));
+                    positionsCollection.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, 0));
+                    positionsCollection.Add(new Point3D(lineXRight, lineYTop, 0));
+                    triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                    triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                    triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                    triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                    triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                    triangleIndicesCollection.Add(triangleIndicesCollection.Count);
 
-                    meshGeometry3DLines.Positions = positionsCollectionLines;
-                    meshGeometry3DLines.TriangleIndices = triangleIndicesCollectionLines;
-                    geometryModel3DLines.Geometry = meshGeometry3DLines;
-                    geometryModel3DLines.Material = lineDiffuseMaterial;
-                    model3DGroupRight.Children.Add(geometryModel3DLines);
-                    meshGeometry3DPlanes.Positions = positionsCollectionPlanes;
-                    meshGeometry3DPlanes.TriangleIndices = triangleIndicesCollectionPlanes;
-                    geometryModel3DPlanes.Geometry = meshGeometry3DPlanes;
+                    meshGeometry3D.Positions = positionsCollection;
+                    meshGeometry3D.TriangleIndices = triangleIndicesCollection;
+                    geometryModel3D.Geometry = meshGeometry3D;
                     if (isEvenParameter)
                     {
-                        geometryModel3DPlanes.Material = k % 2 == 0 ? evenDarkLineParametersDiffuseMaterial : evenMediumLiteLineParametersDiffuseMaterial;
+                        geometryModel3D.Material = k % 2 == 0 ? evenDarkLineParametersDiffuseMaterial : evenMediumLiteLineParametersDiffuseMaterial;
                     }
                     else
                     {
-                        geometryModel3DPlanes.Material = k % 2 == 0 ? oddDarkLineParametersDiffuseMaterial : oddMediumLiteLineParametersDiffuseMaterial;
+                        geometryModel3D.Material = k % 2 == 0 ? oddDarkLineParametersDiffuseMaterial : oddMediumLiteLineParametersDiffuseMaterial;
                     }
-                    model3DGroupTopParameters.Children.Add(geometryModel3DPlanes);
+                    model3DGroupTopParameters.Children.Add(geometryModel3D);
                 }
                 ScaleValuesTopParametersNamePoints.Add(new Point3D(0, -currentLineOffset + _scaleValueLineWidth, 0));
                 ScaleValuesTopParametersNames.Add(_topAxisParameters[i].Name);
@@ -941,53 +904,44 @@ namespace ktradesystem.ViewModels
                 {
                     for(int u = 0; u < countParameterValues; u++)
                     {
-                        GeometryModel3D geometryModel3DLines = new GeometryModel3D();
-                        MeshGeometry3D meshGeometry3DLines = new MeshGeometry3D();
-                        Point3DCollection positionsCollectionLines = new Point3DCollection();
-                        Int32Collection triangleIndicesCollectionLines = new Int32Collection();
-                        GeometryModel3D geometryModel3DPlanes = new GeometryModel3D();
-                        MeshGeometry3D meshGeometry3DPlanes = new MeshGeometry3D();
-                        Point3DCollection positionsCollectionPlanes = new Point3DCollection();
-                        Int32Collection triangleIndicesCollectionPlanes = new Int32Collection();
+                        GeometryModel3D geometryModel3D = new GeometryModel3D();
+                        MeshGeometry3D meshGeometry3D = new MeshGeometry3D();
+                        Point3DCollection positionsCollection = new Point3DCollection();
+                        Int32Collection triangleIndicesCollection = new Int32Collection();
 
                         double lineXLeft = -_cubeSideSize / 2 + rectangleValueLength * numberParameterValue; //левая координата X для линии
                         double lineXRight = lineXLeft + rectangleValueLength; //правая координата X для линии
                         double lineYTop = -currentLineOffset + (_cubeSideSize * _parametersScaleValuesWidth) * 2; //верхняя координата Y для линии
                         double lineYBottom = -currentLineOffset + _cubeSideSize * _parametersScaleValuesWidth; //нижняя координата Y для линии
 
-                        positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, 0));
-                        positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYBottom + _scaleValueLineWidth, 0));
-                        positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, 0));
-                        positionsCollectionPlanes.Add(new Point3D(lineXLeft, lineYTop, 0));
-                        positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, 0));
-                        positionsCollectionPlanes.Add(new Point3D(lineXRight, lineYTop, 0));
-                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
-                        triangleIndicesCollectionPlanes.Add(triangleIndicesCollectionPlanes.Count);
+                        positionsCollection.Add(new Point3D(lineXLeft, lineYTop, 0));
+                        positionsCollection.Add(new Point3D(lineXLeft, lineYBottom + _scaleValueLineWidth, 0));
+                        positionsCollection.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, 0));
+                        positionsCollection.Add(new Point3D(lineXLeft, lineYTop, 0));
+                        positionsCollection.Add(new Point3D(lineXRight, lineYBottom + _scaleValueLineWidth, 0));
+                        positionsCollection.Add(new Point3D(lineXRight, lineYTop, 0));
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+                        triangleIndicesCollection.Add(triangleIndicesCollection.Count);
 
-                        meshGeometry3DLines.Positions = positionsCollectionLines;
-                        meshGeometry3DLines.TriangleIndices = triangleIndicesCollectionLines;
-                        geometryModel3DLines.Geometry = meshGeometry3DLines;
-                        geometryModel3DLines.Material = lineDiffuseMaterial;
-                        model3DGroupRight.Children.Add(geometryModel3DLines);
-                        meshGeometry3DPlanes.Positions = positionsCollectionPlanes;
-                        meshGeometry3DPlanes.TriangleIndices = triangleIndicesCollectionPlanes;
-                        geometryModel3DPlanes.Geometry = meshGeometry3DPlanes;
+                        meshGeometry3D.Positions = positionsCollection;
+                        meshGeometry3D.TriangleIndices = triangleIndicesCollection;
+                        geometryModel3D.Geometry = meshGeometry3D;
                         if (isEvenParameter)
                         {
-                            geometryModel3DPlanes.Material = numberParameterValue % 2 == 0 ? evenMediumLiteLineParametersDiffuseMaterial : evenLiteLineParametersDiffuseMaterial;
+                            geometryModel3D.Material = numberParameterValue % 2 == 0 ? evenMediumLiteLineParametersDiffuseMaterial : evenLiteLineParametersDiffuseMaterial;
                         }
                         else
                         {
-                            geometryModel3DPlanes.Material = numberParameterValue % 2 == 0 ? oddMediumLiteLineParametersDiffuseMaterial : oddLiteLineParametersDiffuseMaterial;
+                            geometryModel3D.Material = numberParameterValue % 2 == 0 ? oddMediumLiteLineParametersDiffuseMaterial : oddLiteLineParametersDiffuseMaterial;
                         }
-                        model3DGroupTopParameters.Children.Add(geometryModel3DPlanes);
+                        model3DGroupTopParameters.Children.Add(geometryModel3D);
 
-                        ScaleValuesTopParametersValuePoints.Add(new Point3D((lineXRight - lineXLeft) / 2, lineYBottom + _scaleValueLineWidth, 0));
-                        ScaleValuesTopParametersValues.Add(_topAxisParameters[i].ParameterValueType.Id == 1 ? _testing.AlgorithmParametersAllIntValues[parameterIndex][u] : _testing.AlgorithmParametersAllDoubleValues[parameterIndex][u]);
+                        ScaleValuesTopParametersValuePoints.Add(new Point3D(lineXLeft + (lineXRight - lineXLeft) / 2, lineYBottom + _scaleValueLineWidth, 0));
+                        ScaleValuesTopParametersValues.Add(_topAxisParameters[i].ParameterValueType.Id == 1 ? _testing.AlgorithmParametersAllIntValues[parameterIndex][u].ToString() : Math.Round(_testing.AlgorithmParametersAllDoubleValues[parameterIndex][u], 1).ToString());
 
                         numberParameterValue++;
                     }
@@ -1174,12 +1128,95 @@ namespace ktradesystem.ViewModels
                     textBlock.Margin = new Thickness(coordinate2D.X - Math.Round(textWidth / 2), coordinate2D.Y - textHeight, 0, 0);
                     CanvasOn3D.Children.Add(textBlock);
                 }
+
+                //отрисовываем значения параметров левой оси
+                for(int i = 0; i < ScaleValuesLeftParametersValuePoints.Count; i++)
+                {
+                    double textHeight = 13;
+                    double symbolDigitWidth = 4.4; //ширина символа цифры
+                    double symbolMinusWidth = 3.2; //ширина сивола -
+                    double symbolCommaWidth = 1.8; //ширина символа ,
+
+                    double fontSize = 8;
+
+                    //определяем ширину теста
+                    double textWidth = 0;
+                    foreach (char c in ScaleValuesLeftParametersValues[i])
+                    {
+                        if ("1234567890".Contains(c))
+                        {
+                            textWidth += symbolDigitWidth;
+                        }
+                        if ("-".Contains(c))
+                        {
+                            textWidth += symbolMinusWidth;
+                        }
+                        if (",.".Contains(c))
+                        {
+                            textWidth += symbolCommaWidth;
+                        }
+                    }
+
+                    TextBlock textBlock = new TextBlock();
+                    textBlock.Text = ScaleValuesLeftParametersValues[i];
+                    textBlock.FontSize = fontSize;
+                    Transform3DGroup transform3DGroup = new Transform3DGroup();
+                    transform3DGroup.Children.Add(ScaleValuesLeftParametersModel3D.Transform);
+
+                    Point3D point3DtTransformed = transform3DGroup.Transform(ScaleValuesLeftParametersValuePoints[i]); //поворачиваем координату
+                    Point coordinate2D = Convert3DPointTo2D(point3DtTransformed);
+                    textBlock.Margin = new Thickness(coordinate2D.X - Math.Round(textWidth / 2), coordinate2D.Y - textHeight, 0, 0);
+                    CanvasOn3D.Children.Add(textBlock);
+                }
+
+                //отрисовываем значения параметров верхй оси
+                for(int i = 0; i < ScaleValuesTopParametersValuePoints.Count; i++)
+                {
+                    double textHeight = 13;
+                    double symbolDigitWidth = 4.4; //ширина символа цифры
+                    double symbolMinusWidth = 3.2; //ширина сивола -
+                    double symbolCommaWidth = 1.8; //ширина символа ,
+
+                    double fontSize = 8;
+
+                    //определяем ширину теста
+                    double textWidth = 0;
+                    foreach (char c in ScaleValuesTopParametersValues[i])
+                    {
+                        if ("1234567890".Contains(c))
+                        {
+                            textWidth += symbolDigitWidth;
+                        }
+                        if ("-".Contains(c))
+                        {
+                            textWidth += symbolMinusWidth;
+                        }
+                        if (",.".Contains(c))
+                        {
+                            textWidth += symbolCommaWidth;
+                        }
+                    }
+
+                    TextBlock textBlock = new TextBlock();
+                    textBlock.Text = ScaleValuesTopParametersValues[i];
+                    textBlock.FontSize = fontSize;
+                    Transform3DGroup transform3DGroup = new Transform3DGroup();
+                    transform3DGroup.Children.Add(ScaleValuesTopParametersModel3D.Transform);
+
+                    Point3D point3DtTransformed = transform3DGroup.Transform(ScaleValuesTopParametersValuePoints[i]); //поворачиваем координату
+                    Point coordinate2D = Convert3DPointTo2D(point3DtTransformed);
+                    textBlock.Margin = new Thickness(coordinate2D.X - Math.Round(textWidth / 2), coordinate2D.Y - textHeight, 0, 0);
+                    CanvasOn3D.Children.Add(textBlock);
+                }
             }
         }
 
         private void BuildSurfaces() //строит поверхности выбранных критериев оценки
         {
             Model3DGroup model3DGroup = new Model3DGroup();
+            Model3DGroup model3DGroupTorus = new Model3DGroup();
+            bool isCreateTorTestRunTopModel = false; //создан ли тор топ-модели
+            List<int> createdTorusNeighboursTestRunNumbers = new List<int>(); //созданные номера торов тестовых прогонов соседей топ-модели
             foreach (EvaluationCriteriaPageThreeDimensionChart evaluationCriteriaPageThreeDimensionChart in EvaluationCriteriasPageThreeDimensionChart.Where(j => j.IsChecked))
             {
                 LinearGradientBrush linearGradientBrush = new LinearGradientBrush(); //кисть с градиентной заливкой
@@ -1206,6 +1243,8 @@ namespace ktradesystem.ViewModels
                 Int32Collection triangleIndicesCollection = new Int32Collection();
                 int lines = _testRunsMatrix.GetLength(0);
                 int columns = _testRunsMatrix.GetLength(1);
+                double linesDistance = _cubeSideSize / (lines - 1); //расстояние между линиями
+                double columnsDistance = _cubeSideSize / (columns - 1); //расстояние между колонками
                 for (int x = 1; x < lines; x++)
                 {
                     for(int y = 1; y < columns; y++)
@@ -1215,10 +1254,15 @@ namespace ktradesystem.ViewModels
                         double point3Value = _testRunsMatrix[x, y - 1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id).First().DoubleValue;
                         double point4Value = _testRunsMatrix[x, y].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id).First().DoubleValue;
 
+                        Point3D point1 = new Point3D((y - 1) * columnsDistance - _cubeSideSize / 2, (point1Value - _min) / range * _cubeSideSize - _cubeSideSize / 2, (x - 1) * linesDistance - _cubeSideSize / 2);
+                        Point3D point2 = new Point3D((y) * columnsDistance - _cubeSideSize / 2, (point2Value - _min) / range * _cubeSideSize - _cubeSideSize / 2, (x - 1) * linesDistance - _cubeSideSize / 2);
+                        Point3D point3 = new Point3D((y - 1) * columnsDistance - _cubeSideSize / 2, (point3Value - _min) / range * _cubeSideSize - _cubeSideSize / 2, (x) * linesDistance - _cubeSideSize / 2);
+                        Point3D point4 = new Point3D((y) * columnsDistance - _cubeSideSize / 2, (point4Value - _min) / range * _cubeSideSize - _cubeSideSize / 2, (x) * linesDistance - _cubeSideSize / 2);
+                        /*
                         Point3D point1 = new Point3D((x - 1) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (point1Value - _min) / range * _cubeSideSize - _cubeSideSize / 2, (y - 1) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
                         Point3D point2 = new Point3D((x - 1) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (point2Value - _min) / range * _cubeSideSize - _cubeSideSize / 2, (y) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
                         Point3D point3 = new Point3D((x) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (point3Value - _min) / range * _cubeSideSize - _cubeSideSize / 2, (y - 1) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
-                        Point3D point4 = new Point3D((x) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (point4Value - _min) / range * _cubeSideSize - _cubeSideSize / 2, (y) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);
+                        Point3D point4 = new Point3D((x) / (double)(lines - 1) * _cubeSideSize - _cubeSideSize / 2, (point4Value - _min) / range * _cubeSideSize - _cubeSideSize / 2, (y) / (double)(columns - 1) * _cubeSideSize - _cubeSideSize / 2);*/
                         positionsCollection.Add(point1);
                         positionsCollection.Add(point2);
                         positionsCollection.Add(point3);
@@ -1231,18 +1275,56 @@ namespace ktradesystem.ViewModels
                         textureCoordinates.Add(new Point((point2Value - _min) / range, (point2Value - _min) / range));
                         textureCoordinates.Add(new Point((point4Value - _min) / range, (point4Value - _min) / range));
                         textureCoordinates.Add(new Point((point3Value - _min) / range, (point3Value - _min) / range));
-                        /*textureCoordinates.Add(new Point((point1Value - _min) / range, 0));
-                        textureCoordinates.Add(new Point((point2Value - _min) / range, 0));
-                        textureCoordinates.Add(new Point((point3Value - _min) / range, 0));
-                        textureCoordinates.Add(new Point((point2Value - _min) / range, 0));
-                        textureCoordinates.Add(new Point((point4Value - _min) / range, 0));
-                        textureCoordinates.Add(new Point((point3Value - _min) / range, 0));*/
                         triangleIndicesCollection.Add(triangleIndicesCollection.Count);
                         triangleIndicesCollection.Add(triangleIndicesCollection.Count);
                         triangleIndicesCollection.Add(triangleIndicesCollection.Count);
                         triangleIndicesCollection.Add(triangleIndicesCollection.Count);
                         triangleIndicesCollection.Add(triangleIndicesCollection.Count);
                         triangleIndicesCollection.Add(triangleIndicesCollection.Count);
+
+                        //добавляем торы топ-модели и соседей топ-модели
+                        for(int i = 0; i < 4; i++)
+                        {
+                            int xIndex = x - 1;
+                            int yIndex = y - 1;
+                            if(i > 1)
+                            {
+                                xIndex = x;
+                            }
+                            if(i == 1 || i == 3)
+                            {
+                                yIndex = y;
+                            }
+                            Point3D point3D = point1;
+                            if (i == 1)
+                            {
+                                point3D = point2;
+                            }
+                            if (i == 2)
+                            {
+                                point3D = point3;
+                            }
+                            if (i == 3)
+                            {
+                                point3D = point4;
+                            }
+                            //добавляем тор топ-модели
+                            if(_testBatch.TopModelTestRunNumber == _testRunsMatrix[xIndex, yIndex].Number && !isCreateTorTestRunTopModel)
+                            {
+                                isCreateTorTestRunTopModel = true;
+                                GeometryModel3D geometryModel3DTor = CreateTorus(_torTopModelDiffuseMaterial);
+                                geometryModel3DTor.Transform = new TranslateTransform3D(point3D.X, point3D.Y, point3D.Z);
+                                model3DGroupTorus.Children.Add(geometryModel3DTor);
+                            }
+                            //добавляем тор соседей топ-модели
+                            if (_testBatch.NeighboursTestRunNumbers.Contains(_testRunsMatrix[xIndex, yIndex].Number) && !createdTorusNeighboursTestRunNumbers.Contains(_testRunsMatrix[xIndex, yIndex].Number))
+                            {
+                                createdTorusNeighboursTestRunNumbers.Add(_testRunsMatrix[xIndex, yIndex].Number);
+                                GeometryModel3D geometryModel3DTor = CreateTorus(_torNeighbourDiffuseMaterial);
+                                geometryModel3DTor.Transform = new TranslateTransform3D(point3D.X, point3D.Y, point3D.Z);
+                                model3DGroupTorus.Children.Add(geometryModel3DTor);
+                            }
+                        }
                     }
                 }
                 meshGeometry3D.Positions = positionsCollection;
@@ -1254,76 +1336,63 @@ namespace ktradesystem.ViewModels
                 model3DGroup.Children.Add(geometryModel3D);
             }
             SurfacesModel3D = model3DGroup;
+            TorusModel3D = model3DGroupTorus;
         }
 
-        public void BuildChart() //строит график
+        private Point3D GetPositionTorus(double R, double r, double alpha, double beta) //возвращает трехмерную координату на поверхности тора, по заданным радиусам и углам
         {
-            if(_testBatch != null)
+            double x = (R + r * Math.Cos(beta)) * Math.Cos(alpha);
+            double y = (R + r * Math.Cos(beta)) * Math.Sin(alpha);
+            double z = r * Math.Sin(beta);
+            return new Point3D(x, z, y);
+        }
+
+        private GeometryModel3D CreateTorus(DiffuseMaterial diffuseMaterial) //возвращает 3d объект: тор
+        {
+            GeometryModel3D geometryModel3D = new GeometryModel3D();
+            MeshGeometry3D meshGeometry3D = new MeshGeometry3D();
+            Point3DCollection positionsCollection = new Point3DCollection();
+            Int32Collection triangleIndicesCollection = new Int32Collection();
+
+            //создаем все точки тора
+            for(int i = 0; i < _torusSegmentCount; i++)
             {
-                Model3DGroup chartModelGroup = new Model3DGroup(); //группа с моделями графика
-                
-                //определяем минимальное и максимальное значение на графике
-                double min = _testBatch.OptimizationTestRuns.First().EvaluationCriteriaValues.Where(j => j.EvaluationCriteria.Id == EvaluationCriteriasPageThreeDimensionChart.Where(jj => jj.IsChecked == true).First().EvaluationCriteria.Id).First().DoubleValue; //получили значение первого выбранного критерия оценки для первого тестового прогона
-                double max = min;
-                //проходим по всем выбранным критериям оценки
-                foreach(EvaluationCriteriaPageThreeDimensionChart evaluationCriteriaPageThreeDimensionChart in EvaluationCriteriasPageThreeDimensionChart.Where(j => j.IsChecked == true))
+                double alpha = 6.28318530718 / _torusSegmentCount * i; //угол вращения на торе, 6.28318530718 радиан = 360 градусов
+                for (int k = 0; k < _torusLineSegmntCount; k++)
                 {
-                    //определяем индекс текущего критерия оценки
-                    int evaluationCriteriaIndex = -1;
-                    int i = 0;
-                    while(i < _testBatch.OptimizationTestRuns.First().EvaluationCriteriaValues.Count && evaluationCriteriaIndex == -1)
-                    {
-                        if(evaluationCriteriaPageThreeDimensionChart.EvaluationCriteria.Id == _testBatch.OptimizationTestRuns.First().EvaluationCriteriaValues[i].EvaluationCriteria.Id)
-                        {
-                            evaluationCriteriaIndex = i;
-                        }
-                        i++;
-                    }
-                    //проходим по всем тестовым прогонам данной тестовой связки, и ищем в них минимальное и максимальное значения критерия оценки
-                    foreach (TestRun testRun in _testBatch.OptimizationTestRuns)
-                    {
-                        if(testRun.EvaluationCriteriaValues[evaluationCriteriaIndex].DoubleValue < min)
-                        {
-                            min = testRun.EvaluationCriteriaValues[evaluationCriteriaIndex].DoubleValue;
-                        }
-                        if(testRun.EvaluationCriteriaValues[evaluationCriteriaIndex].DoubleValue > max)
-                        {
-                            max = testRun.EvaluationCriteriaValues[evaluationCriteriaIndex].DoubleValue;
-                        }
-                    }
+                    double beta = 6.28318530718 / _torusLineSegmntCount * k; //угол вращения внутри линии тора, 6.28318530718 радиан = 360 градусов
+                    positionsCollection.Add(GetPositionTorus(_torusRadius * _cubeSideSize, _torusLineRadius * _cubeSideSize, alpha, beta));
                 }
-                
-                //формируем двумерный массив с тестовыми прогонами, на основе выбранных осей поисковой плоскости
-                //определяем значения оптимизируемых переменных для вертикальной и горизонтальной оси двумерного массива, на персечении комбинации должен находится тестовый прогон с данной комбинацией параметров
-
-                //определяем значения на шкале по оси критерия оценки
-
-
-
-
-
-                //ChartModel.Content = chartModelGroup;
-
-
-
-
-
-
-                //создаем переднюю шкалу со значениями
-                /*ChartScaleValuesFront = new Model3DGroup();
-                GeometryModel3D frontPlane = new GeometryModel3D(); //определяем плоскость
-                MeshGeometry3D meshGeometry3D = new MeshGeometry3D();
-                double frontPlaneZ = _sizeChartSide / 2 + _sizeChartSide * _countScaleValues;
-                frontPlane.Geometry = CreateMeshGeometry3D(new Point3D[4] { new Point3D(-_sizeChartSide / 2, -_sizeChartSide / 2, frontPlaneZ), new Point3D(-_sizeChartSide / 2, _sizeChartSide / 2, frontPlaneZ), new Point3D(_sizeChartSide / 2, _sizeChartSide / 2, frontPlaneZ), new Point3D(_sizeChartSide / 2, -_sizeChartSide / 2, frontPlaneZ) }, new int[6] { 0, 1, 2, 3, 4, 5 });
-                ChartScaleValuesFront.Children.Add(frontPlane);
-                GeometryModel3D[] frontScales = new GeometryModel3D[_countScaleValues]; //плоскости, которые рисуют линии для значений
-                for(int i = 0; i < _countScaleValues; i++)
-                {
-                    GeometryModel3D frontScale = new GeometryModel3D(); //определяем плоскость, которая отобразит линию для значения шкалы
-
-                    frontPlane.Geometry = CreateMeshGeometry3D(new Point3D[4] { new Point3D(-_sizeChartSide / 2, -_sizeChartSide / 2, _sizeChartSide / 2), new Point3D(-_sizeChartSide / 2, _sizeChartSide / 2, _sizeChartSide / 2), new Point3D(_sizeChartSide / 2, _sizeChartSide / 2, _sizeChartSide / 2), new Point3D(_sizeChartSide / 2, -_sizeChartSide / 2, _sizeChartSide / 2) }, new int[6] { 0, 1, 2, 3, 4, 5 });
-                }*/
             }
+
+            //соединяем точки в треугольники
+            for(int i = 0; i < _torusSegmentCount; i++)
+            {
+                for (int k = 0; k < _torusLineSegmntCount; k++)
+                {
+                    //создаем два треугольника, образующие полигон
+                    int lastI = i > 0 ? i - 1 : _torusSegmentCount - 1;
+                    int lastK = k > 0 ? k - 1 : _torusLineSegmntCount - 1;
+
+                    int point1Index = (lastI * _torusLineSegmntCount) + k;
+                    int point2Index = (lastI * _torusLineSegmntCount) + lastK;
+                    int point3Index = (i * _torusLineSegmntCount) + lastK;
+                    int point4Index = (i * _torusLineSegmntCount) + k;
+                    triangleIndicesCollection.Add(point1Index);
+                    triangleIndicesCollection.Add(point2Index);
+                    triangleIndicesCollection.Add(point3Index);
+                    triangleIndicesCollection.Add(point3Index);
+                    triangleIndicesCollection.Add(point4Index);
+                    triangleIndicesCollection.Add(point1Index);
+                }
+            }
+
+            meshGeometry3D.Positions = positionsCollection;
+            meshGeometry3D.TriangleIndices = triangleIndicesCollection;
+            geometryModel3D.Geometry = meshGeometry3D;
+            geometryModel3D.Material = diffuseMaterial;
+
+            return geometryModel3D;
         }
 
         private ObservableCollection<EvaluationCriteriaPageThreeDimensionChart> _evaluationCriteriasPageThreeDimensionChart = new ObservableCollection<EvaluationCriteriaPageThreeDimensionChart>(); //критерии оценки для checkbox

@@ -377,8 +377,8 @@
                     <ModelVisual3D Content="{Binding ScaleValuesLeftParametersModel3D}"></ModelVisual3D>
                     <ModelVisual3D Content="{Binding ScaleValuesTopParametersModel3D}"></ModelVisual3D>
                     <ModelVisual3D Content="{Binding SurfacesModel3D}"></ModelVisual3D>
+                    <ModelVisual3D Content="{Binding TorusModel3D}"></ModelVisual3D>
                     <ModelVisual3D Content="{Binding LevelsModel3D}"></ModelVisual3D>
-                    <ModelVisual3D Content="{Binding SearchPlanesModel3D}"></ModelVisual3D>
                     <!--<ModelVisual3D>
                         <ModelVisual3D.Content>
                             <Model3DGroup>
@@ -418,7 +418,8 @@ TriangleIndices="
                     </ModelVisual3D>-->
                 </Viewport3D.Children>
             </Viewport3D>
-            <Canvas Grid.Row="1" x:Name="canvasOn3D" MouseDown="canvasOn3D_MouseDown" MouseMove="canvasOn3D_MouseMove" MouseUp="canvasOn3D_MouseUp" Background="Transparent" ClipToBounds="True"/>
+            <Canvas Grid.Row="1" x:Name="canvasOn3D" Background="Transparent" ClipToBounds="True"/>
+            <Canvas Grid.Row="1" x:Name="canvasOn3DForMouseEvents" MouseDown="canvasOn3DForMouseEvents_MouseDown" MouseMove="canvasOn3DForMouseEvents_MouseMove" MouseUp="canvasOn3DForMouseEvents_MouseUp" Background="Transparent" ClipToBounds="True"/>
         </Grid>
     </Grid>
 </Page>

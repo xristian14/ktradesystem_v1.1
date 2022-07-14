@@ -692,7 +692,7 @@ namespace ktradesystem.Models
                         }
 
                         //создаем testBatch
-                        TestBatch testBatch = new TestBatch { Number = testing.TestBatches.Count + 1, DataSourceGroup = dataSourceGroup, DataSourceGroupIndex = testing.DataSourceGroups.IndexOf(dataSourceGroup), StatisticalSignificance = new List<double>(), IsTopModelDetermining = false, IsTopModelWasFind = false, OptimizationPerfectProfits = new List<PerfectProfit>(), ForwardPerfectProfits = new List<PerfectProfit>() };
+                        TestBatch testBatch = new TestBatch { Number = testing.TestBatches.Count + 1, DataSourceGroup = dataSourceGroup, DataSourceGroupIndex = testing.DataSourceGroups.IndexOf(dataSourceGroup), StatisticalSignificance = new List<double>(), IsTopModelDetermining = false, IsTopModelWasFind = false, OptimizationPerfectProfits = new List<PerfectProfit>(), ForwardPerfectProfits = new List<PerfectProfit>(), NeighboursTestRunNumbers = new List<int>() };
 
                         int testRunNumber = 1; //номер тестового прогона
 
@@ -716,7 +716,7 @@ namespace ktradesystem.Models
                             List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
                             depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
 
-                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = testing.DefaultCurrency, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges };
+                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = testing.DefaultCurrency, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges, Totalcomission = 0 };
                             //формируем список со значениями параметров алгоритма
                             List<AlgorithmParameterValue> algorithmParameterValues = new List<AlgorithmParameterValue>();
                             int alg = 0;
@@ -759,7 +759,7 @@ namespace ktradesystem.Models
                             List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
                             depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
 
-                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = false, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges };
+                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = false, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges, Totalcomission = 0 };
                             TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, IsOptimizationTestRun = false, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
                             testRunNumber++;
                             //добавляем форвардный тест в testBatch
@@ -784,7 +784,7 @@ namespace ktradesystem.Models
                             List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
                             depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
 
-                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = true, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges };
+                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = true, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges, Totalcomission = 0 };
                             TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, IsOptimizationTestRun = false, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
                             testRunNumber++;
                             //добавляем форвардный тест с торговлей депозитом в testBatch
@@ -2293,7 +2293,9 @@ namespace ktradesystem.Models
                 account.CurrentPosition.Add(currentDeal);
                 isMakeADeal = true; //запоминаем что была совершена сделка
                 //вычитаем комиссию на сделку из свободных средств
+                double comission = (double)((decimal)minLotsComission * (dealLotsCount / order.DataSource.MinLotCount));
                 freeDeposit -= (double)((decimal)minLotsComission * (dealLotsCount / order.DataSource.MinLotCount));
+                account.Totalcomission += comission;
                 //закрываем открытые позиции которые были закрыты данной сделкой
                 int i = 0;
                 while (i < account.CurrentPosition.Count - 1 && currentDeal.Count > 0) //проходим по всем сделкам кроме последней (только что добавленной)
@@ -2419,8 +2421,8 @@ namespace ktradesystem.Models
                         }
                     }
                     isLastGroupSizeNearThanCurrent = groupWidth == 2 ? false : Math.Abs(requiredGroupSize - currentGroupSize) > Math.Abs(requiredGroupSize - lastGroupSize); //для первой итерации устанавливаем false, для следующих, если прошлый размер группы ближе к требуемому устанавливаем в true
-                } while (isGroupWidthEqualMaxParameterCountValues == false && isLastGroupSizeNearThanCurrent);
-                groupWidth = isLastGroupSizeNearThanCurrent ? groupWidth-- : groupWidth;
+                } while (isGroupWidthEqualMaxParameterCountValues == false && isLastGroupSizeNearThanCurrent == false);
+                groupWidth = isLastGroupSizeNearThanCurrent ? groupWidth - 1 : groupWidth;
                 List<int> nonSingleAlgorithmParameterGroupSize = new List<int>(); //размеры группы для каждого параметра (сколько значений каждого параметра находится в одной группе)
                 List<int> nonSingleAlgorithmParameterCountValues = new List<int>(); //количество значений у каждого параметра
                 for (int i = 0; i < nonSingleAlgorithmParameterIndexes.Count; i++)
@@ -2451,17 +2453,17 @@ namespace ktradesystem.Models
                         for (int i = 0; i < nonSingleAlgorithmParameterIndexes.Count; i++)
                         {
                             int parameterIndex = nonSingleAlgorithmParameterIndexes[i]; //индекс параметра
-                            int valueIndex = parameterIndexesCombination[parameterIndex]; //индекс значения параметра
+                            int valueIndex = parameterIndexesCombination[i]; //индекс значения параметра
                             algorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parameterIndex], IntValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[parameterIndex][valueIndex] : 0, DoubleValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 2 ? testing.AlgorithmParametersAllDoubleValues[parameterIndex][valueIndex] : 0 });
                         }
                         int testRunIndex = ModelFunctions.FindTestRunIndexByAlgorithmParameterValues(testBatch.OptimizationTestRuns, algorithmParameterValues);
                         group.Add(testBatch.OptimizationTestRuns[testRunIndex]); //записываем индекс тестового прогона с текущей комбинацией значений параметров
                         groupIndexes.Add(testRunIndex);
                         string testRunParameterValues = "";
-                        foreach(int pIndex in nonSingleAlgorithmParameterIndexes)
+                        for(int i = 0; i < nonSingleAlgorithmParameterIndexes.Count; i++)
                         {
-                            testRunParameterValues += testing.Algorithm.AlgorithmParameters[pIndex].Name + " = ";
-                            int valIndex = parameterIndexesCombination[pIndex]; //индекс значения параметра
+                            int pIndex = nonSingleAlgorithmParameterIndexes[i];
+                            int valIndex = parameterIndexesCombination[i]; //индекс значения параметра
                             testRunParameterValues += testing.Algorithm.AlgorithmParameters[pIndex].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[pIndex][valIndex].ToString() : testing.AlgorithmParametersAllDoubleValues[pIndex][valIndex].ToString();
                             testRunParameterValues += ", ";
                         }
@@ -2587,6 +2589,14 @@ namespace ktradesystem.Models
                         {
                             testBatch.SetTopModel(groups[groupIndex][tRunIndex]);
                             isTopModelFind = true;
+                            //записываем номера соседних тестов топ-модели
+                            foreach(TestRun testRun in groups[groupIndex])
+                            {
+                                if(testRun.Number != testBatch.TopModelTestRunNumber)
+                                {
+                                    testBatch.NeighboursTestRunNumbers.Add(testRun.Number);
+                                }
+                            }
                         }
                         tRunIndex++;
                     }

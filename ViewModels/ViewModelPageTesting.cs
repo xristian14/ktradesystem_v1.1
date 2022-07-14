@@ -3402,7 +3402,7 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private string _sizeNeighboursGroupPercent = "9";
+        private string _sizeNeighboursGroupPercent = "16";
         public string SizeNeighboursGroupPercent //размер группы соседних тестов от общей площади поисковой плоскости
         {
             get { return _sizeNeighboursGroupPercent; }

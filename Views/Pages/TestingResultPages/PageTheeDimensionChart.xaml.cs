@@ -34,17 +34,17 @@ namespace ktradesystem.Views.Pages.TestingResultPages
 
         ViewModelPageTheeDimensionChart _viewModelPageTheeDimensionChart;
 
-        private void canvasOn3D_MouseDown(object sender, MouseButtonEventArgs e)
+        private void canvasOn3DForMouseEvents_MouseDown(object sender, MouseButtonEventArgs e)
         {
             _viewModelPageTheeDimensionChart.MouseDown(e.GetPosition(sender as IInputElement));
         }
 
-        private void canvasOn3D_MouseMove(object sender, MouseEventArgs e)
+        private void canvasOn3DForMouseEvents_MouseMove(object sender, MouseEventArgs e)
         {
             _viewModelPageTheeDimensionChart.MouseMove(e.GetPosition(sender as IInputElement));
         }
 
-        private void canvasOn3D_MouseUp(object sender, MouseButtonEventArgs e)
+        private void canvasOn3DForMouseEvents_MouseUp(object sender, MouseButtonEventArgs e)
         {
             _viewModelPageTheeDimensionChart.MouseUp();
         }

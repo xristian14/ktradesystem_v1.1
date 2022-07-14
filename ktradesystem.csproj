@@ -113,6 +113,7 @@
     <Compile Include="CommunicationChannel\TestingProgress.cs" />
     <Compile Include="Models\Account.cs" />
     <Compile Include="Models\AccountForCalculate.cs" />
+    <Compile Include="Models\AccountVariables.cs" />
     <Compile Include="Models\AlgorithmCalculateResult.cs" />
     <Compile Include="Models\AlgorithmIndicatorCatalog.cs" />
     <Compile Include="Models\AlgorithmIndicatorCatalogElement.cs" />

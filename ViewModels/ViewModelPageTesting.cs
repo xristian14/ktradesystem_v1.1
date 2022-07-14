@@ -1200,6 +1200,106 @@ namespace ktradesystem.ViewModels
                 }, (obj) => IsAddOrEditAlgorithm());
             }
         }
+        public ICommand AlgorithmPasteAccountIntVar1_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.AccountVariables.IntVar1");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteAccountIntVar2_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.AccountVariables.IntVar2");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteAccountIntVar3_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.AccountVariables.IntVar3");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteAccountIntVar4_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.AccountVariables.IntVar4");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteAccountIntVar5_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.AccountVariables.IntVar5");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteAccountDoubleVar1_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.AccountVariables.DoubleVar1");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteAccountDoubleVar2_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.AccountVariables.DoubleVar2");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteAccountDoubleVar3_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.AccountVariables.DoubleVar3");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteAccountDoubleVar4_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.AccountVariables.DoubleVar4");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
+        public ICommand AlgorithmPasteAccountDoubleVar5_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.AccountVariables.DoubleVar5");
+                }, (obj) => IsAddOrEditAlgorithm());
+            }
+        }
         public ICommand AlgorithmPasteOrderMarketSell_Click
         {
             get

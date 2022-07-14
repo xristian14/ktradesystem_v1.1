@@ -1262,14 +1262,13 @@ namespace ktradesystem.ViewModels
                     {
                         if (ordersCurrentDs[orderIndex].HorizontalLineLeft + ordersCurrentDs[orderIndex].HorizontalLineWidth > 0) //правая координата заявки положительная, значит эта заявка в видимой области
                         {
-                            double horizontalLineThickness = _candleWidth > 4 ? 2 : 1;
+                            double horizontalLineThickness = 1;
                             ordersCurrentDs[orderIndex].HorizontalLineTop = /*Math.Round*/(TradeChartAreas[0].AreaHeight * (1 - (ordersCurrentDs[orderIndex].Order.Price - minPrice) / priceRange) - horizontalLineThickness / 2) + currentTop;
                             ordersCurrentDs[orderIndex].HorizontalLineHeight = horizontalLineThickness;
                             if (ordersCurrentDs[orderIndex].IsStart) //если заявка начинается на этом сегменте, рисуем вертикальную линию
                             {
-                                ordersCurrentDs[orderIndex].VerticalLineHeight = _partOfOnePriceStepHeightForOrderVerticalLine * onePriceStepHeight;
-                                ordersCurrentDs[orderIndex].VerticalLineHeight = ordersCurrentDs[orderIndex].VerticalLineHeight < horizontalLineThickness + 2 ? horizontalLineThickness + 2 : ordersCurrentDs[orderIndex].VerticalLineHeight; //если высота вертикальной линии меньше чем толщина горизонтальной линии + 2, устанавливаем на такую толщину
-                                ordersCurrentDs[orderIndex].VerticalLineTop = ordersCurrentDs[orderIndex].HorizontalLineTop - ordersCurrentDs[orderIndex].VerticalLineHeight / 2;
+                                ordersCurrentDs[orderIndex].VerticalLineHeight = horizontalLineThickness + 2;
+                                ordersCurrentDs[orderIndex].VerticalLineTop = ordersCurrentDs[orderIndex].HorizontalLineTop - Math.Round(ordersCurrentDs[orderIndex].VerticalLineHeight / 2);
                                 ordersCurrentDs[orderIndex].VerticalLineTop = ordersCurrentDs[orderIndex].HorizontalLineTop - (ordersCurrentDs[orderIndex].VerticalLineHeight - horizontalLineThickness) / 2;
                             }
                         }

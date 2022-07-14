@@ -385,13 +385,23 @@
                                         <StackPanel Orientation="Horizontal">
                                             <Button Content="Свободный остаток в рублях" Command="{Binding AlgorithmPasteAccountFreeRubleMoney_Click}" Width="180"/>
                                             <Button Content="Свободный остаток в долларах" Command="{Binding AlgorithmPasteAccountFreeDollarMoney_Click}" Width="180"/>
+                                            <Button Content="IntVar1" Command="{Binding AlgorithmPasteAccountIntVar1_Click}" Width="47"/>
+                                            <Button Content="IntVar2" Command="{Binding AlgorithmPasteAccountIntVar2_Click}" Width="47"/>
+                                            <Button Content="IntVar3" Command="{Binding AlgorithmPasteAccountIntVar3_Click}" Width="47"/>
+                                            <Button Content="IntVar4" Command="{Binding AlgorithmPasteAccountIntVar4_Click}" Width="47"/>
+                                            <Button Content="IntVar5" Command="{Binding AlgorithmPasteAccountIntVar5_Click}" Width="47"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <Button Content="Занятые средства в рублях" Command="{Binding AlgorithmPasteAccountTakenRubleMoney_Click}" Width="180"/>
                                             <Button Content="Занятые средства в долларах" Command="{Binding AlgorithmPasteAccountTakenDollarMoney_Click}" Width="180"/>
+                                            <Button Content="DoubleVar1" Command="{Binding AlgorithmPasteAccountDoubleVar1_Click}" Width="69"/>
+                                            <Button Content="DoubleVar2" Command="{Binding AlgorithmPasteAccountDoubleVar2_Click}" Width="69"/>
+                                            <Button Content="DoubleVar3" Command="{Binding AlgorithmPasteAccountDoubleVar3_Click}" Width="69"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Это форвардное тестирование с торговлей депозитом?" Command="{Binding AlgorithmPasteAccountIsForwardDepositTrading_Click}" Width="340"/>
+                                            <Button Content="Это форвардное тестирование с торговлей депозитом?" Command="{Binding AlgorithmPasteAccountIsForwardDepositTrading_Click}" Width="360"/>
+                                            <Button Content="DoubleVar4" Command="{Binding AlgorithmPasteAccountDoubleVar4_Click}" Width="69"/>
+                                            <Button Content="DoubleVar5" Command="{Binding AlgorithmPasteAccountDoubleVar5_Click}" Width="69"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </GroupBox>

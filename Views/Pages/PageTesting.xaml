@@ -428,6 +428,7 @@
                                         <StackPanel Orientation="Horizontal">
                                             <Button Content="Данные графика" Command="{Binding AlgorithmPasteDatasourceCandles_Click}" Width="110"/>
                                             <Button Content="Валюта рубль?" Command="{Binding AlgorithmPasteDatasourceIsCurrencyRuble_Click}" Width="146"/>
+                                            <Button Content="Минимальное количество лотов" Command="{Binding AlgorithmPasteDatasourceMinLotCount_Click}" Width="195"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <Button Content="Количество купленных лотов в открытой позиции" Command="{Binding AlgorithmPasteDatasourceCountLotsBuy_Click}" Width="290"/>

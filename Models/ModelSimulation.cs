@@ -376,7 +376,7 @@ namespace ktradesystem.Models
                         order.Direction = direction;
                         order.DataSource = _modelData.DataSources.Where(j => j.Id == dataSourceForCalculate.idDataSource).First();
                         order.IdDataSource = order.DataSource.Id;
-                        order.Price = price;
+                        order.Price = ModelFunctions.RoundToIncrement(price, dataSourceForCalculate.PriceStep);
                         order.Count = count;
                         order.StartCount = count;
 
@@ -1886,6 +1886,7 @@ namespace ktradesystem.Models
                             dataSourcesForCalculate[i] = new DataSourceForCalculate();
                             dataSourcesForCalculate[i].idDataSource = dataSourceCandles[i].DataSource.Id;
                             dataSourcesForCalculate[i].IndicatorsValues = indicatorsValues[i];
+                            dataSourcesForCalculate[i].MinLotCount = dataSourceCandles[i].DataSource.MinLotCount;
                             dataSourcesForCalculate[i].PriceStep = dataSourceCandles[i].DataSource.PriceStep;
                             dataSourcesForCalculate[i].CostPriceStep = dataSourceCandles[i].DataSource.CostPriceStep;
                             dataSourcesForCalculate[i].MinLotsCost = dataSourceCandles[i].DataSource.MarginType.Id == 2 ? dataSourceCandles[i].DataSource.MarginCost * dataSourceCandles[i].DataSource.MinLotMarginPartCost : dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].C * dataSourceCandles[i].DataSource.MinLotMarginPartCost;
@@ -1917,8 +1918,8 @@ namespace ktradesystem.Models
                             {
                                 if (testRun.Account.IsForwardDepositTrading == false)
                                 {
-                                    order.Count = 1;
-                                    order.StartCount = 1;
+                                    order.Count = order.DataSource.MinLotCount;
+                                    order.StartCount = order.DataSource.MinLotCount;
                                 }
                                 order.DateTimeSubmit = currentDateTime;
                             }
@@ -2067,10 +2068,6 @@ namespace ktradesystem.Models
                 {
                     break; //если был запрос на отмену тестирования, завершаем цикл
                 }
-                if(i == 1)
-                {
-                    ModelFunctions.TestEvaluationCriteria(testRun);
-                }
                 //копируем объект скомпилированного критерия оценки, чтобы из разных потоков не обращаться к одному объекту и к одним свойствам объекта
                 dynamic CompiledEvaluationCriteriaCopy = testing.CompiledEvaluationCriterias[i].Clone();
                 EvaluationCriteriaValue evaluationCriteriaValue = CompiledEvaluationCriteriaCopy.Calculate(dataSourceCandles, testRun, _modelData.Settings);
@@ -2216,6 +2213,16 @@ namespace ktradesystem.Models
                             {
                                 decimal dealCount = order.Count <= overLots ? order.Count : overLots;
                                 double dealPrice = order.Price;
+
+                                //если цена лимитной заявки находится вне цены свечки (цена покупки выше самой худшей цены свечки, или цена продажи ниже самой худшей цены свечки), устанавливаем цену исполнения как у рыночной заявки
+                                if ((order.Direction == true && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H < order.Price) || (order.Direction == false && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L > order.Price))
+                                {
+                                    int slippage = gaps[dataSourcesCandlesIndex] ? 0 : dataSourcesCandles[dataSourcesCandlesIndex].DataSource.PointsSlippage; //если текущая свечка - гэп, убираем базовое проскальзывание, и оставляем только вычисляемое, чтобы цена исполнения заявки была по худщей цене в свечке, и если объем большой то и проскальзывание было
+                                    slippage += Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //добавляем проскальзывание
+                                    slippage = order.Direction == true ? slippage : -slippage; //для покупки проскальзывание идет вверх, для продажи вниз
+                                    dealPrice = dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].C + slippage * dataSourcesCandles[dataSourcesCandlesIndex].DataSource.PriceStep;
+                                }
+
                                 if (gaps[dataSourcesCandlesIndex]) //если текущая свечка - гэп, устанавливаем худшую цену
                                 {
                                     dealPrice = order.Direction ? dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H : dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L;
@@ -2310,7 +2317,7 @@ namespace ktradesystem.Models
                         freeDeposit += resultMoney;
                         //определяем стоимость закрытых лотов в открытой позиции, вычитаем её из занятых средств и прибавляем к свободным
                         double closedCost = account.CurrentPosition[i].Order.DataSource.MarginType.Id == 2 ? account.CurrentPosition[i].Order.DataSource.MarginCost * order.DataSource.MinLotMarginPartCost : account.CurrentPosition[i].Price * order.DataSource.MinLotMarginPartCost;
-                        closedCost = (double)((decimal)closedCost * decrementCount); //умножаем стоимость на количество
+                        closedCost = (double)((decimal)closedCost * (decrementCount / account.CurrentPosition[i].DataSource.MinLotCount)); //умножаем стоимость на количество
                         takenDeposit -= closedCost; //вычитаем из занятых на открытые позиции средств
                         freeDeposit += closedCost; //прибавляем к свободным средствам
                         //вычитаем закрытое количесво из открытых позиций
@@ -2352,7 +2359,7 @@ namespace ktradesystem.Models
             foreach (Currency currency in _modelData.Currencies)
             {
                 //переводим доллоровую стоимость в валютную, умножая на стоимость 1 доллара
-                double cost = Math.Round(dollarCostDeposit * currency.DollarCost, 2);
+                double cost = dollarCostDeposit * currency.DollarCost;
                 depositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = cost, DateTime = dateTime });
             }
 

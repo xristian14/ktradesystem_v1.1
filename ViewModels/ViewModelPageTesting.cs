@@ -1370,6 +1370,16 @@ namespace ktradesystem.ViewModels
                 }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
             }
         }
+        public ICommand AlgorithmPasteDatasourceMinLotCount_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + ".MinLotCount");
+                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
+            }
+        }
         public ICommand AlgorithmPasteDataSourceTimeInCandle_Click
         {
             get

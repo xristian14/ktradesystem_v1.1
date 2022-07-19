@@ -110,7 +110,7 @@ namespace ktradesystem.ViewModels
 
         private void CreateStatisticalSignificance() //обновляет статистическую значимость
         {
-            int totalCount = (int)(_testBatch.StatisticalSignificance[0] + _testBatch.StatisticalSignificance[2]); //количество прибыльных плюс количество убыточных
+            int totalCount = _testBatch.OptimizationTestRuns.Count;
             double totalNet = _testBatch.StatisticalSignificance[1] + _testBatch.StatisticalSignificance[3]; //прибыль прибыльных плюс убыток убыточных
             int profitCount = (int)_testBatch.StatisticalSignificance[0];
             double profitCountPercent = Math.Round((double)profitCount / totalCount * 100.0, 1);

@@ -959,7 +959,7 @@ namespace ktradesystem.ViewModels
                             {
                                 orderFillColor = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex].Direction ? _stopBuyOrderFillColor : _stopSellOrderFillColor;
                             }
-                            double verticalLineWidth = _candleWidth >= 2 ? _candleWidth / 2 : 1;
+                            double verticalLineWidth = 1;
                             Orders.Insert(0, new OrderPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, FillColor = orderFillColor, Order = _testRun.Account.AllOrders[orderIndexPageTradeChart.OrderIndex], IsStart = orderIndexPageTradeChart.IsStart, HorizontalLineLeft = bodyLeft - _candleWidth, HorizontalLineWidth = _candleWidth, VerticalLineLeft = bodyLeft - verticalLineWidth, VerticalLineWidth = verticalLineWidth });
                         }
 

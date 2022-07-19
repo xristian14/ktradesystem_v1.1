@@ -207,8 +207,14 @@ namespace ktradesystem.Models
                 algorithmVariables += "Parameter_" + algorithm.AlgorithmParameters[k].Name + " = ";
                 algorithmVariables += algorithm.AlgorithmParameters[k].ParameterValueType.Id == 1 ? "algorithmParametersIntValues[" + k + "]; " : "algorithmParametersDoubleValues[" + k + "]; ";
             }
+            //удаляем комментарии
+            string scriptAlgorithmStr = algorithm.Script;
+            while(scriptAlgorithmStr.IndexOf("/*") != -1 && scriptAlgorithmStr.IndexOf("*/") != -1)
+            {
+                scriptAlgorithmStr = scriptAlgorithmStr.Remove(scriptAlgorithmStr.IndexOf("/*"), scriptAlgorithmStr.IndexOf("*/") - scriptAlgorithmStr.IndexOf("/*") + 2);
+            }
             //удаляем дублирующиеся пробелы
-            StringBuilder scriptAlgorithm = ModelFunctions.RemoveDuplicateSpaces(algorithm.Script);
+            StringBuilder scriptAlgorithm = ModelFunctions.RemoveDuplicateSpaces(scriptAlgorithmStr);
             //добавляем приведение к double правой части операции деления, чтобы результат int/int был с дробной частью
             scriptAlgorithm.Replace("/", "/(double)");
             //заменяем все обращения к конкретному индикатору типа: Datasource_maket.Indicator_sma на Datasource_maket_Indicator_sma
@@ -3270,7 +3276,7 @@ namespace ktradesystem.Models
                     lossCount++;
                     lossMoney += testRunProfit;
                 }
-                else
+                else if(testRunProfit > 0)
                 {
                     profitCount++;
                     profitMoney += testRunProfit;

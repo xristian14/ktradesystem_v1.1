@@ -3340,6 +3340,7 @@ namespace ktradesystem.ViewModels
                     }
 
                     DataSourceGroupsView.Add( new DataSourceGroupView { Number = DataSourceGroupsView.Count + 1, DataSourcesAccordances = dataSourcesAccordances });
+                    SelectedCurrency = Currencies.Where(a => a.Id == dataSourcesAccordances[0].DataSource.Currency.Id).First(); //выбираем валюту как у добавленного источника данных
                     CloseAddDataSourceTemplateAction?.Invoke();
                 }, (obj) => IsFieldsAddDataSourceGroupViewCorrect());
             }

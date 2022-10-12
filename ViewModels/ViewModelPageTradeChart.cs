@@ -68,9 +68,9 @@ namespace ktradesystem.ViewModels
         private double _tradeChartHiddenSegmentsSize = 0.85; //размер генерируемой области с сегментами и слева от видимых свечек, относительно размера видимых свечек. Размер отдельно для левых и правых свечек
         private int _scaleValueFontSize = 9; //размер шрифта цены на шкале значения
         private double _scaleValueTextTop = 6; //отступ сверху цены на шкале значения
-        private int[] _scaleValuesCuts = new int[4] { 1, 2, 3, 5 }; //отрезки для шкалы значений (отрезки по сколько пунктов будут. Будет браться значение, при котором количество пикселей на один отрезок будет ближе всего к _scaleValuePixelPerCut) Поиск подходящего размера будет продолжаться, исходя из помноженных на 10 значений массива, на 100, и т.д.
-        private double _scaleValuePixelPerCut = 35; //количество пикселей для одного отрезка на шкале значений. К этому значению будет стремиться размер отрезка
-        private double[] _indicatorAreasHeight = new double[3] { 0.15, 0.225, 0.3 }; //суммарная высота областей для индикаторов, как часть от доступной высоты под области источника данных, номер элемента соответствует количеству индикаторов и показывает суммарную высоту для них, если количество индикаторов больше, берется последний элемент
+        private int[] _scaleValuesCuts = new int[10] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }; //отрезки для шкалы значений (отрезки по сколько пунктов будут. Будет браться значение, при котором количество пикселей на один отрезок будет ближе всего к _scaleValuePixelPerCut) Поиск подходящего размера будет продолжаться, исходя из помноженных на 10 значений массива, на 100, и т.д.
+        private double _scaleValuePixelPerCut = 25; //количество пикселей для одного отрезка на шкале значений. К этому значению будет стремиться размер отрезка
+        private double[] _indicatorAreasHeight = new double[3] { /*0.15, 0.225, 0.3*/0.25, 0.34, 0.45 }; //суммарная высота областей для индикаторов, как часть от доступной высоты под области источника данных, номер элемента соответствует количеству индикаторов и показывает суммарную высоту для них, если количество индикаторов больше, берется последний элемент
         private int _timeLineHeight = 20; //высота временной шкалы
         private List<SegmentPageTradeChart> _segments { get; set; } //сегменты из которых состоит график
         private int _startPeriodSegmentIndex; //индекс сегмента, на котором начинается тестовый период
@@ -837,7 +837,7 @@ namespace ktradesystem.ViewModels
             {
                 foreach (AlgorithmIndicatorValues algorithmIndicatorValues in _testing.DataSourcesCandles[i].AlgorithmIndicatorsValues)
                 {
-                    IndicatorsPolylines.Add(new IndicatorPolylinePageTradeChart { IdDataSource = _testing.DataSourcesCandles[i].DataSource.Id, IdIndicator = algorithmIndicatorValues.AlgorithmIndicator.IdIndicator, StrokeColor = _indicatorStrokeColor, Left = 0, Points = new PointCollection(), PointsPrices = new List<double>() });
+                    IndicatorsPolylines.Add(new IndicatorPolylinePageTradeChart { IdDataSource = _testing.DataSourcesCandles[i].DataSource.Id, IdIndicator = algorithmIndicatorValues.AlgorithmIndicator.IdIndicator, IndicatorEnding = algorithmIndicatorValues.AlgorithmIndicator.Ending, StrokeColor = _indicatorStrokeColor, Left = 0, Points = new PointCollection(), PointsPrices = new List<double>() });
                 }
             }
 
@@ -971,18 +971,18 @@ namespace ktradesystem.ViewModels
                             int triangleHeight = 0;
                             if (_candleWidth < 3)
                             {
-                                triangleWidth = 7;
-                                triangleHeight = 4;
-                            }
-                            else if (_candleWidth < 11)
-                            {
                                 triangleWidth = 9;
                                 triangleHeight = 5;
                             }
-                            else
+                            else if (_candleWidth < 11)
                             {
                                 triangleWidth = 11;
                                 triangleHeight = 6;
+                            }
+                            else
+                            {
+                                triangleWidth = 13;
+                                triangleHeight = 7;
                             }
                             Deals.Insert(0, new DealPageTradeChart { IdDataSource = _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id, StrokeColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealStrokeColor : _sellDealStrokeColor, FillColor = _testRun.Account.AllDeals[dealIndex].Direction ? _buyDealFillColor : _sellDealFillColor, Deal = _testRun.Account.AllDeals[dealIndex], Left = bodyLeft - CandleWidth + Math.Truncate((CandleWidth - triangleWidth) / 2.0), TriangleWidth = triangleWidth, TriangleHeight = triangleHeight, Points = new PointCollection() });
                         }
@@ -993,7 +993,7 @@ namespace ktradesystem.ViewModels
                         {
                             if (algorithmIndicatorValues.Values[_segments[segmentIndex].CandleIndexes[k].FileIndex][_segments[segmentIndex].CandleIndexes[k].CandleIndex].IsNotOverIndex) //если не было превышения индекса при рассчете данного значения индикатора
                             {
-                                IndicatorPolylinePageTradeChart indicatorPolyline = IndicatorsPolylines.Where(a => a.IdDataSource == _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id && a.IdIndicator == algorithmIndicatorValues.AlgorithmIndicator.IdIndicator).First(); //индикатор с текущим источником данных
+                                IndicatorPolylinePageTradeChart indicatorPolyline = IndicatorsPolylines.Where(a => a.IdDataSource == _testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[k].DataSourceCandlesIndex].DataSource.Id && a.IdIndicator == algorithmIndicatorValues.AlgorithmIndicator.IdIndicator && a.IndicatorEnding == algorithmIndicatorValues.AlgorithmIndicator.Ending).First(); //индикатор с текущим источником данных
                                 indicatorPolyline.Points.Insert(0, new Point(bodyLeft - _candleWidth / 2, 0)); //добавляем точку для графика
                                 indicatorPolyline.PointsPrices.Insert(0, algorithmIndicatorValues.Values[_segments[segmentIndex].CandleIndexes[k].FileIndex][_segments[segmentIndex].CandleIndexes[k].CandleIndex].Value); //добавляем значение цены для данной точки, на основании которой будет вычисляться координата Y точки
                             }
@@ -1194,7 +1194,7 @@ namespace ktradesystem.ViewModels
                 //проходим по всем индикаторам главной области
                 foreach(IndicatorMenuItemPageTradeChart indicatorMenuItemPageTradeChart in IndicatorsMenuItemPageTradeChart.Where(a => a.SelectedTradeChartArea.IsDataSource))
                 {
-                    IndicatorPolylinePageTradeChart indicatorPolyline = IndicatorsPolylines.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id && a.IdIndicator == indicatorMenuItemPageTradeChart.AlgorithmIndicator.IdIndicator).First(); //текущий индикатор в IndicatorsMenuItemPageTradeChart с текущим источником данных
+                    IndicatorPolylinePageTradeChart indicatorPolyline = IndicatorsPolylines.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id && a.IdIndicator == indicatorMenuItemPageTradeChart.AlgorithmIndicator.IdIndicator && a.IndicatorEnding == indicatorMenuItemPageTradeChart.AlgorithmIndicator.Ending).First(); //текущий индикатор в IndicatorsMenuItemPageTradeChart с текущим источником данных
                     int pointIndex = 0;
                     bool isXLowThanAreasWidth = indicatorPolyline.Points.Count > 0 ? indicatorPolyline.Points[pointIndex].X <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
                     while (isXLowThanAreasWidth && pointIndex < indicatorPolyline.Points.Count)
@@ -1336,7 +1336,7 @@ namespace ktradesystem.ViewModels
                         //проходим по всем индикаторам текущей области
                         foreach (IndicatorMenuItemPageTradeChart indicatorMenuItemPageTradeChart in IndicatorsMenuItemPageTradeChart.Where(a => a.SelectedTradeChartArea == TradeChartAreas[k]))
                         {
-                            IndicatorPolylinePageTradeChart indicatorPolyline = IndicatorsPolylines.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id && a.IdIndicator == indicatorMenuItemPageTradeChart.AlgorithmIndicator.IdIndicator).First(); //текущий индикатор в IndicatorsMenuItemPageTradeChart с текущим источником данных
+                            IndicatorPolylinePageTradeChart indicatorPolyline = IndicatorsPolylines.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id && a.IdIndicator == indicatorMenuItemPageTradeChart.AlgorithmIndicator.IdIndicator && a.IndicatorEnding == indicatorMenuItemPageTradeChart.AlgorithmIndicator.Ending).First(); //текущий индикатор в IndicatorsMenuItemPageTradeChart с текущим источником данных
                             int pointIndex = 0;
                             bool isXLowThanAreasWidth = indicatorPolyline.Points.Count > 0 ? indicatorPolyline.Points[pointIndex].X <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу
                             while (isXLowThanAreasWidth && pointIndex < indicatorPolyline.Points.Count)
@@ -1375,7 +1375,7 @@ namespace ktradesystem.ViewModels
                     //проходим по всем индикаторам текущей области
                     foreach (IndicatorMenuItemPageTradeChart indicatorMenuItemPageTradeChart in IndicatorsMenuItemPageTradeChart.Where(a => a.SelectedTradeChartArea == TradeChartAreas[k]))
                     {
-                        IndicatorPolylinePageTradeChart indicatorPolyline = IndicatorsPolylines.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id && a.IdIndicator == indicatorMenuItemPageTradeChart.AlgorithmIndicator.IdIndicator).First(); //текущий индикатор в IndicatorsMenuItemPageTradeChart с текущим источником данных
+                        IndicatorPolylinePageTradeChart indicatorPolyline = IndicatorsPolylines.Where(a => a.IdDataSource == DataSourcesOrderDisplayPageTradeChart[i].DataSourceAccordance.DataSource.Id && a.IdIndicator == indicatorMenuItemPageTradeChart.AlgorithmIndicator.IdIndicator && a.IndicatorEnding == indicatorMenuItemPageTradeChart.AlgorithmIndicator.Ending).First(); //текущий индикатор в IndicatorsMenuItemPageTradeChart с текущим источником данных
                         indicatorPolyline.Top = currentTop + pastAreasHeight;
                         int pointIndex = 0;
                         bool isXLowThanAreasWidth = indicatorPolyline.Points.Count > 0 ? indicatorPolyline.Points[pointIndex].X <= areasWidth : false; //поставил сюда условие на непустой список, чтобы не обращаться к несуществующему элементу

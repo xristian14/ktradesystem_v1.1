@@ -12,6 +12,7 @@ namespace ktradesystem.ViewModels
     {
         public int IdDataSource { get; set; }
         public int IdIndicator { get; set; }
+        public string IndicatorEnding { get; set; }
         public SolidColorBrush StrokeColor { get; set; } //цвет линии
         private double _left;
         public double Left //отступ слева

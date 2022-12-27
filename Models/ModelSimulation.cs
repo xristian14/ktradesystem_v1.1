@@ -2028,34 +2028,15 @@ namespace ktradesystem.Models
                 // Убрать проверку на то все ли источники данных имеют свечки на текущей дате
                 // Изменить исполнение рыночных и стоп заявок с открытия следующей свечки на закрытие текущей свечки, на которой была выставлена заявка
                 //--
-                DateTime[][] arr = new DateTime[3][];
-                arr[0] = new DateTime[3];
-                arr[1] = new DateTime[2];
-                arr[2] = new DateTime[4];
-                int index = 0;
-                DateTime nextEarliestDate = arr[0][0];
-                bool isFind = false;
-                for (int i = 0; i < arr.Length; i++) //проходим по всем массивам, и сравниваем их дату с минимальной
-                {
-                    if (index + 1 < arr[i].Length) //если в масиве есть index+1 элемент
-                    {
-                        if (!isFind)
-                        {
-                            isFind = true;
-                            nextEarliestDate = arr[i][index + 1];
-                        }
-                        else
-                        {
-                            if (DateTime.Compare(arr[i][index + 1], nextEarliestDate) < 0)
-                            {
-                                nextEarliestDate = arr[i][index + 1];
-                            }
-                        }
-                    }
-                }
 
                 //находим среди следующих свечек, свечку с саммой ранней датой. Обновляем текущую дату на эту дату. Затем переходим на следующую свечку, если она раньше или равняется текущей дате, и переходим на следующий файл иточника данных только если следующий файл имеется, т.к. мы будем обращаться по текущему индексу и свечки и файла в процессе работы для тех источников данных, которые еще не закончились
                 //ищем среди следующих свечек самую раннюю дату
+                int[] nextCandleIndexes = new int[candleIndexes.Length]; //индексы свечек, свечки, которая позже текущей
+                int[] nextFileIndexes = new int[fileIndexes.Length]; //индексы файлов, свечки, которая позже текущей
+                for(int i = 0; i < nextFileIndexes.Length; i++)
+                {
+                    nextFileIndexes[i] = -1; //если свечки, которая позже текущей не найдно, значение индекса файла равняется -1
+                }
                 DateTime nextEarliestDateTime = dataSourceCandles[0].Candles[fileIndexes[0]][candleIndexes[0]].DateTime; //присваиваем любое значение
                 bool isEndAllDataSources = true;
                 bool isInitNextDateTime = false;
@@ -2086,6 +2067,8 @@ namespace ktradesystem.Models
                     //если не вышли за пределы файлов, значит нашли дату которая позже текущей свечки
                     if(fileIndex < dataSourceCandles[i].Candles.Length)
                     {
+                        nextCandleIndexes[i] = candleIndex; //запоминаем индексы файла и свечки, следующей по дате свечки, у данного источника данных
+                        nextFileIndexes[i] = fileIndex;
                         isEndAllDataSources = false; //отмечаем что не все файлы закончились
                         if (!isInitNextDateTime)
                         {
@@ -2105,50 +2088,28 @@ namespace ktradesystem.Models
                 if (!isEndAllDataSources)
                 {
                     currentDateTime = nextEarliestDateTime;
+                    for(int i = 0; i < dataSourceCandles.Length; i++)
+                    {
+                        if(nextFileIndexes[i] > -1) //если найдена свечка, которая позже текущей
+                        {
+                            //если свечка, которая позже текущей раньше, или равняется обновленной текущей дате, значит переходим на неё (свечка не в будущем)
+                            if (DateTime.Compare(dataSourceCandles[i].Candles[nextFileIndexes[i]][nextCandleIndexes[i]].DateTime, currentDateTime) <= 0)
+                            {
+                                if (nextFileIndexes[i] > fileIndexes[i]) //если перешли на следующий файл, обнуляем индекс гэпа
+                                {
+                                    gapIndexes[i] = 0;
+                                }
+                                candleIndexes[i] = nextCandleIndexes[i];
+                                fileIndexes[i] = nextFileIndexes[i];
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    isOverFileIndex = true;
                 }
                 //--
-
-                //для каждого источника данных доходим до даты, которая позже текущей
-                for (int i = 0; i < dataSourceCandles.Length; i++)
-                {
-                    //переходим на следующую свечку, пока не дойдем до даты которая позже текущей
-                    bool isOverDate = DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) > 0; //дошли ли до даты которая позже текущей
-
-                    //переходим на следующую свечку, пока не дойдем до даты которая позже текущей или пока не выйдем за пределы файлов
-                    while (isOverDate == false && isOverFileIndex == false)
-                    {
-                        candleIndexes[i]++;
-                        //если массив со свечками файла подошел к концу, переходим на следующий файл
-                        if (candleIndexes[i] >= dataSourceCandles[i].Candles[fileIndexes[i]].Length)
-                        {
-                            fileIndexes[i]++;
-                            candleIndexes[i] = 0;
-                            gapIndexes[i] = 0;
-                        }
-                        //если индекс файла не вышел за пределы массива, проверяем, дошли ли до даты которая позже текущей
-                        if (fileIndexes[i] < dataSourceCandles[i].Candles.Length)
-                        {
-                            isOverDate = DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) > 0;
-                        }
-                        else
-                        {
-                            isOverFileIndex = true;
-                        }
-                    }
-                }
-
-                //обновляем текущую дату (берем самую раннюю дату из источников данных)
-                if (isOverFileIndex == false)
-                {
-                    currentDateTime = dataSourceCandles[0].Candles[fileIndexes[0]][candleIndexes[0]].DateTime;
-                    for (int i = 1; i < dataSourceCandles.Length; i++)
-                    {
-                        if (DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) < 0)
-                        {
-                            currentDateTime = dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime;
-                        }
-                    }
-                }
             }
 
             //устанавливаем значение маржи

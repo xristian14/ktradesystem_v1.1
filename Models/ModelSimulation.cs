@@ -2022,6 +2022,92 @@ namespace ktradesystem.Models
                     while (isWereDealsStopLoss && iteration == 1); //если этой первое исполнение алгоритма, и при проверке стоп-заявок были сделки, еще раз прогоняем алгоритм чтобы обновить заявки
                 }
 
+                //--
+                // Найти среди следующих свечек дату, которая самая ранняя, и перейти в эту дату у тех источников данных, следующая свека которых имеет эту дату.
+                // В месте, принимающем заявки которые должны быть выставлены, должна быть проверка, на то, имеет ли источник данных заявки свечку на текущей дате, и если нет, то удалить эту заявку на выставление, т.к. сделка будет совершена а информция о закрытии данной свечки будет через 24 самых мальеньких по дате свечки (если самая маленькая часовая а сделка по дневной), то есть сделка будет совершена в будущем.
+                // Убрать проверку на то все ли источники данных имеют свечки на текущей дате
+                // Изменить исполнение рыночных и стоп заявок с открытия следующей свечки на закрытие текущей свечки, на которой была выставлена заявка
+                //--
+                DateTime[][] arr = new DateTime[3][];
+                arr[0] = new DateTime[3];
+                arr[1] = new DateTime[2];
+                arr[2] = new DateTime[4];
+                int index = 0;
+                DateTime nextEarliestDate = arr[0][0];
+                bool isFind = false;
+                for (int i = 0; i < arr.Length; i++) //проходим по всем массивам, и сравниваем их дату с минимальной
+                {
+                    if (index + 1 < arr[i].Length) //если в масиве есть index+1 элемент
+                    {
+                        if (!isFind)
+                        {
+                            isFind = true;
+                            nextEarliestDate = arr[i][index + 1];
+                        }
+                        else
+                        {
+                            if (DateTime.Compare(arr[i][index + 1], nextEarliestDate) < 0)
+                            {
+                                nextEarliestDate = arr[i][index + 1];
+                            }
+                        }
+                    }
+                }
+
+                //находим среди следующих свечек, свечку с саммой ранней датой. Обновляем текущую дату на эту дату. Затем переходим на следующую свечку, если она раньше или равняется текущей дате, и переходим на следующий файл иточника данных только если следующий файл имеется, т.к. мы будем обращаться по текущему индексу и свечки и файла в процессе работы для тех источников данных, которые еще не закончились
+                //ищем среди следующих свечек самую раннюю дату
+                DateTime nextEarliestDateTime = dataSourceCandles[0].Candles[fileIndexes[0]][candleIndexes[0]].DateTime; //присваиваем любое значение
+                bool isEndAllDataSources = true;
+                bool isInitNextDateTime = false;
+                for (int i = 0; i < dataSourceCandles.Length; i++)
+                {
+                    //доходим до свечки, которая позже текущей свечки в данном источнике данных
+                    //переходим на следующую свечку, пока не дойдем до даты которая позже текущей свечки
+                    bool isOverDate = fileIndexes[i] < dataSourceCandles[i].Candles.Length ? DateTime.Compare(dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime, currentDateTime) > 0 : false; //дошли ли до даты которая позже текущей
+                    int candleIndex = candleIndexes[i];
+                    int fileIndex = fileIndexes[i];
+                    //переходим на следующую свечку, пока не дойдем до даты которая позже текущей или пока не выйдем за пределы файлов
+                    while (isOverDate == false && fileIndex < dataSourceCandles[i].Candles.Length)
+                    {
+                        candleIndex++;
+                        //если массив со свечками файла подошел к концу, переходим на следующий файл
+                        if (candleIndex >= dataSourceCandles[i].Candles[fileIndex].Length)
+                        {
+                            candleIndex = 0;
+                            fileIndex++;
+                            //gapIndexes[i] = 0;
+                        }
+                        //если индекс файла не вышел за пределы массива, проверяем, дошли ли до даты которая позже текущей свечки
+                        if (fileIndex < dataSourceCandles[i].Candles.Length)
+                        {
+                            isOverDate = DateTime.Compare(dataSourceCandles[i].Candles[fileIndex][candleIndex].DateTime, dataSourceCandles[i].Candles[fileIndexes[i]][candleIndexes[i]].DateTime) > 0;
+                        }
+                    }
+                    //если не вышли за пределы файлов, значит нашли дату которая позже текущей свечки
+                    if(fileIndex < dataSourceCandles[i].Candles.Length)
+                    {
+                        isEndAllDataSources = false; //отмечаем что не все файлы закончились
+                        if (!isInitNextDateTime)
+                        {
+                            isInitNextDateTime = true;
+                            nextEarliestDateTime = dataSourceCandles[i].Candles[fileIndex][candleIndex].DateTime;
+                        }
+                        else
+                        {
+                            if(DateTime.Compare(nextEarliestDateTime, dataSourceCandles[i].Candles[fileIndex][candleIndex].DateTime) > 0)
+                            {
+                                nextEarliestDateTime = dataSourceCandles[i].Candles[fileIndex][candleIndex].DateTime;
+                            }
+                        }
+                    }
+                }
+                //если не все файлы закончились, переходим на следующую свечку
+                if (!isEndAllDataSources)
+                {
+                    currentDateTime = nextEarliestDateTime;
+                }
+                //--
+
                 //для каждого источника данных доходим до даты, которая позже текущей
                 for (int i = 0; i < dataSourceCandles.Length; i++)
                 {

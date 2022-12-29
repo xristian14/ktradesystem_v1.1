@@ -28,8 +28,6 @@ namespace ktradesystem.Models
         public bool IsForwardDepositTrading { get; set; } //добавить ли для форвардного тестирования торговлю депозитом
         public List<DepositCurrency> ForwardDepositCurrencies { get; set; } //размер депозита форвардного тестирования во всех валютах
         public Currency DefaultCurrency { get; set; } //валюта по умолчанию
-        public DateTime StartPeriod { get; set; } //дата начала тестирования
-        public DateTime EndPeriod { get; set; } //дата окончания тестирования
         public DateTimeDuration DurationOptimizationTests { get; set; } //длительность оптимизационных тестов
         public DateTimeDuration OptimizationTestSpacing { get; set; } //временной промежуток между оптимизационными тестами
         public DateTimeDuration DurationForwardTest { get; set; } //длительность форвардного тестирования

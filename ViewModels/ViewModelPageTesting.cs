@@ -52,8 +52,6 @@ namespace ktradesystem.ViewModels
 
             Currencies = _modelData.Currencies;
             SelectedCurrency = Currencies[0];
-
-            DataSourceGroupsView.CollectionChanged += DataSourceGroupsViewChanged; //добавили создание периода тестирования при изменении групп источников данных для тестирования
         }
 
         public static ViewModelPageTesting getInstance()
@@ -3152,11 +3150,6 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private void DataSourceGroupsViewChanged(object sender, NotifyCollectionChangedEventArgs e)
-        {
-            SetPeriodTesting();
-        }
-
         private DataSourceGroupView _selectedDataSourceGroupView;
         public DataSourceGroupView SelectedDataSourceGroupView //выбранная группа источников данных
         {
@@ -3333,13 +3326,32 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
+                    //определяем доступные даты тестирования для данной группы источников данных. Доступная дата начала - самая поздняя из дат начала, доступная дата окончания - самая поздняя дата окончания
+                    DateTime startDateTime = new DateTime();
+                    DateTime endDateTime = new DateTime();
+                    bool isFirstIteration = true;
                     List<DataSourceAccordanceView> dataSourcesAccordances = new List<DataSourceAccordanceView>();
                     foreach(DataSourcesForAddingDsGroupView dataSourcesForAddingDsGroupView in DataSourcesForAddingDsGroupsView)
                     {
                         dataSourcesAccordances.Add(new DataSourceAccordanceView { DataSourceTemplate = dataSourcesForAddingDsGroupView.DataSourceTemplate, DataSource = dataSourcesForAddingDsGroupView.SelectedDataSource });
+                        if (isFirstIteration)
+                        {
+                            startDateTime = dataSourcesForAddingDsGroupView.SelectedDataSource.StartDate;
+                            endDateTime = dataSourcesForAddingDsGroupView.SelectedDataSource.EndDate;
+                        }
+                        else
+                        {
+                            if(DateTime.Compare(startDateTime, dataSourcesForAddingDsGroupView.SelectedDataSource.StartDate) < 0)
+                            {
+                                startDateTime = dataSourcesForAddingDsGroupView.SelectedDataSource.StartDate;
+                            }
+                            if (DateTime.Compare(endDateTime, dataSourcesForAddingDsGroupView.SelectedDataSource.EndDate) < 0)
+                            {
+                                endDateTime = dataSourcesForAddingDsGroupView.SelectedDataSource.EndDate;
+                            }
+                        }
                     }
-
-                    DataSourceGroupsView.Add( new DataSourceGroupView { Number = DataSourceGroupsView.Count + 1, DataSourcesAccordances = dataSourcesAccordances });
+                    DataSourceGroupsView.Add(new DataSourceGroupView(DataSourceGroupsView.Count + 1, dataSourcesAccordances, startDateTime, endDateTime));
                     SelectedCurrency = Currencies.Where(a => a.Id == dataSourcesAccordances[0].DataSource.Currency.Id).First(); //выбираем валюту как у добавленного источника данных
                     CloseAddDataSourceTemplateAction?.Invoke();
                 }, (obj) => IsFieldsAddDataSourceGroupViewCorrect());
@@ -3649,172 +3661,6 @@ namespace ktradesystem.ViewModels
                 }
             }
             
-        }
-
-        private bool _isPeriodTestingEnabled = false;
-        public bool IsPeriodTestingEnabled
-        {
-            get { return _isPeriodTestingEnabled; }
-            set
-            {
-                _isPeriodTestingEnabled = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private DateTime _startPeriodTesting;
-        public DateTime StartPeriodTesting //начало перида тестирования
-        {
-            get { return _startPeriodTesting; }
-            set
-            {
-                _startPeriodTesting = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private DateTime _endPeriodTesting;
-        public DateTime EndPeriodTesting //окончание перида тестирования
-        {
-            get { return _endPeriodTesting; }
-            set
-            {
-                _endPeriodTesting = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private DateTime _displayDateStartStartPeriodTesting;
-        public DateTime DisplayDateStartStartPeriodTesting //начало доступных дат для начала периода тестирования
-        {
-            get { return _displayDateStartStartPeriodTesting; }
-            set
-            {
-                _displayDateStartStartPeriodTesting = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private DateTime _displayDateStartEndPeriodTesting;
-        public DateTime DisplayDateStartEndPeriodTesting //начало доступных дат для окончания периода тестирования
-        {
-            get { return _displayDateStartEndPeriodTesting; }
-            set
-            {
-                _displayDateStartEndPeriodTesting = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private DateTime _displayDateEndEndPeriodTesting;
-        public DateTime DisplayDateEndEndPeriodTesting //окончание доступных дат периода окончания тестирования
-        {
-            get { return _displayDateEndEndPeriodTesting; }
-            set
-            {
-                _displayDateEndEndPeriodTesting = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private void SetPeriodTesting() //устанавливаем начальную и конечную даты исходя из доступных дат в выбранных источниках данных
-        {
-            if(DataSourceGroupsView.Count > 0)
-            {
-                IsPeriodTestingEnabled = true;
-                //определяем самую раннюю дату из: самой поздней первой даты среди DataSourcesAccordances (чтобы начало периода была первой датой, на которой все источники данных группы имеют данные)
-                
-                //определяем дату для первого источника данных, чтобы потом с ней сравнивать другие
-                List<DateTime> StartDates = new List<DateTime>(); //список с датами начала
-                foreach(DataSourceAccordanceView dataSourceAccordanceView in DataSourceGroupsView[0].DataSourcesAccordances)
-                {
-                    StartDates.Add(dataSourceAccordanceView.DataSource.StartDate);
-                }
-                DateTime lastStartDate = StartDates[0]; //самая поздняя дата начала
-                for(int y = 1; y < StartDates.Count; y++)
-                {
-                    if(DateTime.Compare(lastStartDate, StartDates[y]) < 0)
-                    {
-                        lastStartDate = StartDates[y];
-                    }
-                }
-                DateTime startDate = lastStartDate; //самая ранняя дата начала, среди доступных для всех комбинаций источников данных, дат
-
-                //проверяем остальные элементы DataSourceGroupsView
-                for (int i = 1; i < DataSourceGroupsView.Count; i++)
-                {
-                    StartDates.Clear();
-                    foreach (DataSourceAccordanceView dataSourceAccordanceView in DataSourceGroupsView[i].DataSourcesAccordances)
-                    {
-                        StartDates.Add(dataSourceAccordanceView.DataSource.StartDate);
-                    }
-                    lastStartDate = StartDates[0]; //самая поздняя дата начала
-                    for (int y = 1; y < StartDates.Count; y++)
-                    {
-                        if (DateTime.Compare(lastStartDate, StartDates[y]) < 0)
-                        {
-                            lastStartDate = StartDates[y];
-                        }
-                    }
-                    //проверяем, дата текущего DataSourceGroupsView раньше startDate
-                    if(DateTime.Compare(lastStartDate, startDate) < 0)
-                    {
-                        startDate = lastStartDate;
-                    }
-                }
-
-                //определяем последнюю дату среди группы источников данных, на которых все источники данных имеют данные
-                //определяем дату для первого источника данных, чтобы потом с ней сравнивать другие
-                List<DateTime> EndDates = new List<DateTime>(); //список с датами окончания
-                foreach (DataSourceAccordanceView dataSourceAccordanceView in DataSourceGroupsView[0].DataSourcesAccordances)
-                {
-                    EndDates.Add(dataSourceAccordanceView.DataSource.EndDate);
-                }
-                DateTime firstEndDate = EndDates[0]; //самая ранняя дата окончания
-                for (int y = 1; y < EndDates.Count; y++)
-                {
-                    if (DateTime.Compare(firstEndDate, EndDates[y]) > 0)
-                    {
-                        firstEndDate = EndDates[y];
-                    }
-                }
-                DateTime endDate = firstEndDate; //самая поздняя дата окончания, среди доступных для всех комбинаций источников данных, дат
-
-                //проверяем остальные элементы DataSourceGroupsView
-                for (int i = 1; i < DataSourceGroupsView.Count; i++)
-                {
-                    EndDates.Clear();
-                    foreach (DataSourceAccordanceView dataSourceAccordanceView in DataSourceGroupsView[i].DataSourcesAccordances)
-                    {
-                        EndDates.Add(dataSourceAccordanceView.DataSource.EndDate);
-                    }
-                    firstEndDate = EndDates[0]; //самая ранняя дата окончания
-                    for (int y = 1; y < EndDates.Count; y++)
-                    {
-                        if (DateTime.Compare(firstEndDate, EndDates[y]) > 0)
-                        {
-                            firstEndDate = EndDates[y];
-                        }
-                    }
-                    //проверяем, дата текущего DataSourceGroupsView позже endDate
-                    if (DateTime.Compare(firstEndDate, endDate) > 0)
-                    {
-                        endDate = firstEndDate;
-                    }
-                }
-
-                StartPeriodTesting = startDate.Date;
-                EndPeriodTesting = endDate.AddDays(1).Date; //прибавил 1 день, т.к. в вычислениях endDate последний день рассматривался как торговый, а в тестировании он будет рассматриваться как день на котором заканчивается торговля
-                DisplayDateStartStartPeriodTesting = new DateTime(startDate.Year, startDate.Month, 1);
-                DisplayDateStartEndPeriodTesting = startDate.Date; //дату окончания можно установить только в доступные даты
-                DisplayDateEndEndPeriodTesting = endDate.Date;
-            }
-            else
-            {
-                IsPeriodTestingEnabled = false;
-                StartPeriodTesting = new DateTime(1, 1, 1);
-                EndPeriodTesting = new DateTime(1, 1, 1);
-            }
         }
 
         private string _durationOptimizationYears;
@@ -4323,13 +4169,6 @@ namespace ktradesystem.ViewModels
                 }
             }
 
-            //проверяем что дата начала периода тестирования раньше даты окончания периода тестирования
-            if(DateTime.Compare(EndPeriodTesting.Date, StartPeriodTesting.Date) <= 0)
-            {
-                result = false;
-                TooltipLaunchTesting.Add("Дата начала периода тестирования должна быть раньше даты окончания.");
-            }
-
             //проверяем корректность длительности оптимизационных тестов
             bool isYearsNotEmpty = true;
             bool isMonthsNotEmpty = true;
@@ -4609,7 +4448,7 @@ namespace ktradesystem.ViewModels
                         {
                             dataSourceAccordances.Add(new DataSourceAccordance { DataSourceTemplate = dataSourceAccordanceView.DataSourceTemplate, DataSource = dataSourceAccordanceView.DataSource });
                         }
-                        dataSourceGroups.Add(new DataSourceGroup { DataSourceAccordances = dataSourceAccordances });
+                        dataSourceGroups.Add(new DataSourceGroup { DataSourceAccordances = dataSourceAccordances, StartPeriodTesting = dataSourceGroupView.StartPeriodTesting, EndPeriodTesting = dataSourceGroupView.EndPeriodTesting });
                     }
 
                     //TopModelCriteria
@@ -4675,8 +4514,6 @@ namespace ktradesystem.ViewModels
                     testing.IsForwardDepositTrading = IsForwardDepositTesting;
                     testing.ForwardDepositCurrencies = forwardDepositCurrencies;
                     testing.DefaultCurrency = SelectedCurrency;
-                    testing.StartPeriod = StartPeriodTesting.Date;
-                    testing.EndPeriod = EndPeriodTesting.Date;
                     testing.DurationOptimizationTests = durationOptimizationTests;
                     testing.OptimizationTestSpacing = optimizationTestSpacing;
                     testing.DurationForwardTest = durationForwardTest;

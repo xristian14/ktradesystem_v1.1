@@ -11,5 +11,7 @@ namespace ktradesystem.Models
     public class DataSourceGroup
     {
         public List<DataSourceAccordance> DataSourceAccordances { get; set; }
+        public DateTime StartPeriodTesting { get; set; } //начало перида тестирования
+        public DateTime EndPeriodTesting { get; set; } //окончание перида тестирования
     }
 }

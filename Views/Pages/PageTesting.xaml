@@ -519,31 +519,38 @@
                     <Button Content="Добавить" Command="{Binding AddDataSourceGroupView_Click}" Width="70"/>
                     <Button Content="Удалить" Command="{Binding DeleteDataSourceGroupView_Click}" Width="60" Margin="7 0 0 0"/>
                 </StackPanel>
-                <ListView ItemsSource="{Binding DataSourceGroupsView}" SelectedItem="{Binding SelectedDataSourceGroupView, Mode=TwoWay}" SelectionMode="Single" MaxHeight="170">
+                <ListView ItemsSource="{Binding DataSourceGroupsView}" SelectedItem="{Binding SelectedDataSourceGroupView, Mode=TwoWay}" SelectionMode="Single" MaxHeight="200">
                     <ListView.View>
                         <GridView>
                             <GridViewColumn DisplayMemberBinding="{Binding Number}" Header="№" Width="{Binding ElementName=helperDs1, Path=ActualWidth}"/>
                             <GridViewColumn Header="Макет источника данных   –   Источник данных" Width="{Binding ElementName=helperDs2, Path=ActualWidth}">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <ListView ItemsSource="{Binding DataSourcesAccordances}">
-                                            <ListView.View>
-                                                <GridView>
-                                                    <GridViewColumn DisplayMemberBinding="{Binding DataSourceTemplate.Name}" Width="{Binding ElementName=helperDss1, Path=ActualWidth}"/>
-                                                    <GridViewColumn DisplayMemberBinding="{Binding DataSource.Name}" Width="{Binding ElementName=helperDss2, Path=ActualWidth}"/>
-                                                    <GridView.ColumnHeaderContainerStyle>
-                                                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                        </Style>
-                                                    </GridView.ColumnHeaderContainerStyle>
-                                                </GridView>
-                                            </ListView.View>
-                                            <ListView.ItemContainerStyle>
-                                                <Style TargetType="ListViewItem">
-                                                    <Setter Property="Focusable" Value="false"/>
-                                                </Style>
-                                            </ListView.ItemContainerStyle>
-                                        </ListView>
+                                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                                            <ListView ItemsSource="{Binding DataSourcesAccordances}">
+                                                <ListView.View>
+                                                    <GridView>
+                                                        <GridViewColumn DisplayMemberBinding="{Binding DataSourceTemplate.Name}" Width="{Binding ElementName=helperDss1, Path=ActualWidth}"/>
+                                                        <GridViewColumn DisplayMemberBinding="{Binding DataSource.Name}" Width="{Binding ElementName=helperDss2, Path=ActualWidth}"/>
+                                                        <GridView.ColumnHeaderContainerStyle>
+                                                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </Style>
+                                                        </GridView.ColumnHeaderContainerStyle>
+                                                    </GridView>
+                                                </ListView.View>
+                                                <ListView.ItemContainerStyle>
+                                                    <Style TargetType="ListViewItem">
+                                                        <Setter Property="Focusable" Value="false"/>
+                                                    </Style>
+                                                </ListView.ItemContainerStyle>
+                                            </ListView>
+                                            <StackPanel Orientation="Horizontal">
+                                                <DatePicker SelectedDate="{Binding StartPeriodTesting, Mode=TwoWay}" DisplayDateStart="{Binding AvailableStartPeriodTesting, Mode=OneWay}" DisplayDateEnd="{Binding EndPeriodTesting, Mode=OneWay}"/>
+                                                <TextBlock Text=" – " VerticalAlignment="Center"/>
+                                                <DatePicker SelectedDate="{Binding EndPeriodTesting, Mode=TwoWay}" DisplayDateStart="{Binding StartPeriodTesting, Mode=OneWay}" DisplayDateEnd="{Binding AvailableEndPeriodTesting, Mode=OneWay}"/>
+                                            </StackPanel>
+                                        </StackPanel>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
@@ -684,12 +691,6 @@
                             </Style>
                         </ListView.ItemContainerStyle>
                     </ListView>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" IsEnabled="{Binding IsPeriodTestingEnabled}" Margin="0 10 0 0">
-                    <TextBlock Text="Период тестирования: " VerticalAlignment="Center"/>
-                    <DatePicker SelectedDate="{Binding StartPeriodTesting, Mode=TwoWay}" DisplayDateStart="{Binding DisplayDateStartStartPeriodTesting, Mode=OneWay}" DisplayDateEnd="{Binding EndPeriodTesting, Mode=OneWay}"/>
-                    <TextBlock Text=" – " VerticalAlignment="Center"/>
-                    <DatePicker SelectedDate="{Binding EndPeriodTesting, Mode=TwoWay}" DisplayDateStart="{Binding DisplayDateStartEndPeriodTesting, Mode=OneWay}" DisplayDateEnd="{Binding DisplayDateEndEndPeriodTesting, Mode=OneWay}"/>
                 </StackPanel>
                 <TextBlock Text="Длительность оптимизационных тестов:" VerticalAlignment="Center" Margin="0 15 0 0"/>
                 <StackPanel Orientation="Horizontal" Margin="0 2 0 0">

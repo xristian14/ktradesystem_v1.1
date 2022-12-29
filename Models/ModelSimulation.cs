@@ -482,7 +482,41 @@ namespace ktradesystem.Models
             }
             return newCombination;
         }
+        /// <summary>
+        /// Разделяет временной период на более котроткие временные интервалы, с отступом от начала offset, длительностью duration. Следующий интервал начнется с (даты начала предыдущего + spacing). Возвращает список с датами интервалов, в 0-м элементе - дата начала интервала, в 1-м - дата окончания интервала + 1 минута. isMinDuration - если true, интервал будет создан даже если в оставшийся период не помещается полная длительность, но помещается минимально допустимая длительность, размер которой определяется в настройках, id=2; - если false, будут создаваться интервалы только с полной длительностью duration.
+        /// </summary>
+        private List<DateTime[]> SplitPeriod(TimeSpan offset, DateTime startDateTime, DateTime endDateTime, DateTimeDuration duration, DateTimeDuration spacing, bool isMinDuration)
+        {
+            List<DateTime[]> intervals = new List<DateTime[]>();
+            double step = 0.25; //шаг уменьшения длительности
+            TimeSpan overDate = TimeSpan.FromMinutes(1);
+            DateTime currentDateTime = startDateTime + offset;
+            TimeSpan minDuration = currentDateTime.AddYears(duration.Years).AddMonths(duration.Months).AddDays(duration.Days) - currentDateTime;
+            minDuration = isMinDuration ? TimeSpan.FromDays(Math.Round(minDuration.TotalDays * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100.0))) : minDuration;
+            while (currentDateTime + minDuration <= endDateTime)
+            {
+                //определяем длительность, которая помещается в оставшийся период
+                double currentDurationPercent = 100;
+                TimeSpan currentDuration = currentDateTime.AddYears(duration.Years).AddMonths(duration.Months).AddDays(duration.Days) - currentDateTime;
+                if (isMinDuration)
+                {
+                    currentDuration = TimeSpan.FromDays(Math.Round((currentDateTime.AddYears(duration.Years).AddMonths(duration.Months).AddDays(duration.Days) - currentDateTime).TotalDays * (currentDurationPercent / 100.0)));
+                    while (currentDateTime + currentDuration > endDateTime)
+                    {
+                        currentDurationPercent -= step;
+                        currentDuration = TimeSpan.FromDays(Math.Round((currentDateTime.AddYears(duration.Years).AddMonths(duration.Months).AddDays(duration.Days) - currentDateTime).TotalDays * (currentDurationPercent / 100.0)));
+                    }
+                }
+                
+                DateTime currentEndDateTime = currentDateTime + currentDuration + overDate;
+                intervals.Add(new DateTime[2] { new DateTime(currentDateTime.Year, currentDateTime.Month, currentDateTime.Day, currentDateTime.Hour, currentDateTime.Minute, currentDateTime.Second), new DateTime(currentEndDateTime.Year, currentEndDateTime.Month, currentEndDateTime.Day, currentEndDateTime.Hour, currentEndDateTime.Minute, currentEndDateTime.Second) });
 
+                currentDateTime = currentDateTime.AddYears(spacing.Years).AddMonths(spacing.Months).AddDays(spacing.Days);
+                minDuration = currentDateTime.AddYears(duration.Years).AddMonths(duration.Months).AddDays(duration.Days) - currentDateTime;
+                minDuration = isMinDuration ? TimeSpan.FromDays(Math.Round(minDuration.TotalDays * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100.0))) : minDuration;
+            }
+            return intervals;
+        }
         public void TestingSimulation(Testing testing) //выполнение тестирования
         {
             testing.TestBatches = new List<TestBatch>();
@@ -588,6 +622,11 @@ namespace ktradesystem.Models
             //формируем тестовые связки
             foreach (DataSourceGroup dataSourceGroup in testing.DataSourceGroups)
             {
+                //--
+                //формируем серии оптимизационных тестов для данного источника данных для каждого периода
+                
+                //--
+
                 //формируем серии оптимизационных тестов для данного источника данных для каждого периода
 
                 //определяем диапазон доступных дат для данной группы источников данных (начальная и конечная даты которые есть во всех источниках данных группы)
@@ -2014,14 +2053,7 @@ namespace ktradesystem.Models
                 }
                 while (isWereDealsStopLoss && iteration == 1); //если этой первое исполнение алгоритма, и при проверке стоп-заявок были сделки, еще раз прогоняем алгоритм чтобы обновить заявки
 
-                //--
-                // Найти среди следующих свечек дату, которая самая ранняя, и перейти в эту дату у тех источников данных, следующая свека которых имеет эту дату.
-                // В месте, принимающем заявки которые должны быть выставлены, должна быть проверка, на то, имеет ли источник данных заявки свечку на текущей дате, и если нет, то удалить эту заявку на выставление, т.к. сделка будет совершена а информция о закрытии данной свечки будет через 24 самых мальеньких по дате свечки (если самая маленькая часовая а сделка по дневной), то есть сделка будет совершена по информации из будущего
-                // Убрать проверку на то все ли источники данных имеют свечки на текущей дате
-                // Изменить исполнение рыночных и стоп заявок с открытия следующей свечки на закрытие текущей свечки, на которой была выставлена заявка
-                //--
-
-                //находим среди следующих свечек, свечку с саммой ранней датой. Обновляем текущую дату на эту дату. Затем переходим на следующую свечку, если она раньше или равняется текущей дате, и переходим на следующий файл иточника данных только если следующий файл имеется, т.к. мы будем обращаться по текущему индексу и свечки и файла в процессе работы для тех источников данных, которые еще не закончились
+                //находим среди следующих свечек, свечку с саммой ранней датой. Обновляем текущую дату на эту дату. Затем переходим на следующую свечку, если она раньше или равняется текущей дате, и переходим на следующий файл источника данных только если следующий файл имеется, т.к. мы будем обращаться по текущему индексу и свечки и файла к тем источникам данных которые закончились, во время прохода по тем источникам данных которые еще не закончились (например файл с недельными свечками закончился, а часовые еще есть, и мы еще 7 дней можем торговать на часовых свечках, обращаясь к информации последней недельной свечки)
                 //ищем среди следующих свечек самую раннюю дату
                 int[] nextCandleIndexes = new int[candleIndexes.Length]; //индексы свечек, свечки, которая позже текущей
                 int[] nextFileIndexes = new int[fileIndexes.Length]; //индексы файлов, свечки, которая позже текущей
@@ -2048,7 +2080,6 @@ namespace ktradesystem.Models
                         {
                             candleIndex = 0;
                             fileIndex++;
-                            //gapIndexes[i] = 0;
                         }
                         //если индекс файла не вышел за пределы массива, проверяем, дошли ли до даты которая позже текущей свечки
                         if (fileIndex < dataSourceCandles[i].Candles.Length)
@@ -2101,7 +2132,6 @@ namespace ktradesystem.Models
                 {
                     isOverFileIndex = true;
                 }
-                //--
             }
 
             //устанавливаем значение маржи

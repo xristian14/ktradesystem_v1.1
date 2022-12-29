@@ -22,8 +22,6 @@ namespace ktradesystem.Models
         public TopModelCriteria TopModelCriteria { get; set; } //критерии оценки топ-модели
         public bool IsConsiderNeighbours { get; set; } //оценивать топ-модель с учетом соседей
         public double SizeNeighboursGroupPercent { get; set; } //размер группы соседних тестов
-        public bool IsAxesSpecified { get; set; } //указаны ли оси плоскости для поиска топ-модели с соседями
-        public List<AxesParameter> AxesTopModelSearchPlane { get; set; } //оси плоскости для поиска топ-модели с соседями
         public bool IsForwardTesting { get; set; } //проводить ли форвардное тестирование
         public bool IsForwardDepositTrading { get; set; } //добавить ли для форвардного тестирования торговлю депозитом
         public List<DepositCurrency> ForwardDepositCurrencies { get; set; } //размер депозита форвардного тестирования во всех валютах

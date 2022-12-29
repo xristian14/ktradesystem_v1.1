@@ -3521,7 +3521,6 @@ namespace ktradesystem.ViewModels
             {
                 _isConsiderNeighbours = value;
                 OnPropertyChanged();
-                IsAxesParametersSpecified = false;
             }
         }
 
@@ -3533,45 +3532,6 @@ namespace ktradesystem.ViewModels
             {
                 _sizeNeighboursGroupPercent = value;
                 OnPropertyChanged();
-            }
-        }
-
-        private bool _isAxesParametersSpecified;
-        public bool IsAxesParametersSpecified //показатель выбранности чек-бокса, указаны ли оси
-        {
-            get { return _isAxesParametersSpecified; }
-            set
-            {
-                _isAxesParametersSpecified = value;
-                OnPropertyChanged();
-                CreateAxesParametersSelectView();
-            }
-        }
-
-        private ObservableCollection<AxesParameterSelectView> _axesParametersSelectView = new ObservableCollection<AxesParameterSelectView>();
-        public ObservableCollection<AxesParameterSelectView> AxesParametersSelectView //выбор осей двумерной плоскости на которой будет искаться топ-модель с соседями
-        {
-            get { return _axesParametersSelectView; }
-            set
-            {
-                _axesParametersSelectView = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private void CreateAxesParametersSelectView()
-        {
-            AxesParametersSelectView.Clear();
-            if (IsAxesParametersSpecified)
-            {
-                List<AlgorithmParameterView> algorithmParametersView = new List<AlgorithmParameterView>();
-                foreach(AlgorithmParameterView algorithmParameterView in AlgorithmParametersView)
-                {
-                    algorithmParametersView.Add(algorithmParameterView);
-                }
-
-                AxesParametersSelectView.Add(new AxesParameterSelectView { Axis = "X", AlgorithmParametersView = algorithmParametersView });
-                AxesParametersSelectView.Add(new AxesParameterSelectView { Axis = "Y", AlgorithmParametersView = algorithmParametersView });
             }
         }
 
@@ -4141,24 +4101,6 @@ namespace ktradesystem.ViewModels
                 }
             }
 
-            //проверяем что для осей плоскости выбраны разные параметры
-            if (IsAxesParametersSpecified)
-            {
-                if(AxesParametersSelectView.Count > 0)
-                {
-                    if(AxesParametersSelectView[0].SelectedAlgorithmParameterView == null || AxesParametersSelectView[1].SelectedAlgorithmParameterView == null)
-                    {
-                        result = false;
-                        TooltipLaunchTesting.Add("Не выбраны оси двумерной плоскости поиска топ-модели с соседями.");
-                    }
-                    else if(AxesParametersSelectView[0].SelectedAlgorithmParameterView == AxesParametersSelectView[1].SelectedAlgorithmParameterView)
-                    {
-                        result = false;
-                        TooltipLaunchTesting.Add("Выбраны одинаковые параметры для осей двумерной плоскости поиска топ-модели с соседями.");
-                    }
-                }
-            }
-
             //проверяем что размер депозита имеет корректное значение
             if(IsForwardTesting && IsForwardDepositTesting)
             {
@@ -4462,13 +4404,6 @@ namespace ktradesystem.ViewModels
                     }
                     topModelCriteria.TopModelFilters = topModelFilters;
 
-                    //AxesTopModelSearchPlane
-                    List<AxesParameter> axesTopModelSearchPlane = new List<AxesParameter>();
-                    foreach(AxesParameterSelectView axesParameterSelectView in AxesParametersSelectView)
-                    {
-                        axesTopModelSearchPlane.Add(new AxesParameter { AlgorithmParameter = SelectedAlgorithm.AlgorithmParameters.Where(j => j.Name == axesParameterSelectView.SelectedAlgorithmParameterView.Name).First() });
-                    }
-
                     //ForwardDepositCurrencies
                     List<DepositCurrency> forwardDepositCurrencies = new List<DepositCurrency>();
                     if(IsForwardTesting && IsForwardDepositTesting)
@@ -4508,8 +4443,6 @@ namespace ktradesystem.ViewModels
                     testing.TopModelCriteria = topModelCriteria;
                     testing.IsConsiderNeighbours = IsConsiderNeighbours;
                     testing.SizeNeighboursGroupPercent = double.Parse(SizeNeighboursGroupPercent);
-                    testing.IsAxesSpecified = IsAxesParametersSpecified;
-                    testing.AxesTopModelSearchPlane = axesTopModelSearchPlane;
                     testing.IsForwardTesting = IsForwardTesting;
                     testing.IsForwardDepositTrading = IsForwardDepositTesting;
                     testing.ForwardDepositCurrencies = forwardDepositCurrencies;

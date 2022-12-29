@@ -157,7 +157,6 @@
     <Compile Include="Models\Datatables\TypeOrder.cs" />
     <Compile Include="ViewModels\AlgorithmIndicatorView.cs" />
     <Compile Include="ViewModels\AlgorithmParameterView.cs" />
-    <Compile Include="ViewModels\AxesParameterSelectView.cs" />
     <Compile Include="ViewModels\AxisPlanePageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\CandleIndexPageTradeChart.cs" />
     <Compile Include="ViewModels\CandlePageTradeChart.cs" />

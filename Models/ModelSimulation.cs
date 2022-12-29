@@ -485,12 +485,12 @@ namespace ktradesystem.Models
         /// <summary>
         /// Разделяет временной период на более котроткие временные интервалы, с отступом от начала offset, длительностью duration. Следующий интервал начнется с (даты начала предыдущего + spacing). Возвращает список с датами интервалов, в 0-м элементе - дата начала интервала, в 1-м - дата окончания интервала + 1 минута. isMinDuration - если true, интервал будет создан даже если в оставшийся период не помещается полная длительность, но помещается минимально допустимая длительность, размер которой определяется в настройках, id=2; - если false, будут создаваться интервалы только с полной длительностью duration.
         /// </summary>
-        private List<DateTime[]> SplitPeriod(TimeSpan offset, DateTime startDateTime, DateTime endDateTime, DateTimeDuration duration, DateTimeDuration spacing, bool isMinDuration)
+        private List<DateTime[]> SplitPeriod(DateTimeDuration offset, DateTime startDateTime, DateTime endDateTime, DateTimeDuration duration, DateTimeDuration spacing, bool isMinDuration)
         {
             List<DateTime[]> intervals = new List<DateTime[]>();
             double step = 0.25; //шаг уменьшения длительности
             TimeSpan overDate = TimeSpan.FromMinutes(1);
-            DateTime currentDateTime = startDateTime + offset;
+            DateTime currentDateTime = startDateTime.AddYears(offset.Years).AddMonths(offset.Months).AddDays(offset.Days);
             TimeSpan minDuration = currentDateTime.AddYears(duration.Years).AddMonths(duration.Months).AddDays(duration.Days) - currentDateTime;
             minDuration = isMinDuration ? TimeSpan.FromDays(Math.Round(minDuration.TotalDays * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100.0))) : minDuration;
             while (currentDateTime + minDuration <= endDateTime)
@@ -622,227 +622,128 @@ namespace ktradesystem.Models
             //формируем тестовые связки
             foreach (DataSourceGroup dataSourceGroup in testing.DataSourceGroups)
             {
-                //--
-                //формируем серии оптимизационных тестов для данного источника данных для каждого периода
+                //для форвардного теста, делаем длительности оптимизационных тестов полными, для не форвардного - минимально допустимыми
+                //элементы списков с интервалами - массивы: в 0-м элементе дата начала временного интервала, в 1-м дата окончания
+                List<DateTime[]> optimizationIntervals = testing.IsForwardTesting ? SplitPeriod(new DateTimeDuration { Years = 0, Months = 0, Days = 0 }, dataSourceGroup.StartPeriodTesting, dataSourceGroup.EndPeriodTesting, testing.DurationOptimizationTests, testing.OptimizationTestSpacing, false) : SplitPeriod(new DateTimeDuration { Years = 0, Months = 0, Days = 0 }, dataSourceGroup.StartPeriodTesting, dataSourceGroup.EndPeriodTesting, testing.DurationOptimizationTests, testing.OptimizationTestSpacing, true);
+                List<DateTime[]> forwardIntervals = testing.IsForwardTesting ? SplitPeriod(testing.DurationOptimizationTests, dataSourceGroup.StartPeriodTesting, dataSourceGroup.EndPeriodTesting, testing.DurationForwardTest, testing.OptimizationTestSpacing, true) : new List<DateTime[]>();
+                //для форвардного тестирования мог быть создан интервал оптимизационного теста, а на форвардный тест данного оптимизационного интервала оставшегося временного периода могло не хватить, тогда мы удаляем его
+                if (testing.IsForwardTesting)
+                {
+                    int minCountIntervals = Math.Min(optimizationIntervals.Count, forwardIntervals.Count);
+                    while(optimizationIntervals.Count > minCountIntervals)
+                    {
+                        optimizationIntervals.RemoveAt(optimizationIntervals.Count - 1);
+                    }
+                    while (forwardIntervals.Count > minCountIntervals)
+                    {
+                        forwardIntervals.RemoveAt(forwardIntervals.Count - 1);
+                    }
+                }
                 
-                //--
-
-                //формируем серии оптимизационных тестов для данного источника данных для каждого периода
-
-                //определяем диапазон доступных дат для данной группы источников данных (начальная и конечная даты которые есть во всех источниках данных группы)
-                DateTime availableDateStart = new DateTime();
-                DateTime availableDateEnd = new DateTime();
-                for (int i = 0; i < dataSourceGroup.DataSourceAccordances.Count; i++)
+                //формируем тестовые связки для каждого временного интервала
+                for(int t = 0; t < optimizationIntervals.Count; t++)
                 {
-                    if (i == 0)
+                    //создаем testBatch
+                    TestBatch testBatch = new TestBatch { Number = testing.TestBatches.Count + 1, DataSourceGroup = dataSourceGroup, DataSourceGroupIndex = testing.DataSourceGroups.IndexOf(dataSourceGroup), StatisticalSignificance = new List<double>(), IsTopModelDetermining = false, IsTopModelWasFind = false, OptimizationPerfectProfits = new List<PerfectProfit>(), ForwardPerfectProfits = new List<PerfectProfit>(), NeighboursTestRunNumbers = new List<int>() };
+
+                    int testRunNumber = 1; //номер тестового прогона
+
+                    //формируем оптимизационные тесты
+                    List<TestRun> optimizationTestRuns = new List<TestRun>();
+                    for (int i = 0; i < allCombinations.Count; i++)
                     {
-                        availableDateStart = dataSourceGroup.DataSourceAccordances[i].DataSource.StartDate.Date;
-                        availableDateEnd = dataSourceGroup.DataSourceAccordances[i].DataSource.EndDate.Date;
+                        List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //свободные средства в открытых позициях
+                        List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
+                        foreach (Currency currency in _modelData.Currencies)
+                        {
+                            freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = optimizationIntervals[t][0] });
+                            takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = optimizationIntervals[t][0] });
+                        }
+
+                        List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
+                        foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
+                        {
+                            firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0, DateTime = optimizationIntervals[t][0] });
+                        }
+                        List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
+                        depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
+
+                        Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), AccountVariables = AccountVariables.GetAccountVariables(), DefaultCurrency = testing.DefaultCurrency, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges, Totalcomission = 0 };
+                        //формируем список со значениями параметров алгоритма
+                        List<AlgorithmParameterValue> algorithmParameterValues = new List<AlgorithmParameterValue>();
+                        int alg = 0;
+                        while (alg < testing.Algorithm.AlgorithmParameters.Count)
+                        {
+                            AlgorithmParameterValue algorithmParameterValue = new AlgorithmParameterValue { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[alg] };
+                            if (testing.Algorithm.AlgorithmParameters[alg].ParameterValueType.Id == 1)
+                            {
+                                algorithmParameterValue.IntValue = testing.AlgorithmParametersAllIntValues[alg][allCombinations[i][alg]];
+                            }
+                            else
+                            {
+                                algorithmParameterValue.DoubleValue = testing.AlgorithmParametersAllDoubleValues[alg][allCombinations[i][alg]];
+                            }
+                            algorithmParameterValues.Add(algorithmParameterValue);
+                            alg++;
+                        }
+                        TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, IsOptimizationTestRun = true, Account = account, StartPeriod = optimizationIntervals[t][0], EndPeriod = optimizationIntervals[t][1], AlgorithmParameterValues = algorithmParameterValues, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
+                        testRunNumber++;
+                        optimizationTestRuns.Add(testRun);
                     }
-                    else
+                    testBatch.OptimizationTestRuns = optimizationTestRuns;
+
+                    //формируем форвардный тест
+                    if (testing.IsForwardTesting)
                     {
-                        if (DateTime.Compare(availableDateStart, dataSourceGroup.DataSourceAccordances[i].DataSource.StartDate) < 0)
+                        List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //свободные средства в открытых позициях
+                        List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
+                        foreach (Currency currency in _modelData.Currencies)
                         {
-                            availableDateStart = dataSourceGroup.DataSourceAccordances[i].DataSource.StartDate.Date;
+                            freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = forwardIntervals[t][0] });
+                            takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = forwardIntervals[t][0] });
                         }
-                        if (DateTime.Compare(availableDateEnd, dataSourceGroup.DataSourceAccordances[i].DataSource.EndDate) > 0)
+
+                        List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
+                        foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
                         {
-                            availableDateEnd = dataSourceGroup.DataSourceAccordances[i].DataSource.EndDate.Date;
+                            firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0, DateTime = forwardIntervals[t][0] });
                         }
+                        List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
+                        depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
+
+                        Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), AccountVariables = AccountVariables.GetAccountVariables(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = false, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges, Totalcomission = 0 };
+                        TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, IsOptimizationTestRun = false, Account = account, StartPeriod = forwardIntervals[t][0], EndPeriod = forwardIntervals[t][1], EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
+                        testRunNumber++;
+                        //добавляем форвардный тест в testBatch
+                        testBatch.ForwardTestRun = testRun;
                     }
+                    //формируем форвардный тест с торговлей депозитом
+                    if (testing.IsForwardTesting && testing.IsForwardDepositTrading)
+                    {
+                        List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //свободные средства в открытых позициях
+                        List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
+                        foreach (DepositCurrency depositCurrency in testing.ForwardDepositCurrencies)
+                        {
+                            freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = depositCurrency.Deposit, DateTime = forwardIntervals[t][0] });
+                            takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0, DateTime = forwardIntervals[t][0] });
+                        }
+
+                        List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
+                        foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
+                        {
+                            firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = depositCurrency.Deposit, DateTime = forwardIntervals[t][0] });
+                        }
+                        List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
+                        depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
+
+                        Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), AccountVariables = AccountVariables.GetAccountVariables(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = true, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges, Totalcomission = 0 };
+                        TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, IsOptimizationTestRun = false, Account = account, StartPeriod = forwardIntervals[t][0], EndPeriod = forwardIntervals[t][1], EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
+                        testRunNumber++;
+                        //добавляем форвардный тест с торговлей депозитом в testBatch
+                        testBatch.ForwardTestRunDepositTrading = testRun;
+                    }
+                    testing.TestBatches.Add(testBatch);
                 }
-                availableDateEnd = availableDateEnd.AddDays(1); //прибавляем 1 день, т.к. в расчетах последний день является днем окончания и не торговым днем, а здесь последний день вычисляется как торговый
-
-                //определяем дату окончания тестирования
-                DateTime endDate = DateTime.Compare(availableDateEnd, testing.EndPeriod) > 0 ? testing.EndPeriod : availableDateEnd;
-
-                DateTime currentDate = testing.StartPeriod; //текущая дата
-
-                bool isMinDurationFit = true; //помещается ли минимальноая длительность в оставшийся промежуток
-                do
-                {
-                    DateTime earliestEndDate = new DateTime(); //самая ранняя дата окончания теста, исходя из минимальной длительности теста
-                    //проверяем, помещается ли минимальная длительность в доступный промежуток
-                    if (testing.IsForwardTesting) //для форвардного тестирования минимальная длительность состоит из полной оптимизационной длительности и минимальной форвардной
-                    {
-                        earliestEndDate = currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days);
-                        TimeSpan minimumForwardDuration = TimeSpan.FromDays((earliestEndDate.AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days) - earliestEndDate).TotalDays * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100.0)); //минимальная длительность форвардного теста
-                        earliestEndDate = earliestEndDate.AddDays(Math.Round(minimumForwardDuration.TotalDays));
-                    }
-                    else //для оптимизационного тестирования минимальная длительность равна минимальной оптимизационной длительности
-                    {
-                        TimeSpan minimumOptimizationDuration = TimeSpan.FromDays((currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days) - currentDate).TotalDays * (_modelData.Settings.Where(i => i.Id == 2).First().IntValue / 100.0)); //минимальная длительность форвардного теста
-                        earliestEndDate = currentDate.AddDays(Math.Round(minimumOptimizationDuration.TotalDays));
-                    }
-                    if(DateTime.Compare(earliestEndDate, testing.EndPeriod) > 0) //если самая ранняя дата окончания позже даты окончания тестирования, значит тест не помещается в оставшийся период
-                    {
-                        isMinDurationFit = false;
-                    }
-
-                    if (isMinDurationFit)
-                    {
-                        //определяем начальные и конечные даты оптимизационного и форвардного тестов
-                        DateTime optimizationStartDate = currentDate.Date;
-                        DateTime optimizationEndDate = new DateTime(); //дата, на которой заканчивается тест, этот день не торговый
-                        DateTime forwardStartDate = new DateTime();
-                        DateTime forwardEndDate = new DateTime(); //дата, на которой заканчивается тест, этот день не торговый
-
-                        //проверяем, помещается ли полная оптимизационная и форвардная длительность в доступный промежуток
-                        if (DateTime.Compare(currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days), testing.EndPeriod) > 0) //если текущая дата + полная длительность позже даты окончания тестирования, значит не помещается
-                        {
-                            //определяем максимальную длительность, которая помещается в доступный промежуток
-                            double currentDurationPercent = 100;
-                            DateTime endTestsDate = new DateTime(); //дата окончания тестов
-                            TimeSpan forwardDuration = TimeSpan.Zero;
-                            TimeSpan optimizationDuration = TimeSpan.Zero;
-
-                            do
-                            {
-                                currentDurationPercent -= 0.25;
-                                if (testing.IsForwardTesting) //для форвардного тестирования
-                                {
-                                    endTestsDate = currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days);
-                                    forwardDuration = TimeSpan.FromDays((endTestsDate.AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days) - endTestsDate).TotalDays * (currentDurationPercent / 100.0)); //длительность форвардного теста
-                                    forwardDuration = forwardDuration.TotalDays < 1 ? TimeSpan.FromDays(1) : forwardDuration; //если менее одного дня, устанавливаем в один день
-                                    endTestsDate = endTestsDate.AddDays(Math.Round(forwardDuration.TotalDays));
-                                }
-                                else //для оптимизационного тестирования
-                                {
-                                    optimizationDuration = TimeSpan.FromDays((currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days) - currentDate).TotalDays * (currentDurationPercent / 100.0)); //длительность оптимизационных тестов
-                                    optimizationDuration = optimizationDuration.TotalDays < 1 ? TimeSpan.FromDays(1) : optimizationDuration; //если менее одного дня, устанавливаем в один день
-                                    endTestsDate = currentDate.AddDays(Math.Round(optimizationDuration.TotalDays));
-                                }
-                            }
-                            while (DateTime.Compare(endTestsDate, testing.EndPeriod) > 0);
-
-                            //устанавливаем начальные и конечные даты оптимизационного и форвардного тестов
-                            if (testing.IsForwardTesting) //для форвардного тестирования
-                            {
-                                optimizationEndDate = currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).Date;
-                                forwardStartDate = optimizationEndDate.Date;
-                                forwardEndDate = endTestsDate.Date;
-                            }
-                            else //для оптимизационного тестирования
-                            {
-                                optimizationEndDate = endTestsDate.Date;
-                            }
-                        }
-                        else
-                        {
-                            //устанавливаем начальные и конечные даты оптимизационного и форвардного тестов
-                            optimizationStartDate = currentDate.Date;
-                            optimizationEndDate = currentDate.AddYears(testing.DurationOptimizationTests.Years).AddMonths(testing.DurationOptimizationTests.Months).AddDays(testing.DurationOptimizationTests.Days).Date;
-                            forwardStartDate = optimizationEndDate;
-                            forwardEndDate = forwardStartDate.AddYears(testing.DurationForwardTest.Years).AddMonths(testing.DurationForwardTest.Months).AddDays(testing.DurationForwardTest.Days).Date;
-                        }
-
-                        //создаем testBatch
-                        TestBatch testBatch = new TestBatch { Number = testing.TestBatches.Count + 1, DataSourceGroup = dataSourceGroup, DataSourceGroupIndex = testing.DataSourceGroups.IndexOf(dataSourceGroup), StatisticalSignificance = new List<double>(), IsTopModelDetermining = false, IsTopModelWasFind = false, OptimizationPerfectProfits = new List<PerfectProfit>(), ForwardPerfectProfits = new List<PerfectProfit>(), NeighboursTestRunNumbers = new List<int>() };
-
-                        int testRunNumber = 1; //номер тестового прогона
-
-                        //формируем оптимизационные тесты
-                        List<TestRun> optimizationTestRuns = new List<TestRun>();
-                        for (int i = 0; i < allCombinations.Count; i++)
-                        {
-                            List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //свободные средства в открытых позициях
-                            List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
-                            foreach (Currency currency in _modelData.Currencies)
-                            {
-                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = optimizationStartDate });
-                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = optimizationStartDate });
-                            }
-
-                            List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
-                            foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
-                            {
-                                firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0, DateTime = optimizationStartDate });
-                            }
-                            List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
-                            depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
-
-                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), AccountVariables = AccountVariables.GetAccountVariables(), DefaultCurrency = testing.DefaultCurrency, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges, Totalcomission = 0 };
-                            //формируем список со значениями параметров алгоритма
-                            List<AlgorithmParameterValue> algorithmParameterValues = new List<AlgorithmParameterValue>();
-                            int alg = 0;
-                            while (alg < testing.Algorithm.AlgorithmParameters.Count)
-                            {
-                                AlgorithmParameterValue algorithmParameterValue = new AlgorithmParameterValue { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[alg] };
-                                if (testing.Algorithm.AlgorithmParameters[alg].ParameterValueType.Id == 1)
-                                {
-                                    algorithmParameterValue.IntValue = testing.AlgorithmParametersAllIntValues[alg][allCombinations[i][alg]];
-                                }
-                                else
-                                {
-                                    algorithmParameterValue.DoubleValue = testing.AlgorithmParametersAllDoubleValues[alg][allCombinations[i][alg]];
-                                }
-                                algorithmParameterValues.Add(algorithmParameterValue);
-                                alg++;
-                            }
-                            TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, IsOptimizationTestRun = true, Account = account, StartPeriod = optimizationStartDate, EndPeriod = optimizationEndDate, AlgorithmParameterValues = algorithmParameterValues, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
-                            testRunNumber++;
-                            optimizationTestRuns.Add(testRun);
-                        }
-                        testBatch.OptimizationTestRuns = optimizationTestRuns;
-
-                        //формируем форвардный тест
-                        if (testing.IsForwardTesting)
-                        {
-                            List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //свободные средства в открытых позициях
-                            List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
-                            foreach (Currency currency in _modelData.Currencies)
-                            {
-                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = forwardStartDate });
-                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = forwardStartDate });
-                            }
-
-                            List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
-                            foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
-                            {
-                                firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0, DateTime = forwardStartDate });
-                            }
-                            List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
-                            depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
-
-                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), AccountVariables = AccountVariables.GetAccountVariables(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = false, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges, Totalcomission = 0 };
-                            TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, IsOptimizationTestRun = false, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
-                            testRunNumber++;
-                            //добавляем форвардный тест в testBatch
-                            testBatch.ForwardTestRun = testRun;
-                        }
-                        //формируем форвардный тест с торговлей депозитом
-                        if (testing.IsForwardTesting && testing.IsForwardDepositTrading)
-                        {
-                            List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //свободные средства в открытых позициях
-                            List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
-                            foreach (DepositCurrency depositCurrency in testing.ForwardDepositCurrencies)
-                            {
-                                freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = depositCurrency.Deposit, DateTime = forwardStartDate });
-                                takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0, DateTime = forwardStartDate });
-                            }
-
-                            List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
-                            foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
-                            {
-                                firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = depositCurrency.Deposit, DateTime = forwardStartDate });
-                            }
-                            List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
-                            depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
-
-                            Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), AccountVariables = AccountVariables.GetAccountVariables(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = true, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges, Totalcomission = 0 };
-                            TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, IsOptimizationTestRun = false, Account = account, StartPeriod = forwardStartDate, EndPeriod = forwardEndDate, EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
-                            testRunNumber++;
-                            //добавляем форвардный тест с торговлей депозитом в testBatch
-                            testBatch.ForwardTestRunDepositTrading = testRun;
-                        }
-
-                        testing.TestBatches.Add(testBatch);
-
-                        //прибавляем к текущей дате временной промежуток между оптимизационными тестами
-                        currentDate = currentDate.AddYears(testing.OptimizationTestSpacing.Years).AddMonths(testing.OptimizationTestSpacing.Months).AddDays(testing.OptimizationTestSpacing.Days);
-                    }
-                }
-                while (isMinDurationFit);
             }
 
             //выполняем компиляцию индикаторов алгоритма, алгоритма и критериев оценки
@@ -2685,598 +2586,6 @@ namespace ktradesystem.Models
                     groupIndex++;
                 }
             }
-            /*else if (testing.IsConsiderNeighbours) //если поиск топ-модели учитывает соседей, то для двух и более параметров - определяем оси двумерной плоскости поиска топ-модели с соседями и размер осей группы и определяем список с лучшими группами в порядке убывания и ищем топ-модель в группе, а для одного параметра - определяем размер группы и определяем список с лучшими группами в порядке убывания и ищем топ-модель (если из-за фильтров не найдена модель, ищем топ-модель в следующей лучшей группе, пока не кончатся группы)
-            {
-                if (testing.AlgorithmParametersAllIntValues.Length == 1) //если параметр всего один
-                {
-                    int xAxisCountParameterValue = testing.AlgorithmParametersAllIntValues.Length > 0 ? testing.AlgorithmParametersAllIntValues.Length : testing.AlgorithmParametersAllDoubleValues.Length; //количество значений параметра
-                    int xAxisGroupSize = (int)Math.Round(xAxisCountParameterValue * (testing.SizeNeighboursGroupPercent / 100));
-                    xAxisGroupSize = xAxisGroupSize < 2 ? 2 : xAxisGroupSize; //если меньше 2-х, устанавливаем как 2
-                    xAxisGroupSize = xAxisCountParameterValue < 2 ? 1 : xAxisGroupSize; //если количество значений параметра меньше 2-х, устанавливаем как 1
-
-                    List<TestRun[]> testRunGroups = new List<TestRun[]>(); //список с группами
-                    List<double> amountGroupsValue = new List<double>(); //суммарное значение критерия оценки для групп
-                                                                         //формируем группы
-                    int startIndex = 0; //индекс первого элемента для группы
-                    int endIndex = startIndex + (xAxisGroupSize - 1); //индекс последнего элемента для группы
-                    while (endIndex < testBatch.OptimizationTestRuns.Count)
-                    {
-                        TestRun[] testRuns = new TestRun[xAxisGroupSize];
-                        for (int i = 0; i < xAxisGroupSize; i++)
-                        {
-                            testRuns[i] = testBatch.OptimizationTestRuns[startIndex + i];
-                        }
-                        startIndex++;
-                        endIndex = startIndex + (xAxisGroupSize - 1);
-                    }
-                    //вычисляем суммарные значения критерия оценки для групп
-                    for (int i = 0; i < testRunGroups.Count; i++)
-                    {
-                        double amountValue = 0;
-                        for (int k = 0; k < testRunGroups[i].Length; k++)
-                        {
-                            amountValue += testRunGroups[i][k].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue;
-                        }
-                        amountGroupsValue.Add(amountValue);
-                    }
-                    //сортируем список групп по убыванию суммарного значения критерия оценки
-                    TestRun[] saveGroup; //элемент списка для сохранения после удаления из списка
-                    double saveValue; //элемент списка для сохранения после удаления из списка
-                    for (int i = 0; i < amountGroupsValue.Count; i++)
-                    {
-                        for (int k = 0; k < amountGroupsValue.Count - 1; k++)
-                        {
-                            if (amountGroupsValue[k] < amountGroupsValue[k + 1])
-                            {
-                                saveGroup = testRunGroups[k];
-                                testRunGroups[k] = testRunGroups[k + 1];
-                                testRunGroups[k + 1] = saveGroup;
-
-                                saveValue = amountGroupsValue[k];
-                                amountGroupsValue[k] = amountGroupsValue[k + 1];
-                                amountGroupsValue[k + 1] = saveValue;
-                            }
-                        }
-                    }
-                    //сортируем testRun-ы в группах в порядке убытвания критерия оценки
-                    TestRun saveTestRun; //элемент списка для сохранения после удаления из списка
-                    for (int u = 0; u < testRunGroups.Count; u++)
-                    {
-                        for (int i = 0; i < testRunGroups[u].Length; i++)
-                        {
-                            for (int k = 0; k < testRunGroups[u].Length - 1; k++)
-                            {
-                                if (testRunGroups[u][k].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue < testRunGroups[u][k + 1].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue)
-                                {
-                                    saveTestRun = testRunGroups[u][k];
-                                    testRunGroups[u][k] = testRunGroups[u][k + 1];
-                                    testRunGroups[u][k + 1] = saveTestRun;
-                                }
-                            }
-                        }
-                    }
-                    //проходим по всем группам, и в каждой группе проходим по всем testRun-ам, и ищем первый который соответствует фильтрам
-                    bool isFindTopModel = false;
-                    int groupIndex = 0;
-                    while (isFindTopModel == false && groupIndex < testRunGroups.Count)
-                    {
-                        int testRunIndex1 = 0;
-                        while (isFindTopModel == false && testRunIndex1 < testRunGroups[groupIndex].Length)
-                        {
-                            //проходим по всем фильтрам
-                            bool isFilterFail = false;
-                            foreach (TopModelFilter topModelFilter in testing.TopModelCriteria.TopModelFilters)
-                            {
-                                if (topModelFilter.CompareSign == CompareSign.GetMore()) //знак сравнения фильтра Больше
-                                {
-                                    if (testRunGroups[groupIndex][testRunIndex1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue <= topModelFilter.Value)
-                                    {
-                                        isFilterFail = true;
-                                    }
-                                }
-                                else //знак сравнения фильтра Меньше
-                                {
-                                    if (testRunGroups[groupIndex][testRunIndex1].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue >= topModelFilter.Value)
-                                    {
-                                        isFilterFail = true;
-                                    }
-                                }
-                            }
-                            //если testRun удовлетворяет всем фильтрам, записываем его как топ-модель
-                            if (isFilterFail == false)
-                            {
-                                testBatch.TopModelTestRun = testRunGroups[groupIndex][testRunIndex1];
-                                isFindTopModel = true;
-                            }
-                        }
-                        groupIndex++;
-                    }
-                }
-                else //если параметров 2 и более
-                {
-                    //определяем оси двумерной плоскости поиска топ-модели с соседями
-                    if (testing.IsAxesSpecified) //если оси указаны, присваиваем указанные оси
-                    {
-                        testBatch.AxesTopModelSearchPlane = testing.AxesTopModelSearchPlane;
-                    }
-                    else //если оси не указаны, находим оси двумерной плоскости поиска топ-модели с соседями, для которых волатильность критерия оценки минимальная
-                    {
-                        //находим максимальную площадь плоскости
-                        int maxArea = 0;
-                        int axisX = 0; //одна ось плоскости
-                        int axisY = 0; //вторая ось плоскости
-                        for (int i = 0; i < testing.AlgorithmParametersAllIntValues.Length; i++)
-                        {
-                            for (int k = 0; k < testing.AlgorithmParametersAllIntValues.Length; k++)
-                            {
-                                if (i != k)
-                                {
-                                    int iCount = 0; //количество элементов в параметре с индексом i
-                                    iCount = testing.AlgorithmParametersAllIntValues[i].Count > 0 ? testing.AlgorithmParametersAllIntValues[i].Count : testing.AlgorithmParametersAllDoubleValues[i].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
-                                    int kCount = 0; //количество элементов в параметре с индексом k
-                                    kCount = testing.AlgorithmParametersAllIntValues[i].Count > 0 ? testing.AlgorithmParametersAllIntValues[i].Count : testing.AlgorithmParametersAllDoubleValues[i].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, индаче количество double values элементов
-                                    if (iCount * kCount > maxArea) //если площадь данной комбинации больше максимальной, запоминаем площадь плоскости и её оси
-                                    {
-                                        maxArea = iCount * kCount;
-                                        axisX = i;
-                                        axisY = k;
-                                    }
-                                }
-                            }
-                        }
-                        //формируем список с комбинациями параметров
-                        List<int[]> parametersCombination = new List<int[]>(); //комбинации из 2-х параметров
-                        for (int i = 0; i < testing.AlgorithmParametersAllIntValues.Length; i++)
-                        {
-                            for (int k = 0; k < testing.AlgorithmParametersAllIntValues.Length; k++)
-                            {
-                                if (i != k)
-                                {
-                                    int iCount = 0; //количество элементов в параметре с индексом i
-                                    iCount = testing.AlgorithmParametersAllIntValues[i].Count > 0 ? testing.AlgorithmParametersAllIntValues[i].Count : testing.AlgorithmParametersAllDoubleValues[i].Count; //если количество элементов в int values больше нуля, присваивае
-                                    int kCount = 0; //количество элементов в параметре с индексом k
-                                    kCount = testing.AlgorithmParametersAllIntValues[i].Count > 0 ? testing.AlgorithmParametersAllIntValues[i].Count : testing.AlgorithmParametersAllDoubleValues[i].Count; //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                                    //проверяем есть ли уже такая комбинация, чтобы не записать одну и ту же несколько раз
-                                    bool isFind = parametersCombination.Where(j => (j[0] == i && j[1] == k) || (j[0] == k && j[1] == i)).Any();
-                                    if (isFind == false)
-                                    {
-                                        parametersCombination.Add(new int[2] { i, k }); //запоминаем комбинацию
-                                    }
-                                }
-                            }
-                        }
-
-                        //определяем волатильность критерия оценки для каждой комбинации параметров
-                        List<double> averageVolatilityParametersCombination = new List<double>(); //средняя волатильность на еденицу параметра (суммарная волатильность/количество элементов) для комбинаций параметров
-                        for (int i = 0; i < parametersCombination.Count; i++)
-                        {
-                            //parametersCombination[i][0] - индекс первого параметра комбинации
-                            //parametersCombination[i][1] - индекс второго параметра комбинации
-                            bool xParameterIsInt = false; //параметр типа int, true - int, false - double
-                            bool yParameterIsInt = false; //параметр типа int, true - int, false - double
-                            int xParameterCountValues = 0; //количество элементов в параметре X
-                                                           //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                            if (testing.AlgorithmParametersAllIntValues[parametersCombination[i][0]].Count > 0)
-                            {
-                                xParameterCountValues = testing.AlgorithmParametersAllIntValues[parametersCombination[i][0]].Count;
-                                xParameterIsInt = true;
-                            }
-                            else
-                            {
-                                xParameterCountValues = testing.AlgorithmParametersAllDoubleValues[parametersCombination[i][0]].Count;
-                            }
-
-                            int yParameterCountValues = 0; //количество элементов в параметре Y
-                                                           //если количество элементов в int values больше нуля, присваиваем количеству параметра количество int values элементов, иначе количество double values элементов
-                            if (testing.AlgorithmParametersAllIntValues[parametersCombination[i][1]].Count > 0)
-                            {
-                                yParameterCountValues = testing.AlgorithmParametersAllIntValues[parametersCombination[i][1]].Count;
-                                yParameterIsInt = true;
-                            }
-                            else
-                            {
-                                yParameterCountValues = testing.AlgorithmParametersAllDoubleValues[parametersCombination[i][1]].Count;
-                            }
-
-                            double amountVolatility = 0; //суммарная волатильность
-                            int countIncreaseVolatility = 0; //количество прибавлений суммарной волатильности. На это значение будет делиться суммарная волатильность для получения средней
-                                                             //перебираем все testRun-ы слева направо, переходя на следующую строку, и суммируем разности соседних тестов взятые по модулю
-                            for (int x = 0; x < xParameterCountValues; x++)
-                            {
-                                for (int y = 1; y < yParameterCountValues; y++)
-                                {
-                                    //находим testRun-ы со значениями параметров x и y - 1, а так же x и y
-                                    int indexXParameter = parametersCombination[i][0]; //индекс 1-го параметра комбинации (в параметрах алгоритма)
-                                    int indexYParameter = parametersCombination[i][1]; //индекс 2-го параметра комбинации (в параметрах алгоритма)
-                                    //значение параметра X текущей комбинации параметров
-                                    int xParameterValueInt = xParameterIsInt ? testing.AlgorithmParametersAllIntValues[indexXParameter][x] : 0;
-                                    double xParameterValueDouble = xParameterIsInt ? 0 : testing.AlgorithmParametersAllDoubleValues[indexXParameter][x];
-                                    //значение параметра Y текущей комбинации параметров
-                                    int yParameterValueInt = yParameterIsInt ? testing.AlgorithmParametersAllIntValues[indexYParameter][y] : 0;
-                                    double yParameterValueDouble = yParameterIsInt ? 0 : testing.AlgorithmParametersAllDoubleValues[indexYParameter][y];
-                                    //значение параметра Y - 1 текущей комбинации параметров
-                                    int yDecrementParameterValueInt = yParameterIsInt ? testing.AlgorithmParametersAllIntValues[indexYParameter][y - 1] : 0;
-                                    double yDecrementParameterValueDouble = yParameterIsInt ? 0 : testing.AlgorithmParametersAllDoubleValues[indexYParameter][y - 1];
-
-                                    List<TestRun> previousTestRuns = new List<TestRun>(); //список с testRun-ми, у которых имеются значения параметров x и y - 1
-                                    List<TestRun> nextTestRuns = new List<TestRun>(); //список с testRun-ми, у которых имеются значения параметров x и y
-                                    //далее поиск с помощью where() testRun-ов с комбинациями значений параметров x и y - 1, x и y, исходя из того в каком списке находится каждый из параметров комбинации и какого типа
-                                    //новое
-                                    if (xParameterIsInt == true && yParameterIsInt == true)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                    }
-                                    if (xParameterIsInt == true && yParameterIsInt == false)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                    }
-                                    if (xParameterIsInt == false && yParameterIsInt == true)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yDecrementParameterValueInt).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                    }
-                                    if (xParameterIsInt == false && yParameterIsInt == false)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yDecrementParameterValueDouble).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                    }
-
-                                    //получаем значение волатильности для всех testRun с текущей комбинацией параметров TopModelEvaluationCriteriaIndex
-                                    for (int u = 0; u < previousTestRuns.Count; u++)
-                                    {
-                                        //прибавляем волатильность между соседними testRun-ми к суммарной волатильности
-                                        amountVolatility += Math.Abs(nextTestRuns[u].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue - previousTestRuns[u].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue);
-                                        countIncreaseVolatility++;
-                                    }
-                                }
-                            }
-
-                            //перебираем все testRun-ы сверху-вниз, переходя на следующую колонку, и суммируем разности соседних тестов взятые по модулю
-                            for (int y = 0; y < yParameterCountValues; y++)
-                            {
-                                for (int x = 1; x < xParameterCountValues; x++)
-                                {
-                                    //находим testRun-ы со значениями параметров x и y - 1, а так же x и y
-                                    int indexXParameter = parametersCombination[i][0]; //индекс 1-го параметра комбинации (в параметрах алгоритма)
-                                    int indexYParameter = parametersCombination[i][1]; //индекс 2-го параметра комбинации (в параметрах алгоритма)
-                                    //значение параметра X текущей комбинации параметров
-                                    int xParameterValueInt = xParameterIsInt ? testing.AlgorithmParametersAllIntValues[indexXParameter][x] : 0;
-                                    double xParameterValueDouble = xParameterIsInt ? 0 : testing.AlgorithmParametersAllDoubleValues[indexXParameter][x];
-                                    //значение параметра Y текущей комбинации параметров
-                                    int yParameterValueInt = yParameterIsInt ? testing.AlgorithmParametersAllIntValues[indexYParameter][y] : 0;
-                                    double yParameterValueDouble = yParameterIsInt ? 0 : testing.AlgorithmParametersAllDoubleValues[indexYParameter][y];
-                                    //значение параметра X - 1 текущей комбинации параметров
-                                    int xDecrementParameterValueInt = xParameterIsInt ? testing.AlgorithmParametersAllIntValues[indexXParameter][x - 1] : 0;
-                                    double xDecrementParameterValueDouble = xParameterIsInt ? 0 : testing.AlgorithmParametersAllDoubleValues[indexXParameter][x - 1];
-
-                                    List<TestRun> previousTestRuns = new List<TestRun>(); //список с testRun-ми, у которых имеются значения параметров x и y - 1
-                                    List<TestRun> nextTestRuns = new List<TestRun>(); //список с testRun-ми, у которых имеются значения параметров x и y
-                                    //далее поиск с помощью where() testRun-ов с комбинациями значений параметров x и y - 1, x и y, исходя из того в каком списке находится каждый из параметров комбинации и какого типа
-                                    //новое
-                                    if (xParameterIsInt == true && yParameterIsInt == true)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                    }
-                                    if (xParameterIsInt == true && yParameterIsInt == false)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xDecrementParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].IntValue == xParameterValueInt && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                    }
-                                    if (xParameterIsInt == false && yParameterIsInt == true)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].IntValue == yParameterValueInt).ToList();
-                                    }
-                                    if (xParameterIsInt == false && yParameterIsInt == true)
-                                    {
-                                        previousTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xDecrementParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                        nextTestRuns = testBatch.OptimizationTestRuns.Where(j => j.AlgorithmParameterValues[indexXParameter].DoubleValue == xParameterValueDouble && j.AlgorithmParameterValues[indexYParameter].DoubleValue == yParameterValueDouble).ToList();
-                                    }
-
-                                    //получаем значение волатильности для всех testRun с текущей комбинацией параметров TopModelEvaluationCriteriaIndex
-                                    for (int u = 0; u < previousTestRuns.Count; u++)
-                                    {
-                                        //прибавляем волатильность между соседними testRun-ми к суммарной волатильности
-                                        amountVolatility += Math.Abs(nextTestRuns[u].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue - previousTestRuns[u].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue);
-                                        countIncreaseVolatility++;
-                                    }
-                                }
-                            }
-
-                            averageVolatilityParametersCombination.Add(amountVolatility / (countIncreaseVolatility / 2)); //записываем среднюю волатильность для данной комбинации (делим на 2, т.к. мы дважды проходились по плоскости и суммировали общую волатильность: слева-направо и вниз, а так же сверху-вниз и направо)
-                        }
-
-                        //выбираем комбинацию параметров с самой низкой средней волатильностью
-                        int indexMinAverageVolatility = 0;
-                        double minAverageVolatility = averageVolatilityParametersCombination[0];
-                        for (int i = 1; i < averageVolatilityParametersCombination.Count; i++)
-                        {
-                            if (averageVolatilityParametersCombination[i] < minAverageVolatility)
-                            {
-                                indexMinAverageVolatility = i;
-                                minAverageVolatility = averageVolatilityParametersCombination[i];
-                            }
-                        }
-
-                        //формируем первый параметр оси
-                        AxesParameter axesParameterX = new AxesParameter();
-                        axesParameterX.AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parametersCombination[indexMinAverageVolatility][0]];
-                        //формируем второй параметр оси
-                        AxesParameter axesParameterY = new AxesParameter();
-                        axesParameterY.AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parametersCombination[indexMinAverageVolatility][1]];
-
-                        List<AxesParameter> axesTopModelSearchPlane = new List<AxesParameter>();
-                        axesTopModelSearchPlane.Add(axesParameterX);
-                        axesTopModelSearchPlane.Add(axesParameterY);
-                        testBatch.AxesTopModelSearchPlane = axesTopModelSearchPlane;
-                    }
-
-                    //оси определили, далее определяем размер группы соседних тестов
-                    //определяем размер двумерной плоскости с выбранными осями
-                    //количество значений параметра X
-                    bool isXAxisIntValue = testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
-                    int xAxisParameterIndex = testing.Algorithm.AlgorithmParameters.IndexOf(testing.Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter).First()); //индекс параметра в списке параметров
-                    int xAxisCountParameterValue = isXAxisIntValue ? testing.AlgorithmParametersAllIntValues[xAxisParameterIndex].Count : testing.AlgorithmParametersAllDoubleValues[xAxisParameterIndex].Count; //запоминаем количество значений параметра
-
-                    //количество значений параметра Y
-                    bool isYAxisIntValue = testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter.ParameterValueType.Id == 1 ? true : false; //тип значения параметра
-                    int yAxisParameterIndex = testing.Algorithm.AlgorithmParameters.IndexOf(testing.Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter).First()); //индекс параметра в списке параметров
-                    int yAxisCountParameterValue = isYAxisIntValue ? testing.AlgorithmParametersAllIntValues[yAxisParameterIndex].Count : testing.AlgorithmParametersAllDoubleValues[yAxisParameterIndex].Count; //запоминаем количество значений параметра
-
-                    //определяем размер группы соседних тестов
-                    double groupArea = xAxisCountParameterValue * yAxisCountParameterValue * (testing.SizeNeighboursGroupPercent / 100); //площадь группы соседних тестов
-                    int xAxisSize = (int)Math.Round(Math.Sqrt(groupArea)); //размер группы по оси X
-                    int yAxisSize = xAxisSize; //размер группы по оси Y
-                                               //если размер сторон группы меньше 2, устанавливаем в 2, если размер оси позволяет
-                    xAxisSize = xAxisSize < 2 && xAxisCountParameterValue >= 2 ? 2 : xAxisSize;
-                    yAxisSize = yAxisSize < 2 && yAxisCountParameterValue >= 2 ? 2 : yAxisSize;
-                    //если размер сторон группы меньше 1, устанавливаем в 1
-                    xAxisSize = xAxisSize < 1 ? 1 : xAxisSize;
-                    yAxisSize = yAxisSize < 1 ? 1 : yAxisSize;
-                    //если одна из сторон группы больше размера оси
-                    if (xAxisSize > xAxisCountParameterValue || yAxisSize > yAxisCountParameterValue)
-                    {
-                        if (xAxisSize > xAxisCountParameterValue)
-                        {
-                            xAxisSize = xAxisCountParameterValue; //устанавливаем размер стороны группы в размер оси
-                            yAxisSize = (int)Math.Round(groupArea / xAxisSize); //размер второй стороны высчитываем как площадь группы / размер первой оси
-                        }
-                        if (yAxisSize > yAxisCountParameterValue)
-                        {
-                            yAxisSize = yAxisCountParameterValue; //устанавливаем размер стороны группы в размер оси
-                            xAxisSize = (int)Math.Round(groupArea / yAxisSize); //размер второй стороны высчитываем как площадь группы / размер первой оси
-                        }
-                    }
-
-                    //формируем список с комбинациями параметров тестов групп
-                    List<List<int[]>> groupsParametersCombinations = new List<List<int[]>>(); //список групп, група содержит список тестов, тест содержит массив индексов значений из AlgorithmParametersAllIntValues или AlgorithmParametersAllDoubleValues для параметров алгоритма
-                    /*новое
-                    groupsParameterCombinations{
-                        [0](1-я группа) => {
-                            [0](1-й тест группы) => индексы_значений_алгоритма{ 1, 5 }
-                        }
-                    }
-                    */
-                    /*старое
-                    groupsParameterCombinations{
-                        [0](1-я группа) => {
-                            [0](1-й тест группы) => {
-                                [0] => индексы_значений_индикаторов{ 1, 5 },
-                                [1] => индексы_значений_алгоритма{ 4, 2 }
-                            }
-                        }
-                    }
-                    */
-                    //формируем группы с комбинациями параметров плоскости поиска топ-модели
-                    //проходим по оси X столько раз, сколько помещается размер стороны группы по оси X
-                    /*for (int x = 0; x < xAxisCountParameterValue - (xAxisSize - 1); x++)
-                    {
-                        //проходим по оси Y столько раз, сколько помещается размер стороны группы по оси Y
-                        for (int y = 0; y < yAxisCountParameterValue - (yAxisSize - 1); y++)
-                        {
-                            List<int[]> currentGroup = new List<int[]>();
-                            //проходим по всем элементам группы
-                            for (int par1 = x; par1 < x + xAxisSize; par1++)
-                            {
-                                for (int par2 = y; par2 < y + yAxisSize; par2++)
-                                {
-                                    int[] testRunParametersCombination = new int[testing.Algorithm.AlgorithmParameters.Count]; //индексы значений алгоритма
-
-                                    //записываем параметр оси X
-                                    int xParameterIndex = testing.Algorithm.AlgorithmParameters.IndexOf(testing.Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter).First()); //индекс параметра в списке параметров
-                                    testRunParametersCombination[xParameterIndex] = par1; //записываем индекс значения параметра в значениях параметра алгоритма
-
-                                    //записываем параметр оси Y
-                                    int yParameterIndex = testing.Algorithm.AlgorithmParameters.IndexOf(testing.Algorithm.AlgorithmParameters.Where(j => j == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter).First()); //индекс параметра в списке параметров
-                                    testRunParametersCombination[yParameterIndex] = par2; //записываем индекс значения параметра в значениях параметра алгоритма
-                                    currentGroup.Add(testRunParametersCombination);
-                                }
-                            }
-                            groupsParametersCombinations.Add(currentGroup);
-                        }
-                    }
-                    //после того как сформированы группы только с двумя параметрами (осей), на их основе создаются группы с оставшимися (не входящими в оси) параметрами: берется группа, и полностью дублируется для каждого значения параметра и в элементы этой группы вставляется значение параметра
-                    //формируем группы с оставшимися параметрами
-                    //проходим по всем параметрами
-                    for (int i = 0; i < testing.AlgorithmParametersAllIntValues.Length; i++)
-                    {
-                        bool isXParameter = false;
-                        if (testing.Algorithm.AlgorithmParameters[i].Id == testBatch.AxesTopModelSearchPlane[0].AlgorithmParameter.Id)
-                        {
-                            isXParameter = true;
-                        }
-
-                        bool isYParameter = false;
-                        if (testing.Algorithm.AlgorithmParameters[i].Id == testBatch.AxesTopModelSearchPlane[1].AlgorithmParameter.Id)
-                        {
-                            isYParameter = true;
-                        }
-
-                        //если параметр не X и не Y
-                        if (isXParameter == false && isYParameter == false)
-                        {
-                            //формируем новые группы с комбинациями значений текущего параметра
-                            List<List<int[]>> newGroupsParametersCombinations = new List<List<int[]>>();
-                            int countValues = testing.AlgorithmParametersAllIntValues[i].Count; //количество значений параметра
-                                                                                        //проходим по всем значениям параметра
-                            for (int k = 0; k < countValues; k++)
-                            {
-                                //копируем старую группу, и в каждую комбинацию параметров вставляем значение текущего параметра
-                                List<List<int[]>> currentNewGroupsParametersCombinations = new List<List<int[]>>();
-                                //проходим по всем старым группам
-                                for (int u = 0; u < groupsParametersCombinations.Count; u++)
-                                {
-                                    List<int[]> newParameterCombinations = new List<int[]>();
-                                    //проходим по всем комбинациям группы
-                                    for (int r = 0; r < groupsParametersCombinations[u].Count; r++)
-                                    {
-                                        int[] newParameterCombination = new int[testing.Algorithm.AlgorithmParameters.Count];
-                                        //копируем параметры алгоритма
-                                        for (int algorithmParameterIndex = 0; algorithmParameterIndex < groupsParametersCombinations[u][r].Length; algorithmParameterIndex++)
-                                        {
-                                            newParameterCombination[algorithmParameterIndex] = groupsParametersCombinations[u][r][algorithmParameterIndex];
-                                        }
-                                        newParameterCombination[i] = k; //вставляем индекс значения текущего параметра
-
-                                        newParameterCombinations.Add(newParameterCombination);
-                                    }
-                                    currentNewGroupsParametersCombinations.Add(newParameterCombinations); //формируем группы с текущим значением текущего параметра
-                                }
-                                newGroupsParametersCombinations.AddRange(currentNewGroupsParametersCombinations); //добавляем в новые группы, группы с текущим значением текущего парамета
-                            }
-                            groupsParametersCombinations = newGroupsParametersCombinations; //обновляем все группы. Теперь для нового параметра будут использоваться группы с новым количеством комбинаций параметров
-                        }
-                    }
-
-                    //формируем список групп с тестами на основе групп с комбинациями параметров теста
-                    List<TestRun[]> testRunsGroups = new List<TestRun[]>();
-                    for (int i = 0; i < groupsParametersCombinations.Count; i++)
-                    {
-                        TestRun[] testRunsGroup = new TestRun[groupsParametersCombinations[i].Count]; //группа с testRun-ами
-                        for (int k = 0; k < groupsParametersCombinations[i].Count; k++)
-                        {
-                            //находим testRun с текущей комбинацией параметров
-                            int tRunIndex = 0;
-                            bool isTestRunFind = false;
-                            while (tRunIndex < testBatch.OptimizationTestRuns.Count && isTestRunFind == false)
-                            {
-                                bool isAllEqual = true; //все ли значения параметров testRun-а равны текущей комбинации
-
-                                //проходим по всем параметрам алгоритма, и сравниваем значения параметров алгоритма текущей комбинации со значениями параметров алгоритма текущего testRun-а
-                                for (int algParIndex = 0; algParIndex < groupsParametersCombinations[i][k].Length; algParIndex++)
-                                {
-                                    if (testBatch.OptimizationTestRuns[tRunIndex].AlgorithmParameterValues[algParIndex].AlgorithmParameter.ParameterValueType.Id == 1) //если параметр тип int
-                                    {
-                                        isAllEqual = testBatch.OptimizationTestRuns[tRunIndex].AlgorithmParameterValues[algParIndex].IntValue != testing.AlgorithmParametersAllIntValues[algParIndex][groupsParametersCombinations[i][k][algParIndex]] ? false : isAllEqual; //если значение параметра testRun != значению параметра текущей комбинации, отмечаем что isAllEqual == false;
-                                    }
-                                    else //параметр типа double
-                                    {
-                                        isAllEqual = testBatch.OptimizationTestRuns[tRunIndex].AlgorithmParameterValues[algParIndex].DoubleValue != testing.AlgorithmParametersAllDoubleValues[algParIndex][groupsParametersCombinations[i][k][algParIndex]] ? false : isAllEqual; //если значение параметра testRun != значению параметра текущей комбинации, отмечаем что isAllEqual == false;
-                                    }
-                                }
-                                if (isAllEqual) //если все параметры текущей комбинации равны параметрам текущего testRun-а, отмечаем что testRun найден
-                                {
-                                    isTestRunFind = true;
-                                }
-                                else
-                                {
-                                    tRunIndex++;
-                                }
-                            }
-                            testRunsGroup[k] = testBatch.OptimizationTestRuns[tRunIndex]; //добавляем testRun в группу соседних тестов
-                        }
-                        testRunsGroups.Add(testRunsGroup); //добавляем в группы, группу соседних тестов
-                    }
-
-                    //формируем список со средними значениями критерия оценки групп
-                    List<double> averageGroupsValues = new List<double>();
-                    //проходим по всем группам
-                    for (int i = 0; i < testRunsGroups.Count; i++)
-                    {
-                        double totalGroupValue = 0;
-                        for (int k = 0; k < testRunsGroups[i].Length; k++)
-                        {
-                            totalGroupValue += testRunsGroups[i][k].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue;
-                        }
-                        averageGroupsValues.Add(totalGroupValue / testRunsGroups[i].Length);
-                    }
-
-                    //сортируем группы по среднему значению критерия оценки в порядке убывания
-                    TestRun[] saveGroup; //элемент списка для сохранения после удаления из списка
-                    double saveValue; //элемент списка для сохранения после удаления из списка
-                    for (int i = 0; i < averageGroupsValues.Count; i++)
-                    {
-                        for (int k = 0; k < averageGroupsValues.Count - 1; k++)
-                        {
-                            if (averageGroupsValues[k] < averageGroupsValues[k + 1])
-                            {
-                                saveGroup = testRunsGroups[k];
-                                testRunsGroups[k] = testRunsGroups[k + 1];
-                                testRunsGroups[k + 1] = saveGroup;
-
-                                saveValue = averageGroupsValues[k];
-                                averageGroupsValues[k] = averageGroupsValues[k + 1];
-                                averageGroupsValues[k + 1] = saveValue;
-                            }
-                        }
-                    }
-
-                    bool isTopModelFind = false;
-                    int groupIndex = 0;
-                    //проходим по всем группам, сортируем тесты в группе в порядке убывания критерия оценки, и ищем тест в группе который соответствует фильтрам
-                    while (isTopModelFind == false && groupIndex < testRunsGroups.Count)
-                    {
-                        //сортируем тесты в группе в порядке убывания критерия оценки
-                        for (int i = 0; i < testRunsGroups[groupIndex].Length; i++)
-                        {
-                            for (int k = 0; k < testRunsGroups[groupIndex].Length - 1; k++)
-                            {
-                                if (testRunsGroups[groupIndex][k].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue < testRunsGroups[groupIndex][k + 1].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue)
-                                {
-                                    TestRun saveTestRun = testRunsGroups[groupIndex][k];
-                                    testRunsGroups[groupIndex][k] = testRunsGroups[groupIndex][k + 1];
-                                    testRunsGroups[groupIndex][k + 1] = saveTestRun;
-                                }
-                            }
-                        }
-                        //проходим по тестам группы, и ищем первый, который соответствует фильтрам
-                        int tRunIndex = 0;
-                        while (isTopModelFind == false && tRunIndex < testRunsGroups[groupIndex].Length)
-                        {
-                            //проходим по всем фильтрам
-                            bool isFilterFail = false;
-                            foreach (TopModelFilter topModelFilter in testing.TopModelCriteria.TopModelFilters)
-                            {
-                                if (topModelFilter.CompareSign == CompareSign.GetMore()) //знак сравнения фильтра Больше
-                                {
-                                    if (testRunsGroups[groupIndex][tRunIndex].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue <= topModelFilter.Value)
-                                    {
-                                        isFilterFail = true;
-                                    }
-                                }
-                                else //знак сравнения фильтра Меньше
-                                {
-                                    if (testRunsGroups[groupIndex][tRunIndex].EvaluationCriteriaValues.Where(j => j.EvaluationCriteria == topModelFilter.EvaluationCriteria).First().DoubleValue >= topModelFilter.Value)
-                                    {
-                                        isFilterFail = true;
-                                    }
-                                }
-                            }
-                            //если testRun удовлетворяет всем фильтрам, записываем его как топ-модель
-                            if (isFilterFail == false)
-                            {
-                                testBatch.SetTopModel(testRunsGroups[groupIndex][tRunIndex]);
-                                isTopModelFind = true;
-                            }
-                            tRunIndex++;
-                        }
-                        groupIndex++;
-                    }
-                }
-            }*/
             else //если поиск топ-модели не учитывает соседей, ищем топ-модель среди оптимизационных тестов
             {
                 //проходим по всем оптимизационным тестами, и ищем топ-модель, которая соответствует фильтрам

@@ -233,6 +233,9 @@
     <Compile Include="Views\Pages\PageTestingNavigation.xaml.cs">
       <DependentUpon>PageTestingNavigation.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\Pages\PageTestingNN.xaml.cs">
+      <DependentUpon>PageTestingNN.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\Pages\PageTestingResult.xaml.cs">
       <DependentUpon>PageTestingResult.xaml</DependentUpon>
     </Compile>
@@ -358,6 +361,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\Pages\PageTestingNavigation.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Pages\PageTestingNN.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

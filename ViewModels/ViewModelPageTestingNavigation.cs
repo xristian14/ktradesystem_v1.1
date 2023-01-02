@@ -15,6 +15,7 @@ namespace ktradesystem.ViewModels
         private ViewModelPageTestingNavigation()
         {
             _testing = new Views.Pages.PageTesting();
+            _testingNN = new Views.Pages.PageTestingNN();
             _testingResult = new Views.Pages.PageTestingResult();
             CurrentPage = _testing;
         }
@@ -29,6 +30,7 @@ namespace ktradesystem.ViewModels
         }
 
         private Page _testing;
+        private Page _testingNN;
         private Page _testingResult;
 
         private Page _currentPage;
@@ -54,6 +56,17 @@ namespace ktradesystem.ViewModels
                 return new DelegateCommand((obj) =>
                 {
                     CurrentPage = _testing;
+                }, (obj) => true);
+            }
+        }
+
+        public ICommand NavigationCreateTestingNN_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    CurrentPage = _testingNN;
                 }, (obj) => true);
             }
         }

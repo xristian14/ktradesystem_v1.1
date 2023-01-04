@@ -383,8 +383,8 @@
                                 <GroupBox Header="Счет">
                                     <StackPanel Orientation="Vertical">
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Свободный остаток в рублях" Command="{Binding AlgorithmPasteAccountFreeRubleMoney_Click}" Width="180"/>
-                                            <Button Content="Свободный остаток в долларах" Command="{Binding AlgorithmPasteAccountFreeDollarMoney_Click}" Width="180"/>
+                                            <Button Content="Свободный остаток" Command="{Binding AlgorithmPasteAccountFreeMoney_Click}" Width="180"/>
+                                            <Button Content="Занятые средства" Command="{Binding AlgorithmPasteAccountTakenMoney_Click}" Width="180"/>
                                             <Button Content="IntVar1" Command="{Binding AlgorithmPasteAccountIntVar1_Click}" Width="47"/>
                                             <Button Content="IntVar2" Command="{Binding AlgorithmPasteAccountIntVar2_Click}" Width="47"/>
                                             <Button Content="IntVar3" Command="{Binding AlgorithmPasteAccountIntVar3_Click}" Width="47"/>
@@ -392,16 +392,14 @@
                                             <Button Content="IntVar5" Command="{Binding AlgorithmPasteAccountIntVar5_Click}" Width="47"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Занятые средства в рублях" Command="{Binding AlgorithmPasteAccountTakenRubleMoney_Click}" Width="180"/>
-                                            <Button Content="Занятые средства в долларах" Command="{Binding AlgorithmPasteAccountTakenDollarMoney_Click}" Width="180"/>
                                             <Button Content="DoubleVar1" Command="{Binding AlgorithmPasteAccountDoubleVar1_Click}" Width="69"/>
                                             <Button Content="DoubleVar2" Command="{Binding AlgorithmPasteAccountDoubleVar2_Click}" Width="69"/>
                                             <Button Content="DoubleVar3" Command="{Binding AlgorithmPasteAccountDoubleVar3_Click}" Width="69"/>
+                                            <Button Content="DoubleVar4" Command="{Binding AlgorithmPasteAccountDoubleVar4_Click}" Width="69"/>
+                                            <Button Content="DoubleVar5" Command="{Binding AlgorithmPasteAccountDoubleVar5_Click}" Width="69"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <Button Content="Это форвардное тестирование с торговлей депозитом?" Command="{Binding AlgorithmPasteAccountIsForwardDepositTrading_Click}" Width="360"/>
-                                            <Button Content="DoubleVar4" Command="{Binding AlgorithmPasteAccountDoubleVar4_Click}" Width="69"/>
-                                            <Button Content="DoubleVar5" Command="{Binding AlgorithmPasteAccountDoubleVar5_Click}" Width="69"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </GroupBox>
@@ -655,13 +653,6 @@
                         <TextBlock Text="Размер депозита:" Width="100"/>
                         <TextBox Text="{Binding ForwardDeposit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200"/>
                     </StackPanel>
-                    <ListView Margin="100 3 0 0" Width="200" HorizontalAlignment="Left" ItemsSource="{Binding DepositInAnotherCurrencies}">
-                        <ListView.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem">
-                                <Setter Property="Focusable" Value="false"/>
-                            </Style>
-                        </ListView.ItemContainerStyle>
-                    </ListView>
                 </StackPanel>
                 <TextBlock Text="Длительность оптимизационных тестов:" VerticalAlignment="Center" Margin="0 15 0 0"/>
                 <StackPanel Orientation="Horizontal" Margin="0 2 0 0">

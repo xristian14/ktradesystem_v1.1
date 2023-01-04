@@ -1473,36 +1473,35 @@ namespace ktradesystem.ViewModels
             _segmentIndex = _startPeriodSegmentIndex + (int)Math.Truncate(areasWidth * 0.8 / CandleWidth);
             _segmentIndex = _segmentIndex >= _segments.Count ? _segments.Count - 1 : _segmentIndex;
         }
-        public List<double> GetDateRatesDepositCurrenciesChanges() //возвращает список с значениями от 0 до 1, для элементов DepositCurrenciesChanges, где 0 - начало тестового прогона, а 1 - окончание, значение отражает положение даты изменения депозита в диапазоне от начала периода теста до окончания
+        public List<double> GetDateRatesDepositStateChanges() //возвращает список с значениями от 0 до 1, для элементов DepositCurrenciesChanges, где 0 - начало тестового прогона, а 1 - окончание, значение отражает положение даты изменения депозита в диапазоне от начала периода теста до окончания
         {
-            List<double> dateRatesDepositCurrenciesChanges = new List<double>();
-            int defaultCurrencyIndex = _testRun.Account.DepositCurrenciesChanges[0].FindIndex(a => a.Currency.Id == _testRun.Account.DefaultCurrency.Id); //индекс элемента, с валютой по умолчанию
-            int depositCurrenciesChangesIndex = 1; //индекс изменения депозита, устанавливаем в 1, чтобы пропустить начальное состояние депозита
+            List<double> dateRatesDepositStateChanges = new List<double>();
+            int depositStateChangesIndex = 1; //индекс изменения депозита, устанавливаем в 1, чтобы пропустить начальное состояние депозита
             int segmentsNumber = 0; //количество пройденных сегментов
-            dateRatesDepositCurrenciesChanges.Add(segmentsNumber); //добавляем первое изменение депозита, которое добавляется по умолчанию, как начальный депозит
+            dateRatesDepositStateChanges.Add(segmentsNumber); //добавляем первое изменение депозита, которое добавляется по умолчанию, как начальный депозит
             int segmentIndex = _startPeriodSegmentIndex;
             while (segmentIndex <= _endPeriodSegmentIndex)
             {
                 if (_segments[segmentIndex].Section.IsPresent)
                 {
                     segmentsNumber++;
-                    if (depositCurrenciesChangesIndex < _testRun.Account.DepositCurrenciesChanges.Count) //проверяем, не вышли ли за границы списка
+                    if (depositStateChangesIndex < _testRun.Account.DepositStateChanges.Count) //проверяем, не вышли ли за границы списка
                     {
-                        if (DateTime.Compare(_testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[0].DataSourceCandlesIndex].Candles[_segments[segmentIndex].CandleIndexes[0].FileIndex][_segments[segmentIndex].CandleIndexes[0].CandleIndex].DateTime, _testRun.Account.DepositCurrenciesChanges[depositCurrenciesChangesIndex][defaultCurrencyIndex].DateTime) >= 0) //если дата текущего сегмента, раньше или равна дате текущего изменения депозита, запоминаем номер текущего сегмента
+                        if (DateTime.Compare(_testing.DataSourcesCandles[_segments[segmentIndex].CandleIndexes[0].DataSourceCandlesIndex].Candles[_segments[segmentIndex].CandleIndexes[0].FileIndex][_segments[segmentIndex].CandleIndexes[0].CandleIndex].DateTime, _testRun.Account.DepositStateChanges[depositStateChangesIndex].DateTime) >= 0) //если дата текущего сегмента, раньше или равна дате текущего изменения депозита, запоминаем номер текущего сегмента
                         {
-                            depositCurrenciesChangesIndex++;
-                            dateRatesDepositCurrenciesChanges.Add(segmentsNumber);
+                            depositStateChangesIndex++;
+                            dateRatesDepositStateChanges.Add(segmentsNumber);
                         }
                     }
                 }
                 segmentIndex++;
             }
             //делим номер сегмента изменения депозита, на количество сегментов
-            for (int i = 0; i < dateRatesDepositCurrenciesChanges.Count; i++)
+            for (int i = 0; i < dateRatesDepositStateChanges.Count; i++)
             {
-                dateRatesDepositCurrenciesChanges[i] /= segmentsNumber;
+                dateRatesDepositStateChanges[i] /= segmentsNumber;
             }
-            return dateRatesDepositCurrenciesChanges;
+            return dateRatesDepositStateChanges;
         }
         public ICommand ToStartPeriod_Click
         {

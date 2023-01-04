@@ -1148,43 +1148,23 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        public ICommand AlgorithmPasteAccountFreeRubleMoney_Click
+        public ICommand AlgorithmPasteAccountFreeMoney_Click
         {
             get
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.FreeRubleMoney");
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.FreeMoney");
                 }, (obj) => IsAddOrEditAlgorithm());
             }
         }
-        public ICommand AlgorithmPasteAccountTakenRubleMoney_Click
+        public ICommand AlgorithmPasteAccountTakenMoney_Click
         {
             get
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.TakenRubleMoney");
-                }, (obj) => IsAddOrEditAlgorithm());
-            }
-        }
-        public ICommand AlgorithmPasteAccountFreeDollarMoney_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.FreeDollarMoney");
-                }, (obj) => IsAddOrEditAlgorithm());
-            }
-        }
-        public ICommand AlgorithmPasteAccountTakenDollarMoney_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.TakenDollarMoney");
+                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "account.TakenMoney");
                 }, (obj) => IsAddOrEditAlgorithm());
             }
         }
@@ -3565,7 +3545,6 @@ namespace ktradesystem.ViewModels
             {
                 _forwardDeposit = value;
                 OnPropertyChanged();
-                CreateDepositInAnotherCurrencies();
             }
         }
 
@@ -3588,39 +3567,7 @@ namespace ktradesystem.ViewModels
             {
                 _selectedCurrency = value;
                 OnPropertyChanged();
-                CreateDepositInAnotherCurrencies();
             }
-        }
-
-        private ObservableCollection<string> _depositInAnotherCurrencies = new ObservableCollection<string>();
-        public ObservableCollection<string> DepositInAnotherCurrencies //размер депозита в других валютах
-        {
-            get { return _depositInAnotherCurrencies; }
-            set
-            {
-                _depositInAnotherCurrencies = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private void CreateDepositInAnotherCurrencies()
-        {
-            DepositInAnotherCurrencies.Clear();
-            if(double.TryParse(ForwardDeposit, out double res))
-            {
-                //определяем доллоровую стоимость депозита
-                double dollarCostDeposit = res / SelectedCurrency.DollarCost;
-                foreach (Currency currency in Currencies)
-                {
-                    if (currency != SelectedCurrency)
-                    {
-                        //переводим доллоровую стоимость в валютную, умножая на стоимость 1 доллара
-                        double cost = Math.Round(dollarCostDeposit * currency.DollarCost, 2);
-                        DepositInAnotherCurrencies.Add(cost.ToString() + currency.Name);
-                    }
-                }
-            }
-            
         }
 
         private string _durationOptimizationYears;
@@ -4404,20 +4351,6 @@ namespace ktradesystem.ViewModels
                     }
                     topModelCriteria.TopModelFilters = topModelFilters;
 
-                    //ForwardDepositCurrencies
-                    List<DepositCurrency> forwardDepositCurrencies = new List<DepositCurrency>();
-                    if(IsForwardTesting && IsForwardDepositTesting)
-                    {
-                        //определяем доллоровую стоимость депозита
-                        double dollarCostDeposit = double.Parse(ForwardDeposit) / SelectedCurrency.DollarCost;
-                        foreach (Currency currency in Currencies)
-                        {
-                            //переводим доллоровую стоимость в валютную, умножая на стоимость 1 доллара
-                            double cost = Math.Round(dollarCostDeposit * currency.DollarCost, 2);
-                            forwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = cost });
-                        }
-                    }
-
                     //DurationOptimizationTests
                     DateTimeDuration durationOptimizationTests = new DateTimeDuration();
                     durationOptimizationTests.Years = (DurationOptimizationYears == "" || DurationOptimizationYears == null) ? 0 : int.Parse(DurationOptimizationYears);
@@ -4445,7 +4378,7 @@ namespace ktradesystem.ViewModels
                     testing.SizeNeighboursGroupPercent = double.Parse(SizeNeighboursGroupPercent);
                     testing.IsForwardTesting = IsForwardTesting;
                     testing.IsForwardDepositTrading = IsForwardDepositTesting;
-                    testing.ForwardDepositCurrencies = forwardDepositCurrencies;
+                    testing.ForwardDeposit = double.Parse(ForwardDeposit);
                     testing.DefaultCurrency = SelectedCurrency;
                     testing.DurationOptimizationTests = durationOptimizationTests;
                     testing.OptimizationTestSpacing = optimizationTestSpacing;

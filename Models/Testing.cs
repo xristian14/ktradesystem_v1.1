@@ -24,7 +24,7 @@ namespace ktradesystem.Models
         public double SizeNeighboursGroupPercent { get; set; } //размер группы соседних тестов
         public bool IsForwardTesting { get; set; } //проводить ли форвардное тестирование
         public bool IsForwardDepositTrading { get; set; } //добавить ли для форвардного тестирования торговлю депозитом
-        public List<DepositCurrency> ForwardDepositCurrencies { get; set; } //размер депозита форвардного тестирования во всех валютах
+        public double ForwardDeposit { get; set; } //размер депозита форвардного тестирования
         public Currency DefaultCurrency { get; set; } //валюта по умолчанию
         public DateTimeDuration DurationOptimizationTests { get; set; } //длительность оптимизационных тестов
         public DateTimeDuration OptimizationTestSpacing { get; set; } //временной промежуток между оптимизационными тестами

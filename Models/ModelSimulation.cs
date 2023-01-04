@@ -652,23 +652,13 @@ namespace ktradesystem.Models
                     List<TestRun> optimizationTestRuns = new List<TestRun>();
                     for (int i = 0; i < allCombinations.Count; i++)
                     {
-                        List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //свободные средства в открытых позициях
-                        List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
-                        foreach (Currency currency in _modelData.Currencies)
-                        {
-                            freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = optimizationIntervals[t][0] });
-                            takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = optimizationIntervals[t][0] });
-                        }
+                        DepositState freeDepositState = new DepositState { Deposit = 0, DateTime = optimizationIntervals[t][0] }; //свободные средства в открытых позициях
+                        DepositState takenDepositState = new DepositState { Deposit = 0, DateTime = optimizationIntervals[t][0] }; //занятые средства(на которые куплены лоты) в открытых позициях
 
-                        List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
-                        foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
-                        {
-                            firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0, DateTime = optimizationIntervals[t][0] });
-                        }
-                        List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
-                        depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
+                        List<DepositState> depositStateChanges = new List<DepositState>(); //начальное состояние депозита
+                        depositStateChanges.Add(new DepositState { Deposit = 0, DateTime = optimizationIntervals[t][0] });
 
-                        Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), AccountVariables = AccountVariables.GetAccountVariables(), DefaultCurrency = testing.DefaultCurrency, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges, Totalcomission = 0 };
+                        Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), AccountVariables = AccountVariables.GetAccountVariables(), DefaultCurrency = testing.DefaultCurrency, FreeDepositState = freeDepositState, TakenDepositState = takenDepositState, DepositStateChanges = depositStateChanges, Totalcomission = 0 };
                         //формируем список со значениями параметров алгоритма
                         List<AlgorithmParameterValue> algorithmParameterValues = new List<AlgorithmParameterValue>();
                         int alg = 0;
@@ -695,23 +685,13 @@ namespace ktradesystem.Models
                     //формируем форвардный тест
                     if (testing.IsForwardTesting)
                     {
-                        List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //свободные средства в открытых позициях
-                        List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
-                        foreach (Currency currency in _modelData.Currencies)
-                        {
-                            freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = forwardIntervals[t][0] });
-                            takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = 0, DateTime = forwardIntervals[t][0] });
-                        }
+                        DepositState freeDepositState = new DepositState { Deposit = 0, DateTime = forwardIntervals[t][0] }; //свободные средства в открытых позициях
+                        DepositState takenDepositState = new DepositState { Deposit = 0, DateTime = forwardIntervals[t][0] }; //занятые средства(на которые куплены лоты) в открытых позициях
 
-                        List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
-                        foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
-                        {
-                            firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0, DateTime = forwardIntervals[t][0] });
-                        }
-                        List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
-                        depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
+                        List<DepositState> depositStateChanges = new List<DepositState>(); //начальное состояние депозита
+                        depositStateChanges.Add(new DepositState { Deposit = 0, DateTime = forwardIntervals[t][0] });
 
-                        Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), AccountVariables = AccountVariables.GetAccountVariables(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = false, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges, Totalcomission = 0 };
+                        Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), AccountVariables = AccountVariables.GetAccountVariables(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = false, FreeDepositState = freeDepositState, TakenDepositState = takenDepositState, DepositStateChanges = depositStateChanges, Totalcomission = 0 };
                         TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, IsOptimizationTestRun = false, Account = account, StartPeriod = forwardIntervals[t][0], EndPeriod = forwardIntervals[t][1], EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
                         testRunNumber++;
                         //добавляем форвардный тест в testBatch
@@ -720,23 +700,13 @@ namespace ktradesystem.Models
                     //формируем форвардный тест с торговлей депозитом
                     if (testing.IsForwardTesting && testing.IsForwardDepositTrading)
                     {
-                        List<DepositCurrency> freeForwardDepositCurrencies = new List<DepositCurrency>(); //свободные средства в открытых позициях
-                        List<DepositCurrency> takenForwardDepositCurrencies = new List<DepositCurrency>(); //занятые средства(на которые куплены лоты) в открытых позициях
-                        foreach (DepositCurrency depositCurrency in testing.ForwardDepositCurrencies)
-                        {
-                            freeForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = depositCurrency.Deposit, DateTime = forwardIntervals[t][0] });
-                            takenForwardDepositCurrencies.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = 0, DateTime = forwardIntervals[t][0] });
-                        }
+                        DepositState freeDepositState = new DepositState { Deposit = testing.ForwardDeposit, DateTime = forwardIntervals[t][0] }; //свободные средства в открытых позициях
+                        DepositState takenDepositState = new DepositState { Deposit = 0, DateTime = forwardIntervals[t][0] }; //занятые средства(на которые куплены лоты) в открытых позициях
 
-                        List<DepositCurrency> firstDepositCurrenciesChanges = new List<DepositCurrency>(); //начальное состояние депозита
-                        foreach (DepositCurrency depositCurrency in freeForwardDepositCurrencies)
-                        {
-                            firstDepositCurrenciesChanges.Add(new DepositCurrency { Currency = depositCurrency.Currency, Deposit = depositCurrency.Deposit, DateTime = forwardIntervals[t][0] });
-                        }
-                        List<List<DepositCurrency>> depositCurrenciesChanges = new List<List<DepositCurrency>>();
-                        depositCurrenciesChanges.Add(firstDepositCurrenciesChanges);
+                        List<DepositState> depositStateChanges = new List<DepositState>(); //начальное состояние депозита
+                        depositStateChanges.Add(new DepositState { Deposit = testing.ForwardDeposit, DateTime = forwardIntervals[t][0] });
 
-                        Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), AccountVariables = AccountVariables.GetAccountVariables(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = true, FreeForwardDepositCurrencies = freeForwardDepositCurrencies, TakenForwardDepositCurrencies = takenForwardDepositCurrencies, DepositCurrenciesChanges = depositCurrenciesChanges, Totalcomission = 0 };
+                        Account account = new Account { Orders = new List<Order>(), AllOrders = new List<Order>(), CurrentPosition = new List<Deal>(), AllDeals = new List<Deal>(), AccountVariables = AccountVariables.GetAccountVariables(), DefaultCurrency = testing.DefaultCurrency, IsForwardDepositTrading = true, FreeDepositState = freeDepositState, TakenDepositState = takenDepositState, DepositStateChanges = depositStateChanges, Totalcomission = 0 };
                         TestRun testRun = new TestRun { Number = testRunNumber, TestBatch = testBatch, IsOptimizationTestRun = false, Account = account, StartPeriod = forwardIntervals[t][0], EndPeriod = forwardIntervals[t][1], EvaluationCriteriaValues = new List<EvaluationCriteriaValue>(), DealsDeviation = new List<string>(), LoseDeviation = new List<string>(), ProfitDeviation = new List<string>(), LoseSeriesDeviation = new List<string>(), ProfitSeriesDeviation = new List<string>(), IsComplete = false };
                         testRunNumber++;
                         //добавляем форвардный тест с торговлей депозитом в testBatch
@@ -1834,7 +1804,7 @@ namespace ktradesystem.Models
                         dataSourcesForCalculate[i].CurrentCandleIndex = candleIndexes[i];
                     }
 
-                    AccountForCalculate accountForCalculate = new AccountForCalculate { FreeRubleMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, FreeDollarMoney = testRun.Account.FreeForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit, TakenRubleMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 1).First().Deposit, TakenDollarMoney = testRun.Account.TakenForwardDepositCurrencies.Where(j => j.Currency.Id == 2).First().Deposit, IsForwardDepositTrading = testRun.Account.IsForwardDepositTrading, AccountVariables = testRun.Account.AccountVariables };
+                    AccountForCalculate accountForCalculate = new AccountForCalculate { FreeMoney = testRun.Account.FreeDepositState.Deposit, TakenMoney = testRun.Account.TakenDepositState.Deposit, IsForwardDepositTrading = testRun.Account.IsForwardDepositTrading, AccountVariables = testRun.Account.AccountVariables };
                     AlgorithmCalculateResult algorithmCalculateResult = CompiledAlgorithmCopy.Calculate(accountForCalculate, dataSourcesForCalculate, algorithmParametersIntValues, algorithmParametersDoubleValues);
 
                     if (IsOverIndex == false) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
@@ -2235,8 +2205,8 @@ namespace ktradesystem.Models
             //стоимость минимального количества лотов
             double minLotsCost = order.DataSource.MarginType.Id == 2 ? order.DataSource.MarginCost * order.DataSource.MinLotMarginPartCost : price * order.DataSource.MinLotMarginPartCost; //для фиксированной маржи, устанавливаем фиксированную маржу источника данных, помноженную на часть стоимости минимального количества лотов относительно маржи, для маржи с графика, устанавливаем стоимость с график, помноженную на часть стоимости минимального количества лотов относительно маржи
             double minLotsComission = order.DataSource.Comissiontype.Id == 2 ? minLotsCost * (order.DataSource.Comission / 100) : order.DataSource.Comission; //комиссия на минимальное количество лотов
-            double freeDeposit = account.FreeForwardDepositCurrencies.Where(i => i.Currency == order.DataSource.Currency).First().Deposit; //свободный остаток в валюте источника данных
-            double takenDeposit = account.TakenForwardDepositCurrencies.Where(i => i.Currency == order.DataSource.Currency).First().Deposit; //занятые средства на открытые позиции в валюте источника данных
+            double freeDeposit = account.FreeDepositState.Deposit; //свободный остаток
+            double takenDeposit = account.TakenDepositState.Deposit; //занятые средства на открытые позиции
             //определяем максимально доступное количество лотов
             decimal maxLotsCount = (decimal)ModelFunctions.TruncateToIncrement(freeDeposit / (minLotsCost + minLotsComission), (double)order.DataSource.MinLotCount);
             decimal reverseDirectionLotsCount = 0;//количество лотов в открытой позиции с обратным направлением
@@ -2316,30 +2286,15 @@ namespace ktradesystem.Models
                     }
                 }
                 //обновляем средства во всех валютах
-                account.FreeForwardDepositCurrencies = CalculateDepositCurrrencies(freeDeposit, order.DataSource.Currency, dateTime);
-                account.TakenForwardDepositCurrencies = CalculateDepositCurrrencies(takenDeposit, order.DataSource.Currency, dateTime);
+                account.FreeDepositState = new DepositState { Deposit = freeDeposit, DateTime = dateTime };
+                account.TakenDepositState = new DepositState { Deposit = takenDeposit, DateTime = dateTime };
                 //если открытые позиции пусты и была совершена сделка, записываем состояние депозита
                 if (account.CurrentPosition.Count == 0 && isMakeADeal)
                 {
-                    account.DepositCurrenciesChanges.Add(account.FreeForwardDepositCurrencies);
+                    account.DepositStateChanges.Add(account.FreeDepositState);
                 }
             }
             return isMakeADeal;
-        }
-
-        private List<DepositCurrency> CalculateDepositCurrrencies(double deposit, Currency inputCurrency, DateTime dateTime) //возвращает значения депозита во всех валютах
-        {
-            List<DepositCurrency> depositCurrencies = new List<DepositCurrency>();
-
-            double dollarCostDeposit = deposit / inputCurrency.DollarCost; //определяем долларовую стоимость
-            foreach (Currency currency in _modelData.Currencies)
-            {
-                //переводим доллоровую стоимость в валютную, умножая на стоимость 1 доллара
-                double cost = dollarCostDeposit * currency.DollarCost;
-                depositCurrencies.Add(new DepositCurrency { Currency = currency, Deposit = cost, DateTime = dateTime });
-            }
-
-            return depositCurrencies;
         }
 
         private int Slippage(DataSourceCandles dataSourceCandles, int fileIndex, int candleIndex, decimal lotsCountInOrder) //возвращает размер проскальзывания в пунктах

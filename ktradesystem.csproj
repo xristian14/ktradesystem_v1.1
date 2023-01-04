@@ -129,7 +129,7 @@
     <Compile Include="Models\Datatables\ParameterValueType.cs" />
     <Compile Include="Models\DateTimeDuration.cs" />
     <Compile Include="Models\Deal.cs" />
-    <Compile Include="Models\DepositCurrency.cs" />
+    <Compile Include="Models\DepositState.cs" />
     <Compile Include="Models\EvaluationCriteriaValue.cs" />
     <Compile Include="Models\IndicatorCalculateResult.cs" />
     <Compile Include="Models\AlgorithmIndicatorValues.cs" />

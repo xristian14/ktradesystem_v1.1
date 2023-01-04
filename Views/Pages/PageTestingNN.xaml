@@ -372,15 +372,15 @@
                     <TextBlock Text="{Binding HiddenLayersCount}" Margin="3 0 0 0"/>
                     <TextBlock Text="Размеры скрытых слоёв:" Margin="6 0 0 0"/>
                     <TextBlock Text="1-й слой:" Margin="6 0 0 0"/>
-                    <TextBox Text="{Binding FirstHiddenLayerCountNeurons}" Width="25" Margin="3 0 0 0"/>
+                    <TextBox Text="{Binding FirstHiddenLayerCountNeurons}" Width="30" Margin="3 0 0 0"/>
                     <TextBlock Text="2-й слой:" Margin="6 0 0 0"/>
-                    <TextBox Text="{Binding SecondHiddenLayerCountNeurons}" Width="25" Margin="3 0 0 0"/>
+                    <TextBox Text="{Binding SecondHiddenLayerCountNeurons}" Width="30" Margin="3 0 0 0"/>
                     <TextBlock Text="3-й слой:" Margin="6 0 0 0"/>
-                    <TextBox Text="{Binding ThirdHiddenLayerCountNeurons}" Width="25" Margin="3 0 0 0"/>
+                    <TextBox Text="{Binding ThirdHiddenLayerCountNeurons}" Width="30" Margin="3 0 0 0"/>
                     <TextBlock Text="4-й слой:" Margin="6 0 0 0"/>
-                    <TextBox Text="{Binding FourthHiddenLayerCountNeurons}" Width="25" Margin="3 0 0 0"/>
+                    <TextBox Text="{Binding FourthHiddenLayerCountNeurons}" Width="30" Margin="3 0 0 0"/>
                     <TextBlock Text="5-й слой:" Margin="6 0 0 0"/>
-                    <TextBox Text="{Binding FifthHiddenLayerCountNeurons}" Width="25" Margin="3 0 0 0"/>                    
+                    <TextBox Text="{Binding FifthHiddenLayerCountNeurons}" Width="30" Margin="3 0 0 0"/>                    
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0 3 0 0">
                     <TextBlock Text="Диапазон значений весов и смещений: от" Margin="0 0 0 0"/>
@@ -409,6 +409,13 @@
                 <StackPanel Orientation="Vertical" Visibility="{Binding DeepQLearningSettingsVisibility}" Margin="0 5 0 0">
                     
                 </StackPanel>
+                <Button Content="Запустить тестирование" Command="{Binding LaunchTesting_Click}" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000"  Padding="10 3" Margin="0 15 0 0" HorizontalAlignment="Left">
+                    <Button.ToolTip>
+                        <ToolTip>
+                            <ListView ItemsSource="{Binding TooltipLaunchTesting}" IsEnabled="False"/>
+                        </ToolTip>
+                    </Button.ToolTip>
+                </Button>
             </StackPanel>
         </Grid>
     </Grid>

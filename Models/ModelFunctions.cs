@@ -167,12 +167,11 @@ namespace ktradesystem.Models
             //Процент выигрышных сделок
             int profitCount = 0;
             int lossCount = 0;
-            int defaulCurrencyIndex = testRun.Account.DepositCurrenciesChanges[0].FindIndex(a => a.Currency == testRun.Account.DefaultCurrency);
             double currentDeposit = 0;
-            double lastDeposit = testRun.Account.DepositCurrenciesChanges[0][defaulCurrencyIndex].Deposit;
-            for (int i = 1; i < testRun.Account.DepositCurrenciesChanges.Count; i++)
+            double lastDeposit = testRun.Account.DepositStateChanges[0].Deposit;
+            for (int i = 1; i < testRun.Account.DepositStateChanges.Count; i++)
             {
-                currentDeposit = testRun.Account.DepositCurrenciesChanges[i][defaulCurrencyIndex].Deposit;
+                currentDeposit = testRun.Account.DepositStateChanges[i].Deposit;
                 if (currentDeposit > lastDeposit)
                 {
                     profitCount++;

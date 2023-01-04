@@ -36,7 +36,7 @@ namespace ktradesystem.ViewModels
         private int scaleValuesCount = 5; //количество отрезков на шкале значений
         private int _scaleValuesWidth = 46; //ширина левой области со шкалой значений
         private int _timeLineHeight = 20; //высота временной шкалы
-        List<double> _dateRatesDepositCurrenciesChanges = new List<double>(); //список с значениями от 0 до 1, для элементов DepositCurrenciesChanges, где 0 - начало тестового прогона, а 1 - окончание, значение отражает положение даты изменения депозита в диапазоне от начала периода теста до окончания
+        List<double> _dateRatesDepositStateChanges = new List<double>(); //список с значениями от 0 до 1, для элементов DepositStateChanges, где 0 - начало тестового прогона, а 1 - окончание, значение отражает положение даты изменения депозита в диапазоне от начала периода теста до окончания
 
         private double _canvasProfitChartWidth;
         public double СanvasProfitChartWidth //ширина canvas с графиком
@@ -98,21 +98,20 @@ namespace ktradesystem.ViewModels
             TimeLinesPageProfitChart.Clear();
             int availableHeight = (int)Math.Truncate(СanvasProfitChartHeight - _topMargin - _timeLineHeight);
             int availableChartWidth = (int)Math.Truncate(СanvasProfitChartWidth - _scaleValuesWidth);
-            int defaultCurrencyIndex = _testRun.Account.DepositCurrenciesChanges[0].FindIndex(a => a.Currency.Id == _testRun.Account.DefaultCurrency.Id); //индекс элемента, с валютой по умолчанию
             double minDeposit = 0;
             double maxDeposit = 0;
             //определяем минимальный и максимальный размер депозита
-            for (int i = 0; i < _testRun.Account.DepositCurrenciesChanges.Count; i++)
+            for (int i = 0; i < _testRun.Account.DepositStateChanges.Count; i++)
             {
                 if (i == 0)
                 {
-                    minDeposit = _testRun.Account.DepositCurrenciesChanges[i][defaultCurrencyIndex].Deposit;
-                    maxDeposit = _testRun.Account.DepositCurrenciesChanges[i][defaultCurrencyIndex].Deposit;
+                    minDeposit = _testRun.Account.DepositStateChanges[i].Deposit;
+                    maxDeposit = _testRun.Account.DepositStateChanges[i].Deposit;
                 }
                 else
                 {
-                    minDeposit = _testRun.Account.DepositCurrenciesChanges[i][defaultCurrencyIndex].Deposit < minDeposit ? _testRun.Account.DepositCurrenciesChanges[i][defaultCurrencyIndex].Deposit : minDeposit;
-                    maxDeposit = _testRun.Account.DepositCurrenciesChanges[i][defaultCurrencyIndex].Deposit > maxDeposit ? _testRun.Account.DepositCurrenciesChanges[i][defaultCurrencyIndex].Deposit : maxDeposit;
+                    minDeposit = _testRun.Account.DepositStateChanges[i].Deposit < minDeposit ? _testRun.Account.DepositStateChanges[i].Deposit : minDeposit;
+                    maxDeposit = _testRun.Account.DepositStateChanges[i].Deposit > maxDeposit ? _testRun.Account.DepositStateChanges[i].Deposit : maxDeposit;
                 }
             }
             double depositRange = maxDeposit - minDeposit;
@@ -138,16 +137,16 @@ namespace ktradesystem.ViewModels
             //добавляем линию графика и временную шкалу
             IndicatorPolylinePageTradeChart indicatorPolyline = new IndicatorPolylinePageTradeChart { StrokeColor = _indicatorStrokeColor, Left = 0, Points = new PointCollection() };
             double lastTimeLineLeft = -_timeLineFullDateTimeLeft; //отступ последнего элемента временной шкалы
-            for (int i = 0; i < _testRun.Account.DepositCurrenciesChanges.Count; i++)
+            for (int i = 0; i < _testRun.Account.DepositStateChanges.Count; i++)
             {
                 //добавляем линию графика
-                double left = _scaleValuesWidth + _dateRatesDepositCurrenciesChanges[i] * availableChartWidth;
-                indicatorPolyline.Points.Add(new Point(left, _topMargin + availableHeight * (1 - (_testRun.Account.DepositCurrenciesChanges[i][defaultCurrencyIndex].Deposit - minDeposit) / depositRange)));
+                double left = _scaleValuesWidth + _dateRatesDepositStateChanges[i] * availableChartWidth;
+                indicatorPolyline.Points.Add(new Point(left, _topMargin + availableHeight * (1 - (_testRun.Account.DepositStateChanges[i].Deposit - minDeposit) / depositRange)));
                 //добавляем линию таймлайна
                 if(left - lastTimeLineLeft >= _timeLineTimePixelsPerCut) //если отступ от прошлой линии таймлайна, равен или больше требуемого, добавляем линию таймлайна
                 {
                     lastTimeLineLeft = left;
-                    TimeLinesPageProfitChart.Add(new TimeLinePageTradeChart { DateTime = _testRun.Account.DepositCurrenciesChanges[i][defaultCurrencyIndex].DateTime, StrokeLineColor = _timeLineStrokeLineColor, TextColor = _timeLineTextColor, FontSize = _timeLineFontSize, TextLeft = left - _timeLineFullDateTimeLeft, TextTop = _topMargin + availableHeight + 3, LineLeft = left, X1 = Math.Truncate(left), Y1 = 0, X2 = Math.Truncate(left), Y2 = _topMargin + availableHeight });
+                    TimeLinesPageProfitChart.Add(new TimeLinePageTradeChart { DateTime = _testRun.Account.DepositStateChanges[i].DateTime, StrokeLineColor = _timeLineStrokeLineColor, TextColor = _timeLineTextColor, FontSize = _timeLineFontSize, TextLeft = left - _timeLineFullDateTimeLeft, TextTop = _topMargin + availableHeight + 3, LineLeft = left, X1 = Math.Truncate(left), Y1 = 0, X2 = Math.Truncate(left), Y2 = _topMargin + availableHeight });
                 }
             }
             IndicatorsPolylines.Add(indicatorPolyline);
@@ -157,7 +156,7 @@ namespace ktradesystem.ViewModels
             if (ViewModelPageTestingResult.getInstance().SelectedTestBatchTestingResultCombobox != null && ViewModelPageTestingResult.getInstance().SelectedTestRunTestingResultCombobox != null)
             {
                 _testRun = ViewModelPageTestingResult.getInstance().SelectedTestRunTestingResultCombobox.TestRun;
-                _dateRatesDepositCurrenciesChanges = _viewModelPageTradeChart.GetDateRatesDepositCurrenciesChanges();
+                _dateRatesDepositStateChanges = _viewModelPageTradeChart.GetDateRatesDepositStateChanges();
                 BuildProfitChart();
             }
         }

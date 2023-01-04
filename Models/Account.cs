@@ -16,9 +16,9 @@ namespace ktradesystem.Models
         public List<Deal> AllDeals { get; set; }
         public AccountVariables AccountVariables { get; set; } //переменные в которых пользователь может хранить данные
         public bool IsForwardDepositTrading { get; set; } //если это форвардный тест с торговлей депозитом
-        public List<DepositCurrency> FreeForwardDepositCurrencies { get; set; } //свободные средства
-        public List<DepositCurrency> TakenForwardDepositCurrencies { get; set; } //занятые средства (в открытых позициях)
-        public List<List<DepositCurrency>> DepositCurrenciesChanges { get; set; } //изменения депозита в разных валютах
+        public DepositState FreeDepositState { get; set; } //свободные средства
+        public DepositState TakenDepositState { get; set; } //занятые средства (в открытых позициях)
+        public List<DepositState> DepositStateChanges { get; set; } //изменения депозита
         public Currency DefaultCurrency { get; set; } //валюта по умолчанию
         public double Totalcomission { get; set; } //суммарная комиссия
         public double Margin { get; set; } //значение маржи. Вычисляется в конце выполнения тестового прогона, и используется для вычисления критериев оценки. Т.к. вычислять каждый раз в критериях оценки займет больше времени

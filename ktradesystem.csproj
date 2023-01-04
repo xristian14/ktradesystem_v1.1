@@ -165,6 +165,7 @@
     <Compile Include="ViewModels\DataSourceGroupView.cs" />
     <Compile Include="ViewModels\DataSourceOrderDisplayPageTradeChart.cs" />
     <Compile Include="ViewModels\DataSourcesForAddingDsGroupView.cs" />
+    <Compile Include="ViewModels\DataSourceTemplateNnView.cs" />
     <Compile Include="ViewModels\DataSourceView.cs" />
     <Compile Include="ViewModels\DealPageTradeChart.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
@@ -177,6 +178,7 @@
     <Compile Include="ViewModels\IndicatorParameterTemplateView.cs" />
     <Compile Include="ViewModels\IndicatorPolylinePageTradeChart.cs" />
     <Compile Include="ViewModels\LevelPageThreeDimensionChart.cs" />
+    <Compile Include="ViewModels\NumericUpDown.cs" />
     <Compile Include="ViewModels\ObservableCollectionWithItemNotify.cs" />
     <Compile Include="ViewModels\OptimizationTestsInfo.cs" />
     <Compile Include="ViewModels\OrderIndexPageTradeChart.cs" />
@@ -208,6 +210,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ViewModels\ViewModelPageTestingNavigation.cs" />
+    <Compile Include="ViewModels\ViewModelPageTestingNN.cs" />
     <Compile Include="ViewModels\ViewModelPageTestingResult.cs" />
     <Compile Include="ViewModels\ViewModelPageTestRunInfo.cs" />
     <Compile Include="ViewModels\ViewModelPageTheeDimensionChart.cs" />

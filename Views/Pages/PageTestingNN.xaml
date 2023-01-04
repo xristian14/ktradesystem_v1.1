@@ -110,6 +110,10 @@
                     <Grid Grid.Column="4" x:Name="helperDsTemp4"/>
                     <Grid Grid.Column="5" x:Name="helperDsTemp5"/>
                 </Grid>
+                <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                    <TextBlock Text="Вести торговлю по"/>
+                    <ComboBox ItemsSource="{Binding qqq}" SelectedItem="{Binding www}" Margin="7 0 0 0"/>
+                </StackPanel>
                 <Grid Margin="0 15 0 0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="0.7*"/>
@@ -401,15 +405,25 @@
                         <TextBox Text="{Binding PopulationSize}" Width="40" Margin="3 0 0 0"/>
                         <TextBlock Text="Количество поколений:" Margin="6 0 0 0"/>
                         <TextBox Text="{Binding PopulationSize}" Width="50" Margin="3 0 0 0"/>
-                        <TextBlock Text="Процент мутации= (" Margin="6 0 0 0"/>
-                        <TextBox Text="{Binding MutationPercent}" Width="30" Margin="0 0 0 0"/>
-                        <TextBlock Text="/длина_генома)" Margin="0 0 0 0"/>
+                        <TextBlock Text="Шанс мутации:" Margin="6 0 0 0"/>
+                        <TextBox Text="{Binding MutationPercent}" Width="40" Margin="3 0 0 0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                        <CheckBox Content="Использовать функцию уменьшения значения приспособленности (доходность на маржу), зависящую от устойчивости ряда. Значения ряда - приспособленность за определенные временные интервалы." IsChecked="{Binding www}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="17 5 0 0">
+                        <TextBlock Text="Длительность интервала одного значения ряда:" Margin="0 0 0 0"/>
+                        <TextBox Text="{Binding PopulationSize}" Width="40" Margin="3 0 0 0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="17 3 0 0">
+                        <TextBlock Text="Множитель значения волатильности. Чем больше, тем сильнее волатильность будет уменьшать значение приспособленности:" Margin="0 0 0 0"/>
+                        <TextBox Text="{Binding PopulationSize}" Width="40" Margin="3 0 0 0"/>
                     </StackPanel>
                 </StackPanel>
                 <StackPanel Orientation="Vertical" Visibility="{Binding DeepQLearningSettingsVisibility}" Margin="0 5 0 0">
                     
                 </StackPanel>
-                <Button Content="Запустить тестирование" Command="{Binding LaunchTesting_Click}" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000"  Padding="10 3" Margin="0 15 0 0" HorizontalAlignment="Left">
+                <Button Content="Запустить тестирование" Command="{Binding LaunchTesting_Click}" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000"  Padding="7 3" Margin="0 10 0 0" HorizontalAlignment="Left">
                     <Button.ToolTip>
                         <ToolTip>
                             <ListView ItemsSource="{Binding TooltipLaunchTesting}" IsEnabled="False"/>

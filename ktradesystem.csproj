@@ -138,6 +138,7 @@
     <Compile Include="Models\ModelTestingResult.cs" />
     <Compile Include="Models\Order.cs" />
     <Compile Include="Models\PerfectProfit.cs" />
+    <Compile Include="Models\Scaler.cs" />
     <Compile Include="Models\TestBatch.cs" />
     <Compile Include="Models\TestingHeader.cs" />
     <Compile Include="Models\TestRun.cs" />
@@ -184,6 +185,7 @@
     <Compile Include="ViewModels\OrderIndexPageTradeChart.cs" />
     <Compile Include="ViewModels\OrderPageTradeChart.cs" />
     <Compile Include="ViewModels\PageItem.cs" />
+    <Compile Include="ViewModels\ScalerView.cs" />
     <Compile Include="ViewModels\ScaleValuePageTradeChart.cs" />
     <Compile Include="ViewModels\SectionPageTradeChart.cs" />
     <Compile Include="ViewModels\SegmentDealIndexPageTradeChart.cs" />
@@ -277,6 +279,9 @@
     </Compile>
     <Compile Include="Views\ViewAddDataSourceTemplate.xaml.cs">
       <DependentUpon>ViewAddDataSourceTemplate.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ViewAddEditScaler.xaml.cs">
+      <DependentUpon>ViewAddEditScaler.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ViewAddIndicatorParameterTemplate.xaml.cs">
       <DependentUpon>ViewAddIndicatorParameterTemplate.xaml</DependentUpon>
@@ -420,6 +425,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\ViewAddDataSourceTemplate.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ViewAddEditScaler.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

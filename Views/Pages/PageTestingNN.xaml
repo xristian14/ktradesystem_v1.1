@@ -122,9 +122,9 @@
                     <StackPanel Grid.Column="0" Orientation="Vertical">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Scaler-ы" FontWeight="Bold"/>
-                            <Button Content="Добавить" Command="{Binding AddDataSourceTemplate_Click}" Width="70" Margin="7 0 0 0"/>
-                            <Button Content="Редактировать" Command="{Binding EditDataSourceTemplate_Click}" Width="95" Margin="7 0 0 0"/>
-                            <Button Content="Удалить" Command="{Binding DeleteDataSourceTemplate_Click}" Width="60" Margin="7 0 0 0"/>
+                            <Button Content="Добавить" Command="{Binding AddScaler_Click}" Width="70" Margin="7 0 0 0"/>
+                            <Button Content="Редактировать" Command="{Binding EditScaler_Click}" Width="95" Margin="7 0 0 0"/>
+                            <Button Content="Удалить" Command="{Binding DeleteScaler_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
                         <ListView ItemsSource="{Binding DataSourceTemplatesView, Mode=OneWay}" SelectedItem="{Binding SelectedDataSourceTemplateView, Mode=OneWayToSource}" SelectionMode="Single" MinHeight="0" MaxHeight="200">
                             <ListView.View>
@@ -407,9 +407,13 @@
                         <TextBox Text="{Binding PopulationSize}" Width="50" Margin="3 0 0 0"/>
                         <TextBlock Text="Шанс мутации:" Margin="6 0 0 0"/>
                         <TextBox Text="{Binding MutationPercent}" Width="40" Margin="3 0 0 0"/>
+                        <TextBlock Text="Доля мутантов в популяции:" Margin="6 0 0 0"/>
+                        <TextBox Text="{Binding MutationPercent}" Width="40" Margin="3 0 0 0"/>
+                        <TextBlock Text="Доля скрещиваемых особей в популяции:" Margin="6 0 0 0"/>
+                        <TextBox Text="{Binding MutationPercent}" Width="40" Margin="3 0 0 0"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
-                        <CheckBox Content="Использовать функцию уменьшения значения приспособленности (доходность на маржу), зависящую от устойчивости ряда. Значения ряда - приспособленность за определенные временные интервалы." IsChecked="{Binding www}"/>
+                        <CheckBox Content="Использовать функцию уменьшения значения приспособленности (Доходность на маржу), зависящую от устойчивости ряда. Значения ряда - приспособленность за определенные временные интервалы." IsChecked="{Binding www}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="17 5 0 0">
                         <TextBlock Text="Длительность интервала одного значения ряда:" Margin="0 0 0 0"/>

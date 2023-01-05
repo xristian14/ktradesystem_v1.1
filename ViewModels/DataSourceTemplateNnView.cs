@@ -48,13 +48,13 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        private bool __isMaxMinCandleNeuron;
+        private bool _isMaxMinCandleNeuron;
         public bool IsMaxMinCandleNeuron
         {
-            get { return __isMaxMinCandleNeuron; }
+            get { return _isMaxMinCandleNeuron; }
             set
             {
-                __isMaxMinCandleNeuron = value;
+                _isMaxMinCandleNeuron = value;
                 OnPropertyChanged();
             }
         }

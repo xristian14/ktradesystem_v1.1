@@ -10,23 +10,28 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 using ktradesystem.ViewModels;
 
-namespace ktradesystem.Views.Pages
+namespace ktradesystem.Views
 {
     /// <summary>
-    /// Логика взаимодействия для PageTestingNN.xaml
+    /// Логика взаимодействия для ViewAddEditScaler.xaml
     /// </summary>
-    public partial class PageTestingNN : Page
+    public partial class ViewAddEditScaler : Window
     {
-        public PageTestingNN()
+        public ViewAddEditScaler()
         {
             InitializeComponent();
 
             ViewModelPageTestingNN viewModelPageTestingNN = ViewModelPageTestingNN.getInstance();
             DataContext = viewModelPageTestingNN;
+
+            if (viewModelPageTestingNN.CloseAdditionalWindowAction == null)
+            {
+                viewModelPageTestingNN.CloseAdditionalWindowAction = new Action(this.Close); //устанавливаем на action viewmodel метод закрытия окна(для кнопки отмена)
+            }
+            Closing += viewModelPageTestingNN.AdditionalWindow_Closing;
         }
     }
 }

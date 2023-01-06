@@ -29,16 +29,6 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        private string _selectedMinDataSourceTemplateName;
-        public string SelectedMinDataSourceTemplateName
-        {
-            get { return _selectedMinDataSourceTemplateName; }
-            set
-            {
-                _selectedMinDataSourceTemplateName = value;
-                OnPropertyChanged();
-            }
-        }
         private ObservableCollection<string> _maxDataSourceTemplateNames;
         public ObservableCollection<string> MaxDataSourceTemplateNames
         {
@@ -46,16 +36,6 @@ namespace ktradesystem.ViewModels
             set
             {
                 _maxDataSourceTemplateNames = value;
-                OnPropertyChanged();
-            }
-        }
-        private string _selectedMaxDataSourceTemplateName;
-        public string SelectedMaxDataSourceTemplateName
-        {
-            get { return _selectedMaxDataSourceTemplateName; }
-            set
-            {
-                _selectedMaxDataSourceTemplateName = value;
                 OnPropertyChanged();
             }
         }

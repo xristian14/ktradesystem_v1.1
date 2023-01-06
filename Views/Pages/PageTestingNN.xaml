@@ -50,43 +50,80 @@
                     <Button Content="Добавить" Command="{Binding AddDataSourceTemplate_Click}" Width="70" Margin="7 0 0 0"/>
                     <Button Content="Удалить" Command="{Binding DeleteDataSourceTemplate_Click}" Width="60" Margin="7 0 0 0"/>
                 </StackPanel>
-                <ListView ItemsSource="{Binding DataSourceTemplatesView, Mode=OneWay}" SelectedItem="{Binding SelectedDataSourceTemplateView, Mode=OneWayToSource}" SelectionMode="Single" MinHeight="0" MaxHeight="200">
+                <ListView ItemsSource="{Binding DataSourceTemplatesNnView}" SelectedItem="{Binding SelectedDataSourceTemplatesNnView, Mode=TwoWay}" SelectionMode="Single" MinHeight="0" MaxHeight="200">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
                     <ListView.View>
                         <GridView>
                             <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Название" Width="{Binding ElementName=helperDsTemp0, Path=ActualWidth}"/>
-                            <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Количество свечек&#x0a;во входном слое" Width="{Binding ElementName=helperDsTemp1, Path=ActualWidth}"/>
-                            <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Смещение от&#x0a;последней свечки" Width="{Binding ElementName=helperDsTemp2, Path=ActualWidth}"/>
+                            <GridViewColumn Header="Количество свечек&#x0a;во входном слое" Width="{Binding ElementName=helperDsTemp1, Path=ActualWidth}">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="10 0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="1*"/>
+                                                <ColumnDefinition Width="auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" Text="{Binding InputLayerCandleCount.Value, Mode=TwoWay}" Height="20"/>
+                                            <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                                <ToggleButton IsChecked="{Binding InputLayerCandleCount.UpClick, Mode=TwoWay}" Height="10">
+                                                    <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="3 -5 3 0"/>
+                                                </ToggleButton>
+                                                <ToggleButton IsChecked="{Binding InputLayerCandleCount.DownClick, Mode=TwoWay}" Height="10">
+                                                    <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="3 -5 3 0"/>
+                                                </ToggleButton>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Смещение от&#x0a;последней свечки" Width="{Binding ElementName=helperDsTemp2, Path=ActualWidth}">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="10 0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="1*"/>
+                                                <ColumnDefinition Width="auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" Text="{Binding LastCandleOffset.Value, Mode=TwoWay}" Height="20"/>
+                                            <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                                <ToggleButton IsChecked="{Binding LastCandleOffset.UpClick, Mode=TwoWay}" Height="10">
+                                                    <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="3 -5 3 0"/>
+                                                </ToggleButton>
+                                                <ToggleButton IsChecked="{Binding LastCandleOffset.DownClick, Mode=TwoWay}" Height="10">
+                                                    <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="3 -5 3 0"/>
+                                                </ToggleButton>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
                             <GridViewColumn Header="Нейроны для&#x0a;информации о свечке" Width="{Binding ElementName=helperDsTemp3, Path=ActualWidth}">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <ComboBox ItemsSource="{Binding AlgorithmParametersView}" SelectedItem="{Binding SelectedAlgorithmParameterView, Mode=TwoWay}" DisplayMemberPath="Name" IsEnabled="{Binding ElementName=algorithmEnabledHelper, Path=IsEnabled}"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <CheckBox Content="Открытие" IsChecked="{Binding IsOpenCandleNeuron}"/>
+                                            <CheckBox Content="Макс/Мин" IsChecked="{Binding IsMaxMinCandleNeuron}" Margin="5 0 0 0"/>
+                                            <CheckBox Content="Закрытие" IsChecked="{Binding IsCloseCandleNeuron}" Margin="5 0 0 0"/>
+                                            <CheckBox Content="Объём" IsChecked="{Binding IsVolumeCandleNeuron}" Margin="5 0 0 0"/>
+                                        </StackPanel>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
                             <GridViewColumn Header="Scaler" Width="{Binding ElementName=helperDsTemp4, Path=ActualWidth}">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <ComboBox ItemsSource="{Binding AlgorithmParametersView}" SelectedItem="{Binding SelectedAlgorithmParameterView, Mode=TwoWay}" DisplayMemberPath="Name" IsEnabled="{Binding ElementName=algorithmEnabledHelper, Path=IsEnabled}"/>
+                                        <ComboBox ItemsSource="{Binding Scalers}" SelectedItem="{Binding SelectedScaler, Mode=TwoWay}" DisplayMemberPath="Number"/>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
                             <GridViewColumn Header="Добавить нейроны: часть минимума и максимума источника данных от &#x0a;максимума выбранных источников данных (2 нейрона для цены и 2 для объема)" Width="{Binding ElementName=helperDsTemp5, Path=ActualWidth}">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <ItemsControl Margin="5 5 0 0" HorizontalAlignment="Left" VerticalAlignment="Top" ItemsSource="{Binding SnakesForRender.SnakesCoordinate}">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <StackPanel Orientation="Horizontal"/>
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <ItemsControl>
-                                                        <CheckBox Content="{Binding qqq}" IsChecked="{Binding IsForwardTesting, Mode=TwoWay}" Margin="0 0 0 7"/>
-                                                    </ItemsControl>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
+                                        <CheckBox Content="" IsChecked="{Binding IsScaleShowingNeurons, Mode=TwoWay}"/>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
@@ -95,11 +132,11 @@
                 </ListView>
                 <Grid Visibility="Visible">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="75"/>
                         <ColumnDefinition Width="0.25*"/>
                         <ColumnDefinition Width="0.25*"/>
-                        <ColumnDefinition Width="0.6*"/>
-                        <ColumnDefinition Width="45"/>
+                        <ColumnDefinition Width="0.70*"/>
+                        <ColumnDefinition Width="55"/>
                         <ColumnDefinition Width="1*"/>
                         <ColumnDefinition Width="33"/>
                     </Grid.ColumnDefinitions>
@@ -126,12 +163,56 @@
                             <Button Content="Редактировать" Command="{Binding EditScaler_Click}" Width="95" Margin="7 0 0 0"/>
                             <Button Content="Удалить" Command="{Binding DeleteScaler_Click}" Width="60" Margin="7 0 0 0"/>
                         </StackPanel>
-                        <ListView ItemsSource="{Binding DataSourceTemplatesView, Mode=OneWay}" SelectedItem="{Binding SelectedDataSourceTemplateView, Mode=OneWayToSource}" SelectionMode="Single" MinHeight="0" MaxHeight="200">
+                        <ListView ItemsSource="{Binding ScalersView}" SelectedItem="{Binding SelectedScalerView, Mode=TwoWay}" SelectionMode="Single" MinHeight="0" MaxHeight="200">
                             <ListView.View>
                                 <GridView>
-                                    <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="№" Width="{Binding ElementName=helperScalers0, Path=ActualWidth}"/>
-                                    <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Min" Width="{Binding ElementName=helperScalers1, Path=ActualWidth}"/>
-                                    <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Max" Width="{Binding ElementName=helperScalers2, Path=ActualWidth}"/>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Number}" Header="№" Width="{Binding ElementName=helperScalers0, Path=ActualWidth}"/>
+                                    <GridViewColumn Header="Min" Width="{Binding ElementName=helperScalers1, Path=ActualWidth}">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ListView ItemsSource="{Binding MinDataSourceTemplateNames}">
+                                                    <ListView.View>
+                                                        <GridView>
+                                                            <GridViewColumn DisplayMemberBinding="{Binding }" Width="{Binding ElementName=helperScalers1_0, Path=ActualWidth}"/>
+                                                            <GridView.ColumnHeaderContainerStyle>
+                                                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </Style>
+                                                            </GridView.ColumnHeaderContainerStyle>
+                                                        </GridView>
+                                                    </ListView.View>
+                                                    <ListView.ItemContainerStyle>
+                                                        <Style TargetType="ListViewItem">
+                                                            <Setter Property="Focusable" Value="false"/>
+                                                        </Style>
+                                                    </ListView.ItemContainerStyle>
+                                                </ListView>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Max" Width="{Binding ElementName=helperScalers2, Path=ActualWidth}">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ListView ItemsSource="{Binding MaxDataSourceTemplateNames}">
+                                                    <ListView.View>
+                                                        <GridView>
+                                                            <GridViewColumn DisplayMemberBinding="{Binding }" Width="{Binding ElementName=helperScalers2_0, Path=ActualWidth}"/>
+                                                            <GridView.ColumnHeaderContainerStyle>
+                                                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </Style>
+                                                            </GridView.ColumnHeaderContainerStyle>
+                                                        </GridView>
+                                                    </ListView.View>
+                                                    <ListView.ItemContainerStyle>
+                                                        <Style TargetType="ListViewItem">
+                                                            <Setter Property="Focusable" Value="false"/>
+                                                        </Style>
+                                                    </ListView.ItemContainerStyle>
+                                                </ListView>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
                                 </GridView>
                             </ListView.View>
                         </ListView>
@@ -143,8 +224,18 @@
                                 <ColumnDefinition Width="33"/>
                             </Grid.ColumnDefinitions>
                             <Grid Grid.Column="0" x:Name="helperScalers0"/>
-                            <Grid Grid.Column="1" x:Name="helperScalers1"/>
-                            <Grid Grid.Column="2" x:Name="helperScalers2"/>
+                            <Grid Grid.Column="1" x:Name="helperScalers1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid Grid.Column="0" x:Name="helperScalers1_0" Margin="20 0"/>
+                            </Grid>
+                            <Grid Grid.Column="2" x:Name="helperScalers2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid Grid.Column="0" x:Name="helperScalers2_0" Margin="20 0"/>
+                            </Grid>
                         </Grid>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Vertical" Margin="10 0 0 0">

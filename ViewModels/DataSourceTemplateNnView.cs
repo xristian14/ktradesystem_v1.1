@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,8 +19,8 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        private string _inputLayerCandleCount;
-        public string InputLayerCandleCount
+        private NumericUpDown _inputLayerCandleCount;
+        public NumericUpDown InputLayerCandleCount
         {
             get { return _inputLayerCandleCount; }
             set
@@ -28,8 +29,8 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        private string _lastCandleOffset;
-        public string LastCandleOffset
+        private NumericUpDown _lastCandleOffset;
+        public NumericUpDown LastCandleOffset
         {
             get { return _lastCandleOffset; }
             set
@@ -65,6 +66,36 @@ namespace ktradesystem.ViewModels
             set
             {
                 _isCloseCandleNeuron = value;
+                OnPropertyChanged();
+            }
+        }
+        private bool _isVolumeCandleNeuron;
+        public bool IsVolumeCandleNeuron
+        {
+            get { return _isVolumeCandleNeuron; }
+            set
+            {
+                _isVolumeCandleNeuron = value;
+                OnPropertyChanged();
+            }
+        }
+        private ObservableCollection<ScalerView> _scalers = new ObservableCollection<ScalerView>();
+        public ObservableCollection<ScalerView> Scalers
+        {
+            get { return _scalers; }
+            set
+            {
+                _scalers = value;
+                OnPropertyChanged();
+            }
+        }
+        private ScalerView _selectedScaler;
+        public ScalerView SelectedScaler
+        {
+            get { return _selectedScaler; }
+            set
+            {
+                _selectedScaler = value;
                 OnPropertyChanged();
             }
         }

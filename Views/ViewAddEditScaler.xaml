@@ -11,7 +11,7 @@
         <StackPanel Orientation="Vertical">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Номер:"/>
-                <TextBlock Text="{Binding www}" Margin="3 0 0 0"/>
+                <TextBlock Text="{Binding ScalerNumber}" Margin="3 0 0 0"/>
             </StackPanel>
             <ScrollViewer Height="180">
                 <Grid>
@@ -55,7 +55,7 @@
                 <Button Content="Сохранить" Command="{Binding SaveScaler_Click}" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000" Width="70">
                     <Button.ToolTip>
                         <ToolTip>
-                            <ListView ItemsSource="{Binding TooltipAddAddDataSourceTemplate}" IsEnabled="False"/>
+                            <ListView ItemsSource="{Binding ButtonsTooltip}" IsEnabled="False"/>
                         </ToolTip>
                     </Button.ToolTip>
                 </Button>

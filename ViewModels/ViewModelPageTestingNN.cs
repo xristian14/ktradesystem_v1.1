@@ -40,9 +40,22 @@ namespace ktradesystem.ViewModels
             viewmodelData.IsPagesAndMainMenuButtonsEnabled = true;
             CloseAdditionalWindowAction = null; //сбрасываем Action, чтобы при инициализации нового окна в него поместился метод его закрытия
         }
-
         public Action CloseAdditionalWindowAction { get; set; }
 
+        private ObservableCollection<string> _buttonsTooltip = new ObservableCollection<string>();
+        public ObservableCollection<string> ButtonsTooltip //подсказка, показываемая при наведении на кнопку
+        {
+            get { return _buttonsTooltip; }
+            set
+            {
+                _buttonsTooltip = value;
+                OnPropertyChanged();
+            }
+        }
+
+
+
+        #region add delete DataSourceTemplates
         private ObservableCollection<DataSourceTemplateNnView> _dataSourceTemplatesNnView = new ObservableCollection<DataSourceTemplateNnView>();
         public ObservableCollection<DataSourceTemplateNnView> DataSourceTemplatesNnView
         {
@@ -53,7 +66,79 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
+        private DataSourceTemplateNnView _selectedDataSourceTemplatesNnView;
+        public DataSourceTemplateNnView SelectedDataSourceTemplatesNnView
+        {
+            get { return _selectedDataSourceTemplatesNnView; }
+            set
+            {
+                _selectedDataSourceTemplatesNnView = value;
+                OnPropertyChanged();
+            }
+        }
+        public ICommand AddDataSourceTemplate_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    DataSourceTemplateNnView dataSourceTemplateNnView = new DataSourceTemplateNnView { Name = "template" + (DataSourceTemplatesNnView.Count + 1).ToString(), InputLayerCandleCount = new NumericUpDown(1, false), LastCandleOffset = new NumericUpDown(0, false), IsOpenCandleNeuron = true, IsMaxMinCandleNeuron = true, IsCloseCandleNeuron = true, IsVolumeCandleNeuron = true, Scalers = ScalersView, IsScaleShowingNeurons = false };
+                    DataSourceTemplatesNnView.Add(dataSourceTemplateNnView);
+                }, (obj) => true);
+            }
+        }
+        public ICommand DeleteDataSourceTemplate_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    DataSourceTemplatesNnView.Remove(SelectedDataSourceTemplatesNnView);
+                    for(int i = 0; i < DataSourceTemplatesNnView.Count; i++)
+                    {
+                        DataSourceTemplatesNnView[i].Name = "template" + (i + 1).ToString();
+                    }
+                    ScalersView.Clear();
+                }, (obj) => SelectedDataSourceTemplatesNnView != null);
+            }
+        }
+        #endregion
 
+
+
+        #region add edit delete Scalers
+        private ObservableCollection<ScalerView> _scalersView = new ObservableCollection<ScalerView>();
+        public ObservableCollection<ScalerView> ScalersView
+        {
+            get { return _scalersView; }
+            private set
+            {
+                _scalersView = value;
+                OnPropertyChanged();
+            }
+        }
+        private ScalerView _selectedScalerView;
+        public ScalerView SelectedScalerView
+        {
+            get { return _selectedScalerView; }
+            set
+            {
+                _selectedScalerView = value;
+                OnPropertyChanged();
+            }
+        }
+        private const string ZERO_SCALER = "Zero";
+        private bool _isAddScaler = false; //добавляется или редактируется Scaler
+        private int _scalerNumber;
+        public int ScalerNumber
+        {
+            get { return _scalerNumber; }
+            set
+            {
+                _scalerNumber = value;
+                OnPropertyChanged();
+            }
+        }
         private ObservableCollection<string> _minScalerDataSourceTemplates = new ObservableCollection<string>();
         public ObservableCollection<string> MinScalerDataSourceTemplates //список с доступными для выбора шаблонами источников данных в minScaler
         {
@@ -134,7 +219,6 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        const string ZERO_SCALER = "Zero";
         private void UpdateMinMaxScalerDataSourceTemplates()
         {
             ListSelectedMinScalerDataSourceTemplates.Clear();
@@ -151,6 +235,98 @@ namespace ktradesystem.ViewModels
             }
             SelectedMinScalerDataSourceTemplates = MinScalerDataSourceTemplates[0];
             SelectedMaxScalerDataSourceTemplates = MaxScalerDataSourceTemplates.Count > 0 ? MaxScalerDataSourceTemplates[0] : "";
+        }
+        public ICommand AddScaler_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    _isAddScaler = true;
+                    UpdateMinMaxScalerDataSourceTemplates();
+                    ScalerNumber = ScalersView.Count + 1;
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
+                    ViewAddEditScaler viewAddEditScaler = new ViewAddEditScaler();
+                    viewAddEditScaler.Show();
+                }, (obj) => true);
+            }
+        }
+        public ICommand EditScaler_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    _isAddScaler = false;
+                    UpdateMinMaxScalerDataSourceTemplates();
+                    ScalerNumber = SelectedScalerView.Number;
+                    ListSelectedMinScalerDataSourceTemplates = new ObservableCollection<string>(SelectedScalerView.MinDataSourceTemplateNames);
+                    ListSelectedMaxScalerDataSourceTemplates = new ObservableCollection<string>(SelectedScalerView.MaxDataSourceTemplateNames);
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
+                    ViewAddEditScaler viewAddEditScaler = new ViewAddEditScaler();
+                    viewAddEditScaler.Show();
+                }, (obj) => SelectedScalerView != null);
+            }
+        }
+        public ICommand DeleteScaler_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    ScalersView.Remove(SelectedScalerView);
+                    for(int i = 0; i < ScalersView.Count; i++)
+                    {
+                        ScalersView[i].Number = i + 1;
+                    }
+                }, (obj) => SelectedScalerView != null);
+            }
+        }
+        private bool CheckAddEditScalerFields()
+        {
+            ButtonsTooltip.Clear();
+            bool res = true;
+            if(ListSelectedMinScalerDataSourceTemplates.Count == 0)
+            {
+                res = false;
+                ButtonsTooltip.Add("Список с минимальными значениями не должен быть пустым.");
+            }
+            if (ListSelectedMaxScalerDataSourceTemplates.Count == 0)
+            {
+                res = false;
+                ButtonsTooltip.Add("Список с максимальными значениями не должен быть пустым.");
+            }
+            return res;
+        }
+        public ICommand SaveScaler_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    if (_isAddScaler)
+                    {
+                        ScalerView scalerView = new ScalerView { Number = ScalerNumber, MinDataSourceTemplateNames = new ObservableCollection<string>(ListSelectedMinScalerDataSourceTemplates), MaxDataSourceTemplateNames = new ObservableCollection<string>(ListSelectedMaxScalerDataSourceTemplates) };
+                        ScalersView.Add(scalerView);
+                    }
+                    else
+                    {
+                        SelectedScalerView.MinDataSourceTemplateNames = new ObservableCollection<string>(ListSelectedMinScalerDataSourceTemplates);
+                        SelectedScalerView.MaxDataSourceTemplateNames = new ObservableCollection<string>(ListSelectedMaxScalerDataSourceTemplates);
+                    }
+                    CloseAdditionalWindowAction?.Invoke();
+                }, (obj) => CheckAddEditScalerFields());
+            }
+        }
+        public ICommand CancelScaler_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    CloseAdditionalWindowAction?.Invoke();
+                }, (obj) => true);
+            }
         }
         public ICommand AddMinScaler_Click
         {
@@ -198,119 +374,6 @@ namespace ktradesystem.ViewModels
                 }, (obj) => ListSelectedMaxScalerDataSourceTemplates.Contains(SelectedListSelectedMaxScalerDataSourceTemplates));
             }
         }
-
-        /*private bool IsFieldsAddAlgorithmParameterCorrect()
-        {
-            bool result = true;
-            TooltipAddAddAlgorithmParameter.Clear(); //очищаем подсказку кнопки добавить
-
-            string name = AlgorithmParameterName != null ? AlgorithmParameterName.Replace(" ", "") : "";
-
-            //проверка на пустое значение
-            if (name == "" || AlgorithmParameterMinValue == "" || AlgorithmParameterMaxValue == "" || AlgorithmParameterstep == "")
-            {
-                result = false;
-                TooltipAddAddAlgorithmParameter.Add("Не заполнены все поля.");
-            }
-
-            //проверка на допустимые символы
-            string letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            bool isNotFind = false;
-            for (int i = 0; i < name.Length; i++)
-            {
-                if (letters.IndexOf(name[i]) == -1)
-                {
-                    isNotFind = true;
-                }
-
-            }
-            if (isNotFind)
-            {
-                result = false;
-                TooltipAddAddAlgorithmParameter.Add("Допустимо использование только английского алфавита.");
-            }
-
-            //проверка на уникальность названия
-            bool isUnique = true;
-            foreach (AlgorithmParameterView item in AlgorithmParametersView)
-            {
-                if (name == item.Name) //проверяем имя на уникальность среди всех записей
-                {
-                    isUnique = false;
-                }
-            }
-            if (isUnique == false)
-            {
-                result = false;
-                TooltipAddAddAlgorithmParameter.Add("Данное название уже используется.");
-            }
-
-            //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(AlgorithmParameterMinValue, out double res) == false)
-            {
-                result = false;
-                TooltipAddAddAlgorithmParameter.Add("Минимальное значение должно быть числом.");
-            }
-
-            //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(AlgorithmParameterMaxValue, out res) == false)
-            {
-                result = false;
-                TooltipAddAddAlgorithmParameter.Add("Максимальное значение должно быть числом.");
-            }
-
-            //проверка на возможность конвертации в число с плавающей точкой
-            if (double.TryParse(AlgorithmParameterstep, out res) == false)
-            {
-                result = false;
-                TooltipAddAddAlgorithmParameter.Add("Шаг должен быть числом.");
-            }
-
-            //проверка на возможность достигнуть максимума с минимума с шагом
-            if (double.TryParse(AlgorithmParameterMinValue, out double min) && double.TryParse(AlgorithmParameterMaxValue, out double max) && double.TryParse(AlgorithmParameterstep, out double step))
-            {
-                if ((max > min && step > 0) == false)
-                {
-                    result = false;
-                    TooltipAddAddAlgorithmParameter.Add("Максимум должен быть больше минимума, а шаг должен быть положительным.");
-                }
-            }
-
-            return result;
-        }*/
-
-        public ICommand AddScaler_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    UpdateMinMaxScalerDataSourceTemplates();
-                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
-                    ViewAddEditScaler viewAddEditScaler = new ViewAddEditScaler();
-                    viewAddEditScaler.Show();
-                }, (obj) => true);
-            }
-        }
-        public ICommand SaveScaler_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    CloseAdditionalWindowAction?.Invoke();
-                }, (obj) => true/*IsFieldsAddAlgorithmParameterCorrect()*/);
-            }
-        }
-        public ICommand CancelScaler_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    CloseAdditionalWindowAction?.Invoke();
-                }, (obj) => true);
-            }
-        }
+        #endregion
     }
 }

@@ -24,17 +24,435 @@
         </XmlDataProvider>
         <!--GridViewColumnCollection-->
         <GridViewColumnCollection x:Key="nn_learning_period">
-            <GridViewColumn Header="Смещение&#x0a;от начала" DisplayMemberBinding="{Binding XPath=ID}" Width="{Binding ElementName=helperNn1_0, Path=ActualWidth}"/>
-            <GridViewColumn Header="Количество&#x0a;периодов" DisplayMemberBinding="{Binding XPath=Name}" Width="{Binding ElementName=helperNn1_1, Path=ActualWidth}"/>
-            <GridViewColumn Header="Длительность&#x0a;периода" DisplayMemberBinding="{Binding XPath=PhoneNumber}" Width="{Binding ElementName=helperNn1_2, Path=ActualWidth}"/>
-            <GridViewColumn Header="Расстояние&#x0a;между периодами" DisplayMemberBinding="{Binding XPath=PhoneNumber}" Width="{Binding ElementName=helperNn1_3, Path=ActualWidth}"/>
+            <GridViewColumn Header="Смещение&#x0a;от начала" Width="{Binding ElementName=helperNn1_0, Path=ActualWidth}">
+                <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                        <Grid Margin="-6 0 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding LearningOffsetY.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding LearningOffsetY.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding LearningOffsetY.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="Y" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Grid.Column="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding LearningOffsetM.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding LearningOffsetM.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding LearningOffsetM.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="M" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Grid.Column="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding LearningOffsetD.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding LearningOffsetD.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding LearningOffsetD.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="D" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Grid>
+                    </DataTemplate>
+                </GridViewColumn.CellTemplate>
+            </GridViewColumn>
+            <GridViewColumn Header="Количество&#x0a;периодов" Width="{Binding ElementName=helperNn1_1, Path=ActualWidth}">
+                <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                        <Grid Margin="10 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding LearningPeriodsCount.Value, Mode=TwoWay}" Height="20"/>
+                            <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                <ToggleButton IsChecked="{Binding LearningPeriodsCount.UpClick, Mode=TwoWay}" Height="10">
+                                    <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="2 -5 2 0"/>
+                                </ToggleButton>
+                                <ToggleButton IsChecked="{Binding LearningPeriodsCount.DownClick, Mode=TwoWay}" Height="10">
+                                    <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="2 -5 2 0"/>
+                                </ToggleButton>
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </GridViewColumn.CellTemplate>
+            </GridViewColumn>
+            <GridViewColumn Header="Длительность&#x0a;периода" Width="{Binding ElementName=helperNn1_2, Path=ActualWidth}">
+                <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                        <Grid Margin="-8 0 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding LearningDurationY.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding LearningDurationY.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding LearningDurationY.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="Y" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Grid.Column="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding LearningDurationM.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding LearningDurationM.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding LearningDurationM.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="M" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Grid.Column="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding LearningDurationD.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding LearningDurationD.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding LearningDurationD.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="D" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Grid>
+                    </DataTemplate>
+                </GridViewColumn.CellTemplate>
+            </GridViewColumn>
+            <GridViewColumn Header="Расстояние&#x0a;между периодами" Width="{Binding ElementName=helperNn1_3, Path=ActualWidth}">
+                <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                        <Grid Margin="-8 0 4 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding LearningDistanceY.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding LearningDistanceY.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding LearningDistanceY.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="Y" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Grid.Column="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding LearningDistanceM.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding LearningDistanceM.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding LearningDistanceM.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="M" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Grid.Column="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding LearningDistanceD.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding LearningDistanceD.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding LearningDistanceD.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="D" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Grid>
+                    </DataTemplate>
+                </GridViewColumn.CellTemplate>
+            </GridViewColumn>
         </GridViewColumnCollection>
         <!--GridViewColumnCollection-->
         <GridViewColumnCollection x:Key="nn_forward_testing_period">
-            <GridViewColumn Header="Смещение&#x0a;от начала" DisplayMemberBinding="{Binding XPath=ID}" Width="{Binding ElementName=helperNn3_0, Path=ActualWidth}"/>
-            <GridViewColumn Header="Количество&#x0a;периодов" DisplayMemberBinding="{Binding XPath=Name}" Width="{Binding ElementName=helperNn3_1, Path=ActualWidth}"/>
-            <GridViewColumn Header="Длительность&#x0a;периода" DisplayMemberBinding="{Binding XPath=PhoneNumber}" Width="{Binding ElementName=helperNn3_2, Path=ActualWidth}"/>
-            <GridViewColumn Header="Расстояние&#x0a;между периодами" DisplayMemberBinding="{Binding XPath=PhoneNumber}" Width="{Binding ElementName=helperNn3_3, Path=ActualWidth}"/>
+            <GridViewColumn Header="Смещение&#x0a;от начала" Width="{Binding ElementName=helperNn3_0, Path=ActualWidth}">
+                <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                        <Grid Margin="-6 0 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding ForwardOffsetY.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding ForwardOffsetY.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding ForwardOffsetY.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="Y" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Grid.Column="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding ForwardOffsetM.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding ForwardOffsetM.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding ForwardOffsetM.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="M" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Grid.Column="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding ForwardOffsetD.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding ForwardOffsetD.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding ForwardOffsetD.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="D" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Grid>
+                    </DataTemplate>
+                </GridViewColumn.CellTemplate>
+            </GridViewColumn>
+            <GridViewColumn Header="Количество&#x0a;периодов" Width="{Binding ElementName=helperNn3_1, Path=ActualWidth}">
+                <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                        <Grid Margin="10 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding ForwardPeriodsCount.Value, Mode=TwoWay}" Height="20"/>
+                            <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                <ToggleButton IsChecked="{Binding ForwardPeriodsCount.UpClick, Mode=TwoWay}" Height="10">
+                                    <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="2 -5 2 0"/>
+                                </ToggleButton>
+                                <ToggleButton IsChecked="{Binding ForwardPeriodsCount.DownClick, Mode=TwoWay}" Height="10">
+                                    <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="2 -5 2 0"/>
+                                </ToggleButton>
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </GridViewColumn.CellTemplate>
+            </GridViewColumn>
+            <GridViewColumn Header="Длительность&#x0a;периода" Width="{Binding ElementName=helperNn3_2, Path=ActualWidth}">
+                <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                        <Grid Margin="-8 0 0 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding ForwardDurationY.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding ForwardDurationY.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding ForwardDurationY.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="Y" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Grid.Column="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding ForwardDurationM.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding ForwardDurationM.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding ForwardDurationM.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="M" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Grid.Column="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding ForwardDurationD.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding ForwardDurationD.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding ForwardDurationD.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="D" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Grid>
+                    </DataTemplate>
+                </GridViewColumn.CellTemplate>
+            </GridViewColumn>
+            <GridViewColumn Header="Расстояние&#x0a;между периодами" Width="{Binding ElementName=helperNn3_3, Path=ActualWidth}">
+                <GridViewColumn.CellTemplate>
+                    <DataTemplate>
+                        <Grid Margin="-8 0 4 0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding ForwardDistanceY.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding ForwardDistanceY.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding ForwardDistanceY.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="Y" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Grid.Column="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding ForwardDistanceM.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding ForwardDistanceM.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding ForwardDistanceM.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="M" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Grid Grid.Column="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding ForwardDistanceD.Value, Mode=TwoWay}" Height="20"/>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
+                                    <ToggleButton IsChecked="{Binding ForwardDistanceD.UpClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                    <ToggleButton IsChecked="{Binding ForwardDistanceD.DownClick, Mode=TwoWay}" Height="10">
+                                        <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="0 -5 0 0"/>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="D" Margin="1 0 2 0" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Grid>
+                    </DataTemplate>
+                </GridViewColumn.CellTemplate>
+            </GridViewColumn>
         </GridViewColumnCollection>
     </Page.Resources>
 
@@ -70,10 +488,10 @@
                                             <TextBox Grid.Column="0" Text="{Binding InputLayerCandleCount.Value, Mode=TwoWay}" Height="20"/>
                                             <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
                                                 <ToggleButton IsChecked="{Binding InputLayerCandleCount.UpClick, Mode=TwoWay}" Height="10">
-                                                    <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="3 -5 3 0"/>
+                                                    <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="2 -5 2 0"/>
                                                 </ToggleButton>
                                                 <ToggleButton IsChecked="{Binding InputLayerCandleCount.DownClick, Mode=TwoWay}" Height="10">
-                                                    <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="3 -5 3 0"/>
+                                                    <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="2 -5 2 0"/>
                                                 </ToggleButton>
                                             </StackPanel>
                                         </Grid>
@@ -91,10 +509,10 @@
                                             <TextBox Grid.Column="0" Text="{Binding LastCandleOffset.Value, Mode=TwoWay}" Height="20"/>
                                             <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch">
                                                 <ToggleButton IsChecked="{Binding LastCandleOffset.UpClick, Mode=TwoWay}" Height="10">
-                                                    <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="3 -5 3 0"/>
+                                                    <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="2 -5 2 0"/>
                                                 </ToggleButton>
                                                 <ToggleButton IsChecked="{Binding LastCandleOffset.DownClick, Mode=TwoWay}" Height="10">
-                                                    <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="3 -5 3 0"/>
+                                                    <TextBlock VerticalAlignment="Top" Text="⯆" Height="5" FontSize="11" Padding="2 -5 2 0"/>
                                                 </ToggleButton>
                                             </StackPanel>
                                         </Grid>
@@ -310,10 +728,15 @@
                 </Grid>
                 <StackPanel Orientation="Horizontal" Margin="0 15 0 0">
                     <TextBlock Text="Нейронные сети" FontWeight="Bold"/>
-                    <Button Content="Добавить" Command="{Binding AddDataSourceTemplate_Click}" Width="70" Margin="7 0 0 0"/>
-                    <Button Content="Удалить" Command="{Binding DeleteDataSourceTemplate_Click}" Width="60" Margin="7 0 0 0"/>
+                    <Button Content="Добавить" Command="{Binding AddNnSettings_Click}" Width="70" Margin="7 0 0 0"/>
+                    <Button Content="Удалить" Command="{Binding DeleteNnSettings_Click}" Width="60" Margin="7 0 0 0"/>
                 </StackPanel>
-                <ListView ItemsSource="{Binding Source={StaticResource personInfo},XPath=Country/Family/Person}" MaxHeight="200">
+                <ListView ItemsSource="{Binding NnSettingsViews}" SelectedItem="{Binding SelectedNnSettingsView, Mode=TwoWay}" SelectionMode="Single" MaxHeight="200">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
                     <ListView.View>
                         <GridView>
                             <GridView.ColumnHeaderContainerStyle>
@@ -326,7 +749,7 @@
                                     </Style.Triggers>
                                 </Style>
                             </GridView.ColumnHeaderContainerStyle>
-                            <GridViewColumn Header="№" Width="{Binding ElementName=helperNn0, Path=ActualWidth}"></GridViewColumn>
+                            <GridViewColumn Header="№" DisplayMemberBinding="{Binding Number}" Width="{Binding ElementName=helperNn0, Path=ActualWidth}"/>
                             <GridViewColumn Header="Периоды обучения" Width="{Binding ElementName=helperNn1, Path=ActualWidth}">
                                 <!--HeaderTemplate-->
                                 <GridViewColumn.HeaderTemplate>
@@ -364,7 +787,7 @@
                             <GridViewColumn Header="Проводить&#x0a;форвардное&#x0a;тестирование" Width="{Binding ElementName=helperNn2, Path=ActualWidth}">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <CheckBox Content="" IsChecked="{Binding www}"/>
+                                        <CheckBox Content="" IsChecked="{Binding IsForwardTesting}"/>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
@@ -402,26 +825,6 @@
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
-                            <GridViewColumn Header="Группы источников данных, на которых будет&#x0a;обучаться и тестироваться нейронная сеть" Width="{Binding ElementName=helperNn4, Path=ActualWidth}">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <ItemsControl Margin="5 5 0 0" HorizontalAlignment="Left" VerticalAlignment="Top" ItemsSource="{Binding SnakesForRender.SnakesCoordinate}">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <StackPanel Orientation="Horizontal"/>
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <ItemsControl>
-                                                        <CheckBox Content="{Binding qqq}" IsChecked="{Binding IsForwardTesting, Mode=TwoWay}" Margin="0 0 0 7"/>
-                                                    </ItemsControl>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
                         </GridView>
                     </ListView.View>
                 </ListView>
@@ -429,18 +832,17 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="33"/>
                         <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="90"/>
                         <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="0.8*"/>
                         <ColumnDefinition Width="33"/>
                     </Grid.ColumnDefinitions>
                     <Grid Grid.Column="0" x:Name="helperNn0"/>
                     <Grid Grid.Column="1" x:Name="helperNn1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="1*"/>
-                            <ColumnDefinition Width="0.7*"/>
+                            <ColumnDefinition Width="0.5*"/>
                             <ColumnDefinition Width="1*"/>
-                            <ColumnDefinition Width="1.15*"/>
+                            <ColumnDefinition Width="1*"/>
                         </Grid.ColumnDefinitions>
                         <Grid Grid.Column="0" x:Name="helperNn1_0"/>
                         <Grid Grid.Column="1" x:Name="helperNn1_1"/>
@@ -451,9 +853,9 @@
                     <Grid Grid.Column="3" x:Name="helperNn3">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="1*"/>
-                            <ColumnDefinition Width="0.7*"/>
+                            <ColumnDefinition Width="0.5*"/>
                             <ColumnDefinition Width="1*"/>
-                            <ColumnDefinition Width="1.15*"/>
+                            <ColumnDefinition Width="1*"/>
                         </Grid.ColumnDefinitions>
                         <Grid Grid.Column="0" x:Name="helperNn3_0"/>
                         <Grid Grid.Column="1" x:Name="helperNn3_1"/>

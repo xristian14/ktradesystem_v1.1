@@ -179,6 +179,7 @@
     <Compile Include="ViewModels\IndicatorParameterTemplateView.cs" />
     <Compile Include="ViewModels\IndicatorPolylinePageTradeChart.cs" />
     <Compile Include="ViewModels\LevelPageThreeDimensionChart.cs" />
+    <Compile Include="ViewModels\NnSettingsView.cs" />
     <Compile Include="ViewModels\NumericUpDown.cs" />
     <Compile Include="ViewModels\ObservableCollectionWithItemNotify.cs" />
     <Compile Include="ViewModels\OptimizationTestsInfo.cs" />

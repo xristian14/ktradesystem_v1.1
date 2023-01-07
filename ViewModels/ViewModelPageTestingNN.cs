@@ -625,5 +625,55 @@ namespace ktradesystem.ViewModels
             }
         }
         #endregion
+
+
+
+        #region add delete NnSettingsVeiw
+        private ObservableCollection<NnSettingsView> _nnSettingsViews = new ObservableCollection<NnSettingsView>();
+        public ObservableCollection<NnSettingsView> NnSettingsViews
+        {
+            get { return _nnSettingsViews; }
+            private set
+            {
+                _nnSettingsViews = value;
+                OnPropertyChanged();
+            }
+        }
+        private NnSettingsView _selectedNnSettingsView;
+        public NnSettingsView SelectedNnSettingsView
+        {
+            get { return _selectedNnSettingsView; }
+            set
+            {
+                _selectedNnSettingsView = value;
+                OnPropertyChanged();
+            }
+        }
+        public ICommand AddNnSettings_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    NnSettingsView nnSettingsView = new NnSettingsView { Number = NnSettingsViews.Count + 1, LearningOffsetY = new NumericUpDown(0, true, 0), LearningOffsetM = new NumericUpDown(0, true, 0), LearningOffsetD = new NumericUpDown(0, true, 0), LearningPeriodsCount = new NumericUpDown(1, true, 1), LearningDurationY = new NumericUpDown(0, true, 0), LearningDurationM = new NumericUpDown(0, true, 0), LearningDurationD = new NumericUpDown(0, true, 0), LearningDistanceY = new NumericUpDown(0, true, 0), LearningDistanceM = new NumericUpDown(0, true, 0), LearningDistanceD = new NumericUpDown(0, true, 0), IsForwardTesting = true, ForwardOffsetY = new NumericUpDown(0, true, 0), ForwardOffsetM = new NumericUpDown(0, true, 0), ForwardOffsetD = new NumericUpDown(0, true, 0), ForwardPeriodsCount = new NumericUpDown(1, true, 1), ForwardDurationY = new NumericUpDown(0, true, 0), ForwardDurationM = new NumericUpDown(0, true, 0), ForwardDurationD = new NumericUpDown(0, true, 0), ForwardDistanceY = new NumericUpDown(0, true, 0), ForwardDistanceM = new NumericUpDown(0, true, 0), ForwardDistanceD = new NumericUpDown(0, true, 0) };
+                    NnSettingsViews.Add(nnSettingsView);
+                }, (obj) => true);
+            }
+        }
+        public ICommand DeleteNnSettings_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    NnSettingsViews.Remove(SelectedNnSettingsView);
+                    for (int i = 0; i < NnSettingsViews.Count; i++)
+                    {
+                        NnSettingsViews[i].Number = i + 1;
+                    }
+                }, (obj) => SelectedNnSettingsView != null);
+            }
+        }
+        #endregion
     }
 }

@@ -149,7 +149,7 @@
                 </Grid>
                 <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
                     <TextBlock Text="Вести торговлю по"/>
-                    <ComboBox ItemsSource="{Binding qqq}" SelectedItem="{Binding www}" Margin="7 0 0 0"/>
+                    <ComboBox ItemsSource="{Binding DataSourceTemplatesNnView}" SelectedItem="{Binding SelectedTradingDataSourceTemplatesNnView, Mode=TwoWay}" DisplayMemberPath="Name" Margin="7 0 0 0"/>
                 </StackPanel>
                 <Grid Margin="0 15 0 0">
                     <Grid.ColumnDefinitions>
@@ -302,6 +302,10 @@
                             <Grid Grid.Column="1" x:Name="helperDss1"/>
                             <Grid Grid.Column="2" x:Name="helperDss2"/>
                         </Grid>
+                        <StackPanel Orientation="Horizontal" Margin="0 7 0 0">
+                            <TextBlock Text="Валюта:"/>
+                            <ComboBox ItemsSource="{Binding Currencies}" SelectedItem="{Binding SelectedCurrency, Mode=TwoWay}" DisplayMemberPath="Name" SelectedIndex="0" Margin="7 0 0 0" Width="38"/>
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
                 <StackPanel Orientation="Horizontal" Margin="0 15 0 0">

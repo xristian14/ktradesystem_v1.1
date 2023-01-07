@@ -1,4 +1,6 @@
-﻿using ktradesystem.Views;
+﻿using ktradesystem.Models;
+using ktradesystem.Models.Datatables;
+using ktradesystem.Views;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -21,7 +23,15 @@ namespace ktradesystem.ViewModels
             }
             return _instance;
         }
-
+        private ViewModelPageTestingNN()
+        {
+            _modelData = ModelData.getInstance();
+            _viewModelPageDataSource = ViewModelPageDataSource.getInstance();
+            Currencies = _modelData.Currencies;
+            SelectedCurrency = Currencies[0];
+        }
+        private ViewModelPageDataSource _viewModelPageDataSource;
+        private ModelData _modelData;
         private ViewmodelData _viewmodelData;
         public ViewmodelData viewmodelData
         {
@@ -76,13 +86,23 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
+        private DataSourceTemplateNnView _selectedTradingDataSourceTemplatesNnView;
+        public DataSourceTemplateNnView SelectedTradingDataSourceTemplatesNnView //шаблон источника данных, по которому вести торговлю
+        {
+            get { return _selectedTradingDataSourceTemplatesNnView; }
+            set
+            {
+                _selectedTradingDataSourceTemplatesNnView = value;
+                OnPropertyChanged();
+            }
+        }
         public ICommand AddDataSourceTemplate_Click
         {
             get
             {
                 return new DelegateCommand((obj) =>
                 {
-                    DataSourceTemplateNnView dataSourceTemplateNnView = new DataSourceTemplateNnView { Name = "template" + (DataSourceTemplatesNnView.Count + 1).ToString(), InputLayerCandleCount = new NumericUpDown(1, false), LastCandleOffset = new NumericUpDown(0, false), IsOpenCandleNeuron = true, IsMaxMinCandleNeuron = true, IsCloseCandleNeuron = true, IsVolumeCandleNeuron = true, Scalers = ScalersView, IsScaleShowingNeurons = false };
+                    DataSourceTemplateNnView dataSourceTemplateNnView = new DataSourceTemplateNnView { Name = "template" + (DataSourceTemplatesNnView.Count + 1).ToString(), InputLayerCandleCount = new NumericUpDown(1, true, 1), LastCandleOffset = new NumericUpDown(0, true, 0), IsOpenCandleNeuron = true, IsMaxMinCandleNeuron = true, IsCloseCandleNeuron = true, IsVolumeCandleNeuron = true, Scalers = ScalersView, IsScaleShowingNeurons = false };
                     DataSourceTemplatesNnView.Add(dataSourceTemplateNnView);
                 }, (obj) => true);
             }
@@ -99,6 +119,8 @@ namespace ktradesystem.ViewModels
                         DataSourceTemplatesNnView[i].Name = "template" + (i + 1).ToString();
                     }
                     ScalersView.Clear();
+                    DataSourceGroupsView.Clear();
+                    SelectedTradingDataSourceTemplatesNnView = null;
                 }, (obj) => SelectedDataSourceTemplatesNnView != null);
             }
         }
@@ -372,6 +394,234 @@ namespace ktradesystem.ViewModels
                 {
                     ListSelectedMaxScalerDataSourceTemplates.Remove(SelectedListSelectedMaxScalerDataSourceTemplates);
                 }, (obj) => ListSelectedMaxScalerDataSourceTemplates.Contains(SelectedListSelectedMaxScalerDataSourceTemplates));
+            }
+        }
+        #endregion
+
+
+
+        #region view add delete DataSourceGroupsView
+        private ObservableCollection<Currency> _currencies;
+        public ObservableCollection<Currency> Currencies
+        {
+            get { return _currencies; }
+            set
+            {
+                _currencies = value;
+                OnPropertyChanged();
+            }
+        }
+        private Currency _selectedCurrency;
+        public Currency SelectedCurrency
+        {
+            get { return _selectedCurrency; }
+            set
+            {
+                _selectedCurrency = value;
+                OnPropertyChanged();
+            }
+        }
+        private ObservableCollection<DataSourceGroupView> _dataSourceGroupsView = new ObservableCollection<DataSourceGroupView>();
+        public ObservableCollection<DataSourceGroupView> DataSourceGroupsView
+        {
+            get { return _dataSourceGroupsView; }
+            private set
+            {
+                _dataSourceGroupsView = value;
+                OnPropertyChanged();
+            }
+        }
+        private DataSourceGroupView _selectedDataSourceGroupView;
+        public DataSourceGroupView SelectedDataSourceGroupView //выбранная группа источников данных
+        {
+            get { return _selectedDataSourceGroupView; }
+            set
+            {
+                _selectedDataSourceGroupView = value;
+                OnPropertyChanged();
+            }
+        }
+        public ObservableCollection<DataSource> DataSources { get; set; } //список источников данных для combobox
+        private void CreateDataSourceGroupView()
+        {
+            DataSources = new ObservableCollection<DataSource>(_viewModelPageDataSource.DataSourcesForSubscribers);
+        }
+        private ObservableCollection<DataSourcesForAddingDsGroupView> _dataSourcesForAddingDsGroupsView = new ObservableCollection<DataSourcesForAddingDsGroupView>();
+        public ObservableCollection<DataSourcesForAddingDsGroupView> DataSourcesForAddingDsGroupsView //список с элементами для окна добавления группы источников данных
+        {
+            get { return _dataSourcesForAddingDsGroupsView; }
+            set
+            {
+                _dataSourcesForAddingDsGroupsView = value;
+                OnPropertyChanged();
+            }
+        }
+        public ICommand AddDataSourceGroupView_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    CreateDataSourceGroupView();
+                    DataSourcesForAddingDsGroupsView.Clear();
+                    foreach (DataSourceTemplateNnView dataSourceTemplateNnView in DataSourceTemplatesNnView)
+                    {
+                        DataSourcesForAddingDsGroupsView.Add(new DataSourcesForAddingDsGroupView { DataSources = _viewModelPageDataSource.DataSourcesForSubscribers, DataSourceTemplate = new DataSourceTemplate { Name = dataSourceTemplateNnView.Name } });
+                    }
+                    viewmodelData.IsPagesAndMainMenuButtonsEnabled = false;
+                    ViewAddDataSourceGroupNn viewAddDataSourceGroupNn = new ViewAddDataSourceGroupNn();
+                    viewAddDataSourceGroupNn.Show();
+                }, (obj) => DataSourceTemplatesNnView.Count > 0);
+            }
+        }
+        public ICommand DeleteDataSourceGroupView_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    DataSourceGroupsView.Remove(SelectedDataSourceGroupView);
+                    //заново пронумеровывем элементы списка
+                    for (int i = 0; i < DataSourceGroupsView.Count; i++)
+                    {
+                        DataSourceGroupsView[i].Number = i + 1;
+                    }
+                }, (obj) => SelectedDataSourceGroupView != null);
+            }
+        }
+        private bool CheckAddDataSourceGroupFields()
+        {
+            bool result = true;
+
+            ButtonsTooltip.Clear(); //очищаем подсказку кнопки добавить
+            //проверяем на заполненность полей
+            bool isAllDataSourceSelected = true;
+            foreach (DataSourcesForAddingDsGroupView dataSourcesForAddingDsGroupView in DataSourcesForAddingDsGroupsView)
+            {
+                if (dataSourcesForAddingDsGroupView.SelectedDataSource == null)
+                {
+                    isAllDataSourceSelected = false;
+                }
+            }
+            if (isAllDataSourceSelected)
+            {
+                //удостоверяемся в том что заполненные поля не содержат одинаковых источников данных
+                bool isFindEqual = false;
+                for (int i = 0; i < DataSourcesForAddingDsGroupsView.Count; i++)
+                {
+                    for (int k = 0; k < DataSourcesForAddingDsGroupsView.Count; k++)
+                    {
+                        if (i != k)
+                        {
+                            if (DataSourcesForAddingDsGroupsView[i].SelectedDataSource == DataSourcesForAddingDsGroupsView[k].SelectedDataSource)
+                            {
+                                isFindEqual = true;
+                            }
+                        }
+                    }
+                }
+                if (isFindEqual == false)
+                {
+                    //проверяем, имеют ли все выбранные источники данных общие даты (находим саму последнюю дату начала и самую раннюю дату окончания, если начало больше окончания, значит общих дат нет)
+                    DateTime startDate = DataSourcesForAddingDsGroupsView[0].SelectedDataSource.StartDate;
+                    DateTime endDate = DataSourcesForAddingDsGroupsView[0].SelectedDataSource.EndDate;
+                    for (int i = 1; i < DataSourcesForAddingDsGroupsView.Count; i++)
+                    {
+                        if (DateTime.Compare(startDate, DataSourcesForAddingDsGroupsView[i].SelectedDataSource.StartDate) < 0)
+                        {
+                            startDate = DataSourcesForAddingDsGroupsView[i].SelectedDataSource.StartDate;
+                        }
+                        if (DateTime.Compare(endDate, DataSourcesForAddingDsGroupsView[i].SelectedDataSource.EndDate) > 0)
+                        {
+                            endDate = DataSourcesForAddingDsGroupsView[i].SelectedDataSource.EndDate;
+                        }
+                    }
+                    if (DateTime.Compare(startDate, endDate) < 0) //если true, то общие даты найдены
+                    {
+                        //проверяем на уникальность комбинации источников данных
+                        bool isUnuque = true;
+                        foreach (DataSourceGroupView dataSourceGroupView in DataSourceGroupsView)
+                        {
+                            bool isFind = true;
+                            //если хоть один DataSourcesAccordance не имеет полного совпадения, значи все в порядке
+                            for (int i = 0; i < dataSourceGroupView.DataSourcesAccordances.Count; i++)
+                            {
+                                if ((dataSourceGroupView.DataSourcesAccordances[i].DataSourceTemplate.Name == DataSourcesForAddingDsGroupsView[i].DataSourceTemplate.Name && dataSourceGroupView.DataSourcesAccordances[i].DataSource == DataSourcesForAddingDsGroupsView[i].SelectedDataSource) == false) //данный DataSourcesAccordance не имеет полного совпадения
+                                {
+                                    isFind = false;
+                                }
+                            }
+                            if (isFind)
+                            {
+                                isUnuque = false;
+                            }
+                        }
+                        if (isUnuque == false)
+                        {
+                            ButtonsTooltip.Add("Данная комбинация источников данных уже добавлена, выберите другую.");
+                            result = false;
+                        }
+                    }
+                }
+                else
+                {
+                    ButtonsTooltip.Add("Выбран один источник данных для нескольких шаблонов.");
+                    result = false;
+                }
+            }
+            else
+            {
+                ButtonsTooltip.Add("Не выбраны источники данных.");
+                result = false;
+            }
+
+            return result;
+        }
+        public ICommand DataSourceGroupViewSave_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    //определяем доступные даты тестирования для данной группы источников данных. Доступная дата начала - самая поздняя из дат начала, доступная дата окончания - самая поздняя дата окончания
+                    DateTime startDateTime = new DateTime();
+                    DateTime endDateTime = new DateTime();
+                    bool isFirstIteration = true;
+                    List<DataSourceAccordanceView> dataSourcesAccordances = new List<DataSourceAccordanceView>();
+                    foreach (DataSourcesForAddingDsGroupView dataSourcesForAddingDsGroupView in DataSourcesForAddingDsGroupsView)
+                    {
+                        dataSourcesAccordances.Add(new DataSourceAccordanceView { DataSourceTemplate = dataSourcesForAddingDsGroupView.DataSourceTemplate, DataSource = dataSourcesForAddingDsGroupView.SelectedDataSource });
+                        if (isFirstIteration)
+                        {
+                            startDateTime = dataSourcesForAddingDsGroupView.SelectedDataSource.StartDate;
+                            endDateTime = dataSourcesForAddingDsGroupView.SelectedDataSource.EndDate;
+                        }
+                        else
+                        {
+                            if (DateTime.Compare(startDateTime, dataSourcesForAddingDsGroupView.SelectedDataSource.StartDate) < 0)
+                            {
+                                startDateTime = dataSourcesForAddingDsGroupView.SelectedDataSource.StartDate;
+                            }
+                            if (DateTime.Compare(endDateTime, dataSourcesForAddingDsGroupView.SelectedDataSource.EndDate) < 0)
+                            {
+                                endDateTime = dataSourcesForAddingDsGroupView.SelectedDataSource.EndDate;
+                            }
+                        }
+                    }
+                    DataSourceGroupsView.Add(new DataSourceGroupView(DataSourceGroupsView.Count + 1, dataSourcesAccordances, startDateTime, endDateTime));
+                    SelectedCurrency = Currencies.Where(a => a.Id == dataSourcesAccordances[0].DataSource.Currency.Id).First(); //выбираем валюту как у добавленного источника данных
+                    CloseAdditionalWindowAction?.Invoke();
+                }, (obj) => CheckAddDataSourceGroupFields());
+            }
+        }
+        public ICommand DataSourceGroupViewCancel_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    CloseAdditionalWindowAction?.Invoke();
+                }, (obj) => true);
             }
         }
         #endregion

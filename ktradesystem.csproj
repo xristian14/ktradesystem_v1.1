@@ -277,6 +277,9 @@
     <Compile Include="Views\ViewAddDataSource.xaml.cs">
       <DependentUpon>ViewAddDataSource.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\ViewAddDataSourceGroupNn.xaml.cs">
+      <DependentUpon>ViewAddDataSourceGroupNn.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ViewAddDataSourceTemplate.xaml.cs">
       <DependentUpon>ViewAddDataSourceTemplate.xaml</DependentUpon>
     </Compile>
@@ -423,6 +426,10 @@
     <Page Include="Views\ViewAddDataSource.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\ViewAddDataSourceGroupNn.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\ViewAddDataSourceTemplate.xaml">
       <SubType>Designer</SubType>

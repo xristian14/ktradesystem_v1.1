@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace ktradesystem.ViewModels
 {
@@ -19,23 +20,41 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        private NumericUpDown _inputLayerCandleCount;
-        public NumericUpDown InputLayerCandleCount
+        private bool _isLimitPrognosisCandles;
+        public bool IsLimitPrognosisCandles
         {
-            get { return _inputLayerCandleCount; }
+            get { return _isLimitPrognosisCandles; }
             set
             {
-                _inputLayerCandleCount = value;
+                _isLimitPrognosisCandles = value;
+                if (value)
+                {
+                    LimitPrognosisCandlesVisibility = Visibility.Visible;
+                }
+                else
+                {
+                    LimitPrognosisCandlesVisibility = Visibility.Collapsed;
+                }
                 OnPropertyChanged();
             }
         }
-        private NumericUpDown _lastCandleOffset;
-        public NumericUpDown LastCandleOffset
+        private Visibility _limitPrognosisCandlesVisibility = Visibility.Collapsed;
+        public Visibility LimitPrognosisCandlesVisibility
         {
-            get { return _lastCandleOffset; }
+            get { return _limitPrognosisCandlesVisibility; }
             set
             {
-                _lastCandleOffset = value;
+                _limitPrognosisCandlesVisibility = value;
+                OnPropertyChanged();
+            }
+        }
+        private NumericUpDown _limitPrognosisCandles;
+        public NumericUpDown LimitPrognosisCandles
+        {
+            get { return _limitPrognosisCandles; }
+            set
+            {
+                _limitPrognosisCandles = value;
                 OnPropertyChanged();
             }
         }
@@ -76,36 +95,6 @@ namespace ktradesystem.ViewModels
             set
             {
                 _isVolumeCandleNeuron = value;
-                OnPropertyChanged();
-            }
-        }
-        private ObservableCollection<ScalerView> _scalers = new ObservableCollection<ScalerView>();
-        public ObservableCollection<ScalerView> Scalers
-        {
-            get { return _scalers; }
-            set
-            {
-                _scalers = value;
-                OnPropertyChanged();
-            }
-        }
-        private ScalerView _selectedScaler;
-        public ScalerView SelectedScaler
-        {
-            get { return _selectedScaler; }
-            set
-            {
-                _selectedScaler = value;
-                OnPropertyChanged();
-            }
-        }
-        private bool _isScaleShowingNeurons;
-        public bool IsScaleShowingNeurons
-        {
-            get { return _isScaleShowingNeurons; }
-            set
-            {
-                _isScaleShowingNeurons = value;
                 OnPropertyChanged();
             }
         }

@@ -170,6 +170,7 @@
     <Compile Include="ViewModels\DataSourceView.cs" />
     <Compile Include="ViewModels\DealPageTradeChart.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
+    <Compile Include="ViewModels\DsPrognosisFileView.cs" />
     <Compile Include="ViewModels\EvaluationCriteriaPageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\EvaluationCriteriaView.cs" />
     <Compile Include="ViewModels\FilterTopModelView.cs" />
@@ -192,6 +193,7 @@
     <Compile Include="ViewModels\SegmentOrderIndexPageTradeChart.cs" />
     <Compile Include="ViewModels\SegmentPageTradeChart.cs" />
     <Compile Include="ViewModels\StackPanelTestingResult.cs" />
+    <Compile Include="ViewModels\StepsSettingsView.cs" />
     <Compile Include="ViewModels\TabControlTestingResultItem.cs" />
     <Compile Include="ViewModels\TestBatchTestingResultCombobox.cs" />
     <Compile Include="ViewModels\TestRunTestingResultCombobox.cs" />

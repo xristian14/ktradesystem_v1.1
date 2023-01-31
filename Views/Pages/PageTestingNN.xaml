@@ -447,7 +447,7 @@
             <ColumnDefinition Width="1200"/>
             <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
-        <Grid Grid.Column="0" Background="White">
+        <ScrollViewer Grid.Column="0" Background="White">
             <StackPanel Orientation="Vertical" Margin="10">
                 <Grid Margin="0 15 0 0">
                     <Grid.ColumnDefinitions>
@@ -731,10 +731,49 @@
                     </Grid>
                     <Grid Grid.Column="4" x:Name="helperNn4"/>
                 </Grid>
-                
+
+                <TextBlock Text="Файлы с прогнозируемыми значениями для источников данных" FontWeight="Bold" Margin="0 15 0 0"/>
+                <Grid Width="700" HorizontalAlignment="Left" Margin="0 2 0 0">
+                    <ListView ItemsSource="{Binding DsPrognosisFilesView}" SelectionMode="Single" MaxHeight="300">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn DisplayMemberBinding="{Binding DataSource.Name}" Header="Источник данных" Width="{Binding ElementName=helperDsPrognosisFiles0, Path=ActualWidth}"/>
+                                <GridViewColumn Header="Файл с прогнозируемыми значениями" Width="{Binding ElementName=helperDsPrognosisFiles1, Path=ActualWidth}">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <ToggleButton IsChecked="{Binding IsSelectFileClick}" Content="Выбрать" Padding="3 0"/>
+                                                <TextBlock Text="{Binding FilePath}" Margin="5 0 0 0"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="Focusable" Value="false"/>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                    </ListView>
+                    <Grid Visibility="Visible">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="0.3*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="33"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0" x:Name="helperDsPrognosisFiles0"/>
+                        <Grid Grid.Column="1" x:Name="helperDsPrognosisFiles1"/>
+                    </Grid>
+                </Grid>
+
                 <TextBlock Text="Структура нейронной сети" FontWeight="Bold" Margin="0 15 0 0"/>
                 <StackPanel Orientation="Horizontal" Margin="0 3 0 0">
-                    <TextBlock Text="Количество скрытых слоёв" Margin="0 0 0 0"/>
+                    <TextBlock Text="Размер входного слоя:" Margin="0 0 0 0"/>
+                    <TextBlock Text="{Binding InputLayerCount}" Margin="3 0 0 0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0 3 0 0">
+                    <TextBlock Text="Количество скрытых слоёв:" Margin="0 0 0 0"/>
                     <Slider Value="{Binding HiddenLayersCount}" Minimum="1" Maximum="5" Width="30" Margin="6 0 0 0"/>
                     <TextBlock Text="{Binding HiddenLayersCount}" Margin="3 0 0 0"/>
                 </StackPanel>
@@ -761,6 +800,10 @@
                     <TextBlock Text="Функция активации:" Margin="0 0 0 0"/>
                     <ComboBox ItemsSource="{Binding wwww}" SelectedItem="{Binding qqq}" Margin="4 0 0 0"/>
                 </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0 1 0 0">
+                    <TextBlock Text="Длина генома:" Margin="0 0 0 0"/>
+                    <TextBlock Text="{Binding www}" Margin="4 0 0 0"/>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0 15 0 0">
                     <TextBlock Text="Параметры генетического алгоритма обучения" FontWeight="Bold"/>
                 </StackPanel>
@@ -771,24 +814,31 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
                         <TextBlock Text="Длительность обучения:" Margin="0 0 0 0"/>
-                        <Button Content="Добавить" Command="{Binding AddNnSettings_Click}" Width="70" Margin="7 0 0 0"/>
-                        <Button Content="Удалить" Command="{Binding DeleteNnSettings_Click}" Width="60" Margin="7 0 0 0"/>
+                        <Button Content="Добавить" Command="{Binding AddStepsSettingsView_Click}" Width="70" Margin="7 0 0 0"/>
+                        <Button Content="Удалить" Command="{Binding DeleteStepsSettingsView_Click}" Width="60" Margin="7 0 0 0"/>
                     </StackPanel>
-                    <Grid Width="300" HorizontalAlignment="Left" Margin="0 0 0 0">
-                        <ListView ItemsSource="{Binding DataSourceGroupsView}" SelectedItem="{Binding SelectedDataSourceGroupView, Mode=TwoWay}" SelectionMode="Single" MaxHeight="200">
+                    <Grid Width="420" HorizontalAlignment="Left" Margin="0 0 0 0">
+                        <ListView ItemsSource="{Binding StepsSettingsViews}" SelectedItem="{Binding SelectedStepsSettingsViews, Mode=TwoWay}" SelectionMode="Single" MaxHeight="200">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn Header="Количество поколений" Width="{Binding ElementName=helperGeneticMutate0, Path=ActualWidth}">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBox Text="{Binding www, Mode=TwoWay}" Width="100"/>
+                                                <TextBox Text="{Binding GenerationsDuration, Mode=TwoWay}" Width="{Binding ElementName=helperGeneticMutate0_0, Path=ActualWidth}"/>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
                                     <GridViewColumn Header="Шанс мутации" Width="{Binding ElementName=helperGeneticMutate1, Path=ActualWidth}">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBox Text="{Binding www, Mode=TwoWay}"  Width="100"/>
+                                                <TextBox Text="{Binding MutationProbability, Mode=TwoWay}"  Width="{Binding ElementName=helperGeneticMutate1_0, Path=ActualWidth}"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Степень масштабирования&#x0a;приспособленности" Width="{Binding ElementName=helperGeneticMutate2, Path=ActualWidth}">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBox Text="{Binding FitnessScaleRate, Mode=TwoWay}"  Width="{Binding ElementName=helperGeneticMutate2_0, Path=ActualWidth}"/>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
@@ -797,19 +847,27 @@
                         </ListView>
                         <Grid Visibility="Visible">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="0.9*"/>
+                                <ColumnDefinition Width="0.6*"/>
                                 <ColumnDefinition Width="1*"/>
                                 <ColumnDefinition Width="33"/>
                             </Grid.ColumnDefinitions>
-                            <Grid Grid.Column="0" x:Name="helperGeneticMutate0"/>
-                            <Grid Grid.Column="1" x:Name="helperGeneticMutate1"/>
+                            <Grid Grid.Column="0" x:Name="helperGeneticMutate0">
+                                <Grid Margin="10 0" x:Name="helperGeneticMutate0_0"/>
+                            </Grid>
+                            <Grid Grid.Column="1" x:Name="helperGeneticMutate1">
+                                <Grid Margin="10 0" x:Name="helperGeneticMutate1_0"/>
+                            </Grid>
+                            <Grid Grid.Column="2" x:Name="helperGeneticMutate2">
+                                <Grid Margin="10 0" x:Name="helperGeneticMutate2_0"/>
+                            </Grid>
                         </Grid>
                     </Grid>
                     <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
                         <CheckBox Content="Использовать функцию уменьшения значения приспособленности (Доходность на маржу), зависящую от устойчивости ряда. Значения ряда - приспособленность за определенные временные интервалы." IsChecked="{Binding www}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="17 5 0 0">
-                        <TextBlock Text="Длительность интервала одного значения ряда:" Margin="0 0 0 0"/>
+                        <TextBlock Text="Количество интервалов, на которое следует разбить один период обучения:" Margin="0 0 0 0"/>
                         <TextBox Text="{Binding PopulationSize}" Width="40" Margin="3 0 0 0"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="17 3 0 0">
@@ -828,6 +886,6 @@
                     </Button.ToolTip>
                 </Button>
             </StackPanel>
-        </Grid>
+        </ScrollViewer>
     </Grid>
 </Page>

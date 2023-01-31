@@ -105,6 +105,7 @@ namespace ktradesystem.ViewModels
                     DataSourceTemplateNnView dataSourceTemplateNnView = new DataSourceTemplateNnView { Name = "template" + (DataSourceTemplatesNnView.Count + 1).ToString(), LimitPrognosisCandles = new NumericUpDown(1, true, 1), IsOpenCandleNeuron = true, IsMaxMinCandleNeuron = true, IsCloseCandleNeuron = true, IsVolumeCandleNeuron = true };
                     DataSourceTemplatesNnView.Add(dataSourceTemplateNnView);
                     DataSourceGroupsView.Clear();
+                    CreateDsPrognosisFiles();
                 }, (obj) => true);
             }
         }
@@ -121,6 +122,7 @@ namespace ktradesystem.ViewModels
                     }
                     DataSourceGroupsView.Clear();
                     SelectedTradingDataSourceTemplatesNnView = null;
+                    CreateDsPrognosisFiles();
                 }, (obj) => SelectedDataSourceTemplatesNnView != null);
             }
         }
@@ -214,6 +216,7 @@ namespace ktradesystem.ViewModels
                     {
                         DataSourceGroupsView[i].Number = i + 1;
                     }
+                    CreateDsPrognosisFiles();
                 }, (obj) => SelectedDataSourceGroupView != null);
             }
         }
@@ -339,6 +342,7 @@ namespace ktradesystem.ViewModels
                     DataSourceGroupsView.Add(new DataSourceGroupView(DataSourceGroupsView.Count + 1, dataSourcesAccordances, startDateTime, endDateTime));
                     SelectedCurrency = Currencies.Where(a => a.Id == dataSourcesAccordances[0].DataSource.Currency.Id).First(); //выбираем валюту как у добавленного источника данных
                     CloseAdditionalWindowAction?.Invoke();
+                    CreateDsPrognosisFiles();
                 }, (obj) => CheckAddDataSourceGroupFields());
             }
         }
@@ -400,6 +404,86 @@ namespace ktradesystem.ViewModels
                         NnSettingsViews[i].Number = i + 1;
                     }
                 }, (obj) => SelectedNnSettingsView != null);
+            }
+        }
+        #endregion
+
+
+
+        #region view add delete StepsSettingsView
+        private ObservableCollection<StepsSettingsView> _stepsSettingsViews = new ObservableCollection<StepsSettingsView>();
+        public ObservableCollection<StepsSettingsView> StepsSettingsViews
+        {
+            get { return _stepsSettingsViews; }
+            private set
+            {
+                _stepsSettingsViews = value;
+                OnPropertyChanged();
+            }
+        }
+        private StepsSettingsView _selectedStepsSettingsViews;
+        public StepsSettingsView SelectedStepsSettingsViews
+        {
+            get { return _selectedStepsSettingsViews; }
+            set
+            {
+                _selectedStepsSettingsViews = value;
+                OnPropertyChanged();
+            }
+        }
+        public ICommand AddStepsSettingsView_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    StepsSettingsView stepsSettingsView = new StepsSettingsView { GenerationsDuration = "100", MutationProbability = "0,01", FitnessScaleRate = "0" };
+                    StepsSettingsViews.Add(stepsSettingsView);
+                }, (obj) => true);
+            }
+        }
+        public ICommand DeleteStepsSettingsView_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    StepsSettingsViews.Remove(SelectedStepsSettingsViews);
+                }, (obj) => SelectedStepsSettingsViews != null);
+            }
+        }
+        #endregion
+
+
+
+        #region view add delete DsPrognosisFileView
+        private ObservableCollection<DsPrognosisFileView> _dsPrognosisFilesView = new ObservableCollection<DsPrognosisFileView>();
+        public ObservableCollection<DsPrognosisFileView> DsPrognosisFilesView
+        {
+            get { return _dsPrognosisFilesView; }
+            private set
+            {
+                _dsPrognosisFilesView = value;
+                OnPropertyChanged();
+            }
+        }
+        private void CreateDsPrognosisFiles()
+        {
+            DsPrognosisFilesView.Clear();
+            List<DataSource> dataSources = new List<DataSource>();
+            for(int i = 0; i < DataSourceGroupsView.Count; i++) //формируем список со всеми источниками данных групп источников данных
+            {
+                for(int k = 0; k < DataSourceGroupsView[i].DataSourcesAccordances.Count; k++)
+                {
+                    if (!dataSources.Any(a => a.Id == DataSourceGroupsView[i].DataSourcesAccordances[k].DataSource.Id))
+                    {
+                        dataSources.Add(DataSourceGroupsView[i].DataSourcesAccordances[k].DataSource);
+                    }
+                }
+            }
+            for(int i = 0; i < dataSources.Count; i++)
+            {
+                DsPrognosisFilesView.Add(new DsPrognosisFileView { DataSource = dataSources[i] });
             }
         }
         #endregion

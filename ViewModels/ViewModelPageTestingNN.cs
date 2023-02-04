@@ -29,6 +29,7 @@ namespace ktradesystem.ViewModels
             _viewModelPageDataSource = ViewModelPageDataSource.getInstance();
             Currencies = _modelData.Currencies;
             SelectedCurrency = Currencies[0];
+            SelectedActivationFunction = ActivationFunctions[0];
         }
         private ViewModelPageDataSource _viewModelPageDataSource;
         private ModelData _modelData;
@@ -410,7 +411,197 @@ namespace ktradesystem.ViewModels
 
 
 
-        #region view add delete StepsSettingsView
+        #region view add delete DsPrognosisFileView
+        private ObservableCollection<DsPrognosisFileView> _dsPrognosisFilesView = new ObservableCollection<DsPrognosisFileView>();
+        public ObservableCollection<DsPrognosisFileView> DsPrognosisFilesView
+        {
+            get { return _dsPrognosisFilesView; }
+            private set
+            {
+                _dsPrognosisFilesView = value;
+                OnPropertyChanged();
+            }
+        }
+        private void CreateDsPrognosisFiles()
+        {
+            DsPrognosisFilesView.Clear();
+            List<DataSource> dataSources = new List<DataSource>();
+            for(int i = 0; i < DataSourceGroupsView.Count; i++) //формируем список со всеми источниками данных групп источников данных
+            {
+                for(int k = 0; k < DataSourceGroupsView[i].DataSourcesAccordances.Count; k++)
+                {
+                    if (!dataSources.Any(a => a.Id == DataSourceGroupsView[i].DataSourcesAccordances[k].DataSource.Id))
+                    {
+                        dataSources.Add(DataSourceGroupsView[i].DataSourcesAccordances[k].DataSource);
+                    }
+                }
+            }
+            for(int i = 0; i < dataSources.Count; i++)
+            {
+                DsPrognosisFilesView.Add(new DsPrognosisFileView { DataSource = dataSources[i] });
+            }
+        }
+        #endregion
+
+
+
+        #region Genetic Algorithm
+
+        private int _inputLayerSize;
+        public int InputLayerSize
+        {
+            get { return _inputLayerSize; }
+            set
+            {
+                _inputLayerSize = value;
+                OnPropertyChanged();
+            }
+        }
+        private int _hiddenLayersCount = 2;
+        public int HiddenLayersCount
+        {
+            get { return _hiddenLayersCount; }
+            set
+            {
+                _hiddenLayersCount = value;
+                OnPropertyChanged();
+            }
+        }
+        private string _firstHiddenLayerCountNeurons = "1";
+        public string FirstHiddenLayerCountNeurons
+        {
+            get { return _firstHiddenLayerCountNeurons; }
+            set
+            {
+                if (int.TryParse(value, out int res))
+                {
+                    _firstHiddenLayerCountNeurons = value;
+                }
+                OnPropertyChanged();
+            }
+        }
+        private string _secondHiddenLayerCountNeurons = "1";
+        public string SecondHiddenLayerCountNeurons
+        {
+            get { return _secondHiddenLayerCountNeurons; }
+            set
+            {
+                if (int.TryParse(value, out int res))
+                {
+                    _secondHiddenLayerCountNeurons = value;
+                }
+                OnPropertyChanged();
+            }
+        }
+        private string _thirdHiddenLayerCountNeurons = "1";
+        public string ThirdHiddenLayerCountNeurons
+        {
+            get { return _thirdHiddenLayerCountNeurons; }
+            set
+            {
+                if (int.TryParse(value, out int res))
+                {
+                    _thirdHiddenLayerCountNeurons = value;
+                }
+                OnPropertyChanged();
+            }
+        }
+        private string _fourthHiddenLayerCountNeurons = "1";
+        public string FourthHiddenLayerCountNeurons
+        {
+            get { return _fourthHiddenLayerCountNeurons; }
+            set
+            {
+                if (int.TryParse(value, out int res))
+                {
+                    _fourthHiddenLayerCountNeurons = value;
+                }
+                OnPropertyChanged();
+            }
+        }
+        private string _fifthHiddenLayerCountNeurons = "1";
+        public string FifthHiddenLayerCountNeurons
+        {
+            get { return _fifthHiddenLayerCountNeurons; }
+            set
+            {
+                if (int.TryParse(value, out int res))
+                {
+                    _fifthHiddenLayerCountNeurons = value;
+                }
+                OnPropertyChanged();
+            }
+        }
+        private string _weightsMin = "-5";
+        public string WeightsMin
+        {
+            get { return _weightsMin; }
+            set
+            {
+                if (int.TryParse(value, out int res))
+                {
+                    _weightsMin = value;
+                }
+                OnPropertyChanged();
+            }
+        }
+        private string _weightsMax = "5";
+        public string WeightsMax
+        {
+            get { return _weightsMax; }
+            set
+            {
+                if (int.TryParse(value, out int res))
+                {
+                    _weightsMax = value;
+                }
+                OnPropertyChanged();
+            }
+        }
+        private ObservableCollection<string> _activationFunctions = new ObservableCollection<string>() { "relu", "leaky relu", "sigmoid" };
+        public ObservableCollection<string> ActivationFunctions
+        {
+            get { return _activationFunctions; }
+            set
+            {
+                _activationFunctions = value;
+                OnPropertyChanged();
+            }
+        }
+        private string _selectedActivationFunction;
+        public string SelectedActivationFunction
+        {
+            get { return _selectedActivationFunction; }
+            set
+            {
+                _selectedActivationFunction = value;
+                OnPropertyChanged();
+            }
+        }
+        private int _genomeLength;
+        public int GenomeLength
+        {
+            get { return _genomeLength; }
+            set
+            {
+                _genomeLength = value;
+                OnPropertyChanged();
+            }
+        }
+        private string _populationSize = "100";
+        public string PopulationSize
+        {
+            get { return _populationSize; }
+            set
+            {
+                if (int.TryParse(value, out int res))
+                {
+                    _populationSize = value;
+                }
+                OnPropertyChanged();
+            }
+        }
+
         private ObservableCollection<StepsSettingsView> _stepsSettingsViews = new ObservableCollection<StepsSettingsView>();
         public ObservableCollection<StepsSettingsView> StepsSettingsViews
         {
@@ -452,38 +643,40 @@ namespace ktradesystem.ViewModels
                 }, (obj) => SelectedStepsSettingsViews != null);
             }
         }
-        #endregion
-
-
-
-        #region view add delete DsPrognosisFileView
-        private ObservableCollection<DsPrognosisFileView> _dsPrognosisFilesView = new ObservableCollection<DsPrognosisFileView>();
-        public ObservableCollection<DsPrognosisFileView> DsPrognosisFilesView
+        private bool _useFitnessReduce = false;
+        public bool UseFitnessReduce
         {
-            get { return _dsPrognosisFilesView; }
-            private set
+            get { return _useFitnessReduce; }
+            set
             {
-                _dsPrognosisFilesView = value;
+                _useFitnessReduce = value;
                 OnPropertyChanged();
             }
         }
-        private void CreateDsPrognosisFiles()
+        private string _intervalsCount = "1";
+        public string IntervalsCount
         {
-            DsPrognosisFilesView.Clear();
-            List<DataSource> dataSources = new List<DataSource>();
-            for(int i = 0; i < DataSourceGroupsView.Count; i++) //формируем список со всеми источниками данных групп источников данных
+            get { return _intervalsCount; }
+            set
             {
-                for(int k = 0; k < DataSourceGroupsView[i].DataSourcesAccordances.Count; k++)
+                if (int.TryParse(value, out int res))
                 {
-                    if (!dataSources.Any(a => a.Id == DataSourceGroupsView[i].DataSourcesAccordances[k].DataSource.Id))
-                    {
-                        dataSources.Add(DataSourceGroupsView[i].DataSourcesAccordances[k].DataSource);
-                    }
+                    _intervalsCount = value;
                 }
+                OnPropertyChanged();
             }
-            for(int i = 0; i < dataSources.Count; i++)
+        }
+        private string _volatilityMultiply = "0,38";
+        public string VolatilityMultiply
+        {
+            get { return _volatilityMultiply; }
+            set
             {
-                DsPrognosisFilesView.Add(new DsPrognosisFileView { DataSource = dataSources[i] });
+                if (double.TryParse(value, out double res))
+                {
+                    _volatilityMultiply = value;
+                }
+                OnPropertyChanged();
             }
         }
         #endregion

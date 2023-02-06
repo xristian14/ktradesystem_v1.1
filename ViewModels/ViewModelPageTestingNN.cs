@@ -558,7 +558,7 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        private ObservableCollection<string> _activationFunctions = new ObservableCollection<string>() { "relu", "leaky relu", "sigmoid" };
+        private ObservableCollection<string> _activationFunctions = new ObservableCollection<string>() { "relu", "leaky relu", "sigmoid", "tanh" };
         public ObservableCollection<string> ActivationFunctions
         {
             get { return _activationFunctions; }

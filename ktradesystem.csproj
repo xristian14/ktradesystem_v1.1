@@ -109,6 +109,22 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AForgeExtensions\Features.cs" />
+    <Compile Include="AForgeExtensions\Neuro\ActivationNetworkFeatures.cs" />
+    <Compile Include="AForgeExtensions\Neuro\ActivationNetworkSerializeFormat.cs" />
+    <Compile Include="AForgeExtensions\Neuro\ILossFunction.cs" />
+    <Compile Include="AForgeExtensions\Neuro\LeakyReLuActivationFunction.cs" />
+    <Compile Include="AForgeExtensions\Neuro\Learning\DeepQLearning.cs" />
+    <Compile Include="AForgeExtensions\Neuro\Learning\GeneticLearningBase.cs" />
+    <Compile Include="AForgeExtensions\Neuro\Learning\GeneticLearningNoTeacher.cs" />
+    <Compile Include="AForgeExtensions\Neuro\Learning\GeneticLearningTeacher.cs" />
+    <Compile Include="AForgeExtensions\Neuro\Learning\GeneticLearning\Chromosome.cs" />
+    <Compile Include="AForgeExtensions\Neuro\Learning\GeneticLearning\RouletteWheelSelection.cs" />
+    <Compile Include="AForgeExtensions\Neuro\Learning\GeneticLearning\SelectionMethodBase.cs" />
+    <Compile Include="AForgeExtensions\Neuro\Learning\GeneticLearning\StepsSettings.cs" />
+    <Compile Include="AForgeExtensions\Neuro\MSELossFunction.cs" />
+    <Compile Include="AForgeExtensions\Neuro\ReLuActivationFunction.cs" />
+    <Compile Include="AForgeExtensions\Neuro\SameActivationFunction.cs" />
     <Compile Include="CommunicationChannel\DataSourceAddingProgress.cs" />
     <Compile Include="CommunicationChannel\TestingProgress.cs" />
     <Compile Include="Models\Account.cs" />
@@ -124,6 +140,7 @@
     <Compile Include="Models\CompareSign.cs" />
     <Compile Include="Models\DataSourceCandles.cs" />
     <Compile Include="Models\DataSourceForCalculate.cs" />
+    <Compile Include="Models\DataSourcePrognosisFile.cs" />
     <Compile Include="Models\Datatables\AlgorithmIndicator.cs" />
     <Compile Include="Models\Datatables\MarginType.cs" />
     <Compile Include="Models\Datatables\ParameterValueType.cs" />
@@ -136,6 +153,11 @@
     <Compile Include="Models\ModelFunctions.cs" />
     <Compile Include="Models\ModelSimulation.cs" />
     <Compile Include="Models\ModelTestingResult.cs" />
+    <Compile Include="Models\NnChromosome.cs" />
+    <Compile Include="Models\NnDataSourceTemplate.cs" />
+    <Compile Include="Models\NnManager.cs" />
+    <Compile Include="Models\NnSettings.cs" />
+    <Compile Include="Models\NnTesting.cs" />
     <Compile Include="Models\Order.cs" />
     <Compile Include="Models\PerfectProfit.cs" />
     <Compile Include="Models\TestBatch.cs" />

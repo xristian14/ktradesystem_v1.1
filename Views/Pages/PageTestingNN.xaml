@@ -598,7 +598,7 @@
                     <Button Content="Добавить" Command="{Binding AddNnSettings_Click}" Width="70" Margin="7 0 0 0"/>
                     <Button Content="Удалить" Command="{Binding DeleteNnSettings_Click}" Width="60" Margin="7 0 0 0"/>
                 </StackPanel>
-                <ListView ItemsSource="{Binding NnSettingsViews}" SelectedItem="{Binding SelectedNnSettingsView, Mode=TwoWay}" SelectionMode="Single" MaxHeight="200">
+                <ListView ItemsSource="{Binding NnSettingsViews}" SelectedItem="{Binding SelectedNnSettingsView, Mode=TwoWay}" SelectionMode="Single" MaxHeight="210">
                     <ListView.ItemContainerStyle>
                         <Style TargetType="ListViewItem">
                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -733,7 +733,7 @@
                 </Grid>
 
                 <TextBlock Text="Файлы с прогнозируемыми значениями для источников данных" FontWeight="Bold" Margin="0 15 0 0"/>
-                <Grid Width="800" HorizontalAlignment="Left" Margin="0 2 0 0">
+                <Grid Width="900" HorizontalAlignment="Left" Margin="0 2 0 0">
                     <ListView ItemsSource="{Binding DsPrognosisFilesView}" SelectionMode="Single" MaxHeight="300">
                         <ListView.View>
                             <GridView>
@@ -758,7 +758,7 @@
                     </ListView>
                     <Grid Visibility="Visible">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="0.35*"/>
+                            <ColumnDefinition Width="0.3*"/>
                             <ColumnDefinition Width="1*"/>
                             <ColumnDefinition Width="33"/>
                         </Grid.ColumnDefinitions>
@@ -766,6 +766,19 @@
                         <Grid Grid.Column="1" x:Name="helperDsPrognosisFiles1"/>
                     </Grid>
                 </Grid>
+
+                <ItemsControl ItemsSource="{Binding PrognosisFilesErrorMessages}" Margin="0 5 0 0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding }"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
                 <TextBlock Text="Структура нейронной сети" FontWeight="Bold" Margin="0 15 0 0"/>
                 <StackPanel Orientation="Horizontal" Margin="0 3 0 0">
@@ -875,7 +888,7 @@
                         <TextBox Text="{Binding VolatilityMultiply}" Width="40" Margin="3 0 0 0"/>
                     </StackPanel>
                 </StackPanel>
-                
+
                 <Button Content="Запустить тестирование" Command="{Binding LaunchTesting_Click}" ToolTipService.ShowOnDisabled="True" ToolTipService.ShowDuration="600000"  Padding="7 3" Margin="0 10 0 10" HorizontalAlignment="Left">
                     <Button.ToolTip>
                         <ToolTip>

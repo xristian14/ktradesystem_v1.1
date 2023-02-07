@@ -8,6 +8,7 @@ namespace ktradesystem.Models
 {
     public class NnSettings
     {
+        public int Number { get; set; }
         public DateTimeDuration LearningPeriodOffset { get; set; }
         public DateTimeDuration LearningPeriodCount { get; set; }
         public DateTimeDuration LearningPeriodDuration { get; set; }

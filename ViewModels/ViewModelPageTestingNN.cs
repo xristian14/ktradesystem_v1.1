@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -441,6 +442,73 @@ namespace ktradesystem.ViewModels
                 DsPrognosisFilesView.Add(new DsPrognosisFileView { DataSource = dataSources[i] });
             }
         }
+        private ObservableCollection<string> _prognosisFilesErrorMessages = new ObservableCollection<string>();
+        public ObservableCollection<string> PrognosisFilesErrorMessages
+        {
+            get { return _prognosisFilesErrorMessages; }
+            private set
+            {
+                _prognosisFilesErrorMessages = value;
+                OnPropertyChanged();
+            }
+        }
+        private void UpdateInputLayerSize() //проходит по всем DsPrognosisFilesView, и если все файлы выбраны, то устанавливает размер входного слоя или сообщает об ошибке
+        {
+            PrognosisFilesErrorMessages.Clear();
+            if (!DsPrognosisFilesView.Any(a => a.FilePath.Length == 0))
+            {
+                int[] prognosisFileCandleLength = new int[DsPrognosisFilesView.Count]; //количество спрогнозированных свечек для одной действительной свечки
+                for(int i = 0; i < DsPrognosisFilesView.Count; i++)
+                {
+                    FileStream fileStream = new FileStream(DsPrognosisFilesView[i].FilePath, FileMode.Open, FileAccess.Read);
+                    StreamReader streamReader = new StreamReader(fileStream);
+                    string line = streamReader.ReadLine(); //пропускаем шапку файла
+                    line = streamReader.ReadLine();
+                    int lineLength = line.Length;
+                    while (line != null && lineLength == 0)
+                    {
+                        line = streamReader.ReadLine();
+                        if(line != null)
+                        {
+                            lineLength = line.Length;
+                        }
+                    }
+                    if(lineLength == 0 || !line.Contains('|'))
+                    {
+                        PrognosisFilesErrorMessages.Add(DsPrognosisFilesView[i].FilePath + " файл имеет неверный формат.");
+                    }
+                    else
+                    {
+                        string[] lineArr = line.Split('|');
+                        prognosisFileCandleLength[i] = lineArr.Length;
+                    }
+                    streamReader.Close();
+                    fileStream.Close();
+                }
+
+                if(PrognosisFilesErrorMessages.Count == 0)
+                {
+                    //проверяем, если имеются ограничения на количество используемых спрогнозированных свечек, имеется ли в файле нужно количество свечек
+                    foreach(DataSourceGroupView dataSourceGroupView in DataSourceGroupsView)
+                    {
+                        foreach(DataSourceAccordanceView dataSourceAccordanceView in dataSourceGroupView.DataSourcesAccordances)
+                        {
+                            DataSourceTemplateNnView dataSourceTemplateNnView = DataSourceTemplatesNnView.Where(a => a.Name == dataSourceAccordanceView.DataSourceTemplate.Name).First();
+                            if (dataSourceTemplateNnView.IsLimitPrognosisCandles)
+                            {
+                                int index = DsPrognosisFilesView.IndexOf(DsPrognosisFilesView.Where(a => a.DataSource.Id == dataSourceAccordanceView.DataSource.Id).First());
+                                if(int.Parse(dataSourceTemplateNnView.LimitPrognosisCandles.Value) > prognosisFileCandleLength[index])
+                                {
+                                    PrognosisFilesErrorMessages.Add("Количество прогнозируемых свечек в файле " + DsPrognosisFilesView[index].FilePath + " меньше указанного в " + dataSourceTemplateNnView.Name + ", и равняется " + prognosisFileCandleLength[index]);
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+            
+        }
         #endregion
 
 
@@ -680,5 +748,21 @@ namespace ktradesystem.ViewModels
             }
         }
         #endregion
+        public ICommand LaunchTesting_Click
+        {
+            get
+            {
+                return new DelegateCommand((obj) =>
+                {
+                    AForge.Neuro.ActivationNetwork activationNetwork0 = AForgeExtensions.Neuro.ActivationNetworkFeatures.BuildRandom(-2f, 2f, new AForgeExtensions.Neuro.LeakyReLuActivationFunction(), 4, 64, 64, 3);
+                    List<AForgeExtensions.Neuro.Learning.GeneticLearning.StepsSettings> stepsSettings0 = new List<AForgeExtensions.Neuro.Learning.GeneticLearning.StepsSettings>() { new AForgeExtensions.Neuro.Learning.GeneticLearning.StepsSettings(150, 0.0025, 0.5), new AForgeExtensions.Neuro.Learning.GeneticLearning.StepsSettings(150, 0.00125, 0.5), new AForgeExtensions.Neuro.Learning.GeneticLearning.StepsSettings(150, 0.000625, 0.5), new AForgeExtensions.Neuro.Learning.GeneticLearning.StepsSettings(150, 0.000313, 0.5) };
+                    AForgeExtensions.Neuro.Learning.GeneticLearningTeacher geneticLearningTeacher0_0 = new AForgeExtensions.Neuro.Learning.GeneticLearningTeacher(activationNetwork0, 100, new AForgeExtensions.Neuro.MSELossFunction(), new AForgeExtensions.Neuro.Learning.GeneticLearning.RouletteWheelSelection(false, true), -2, 2, stepsSettings0);
+                    List<double[]> inputs = new List<double[]> { new double[4] { 0.1, 1, 0.88, 0.2 }, new double[4] { 1, 0.5, 0.04, 0.6 }, new double[4] { 0.5, 0.3, 0.4, 0.01 } };
+                    List<double[]> desiredOutputs = new List<double[]> { new double[3] { 0.51515, -1, -0.707070 }, new double[3] { 0.3, -0.5, -0.05 }, new double[3] { 0.9, 0.5, -0.3 } };
+                    geneticLearningTeacher0_0.Run(inputs, desiredOutputs);
+                    int y = 0;
+                }, (obj) => true);
+            }
+        }
     }
 }

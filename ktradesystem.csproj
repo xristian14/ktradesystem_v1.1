@@ -152,7 +152,6 @@
     <Compile Include="Models\CompareSign.cs" />
     <Compile Include="Models\DataSourceCandles.cs" />
     <Compile Include="Models\DataSourceForCalculate.cs" />
-    <Compile Include="Models\DataSourcePrognosisFile.cs" />
     <Compile Include="Models\Datatables\AlgorithmIndicator.cs" />
     <Compile Include="Models\Datatables\MarginType.cs" />
     <Compile Include="Models\Datatables\ParameterValueType.cs" />
@@ -172,6 +171,7 @@
     <Compile Include="Models\NnTesting.cs" />
     <Compile Include="Models\Order.cs" />
     <Compile Include="Models\PerfectProfit.cs" />
+    <Compile Include="Models\PrognosisCandles.cs" />
     <Compile Include="Models\TestBatch.cs" />
     <Compile Include="Models\TestingHeader.cs" />
     <Compile Include="Models\TestRun.cs" />
@@ -203,7 +203,6 @@
     <Compile Include="ViewModels\DataSourceView.cs" />
     <Compile Include="ViewModels\DealPageTradeChart.cs" />
     <Compile Include="ViewModels\DelegateCommand.cs" />
-    <Compile Include="ViewModels\DsPrognosisFileView.cs" />
     <Compile Include="ViewModels\EvaluationCriteriaPageThreeDimensionChart.cs" />
     <Compile Include="ViewModels\EvaluationCriteriaView.cs" />
     <Compile Include="ViewModels\FilterTopModelView.cs" />
@@ -213,6 +212,7 @@
     <Compile Include="ViewModels\IndicatorParameterTemplateView.cs" />
     <Compile Include="ViewModels\IndicatorPolylinePageTradeChart.cs" />
     <Compile Include="ViewModels\LevelPageThreeDimensionChart.cs" />
+    <Compile Include="ViewModels\NnPrognosisFileView.cs" />
     <Compile Include="ViewModels\NnSettingsView.cs" />
     <Compile Include="ViewModels\NumericUpDown.cs" />
     <Compile Include="ViewModels\ObservableCollectionWithItemNotify.cs" />

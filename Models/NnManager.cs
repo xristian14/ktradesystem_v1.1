@@ -8,6 +8,8 @@ namespace ktradesystem.Models
 {
     public class NnManager
     {
+        public int DataSourceGroupNumber { get; set; }
+        public List<PrognosisCandles> PrognosisCandles { get; set; }
         public AForgeExtensions.Neuro.Learning.GeneticLearningNoTeacher GeneticLearningNoTeacher { get; set; }
         public AForgeExtensions.Neuro.Learning.GeneticLearning.Chromosome LastBestChromosome { get; set; }
         public NnChromosome[] NnPopulation { get; set; }

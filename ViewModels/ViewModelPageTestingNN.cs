@@ -106,8 +106,9 @@ namespace ktradesystem.ViewModels
                 {
                     DataSourceTemplateNnView dataSourceTemplateNnView = new DataSourceTemplateNnView { Name = "template" + (DataSourceTemplatesNnView.Count + 1).ToString(), LimitPrognosisCandles = new NumericUpDown(1, true, 1), IsOpenCandleNeuron = true, IsMaxMinCandleNeuron = true, IsCloseCandleNeuron = true, IsVolumeCandleNeuron = true };
                     DataSourceTemplatesNnView.Add(dataSourceTemplateNnView);
+                    SelectedTradingDataSourceTemplatesNnView = DataSourceTemplatesNnView[0];
                     DataSourceGroupsView.Clear();
-                    CreateDsPrognosisFiles();
+                    CreateNnPrognosisFilesView();
                 }, (obj) => true);
             }
         }
@@ -124,7 +125,7 @@ namespace ktradesystem.ViewModels
                     }
                     DataSourceGroupsView.Clear();
                     SelectedTradingDataSourceTemplatesNnView = null;
-                    CreateDsPrognosisFiles();
+                    CreateNnPrognosisFilesView();
                 }, (obj) => SelectedDataSourceTemplatesNnView != null);
             }
         }
@@ -218,7 +219,7 @@ namespace ktradesystem.ViewModels
                     {
                         DataSourceGroupsView[i].Number = i + 1;
                     }
-                    CreateDsPrognosisFiles();
+                    CreateNnPrognosisFilesView();
                 }, (obj) => SelectedDataSourceGroupView != null);
             }
         }
@@ -344,7 +345,7 @@ namespace ktradesystem.ViewModels
                     DataSourceGroupsView.Add(new DataSourceGroupView(DataSourceGroupsView.Count + 1, dataSourcesAccordances, startDateTime, endDateTime));
                     SelectedCurrency = Currencies.Where(a => a.Id == dataSourcesAccordances[0].DataSource.Currency.Id).First(); //выбираем валюту как у добавленного источника данных
                     CloseAdditionalWindowAction?.Invoke();
-                    CreateDsPrognosisFiles();
+                    CreateNnPrognosisFilesView();
                 }, (obj) => CheckAddDataSourceGroupFields());
             }
         }
@@ -391,6 +392,7 @@ namespace ktradesystem.ViewModels
                 {
                     NnSettingsView nnSettingsView = new NnSettingsView { Number = NnSettingsViews.Count + 1, LearningOffsetY = new NumericUpDown(0, true, 0), LearningOffsetM = new NumericUpDown(0, true, 0), LearningOffsetD = new NumericUpDown(0, true, 0), LearningPeriodsCount = new NumericUpDown(1, true, 1), LearningDurationY = new NumericUpDown(0, true, 0), LearningDurationM = new NumericUpDown(0, true, 0), LearningDurationD = new NumericUpDown(0, true, 0), LearningDistanceY = new NumericUpDown(0, true, 0), LearningDistanceM = new NumericUpDown(0, true, 0), LearningDistanceD = new NumericUpDown(0, true, 0), IsForwardTesting = true, ForwardOffsetY = new NumericUpDown(0, true, 0), ForwardOffsetM = new NumericUpDown(0, true, 0), ForwardOffsetD = new NumericUpDown(0, true, 0), ForwardPeriodsCount = new NumericUpDown(1, true, 1), ForwardDurationY = new NumericUpDown(0, true, 0), ForwardDurationM = new NumericUpDown(0, true, 0), ForwardDurationD = new NumericUpDown(0, true, 0), ForwardDistanceY = new NumericUpDown(0, true, 0), ForwardDistanceM = new NumericUpDown(0, true, 0), ForwardDistanceD = new NumericUpDown(0, true, 0) };
                     NnSettingsViews.Add(nnSettingsView);
+                    CreateNnPrognosisFilesView();
                 }, (obj) => true);
             }
         }
@@ -405,6 +407,7 @@ namespace ktradesystem.ViewModels
                     {
                         NnSettingsViews[i].Number = i + 1;
                     }
+                    CreateNnPrognosisFilesView();
                 }, (obj) => SelectedNnSettingsView != null);
             }
         }
@@ -412,34 +415,33 @@ namespace ktradesystem.ViewModels
 
 
 
-        #region view add delete DsPrognosisFileView
-        private ObservableCollection<DsPrognosisFileView> _dsPrognosisFilesView = new ObservableCollection<DsPrognosisFileView>();
-        public ObservableCollection<DsPrognosisFileView> DsPrognosisFilesView
+        #region NnPrognosisFilesView
+        private ObservableCollection<NnPrognosisFileView> _nnPrognosisFilesView = new ObservableCollection<NnPrognosisFileView>();
+        public ObservableCollection<NnPrognosisFileView> NnPrognosisFilesView
         {
-            get { return _dsPrognosisFilesView; }
+            get { return _nnPrognosisFilesView; }
             private set
             {
-                _dsPrognosisFilesView = value;
+                _nnPrognosisFilesView = value;
                 OnPropertyChanged();
             }
         }
-        private void CreateDsPrognosisFiles()
+        private void CreateNnPrognosisFilesView()
         {
-            DsPrognosisFilesView.Clear();
-            List<DataSource> dataSources = new List<DataSource>();
-            for(int i = 0; i < DataSourceGroupsView.Count; i++) //формируем список со всеми источниками данных групп источников данных
+            NnPrognosisFilesView.Clear();
+            for(int i = 0; i < NnSettingsViews.Count; i++)
             {
-                for(int k = 0; k < DataSourceGroupsView[i].DataSourcesAccordances.Count; k++)
+                for(int k = 0; k < DataSourceGroupsView.Count; k++)
                 {
-                    if (!dataSources.Any(a => a.Id == DataSourceGroupsView[i].DataSourcesAccordances[k].DataSource.Id))
+                    for(int u = 0; u < DataSourceGroupsView[k].DataSourcesAccordances.Count; u++)
                     {
-                        dataSources.Add(DataSourceGroupsView[i].DataSourcesAccordances[k].DataSource);
+                        string nnNumber = k == 0 & u == 0 ? (i + 1).ToString() : "";
+                        string dsGroupNumber = u == 0 ? (k + 1).ToString() : "";
+                        DataSourceTemplateNnView dataSourceTemplateNnView = DataSourceTemplatesNnView.Where(a => a.Name == DataSourceGroupsView[k].DataSourcesAccordances[u].DataSourceTemplate.Name).First();
+                        DataSource dataSource = DataSourceGroupsView[k].DataSourcesAccordances[u].DataSource;
+                        NnPrognosisFilesView.Add(new NnPrognosisFileView() { NnNumber = nnNumber, DsGroupNumber = dsGroupNumber, DataSourceTemplateNnView = dataSourceTemplateNnView, DataSource = dataSource }); ;
                     }
                 }
-            }
-            for(int i = 0; i < dataSources.Count; i++)
-            {
-                DsPrognosisFilesView.Add(new DsPrognosisFileView { DataSource = dataSources[i] });
             }
         }
         private ObservableCollection<string> _prognosisFilesErrorMessages = new ObservableCollection<string>();
@@ -455,7 +457,7 @@ namespace ktradesystem.ViewModels
         private void UpdateInputLayerSize() //проходит по всем DsPrognosisFilesView, и если все файлы выбраны, то устанавливает размер входного слоя или сообщает об ошибке
         {
             PrognosisFilesErrorMessages.Clear();
-            if (!DsPrognosisFilesView.Any(a => a.FilePath.Length == 0))
+            /*if (!DsPrognosisFilesView.Any(a => a.FilePath.Length == 0))
             {
                 int[] prognosisFileCandleLength = new int[DsPrognosisFilesView.Count]; //количество спрогнозированных свечек для одной действительной свечки
                 for(int i = 0; i < DsPrognosisFilesView.Count; i++)
@@ -506,7 +508,7 @@ namespace ktradesystem.ViewModels
                     }
                 }
 
-            }
+            }*/
             
         }
         #endregion
@@ -626,7 +628,7 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
-        private ObservableCollection<string> _activationFunctions = new ObservableCollection<string>() { "relu", "leaky relu", "sigmoid", "bipolar sigmoid" };
+        private ObservableCollection<string> _activationFunctions = new ObservableCollection<string>() { "relu", "leaky relu" };
         public ObservableCollection<string> ActivationFunctions
         {
             get { return _activationFunctions; }

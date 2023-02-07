@@ -1,17 +1,46 @@
-﻿using System;
+﻿using ktradesystem.Models.Datatables;
+using Ookii.Dialogs.Wpf;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ktradesystem.Models;
-using ktradesystem.Models.Datatables;
-using Ookii.Dialogs.Wpf;
 
 namespace ktradesystem.ViewModels
 {
-    class DsPrognosisFileView : ViewModelBase
+    class NnPrognosisFileView : ViewModelBase
     {
-        private DataSource _dataSource;
+        private string _nnNumber = "";
+        public string NnNumber
+        {
+            get { return _nnNumber; }
+            set
+            {
+                _nnNumber = value;
+                OnPropertyChanged();
+            }
+        }
+        private string _dsGroupNumber = "";
+        public string DsGroupNumber
+        {
+            get { return _dsGroupNumber; }
+            set
+            {
+                _dsGroupNumber = value;
+                OnPropertyChanged();
+            }
+        }
+        private DataSourceTemplateNnView _dataSourceTemplateNnView = new DataSourceTemplateNnView();
+        public DataSourceTemplateNnView DataSourceTemplateNnView
+        {
+            get { return _dataSourceTemplateNnView; }
+            set
+            {
+                _dataSourceTemplateNnView = value;
+                OnPropertyChanged();
+            }
+        }
+        private DataSource _dataSource = new DataSource();
         public DataSource DataSource
         {
             get { return _dataSource; }

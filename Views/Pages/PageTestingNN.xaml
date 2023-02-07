@@ -732,39 +732,46 @@
                     <Grid Grid.Column="4" x:Name="helperNn4"/>
                 </Grid>
 
-                <TextBlock Text="Файлы с прогнозируемыми значениями для источников данных" FontWeight="Bold" Margin="0 15 0 0"/>
-                <Grid Width="900" HorizontalAlignment="Left" Margin="0 2 0 0">
-                    <ListView ItemsSource="{Binding DsPrognosisFilesView}" SelectionMode="Single" MaxHeight="300">
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn DisplayMemberBinding="{Binding DataSource.Name}" Header="Источник данных" Width="{Binding ElementName=helperDsPrognosisFiles0, Path=ActualWidth}"/>
-                                <GridViewColumn Header="Файл с прогнозируемыми значениями" Width="{Binding ElementName=helperDsPrognosisFiles1, Path=ActualWidth}">
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal">
-                                                <ToggleButton IsChecked="{Binding IsSelectFileClick}" Content="Выбрать" Padding="3 0"/>
-                                                <TextBlock Text="{Binding FilePath}" Margin="5 0 0 0"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                            </GridView>
-                        </ListView.View>
-                        <ListView.ItemContainerStyle>
-                            <Style TargetType="ListViewItem">
-                                <Setter Property="Focusable" Value="false"/>
-                            </Style>
-                        </ListView.ItemContainerStyle>
-                    </ListView>
-                    <Grid Visibility="Visible">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="0.3*"/>
-                            <ColumnDefinition Width="1*"/>
-                            <ColumnDefinition Width="33"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid Grid.Column="0" x:Name="helperDsPrognosisFiles0"/>
-                        <Grid Grid.Column="1" x:Name="helperDsPrognosisFiles1"/>
-                    </Grid>
+                <TextBlock Text="Нейронные сети, выбор файлов с спрогнозированными свечками для каждой нейронной сети, для каждой группы источников данных" FontWeight="Bold" Margin="0 15 0 0"/>
+                <ListView ItemsSource="{Binding NnPrognosisFilesView}" SelectionMode="Single" MaxHeight="300" Margin="0 4 0 0">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn DisplayMemberBinding="{Binding NnNumber}" Header="№ Nn" Width="{Binding ElementName=helperDsPrognosisFiles0, Path=ActualWidth}"/>
+                            <GridViewColumn DisplayMemberBinding="{Binding DsGroupNumber}" Header="№ DsGroup" Width="{Binding ElementName=helperDsPrognosisFiles1, Path=ActualWidth}"/>
+                            <GridViewColumn DisplayMemberBinding="{Binding DataSourceTemplateNnView.Name}" Header="Шаблон&#x0a;источника данных" Width="{Binding ElementName=helperDsPrognosisFiles2, Path=ActualWidth}"/>
+                            <GridViewColumn DisplayMemberBinding="{Binding DataSource.Name}" Header="Источник данных" Width="{Binding ElementName=helperDsPrognosisFiles3, Path=ActualWidth}"/>
+                            <GridViewColumn Header="Файл с прогнозируемыми значениями" Width="{Binding ElementName=helperDsPrognosisFiles4, Path=ActualWidth}">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <ToggleButton IsChecked="{Binding IsSelectFileClick}" Content="Выбрать" Padding="3 0"/>
+                                            <TextBlock Text="{Binding FilePath}" Margin="5 0 0 0"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="Focusable" Value="false"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                </ListView>
+                <Grid Visibility="Visible">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition Width="75"/>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="0.4*"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="33"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0" x:Name="helperDsPrognosisFiles0"/>
+                    <Grid Grid.Column="1" x:Name="helperDsPrognosisFiles1"/>
+                    <Grid Grid.Column="2" x:Name="helperDsPrognosisFiles2"/>
+                    <Grid Grid.Column="3" x:Name="helperDsPrognosisFiles3"/>
+                    <Grid Grid.Column="4" x:Name="helperDsPrognosisFiles4"/>
                 </Grid>
 
                 <ItemsControl ItemsSource="{Binding PrognosisFilesErrorMessages}" Margin="0 5 0 0">

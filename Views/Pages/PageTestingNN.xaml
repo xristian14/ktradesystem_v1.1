@@ -479,7 +479,7 @@
                                                         <ColumnDefinition Width="auto"/>
                                                     </Grid.ColumnDefinitions>
                                                     <CheckBox IsChecked="{Binding IsLimitPrognosisCandles}" Content=" "/>
-                                                    <TextBox Visibility="{Binding LimitPrognosisCandlesVisibility}" Grid.Column="1" Text="{Binding LimitPrognosisCandles.Value, Mode=TwoWay}" Height="20"/>
+                                                    <TextBox Visibility="{Binding LimitPrognosisCandlesVisibility}" Grid.Column="1" Text="{Binding  LimitPrognosisCandles.Value, Mode=TwoWay}" Height="20"/>
                                                     <StackPanel Visibility="{Binding LimitPrognosisCandlesVisibility}" Grid.Column="2" Orientation="Vertical" HorizontalAlignment="Stretch">
                                                         <ToggleButton IsChecked="{Binding LimitPrognosisCandles.UpClick, Mode=TwoWay}" Height="10">
                                                             <TextBlock VerticalAlignment="Top" Text="⯅" Height="5" FontSize="11" Padding="2 -5 2 0"/>

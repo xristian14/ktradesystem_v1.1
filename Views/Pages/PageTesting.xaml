@@ -447,8 +447,6 @@
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <Button Content="Время в 1 свечке" Command="{Binding AlgorithmPasteDataSourceTimeInCandle_Click}" Width="110"/>
-                                            <Button Content="Время открытия дня" Command="{Binding AlgorithmPasteDataSourceTradingStartTimeOfDay_Click}" Width="146"/>
-                                            <Button Content="Время закрытия дня" Command="{Binding AlgorithmPasteDataSourceTradingEndTimeOfDay_Click}" Width="146"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <Button Content="Выбранный индикатор" Command="{Binding AlgorithmPasteDataSourceIndicator_Click}" Width="140"/>

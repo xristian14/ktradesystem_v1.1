@@ -16,7 +16,7 @@
         <Grid Grid.Row="0">
             <StackPanel Grid.Row="0" Background="#FFFAFAFA" Orientation="Horizontal">
                 <Button Content="Тестирование торговых моделей" Command="{Binding NavigationCreateTesting_Click}" Height="19" Width="auto" Padding="4 0" Margin="15 0 0 0"/>
-                <Button Content="Тестирование нейронных сетей" Command="{Binding NavigationCreateTestingNN_Click}" Height="19" Width="auto" Padding="4 0" Margin="5 0 0 0"/>
+                <!--<Button Content="Тестирование нейронных сетей" Command="{Binding NavigationCreateTestingNN_Click}" Height="19" Width="auto" Padding="4 0" Margin="5 0 0 0"/>-->
                 <Button Content="Результаты тестирования торговых моделей" Command="{Binding NavigationResultTesting_Click}" Height="19" Width="auto" Padding="4 0" Margin="5 0 0 0"/>
             </StackPanel>
         </Grid>

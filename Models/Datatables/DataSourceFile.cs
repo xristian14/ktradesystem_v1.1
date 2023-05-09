@@ -11,7 +11,6 @@ namespace ktradesystem.Models.Datatables
     {
         public int Id { get; set; }
         public string Path { get; set; }
-        public List<DataSourceFileWorkingPeriod> DataSourceFileWorkingPeriods { get; set; }
         public int IdDataSource { get; set; }
     }
 }

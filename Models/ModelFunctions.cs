@@ -8,6 +8,10 @@ namespace ktradesystem.Models
 {
     public class ModelFunctions //класс содержит полезные функции
     {
+        public static DateTime UnixTimestampToUtc(int timestamp) //преобразовывает timestamp в дату и время в формате utc +00
+        {
+            return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(timestamp);
+        }
         public static string SplitDigitsInt(int value) //разделяет целые разряды числа пробелами
         {
             string str = value.ToString();

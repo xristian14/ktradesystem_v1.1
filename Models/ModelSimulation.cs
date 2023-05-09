@@ -833,8 +833,7 @@ namespace ktradesystem.Models
                             while (line != null)
                             {
                                 string[] lineArr = line.Split(',');
-                                string dateTimeFormated = lineArr[2].Insert(6, "-").Insert(4, "-") + " " + lineArr[3].Insert(4, ":").Insert(2, ":");
-                                candles[r] = new Candle { DateTime = DateTime.Parse(dateTimeFormated), O = double.Parse(lineArr[4], nfiDot), H = double.Parse(lineArr[5], nfiDot), L = double.Parse(lineArr[6], nfiDot), C = double.Parse(lineArr[7], nfiDot), V = double.Parse(lineArr[8], nfiDot) };
+                                candles[r] = new Candle { DateTime = ModelFunctions.UnixTimestampToUtc(int.Parse(lineArr[0].Remove(lineArr[0].Length - 3))), O = double.Parse(lineArr[1], nfiDot), H = double.Parse(lineArr[2], nfiDot), L = double.Parse(lineArr[3], nfiDot), C = double.Parse(lineArr[4], nfiDot), V = double.Parse(lineArr[5], nfiDot) };
                                 if(r > 0) //если это не первая свечка, проверяем, является ли она гэпом
                                 {
                                     if (isCandleIntervalMoreThanGapInterval) //если временной интервал свечки больше или равен временному интервалу гэпа, определяем гэп по 1.5 превышению временного интервала свечки
@@ -1785,7 +1784,6 @@ namespace ktradesystem.Models
                                 }
                             }
                         }
-                        DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod = dataSourceCandles[i].DataSource.DataSourceFiles[fileIndexes[i]].DataSourceFileWorkingPeriods.Where(j => DateTime.Compare(currentDateTime, j.StartPeriod) >= 0).Last(); //последний период, дата начала которого раньше или равняется текущей дате
 
                         dataSourcesForCalculate[i] = new DataSourceForCalculate();
                         dataSourcesForCalculate[i].idDataSource = dataSourceCandles[i].DataSource.Id;
@@ -1798,8 +1796,6 @@ namespace ktradesystem.Models
                         dataSourcesForCalculate[i].CountBuy = isBuyDirection ? volumePosition : 0;
                         dataSourcesForCalculate[i].CountSell = isBuyDirection ? 0 : volumePosition;
                         dataSourcesForCalculate[i].TimeInCandle = dataSourceCandles[i].DataSource.Interval.Duration;
-                        dataSourcesForCalculate[i].TradingStartTimeOfDay = dataSourceFileWorkingPeriod.TradingStartTime;
-                        dataSourcesForCalculate[i].TradingEndTimeOfDay = dataSourceFileWorkingPeriod.TradingEndTime;
                         dataSourcesForCalculate[i].Candles = dataSourceCandles[i].Candles[fileIndexes[i]];
                         dataSourcesForCalculate[i].CurrentCandleIndex = candleIndexes[i];
                     }

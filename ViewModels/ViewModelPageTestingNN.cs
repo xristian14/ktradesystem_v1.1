@@ -742,10 +742,11 @@ namespace ktradesystem.ViewModels
             get { return _volatilityMultiply; }
             set
             {
-                if (double.TryParse(value, out double res))
+                /*if (double.TryParse(value, out double res))
                 {
                     _volatilityMultiply = value;
-                }
+                }*/
+                _volatilityMultiply = value;
                 OnPropertyChanged();
             }
         }
@@ -756,13 +757,30 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
-                    AForge.Neuro.ActivationNetwork activationNetwork0 = AForgeExtensions.Neuro.ActivationNetworkFeatures.BuildRandom(-2f, 2f, new AForgeExtensions.Neuro.LeakyReLuActivationFunction(), 4, 64, 64, 3);
+                    /*AForge.Neuro.ActivationNetwork activationNetwork0 = AForgeExtensions.Neuro.ActivationNetworkFeatures.BuildRandom(-2f, 2f, new AForgeExtensions.Neuro.LeakyReLuActivationFunction(), 4, 64, 64, 3);
                     List<AForgeExtensions.Neuro.Learning.GeneticLearning.StepsSettings> stepsSettings0 = new List<AForgeExtensions.Neuro.Learning.GeneticLearning.StepsSettings>() { new AForgeExtensions.Neuro.Learning.GeneticLearning.StepsSettings(150, 0.0025, 0.5), new AForgeExtensions.Neuro.Learning.GeneticLearning.StepsSettings(150, 0.00125, 0.5), new AForgeExtensions.Neuro.Learning.GeneticLearning.StepsSettings(150, 0.000625, 0.5), new AForgeExtensions.Neuro.Learning.GeneticLearning.StepsSettings(150, 0.000313, 0.5) };
                     AForgeExtensions.Neuro.Learning.GeneticLearningTeacher geneticLearningTeacher0_0 = new AForgeExtensions.Neuro.Learning.GeneticLearningTeacher(activationNetwork0, 100, new AForgeExtensions.Neuro.MSELossFunction(), new AForgeExtensions.Neuro.Learning.GeneticLearning.RouletteWheelSelection(false, true), -2, 2, stepsSettings0);
                     List<double[]> inputs = new List<double[]> { new double[4] { 0.1, 1, 0.88, 0.2 }, new double[4] { 1, 0.5, 0.04, 0.6 }, new double[4] { 0.5, 0.3, 0.4, 0.01 } };
                     List<double[]> desiredOutputs = new List<double[]> { new double[3] { 0.51515, -1, -0.707070 }, new double[3] { 0.3, -0.5, -0.05 }, new double[3] { 0.9, 0.5, -0.3 } };
                     geneticLearningTeacher0_0.Run(inputs, desiredOutputs);
-                    int y = 0;
+                    int y = 0;*/
+                    /*DateTime dateTime = new DateTime(2022, 2, 24);
+                    DateTime dateTime2 = new DateTime(2020, 1, 1, 0, 0, 0);
+                    DateTime dateTime3 = new DateTime(2020, 1, 15, 0, 0, 0);
+                    VolatilityMultiply = dateTime.AddMonths(1).ToString();
+                    IntervalsCount = dateTime.AddYears(1).ToString();
+                    DateTime a = dateTime.AddDays(377);
+                    int y = 0;*/
+                    AForge.Neuro.ActivationNetwork activationNetwork0 = AForgeExtensions.Neuro.ActivationNetworkFeatures.BuildRandom(-2f, 2f, new AForgeExtensions.Neuro.LeakyReLuActivationFunction(), 7, 7, 7, 3);
+                    double[] input = new double[] { 0.1, 1, 0.88, 0.2, 0.1, 0.11, 0.115 };
+                    System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+                    stopwatch.Start();
+                    for(int i = 0; i < 21900; i++)
+                    {
+                        activationNetwork0.Compute(input);
+                    }
+                    stopwatch.Stop();
+                    VolatilityMultiply = stopwatch.Elapsed.TotalSeconds.ToString() + " sec";
                 }, (obj) => true);
             }
         }

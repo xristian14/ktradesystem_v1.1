@@ -285,9 +285,9 @@ namespace ktradesystem.ViewModels
                     if (Directory.Exists(AddDataSourceFolder)) //если директория существует, добавляем файлы из нее
                     {
                         string[] files = Directory.GetFiles(AddDataSourceFolder); //получаем массив с названиями файлов
-                        foreach (string item in files) //проходимся по списку файлу и те котоыре имеют расширение .txt добавляем в список невыбранных файлов
+                        foreach (string item in files) //проходимся по списку файлу и те котоыре имеют расширение .csv добавляем в список невыбранных файлов
                         {
-                            if (item.Substring(item.Length - 4) == ".txt")
+                            if (item.Substring(item.Length - 4) == ".csv")
                             {
                                 FilesUnselected.Add(item.Substring(item.LastIndexOf("\\") + 1)); //обрезаем полный путь к файлу, оставляя только имя и расширение
                             }
@@ -555,9 +555,9 @@ namespace ktradesystem.ViewModels
                         string[] files = Directory.GetFiles(vistaFolderBrowserDialog.SelectedPath); //получаем массив с названиями файлов
                         FilesUnselected.Clear(); //очищаем список невыбранных файлов
                         FilesSelected.Clear(); //очищаем список выбранных файлов
-                        foreach (string item in files) //проходимся по списку файлу и те котоыре имеют расширение .txt добавляем в список невыбранных файлов
+                        foreach (string item in files) //проходимся по списку файлу и те которые имеют расширение .csv добавляем в список невыбранных файлов
                         {
-                            if(item.Substring(item.Length - 4) == ".txt")
+                            if(item.Substring(item.Length - 4) == ".csv")
                             {
                                 FilesUnselected.Add(item.Substring(item.LastIndexOf("\\") + 1)); //обрезаем полный путь к файлу, оставляя только имя и расширение
                             }

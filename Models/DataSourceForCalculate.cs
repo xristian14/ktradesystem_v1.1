@@ -20,8 +20,6 @@ namespace ktradesystem.Models
         public decimal CountBuy { get; set; } //количество купленных лотов для данного источника данных
         public decimal CountSell { get; set; } //количество проданных лотов для данного источника данных
         public TimeSpan TimeInCandle { get; set; } //время в свечке
-        public DateTime TradingStartTimeOfDay { get; set; } //время начала торгов дня
-        public DateTime TradingEndTimeOfDay { get; set; } //время окончания торгов дня
         public Candle[] Candles { get; set; }
         public int CurrentCandleIndex { get; set; }
     }

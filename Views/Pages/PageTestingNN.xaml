@@ -892,7 +892,7 @@
                     </StackPanel>
                     <StackPanel IsEnabled="{Binding UseFitnessReduce}" Orientation="Horizontal" Margin="25 3 0 0">
                         <TextBlock Text="Множитель значения волатильности. Чем больше, тем сильнее волатильность будет уменьшать значение приспособленности:" Margin="0 0 0 0"/>
-                        <TextBox Text="{Binding VolatilityMultiply}" Width="40" Margin="3 0 0 0"/>
+                        <TextBox Text="{Binding VolatilityMultiply, Mode=TwoWay}" Width="100" Margin="3 0 0 0"/>
                     </StackPanel>
                 </StackPanel>
 

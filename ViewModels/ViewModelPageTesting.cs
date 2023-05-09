@@ -1468,26 +1468,6 @@ namespace ktradesystem.ViewModels
                 }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
             }
         }
-        public ICommand AlgorithmPasteDataSourceTradingStartTimeOfDay_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + ".TradingStartTimeOfDay");
-                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
-            }
-        }
-        public ICommand AlgorithmPasteDataSourceTradingEndTimeOfDay_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-                    AlgorithmScript = AlgorithmScript.Insert(AlgorithmScriptTextBox.CaretIndex, "Datasource_" + SelectedDataSourceTemplateView.Name + ".TradingEndTimeOfDay");
-                }, (obj) => SelectedDataSourceTemplateView != null && IsAddOrEditAlgorithm());
-            }
-        }
         public ICommand AlgorithmPasteDataSourceIndicator_Click
         {
             get
@@ -3537,13 +3517,16 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private string _forwardDeposit;
+        private string _forwardDeposit = "0";
         public string ForwardDeposit //размер депозита
         {
             get { return _forwardDeposit; }
             set
             {
-                _forwardDeposit = value;
+                if(double.TryParse(value, out double res))
+                {
+                    _forwardDeposit = value;
+                }
                 OnPropertyChanged();
             }
         }

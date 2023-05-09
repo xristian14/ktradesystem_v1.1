@@ -86,17 +86,6 @@ namespace ktradesystem.Models
             return data;
         }
 
-        public DataTable SelectDataSourceFileWorkingPeriods(int idDataSourceFile)
-        {
-            SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "SELECT * FROM DataSourceFileWorkingPeriods WHERE idDataSourceFile = :idDataSourceFile";
-            command.Parameters.AddWithValue("idDataSourceFile", idDataSourceFile);
-            DataTable data = new DataTable();
-            SQLiteDataAdapter adapter = new SQLiteDataAdapter(command);
-            adapter.Fill(data);
-            return data;
-        }
-
         public DataTable SelectDataSourceFromId(int id)
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
@@ -170,18 +159,6 @@ namespace ktradesystem.Models
             command.CommandText = "INSERT INTO DataSourceFiles (path, idDataSource) VALUES (:path, :idDataSource)";
             command.Parameters.AddWithValue("path", dataSourceFile.Path);
             command.Parameters.AddWithValue("idDataSource", dataSourceFile.IdDataSource);
-
-            command.ExecuteNonQuery();
-        }
-
-        public void InsertDataSourceFileWorkingPeriod(DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod)
-        {
-            SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "INSERT INTO DataSourceFileWorkingPeriods (startPeriod, tradingStartTime, tradingEndTime, idDataSourceFile) VALUES (:startPeriod, :tradingStartTime, :tradingEndTime, :idDataSourceFile)";
-            command.Parameters.AddWithValue("startPeriod", dataSourceFileWorkingPeriod.StartPeriod);
-            command.Parameters.AddWithValue("tradingStartTime", dataSourceFileWorkingPeriod.TradingStartTime);
-            command.Parameters.AddWithValue("tradingEndTime", dataSourceFileWorkingPeriod.TradingEndTime);
-            command.Parameters.AddWithValue("idDataSourceFile", dataSourceFileWorkingPeriod.IdDataSourceFile);
 
             command.ExecuteNonQuery();
         }
@@ -434,28 +411,6 @@ namespace ktradesystem.Models
         {
             SQLiteCommand command = new SQLiteCommand(_connection);
             string query = "DELETE FROM DataSourceFiles WHERE id = :id";
-            command.CommandText = query;
-            command.Parameters.AddWithValue("id", id);
-            command.ExecuteNonQuery();
-        }
-
-        public void UpdateDataSourceFileWorkingPeriod(DataSourceFileWorkingPeriod dataSourceFileWorkingPeriod)
-        {
-            SQLiteCommand command = new SQLiteCommand(_connection);
-            command.CommandText = "UPDATE DataSourceFileWorkingPeriods SET startPeriod = :startPeriod, tradingStartTime = :tradingStartTime, tradingEndTime = :tradingEndTime, idDataSourceFile = :idDataSourceFile WHERE id = :id";
-            command.Parameters.AddWithValue("startPeriod", dataSourceFileWorkingPeriod.StartPeriod);
-            command.Parameters.AddWithValue("tradingStartTime", dataSourceFileWorkingPeriod.TradingStartTime);
-            command.Parameters.AddWithValue("tradingEndTime", dataSourceFileWorkingPeriod.TradingEndTime);
-            command.Parameters.AddWithValue("idDataSourceFile", dataSourceFileWorkingPeriod.IdDataSourceFile);
-            command.Parameters.AddWithValue("id", dataSourceFileWorkingPeriod.Id);
-
-            command.ExecuteNonQuery();
-        }
-
-        public void DeleteDataSourceFileWorkingPeriod(int id)
-        {
-            SQLiteCommand command = new SQLiteCommand(_connection);
-            string query = "DELETE FROM DataSourceFileWorkingPeriods WHERE id = :id";
             command.CommandText = query;
             command.Parameters.AddWithValue("id", id);
             command.ExecuteNonQuery();

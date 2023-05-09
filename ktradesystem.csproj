@@ -181,7 +181,6 @@
     <Compile Include="Models\Datatables\Algorithm.cs" />
     <Compile Include="Models\Datatables\AlgorithmParameter.cs" />
     <Compile Include="Models\Datatables\DataSourceFile.cs" />
-    <Compile Include="Models\Datatables\DataSourceFileWorkingPeriod.cs" />
     <Compile Include="Models\Datatables\DataSourceTemplate.cs" />
     <Compile Include="Models\Datatables\EvaluationCriteria.cs" />
     <Compile Include="Models\Datatables\IndicatorParameterRange.cs" />

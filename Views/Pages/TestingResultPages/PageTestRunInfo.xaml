@@ -30,7 +30,7 @@
                 
                 <StackPanel Grid.Row="0" Orientation="Horizontal">
                     <TextBlock Text="Критерии оценки:"/>
-                    <TextBlock Text="Оптимизационные параметры:" Margin="424 0 0 0"/>
+                    <TextBlock Text="Оптимизационные параметры:" Margin="10 0 0 0"/>
                     <TextBlock Text="{Binding AlgorithmParameterValuesText}" Margin="5 0 0 0"/>
                 </StackPanel>
                 <ScrollViewer Grid.Row="1">

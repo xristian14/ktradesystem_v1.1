@@ -28,5 +28,10 @@ namespace ktradesystem.Views.Pages.TestingResultPages
             DataContext = _viewModelPageOptimizationTestsInfo;
         }
         private ViewModelPageOptimizationTestsInfo _viewModelPageOptimizationTestsInfo;
+
+        private void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
     }
 }

@@ -8,11 +8,11 @@ namespace ktradesystem.ViewModels
 {
     class OptimizationTestsInfo
     {
-        public string TradeWindow { get; set; } //торговое окно
-        public string NetProfitLoss { get; set; } //прибыль и убытки
-        public string MaxDropdown { get; set; } //максимальное проседание
-        public string NumberTrades { get; set; } //количество трейдов
-        public string PercentWin { get; set; } //процент выигрышей
-        public string NetProfitLossTopModel { get; set; } //прибыль и убытки топ-модели
+        public string TradeWindow { get; set; }
+        public string AverageNetOnMargin { get; set; }
+        public string AverageMaxDropdown { get; set; }
+        public string AverageTradesNumber { get; set; }
+        public string AverageWinPercent { get; set; }
+        public string NetOnMarginTopModel { get; set; }
     }
 }

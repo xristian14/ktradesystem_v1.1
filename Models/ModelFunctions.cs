@@ -31,12 +31,12 @@ namespace ktradesystem.Models
             }
             return StringReverse(result);
         }
-        public static string SplitDigitsDouble(double value, int decimals = 15) //разделяет целые разряды числа пробелами, decimals - количество разрядов в дробной части
+        public static string SplitDigitsDouble(double value, int decimals = 15, string positiveFiller = "") //разделяет целые разряды числа пробелами, decimals - количество разрядов в дробной части, positiveFiller - добавляется в начало если число положительное
         {
             string result = "";
             if (value is double.NaN == false)
             {
-                string minus = value < 0 ? "-" : "";
+                string minus = value < 0 ? "-" : positiveFiller;
                 string str = Math.Round(Math.Abs(value), decimals).ToString();
                 int commaIndex = str.IndexOf(',');
                 string beforeCommaStr = commaIndex != -1 ? str.Substring(0, commaIndex) : str;

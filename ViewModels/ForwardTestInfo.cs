@@ -9,15 +9,17 @@ namespace ktradesystem.ViewModels
 {
     class ForwardTestInfo : ViewModelBase
     {
-        public string TradeWindow { get; set; } //торговое окно
-        public string NetProfitLoss { get; set; } //прибыль и убытки
-        public string MaxDropdown { get; set; } //максимальное проседание
-        public string NumberTrades { get; set; } //количество трейдов
-        public string PercentWin { get; set; } //процент выигрышей
+        public string TradeWindow { get; set; }
+        public string NetOnMargin { get; set; }
+        public string AnnualNetOnMargin { get; set; } //годовая доходность на маржу
+        public string TopModelAnnualNetOnMargin { get; set; } //годовая доходность на маржу топ-модели
+        public string PromMinusBiggestWinSeries { get; set; } //пессимистическая доходность на маржу минус наибольшая выигрышная серия
+        public string MaxDropdown { get; set; }
+        public string TradesNumber { get; set; }
+        public string WinPercent { get; set; }
         public string AveWinDivAveLoss { get; set; } //отношение среднего выигрыша к среднему проигрышу
-        public string AverageTrade { get; set; } //средний трейд
+        public string AverageTrade { get; set; }
         public string ProfitRisk { get; set; } //отношение доходность/риск
         public string Wfe { get; set; } //форвардный показатель эффективности
-        public string Prom { get; set; } //пессимистическая доходность на маржу
     }
 }

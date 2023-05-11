@@ -5,10 +5,10 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:ktradesystem.Views.Pages.TestingResultPages"
       mc:Ignorable="d" 
-      d:DesignHeight="700" d:DesignWidth="850"
+      d:DesignHeight="700" d:DesignWidth="1100"
       Title="PageDataSourceGroupInfo">
 
-    <Grid Width="850" Height="700" Background="#FFF9F9F9">
+    <Grid Width="1100" Height="700" Background="#FFF9F9F9">
         <Grid Margin="5" Background="White">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
@@ -32,16 +32,18 @@
                 <StackPanel Orientation="Vertical">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="3*"/>
+                            <ColumnDefinition Width="2.5*"/>
                             <ColumnDefinition Width="1.2*"/>
-                            <ColumnDefinition Width="1.42*"/>
-                            <ColumnDefinition Width="1.13*"/>
+                            <ColumnDefinition Width="1.5*"/>
+                            <ColumnDefinition Width="1.8*"/>
+                            <ColumnDefinition Width="2.1*"/>
+                            <ColumnDefinition Width="1.5*"/>
                             <ColumnDefinition Width="1.15*"/>
-                            <ColumnDefinition Width="1.2*"/>
-                            <ColumnDefinition Width="0.9*"/>
-                            <ColumnDefinition Width="0.95*"/>
+                            <ColumnDefinition Width="1.05*"/>
+                            <ColumnDefinition Width="1.25*"/>
                             <ColumnDefinition Width="1*"/>
                             <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1.1*"/>
                             <ColumnDefinition Width="33"/>
                         </Grid.ColumnDefinitions>
                         <Grid Grid.Column="0" x:Name="helper0"/>
@@ -54,8 +56,10 @@
                         <Grid Grid.Column="7" x:Name="helper7"/>
                         <Grid Grid.Column="8" x:Name="helper8"/>
                         <Grid Grid.Column="9" x:Name="helper9"/>
+                        <Grid Grid.Column="10" x:Name="helper10"/>
+                        <Grid Grid.Column="11" x:Name="helper11"/>
                     </Grid>
-                    <ListView Grid.Row="1" Height="{Binding ElementName=helperHeight0, Path=ActualHeight}" ItemsSource="{Binding ForwardTestsInfo}">
+                    <ListView Grid.Row="1" Height="{Binding ElementName=helperHeight0, Path=ActualHeight}" ItemsSource="{Binding ForwardTestsInfo}" FontFamily="Consolas">
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem">
                                 <Setter Property="Focusable" Value="False"/>
@@ -64,15 +68,17 @@
                         <ListView.View>
                             <GridView>
                                 <GridViewColumn DisplayMemberBinding="{Binding TradeWindow}" Header="Торговое окно" Width="{Binding ElementName=helper0, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding NetProfitLoss}" Header="Прибыль&#x0a;и убытки" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding MaxDropdown}" Header="Максимальное&#x0a;проседание" Width="{Binding ElementName=helper2, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding NumberTrades}" Header="Количество&#x0a;трейдов" Width="{Binding ElementName=helper3, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding PercentWin}" Header="Процент&#x0a;выигрышей" Width="{Binding ElementName=helper4, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding AveWinDivAveLoss}" Header="Ср. прибыль&#x0a;/ср. убыток" Width="{Binding ElementName=helper5, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding AverageTrade}" Header="Средний&#x0a;трейд" Width="{Binding ElementName=helper6, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding ProfitRisk}" Header="Прибыль&#x0a;/риск" Width="{Binding ElementName=helper7, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding Wfe}" Header="WFE" Width="{Binding ElementName=helper8, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding Prom}" Header="PROM" Width="{Binding ElementName=helper9, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding NetOnMargin}" Header="Доходность&#x0a; на маржу" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding AnnualNetOnMargin}" Header="Норма годовой&#x0a; доходности&#x0a;  на маржу" Width="{Binding ElementName=helper2, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding TopModelAnnualNetOnMargin}" Header="  Норма годовой&#x0a; доходности на&#x0a;маржу топ-модели" Width="{Binding ElementName=helper3, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding PromMinusBiggestWinSeries}" Header=" Пессимистическая&#x0a;доходность на маржу&#x0a; минус наибольшая&#x0a;  выгрышная серия" Width="{Binding ElementName=helper4, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding MaxDropdown}" Header="Максимальное&#x0a;проседание, %" Width="{Binding ElementName=helper5, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding TradesNumber}" Header="Количество&#x0a; трейдов" Width="{Binding ElementName=helper6, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding WinPercent}" Header=" Процент&#x0a;выигрышей" Width="{Binding ElementName=helper7, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding AveWinDivAveLoss}" Header="Ср. прибыль&#x0a;/ср. убыток" Width="{Binding ElementName=helper8, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding AverageTrade}" Header="Средний&#x0a;трейд" Width="{Binding ElementName=helper9, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding ProfitRisk}" Header="Прибыль&#x0a;/риск" Width="{Binding ElementName=helper10, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding Wfe}" Header="WFE" Width="{Binding ElementName=helper11, Path=ActualWidth}"/>
                             </GridView>
                         </ListView.View>
                     </ListView>

@@ -5,10 +5,10 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:ktradesystem.Views.Pages.TestingResultPages"
       mc:Ignorable="d" 
-      d:DesignHeight="700" d:DesignWidth="550"
+      d:DesignHeight="700" d:DesignWidth="700"
       Title="PageOptimizationTestsInfo">
 
-    <Grid Width="570" Height="700" Background="#FFF9F9F9">
+    <Grid Width="700" Height="700" Background="#FFF9F9F9">
         <Grid Margin="5" Background="White">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
@@ -34,10 +34,10 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="2.7*"/>
                             <ColumnDefinition Width="1.3*"/>
-                            <ColumnDefinition Width="1.5*"/>
+                            <ColumnDefinition Width="1.35*"/>
                             <ColumnDefinition Width="1.3*"/>
-                            <ColumnDefinition Width="1.3*"/>
-                            <ColumnDefinition Width="1.3*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1.7*"/>
                             <ColumnDefinition Width="33"/>
                         </Grid.ColumnDefinitions>
                         <Grid Grid.Column="0" x:Name="helper0"/>
@@ -56,11 +56,11 @@
                         <ListView.View>
                             <GridView>
                                 <GridViewColumn DisplayMemberBinding="{Binding TradeWindow}" Header="Торговое окно" Width="{Binding ElementName=helper0, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding AverageNetOnMargin}" Header=" Средняя&#x0a;доходность&#x0a; на маржу" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding AverageMaxDropdown}" Header="  Среднее&#x0a;максимальное&#x0a; проседание" Width="{Binding ElementName=helper2, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding AverageTradesNumber}" Header=" Среднее&#x0a;количество&#x0a; трейдов" Width="{Binding ElementName=helper3, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding AverageAnnualNetOnMargin}" Header="Средняя норма&#x0a;  годовой&#x0a; доходности&#x0a;  на маржу" Width="{Binding ElementName=helper1, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding AverageMaxDropdownPercent}" Header="   Среднее&#x0a; максимальное&#x0a;проседание, %" Width="{Binding ElementName=helper2, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding AverageAnnualTradesNumber}" Header="Средняя норма&#x0a;  годового&#x0a; количества&#x0a;  трейдов" Width="{Binding ElementName=helper3, Path=ActualWidth}"/>
                                 <GridViewColumn DisplayMemberBinding="{Binding AverageWinPercent}" Header=" Средний&#x0a; процент&#x0a;выигрышей" Width="{Binding ElementName=helper4, Path=ActualWidth}"/>
-                                <GridViewColumn DisplayMemberBinding="{Binding NetOnMarginTopModel}" Header="Доходность&#x0a; на маржу&#x0a;топ-модели" Width="{Binding ElementName=helper5, Path=ActualWidth}"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding TopModelAnnualNetOnMargin}" Header=" Норма годовой&#x0a; доходности на&#x0a;маржу топ-модели" Width="{Binding ElementName=helper5, Path=ActualWidth}"/>
                             </GridView>
                         </ListView.View>
                     </ListView>

@@ -14,7 +14,7 @@ namespace ktradesystem.ViewModels
         public string AnnualNetOnMargin { get; set; } //годовая доходность на маржу
         public string TopModelAnnualNetOnMargin { get; set; } //годовая доходность на маржу топ-модели
         public string PromMinusBiggestWinSeries { get; set; } //пессимистическая доходность на маржу минус наибольшая выигрышная серия
-        public string MaxDropdown { get; set; }
+        public string MaxDropdownPercent { get; set; }
         public string TradesNumber { get; set; }
         public string WinPercent { get; set; }
         public string AveWinDivAveLoss { get; set; } //отношение среднего выигрыша к среднему проигрышу

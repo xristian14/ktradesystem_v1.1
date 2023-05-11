@@ -74,11 +74,11 @@ namespace ktradesystem.ViewModels
                     string currencyName = dataSourceGroupTestBatches[0].OptimizationTestRuns[0].Account.DefaultCurrency.Name;
 
                     int numberTestBatches = 0;
-                    double totalNetOnMargin = 0;
-                    double totalMaxDropdown = 0;
-                    double totalTradesNumber = 0;
+                    double totalAnnualNetOnMargin = 0;
+                    double totalMaxDropdownPercent = 0;
+                    double totalAnnualTradesNumber = 0;
                     double totalWinPercent = 0;
-                    double totalNetOnMarginTopModel = 0;
+                    double totalTopModelAnnualNetOnMargin = 0;
                     bool isTopModelFind = false;
 
                     //проходим по всем TestBatch текущей групы источников данных
@@ -86,30 +86,30 @@ namespace ktradesystem.ViewModels
                     {
                         numberTestBatches++;
 
-                        double totalTestRunNetOnMargin = 0;
-                        double totalTestRunMaxDropdown = 0;
-                        int totalTestRunTradesNumber = 0;
-                        double totalTestRunWinPercent = 0;
+                        double totalTestBatchAnnualNetOnMargin = 0;
+                        double totalTestBatchMaxDropdownPercent = 0;
+                        double totalTestBatchAnnualTradesNumber = 0;
+                        double totalTestBatchWinPercent = 0;
                         //проходим по всем тестовым прогонам и определяем показатели
                         foreach (TestRun testRun in testBatch.OptimizationTestRuns)
                         {
-                            totalTestRunNetOnMargin += testRun.EvaluationCriteriaValues.Find(a => a.EvaluationCriteria.Id == 34).DoubleValue;
-                            totalTestRunMaxDropdown += testRun.EvaluationCriteriaValues.Find(a => a.EvaluationCriteria.Id == 7).DoubleValue;
-                            totalTestRunTradesNumber += (int)testRun.EvaluationCriteriaValues.Find(a => a.EvaluationCriteria.Id == 35).DoubleValue;
-                            totalTestRunWinPercent += testRun.EvaluationCriteriaValues.Find(a => a.EvaluationCriteria.Id == 14).DoubleValue;
+                            totalTestBatchAnnualNetOnMargin += testRun.EvaluationCriteriaValues.Find(a => a.EvaluationCriteria.Id == 6).DoubleValue;
+                            totalTestBatchMaxDropdownPercent += testRun.EvaluationCriteriaValues.Find(a => a.EvaluationCriteria.Id == 8).DoubleValue;
+                            totalTestBatchAnnualTradesNumber += (int)testRun.EvaluationCriteriaValues.Find(a => a.EvaluationCriteria.Id == 9).DoubleValue;
+                            totalTestBatchWinPercent += testRun.EvaluationCriteriaValues.Find(a => a.EvaluationCriteria.Id == 14).DoubleValue;
                         }
 
-                        double averageNetOnMargin = totalTestRunNetOnMargin / testBatch.OptimizationTestRuns.Count;
-                        double averageMaxDropdown = totalTestRunMaxDropdown / testBatch.OptimizationTestRuns.Count;
-                        double averageTradesNumber = (double)totalTestRunTradesNumber / testBatch.OptimizationTestRuns.Count;
-                        double averageWinPercent = totalTestRunWinPercent / testBatch.OptimizationTestRuns.Count;
-                        double netOnMarginTopModel = testBatch.IsTopModelWasFind ? testBatch.TopModelTestRun.EvaluationCriteriaValues.Find(a => a.EvaluationCriteria.Id == 1).DoubleValue : 0;
+                        double averageAnnualNetOnMargin = totalTestBatchAnnualNetOnMargin / testBatch.OptimizationTestRuns.Count;
+                        double averageMaxDropdownPercent = totalTestBatchMaxDropdownPercent / testBatch.OptimizationTestRuns.Count;
+                        double averageAnnualTradesNumber = totalTestBatchAnnualTradesNumber / testBatch.OptimizationTestRuns.Count;
+                        double averageWinPercent = totalTestBatchWinPercent / testBatch.OptimizationTestRuns.Count;
+                        double topModelAnnualNetOnMargin = testBatch.IsTopModelWasFind ? testBatch.TopModelTestRun.EvaluationCriteriaValues.Find(a => a.EvaluationCriteria.Id == 6).DoubleValue : 0;
 
-                        totalNetOnMargin += averageNetOnMargin;
-                        totalMaxDropdown += averageMaxDropdown;
-                        totalTradesNumber += averageTradesNumber;
+                        totalAnnualNetOnMargin += averageAnnualNetOnMargin;
+                        totalMaxDropdownPercent += averageMaxDropdownPercent;
+                        totalAnnualTradesNumber += averageAnnualTradesNumber;
                         totalWinPercent += averageWinPercent;
-                        totalNetOnMarginTopModel += netOnMarginTopModel;
+                        totalTopModelAnnualNetOnMargin += topModelAnnualNetOnMargin;
 
                         DateTime dateTimeStart = testBatch.OptimizationTestRuns[0].StartPeriod; //начало периода тестирования
                         DateTime dateTimeEnd = testBatch.OptimizationTestRuns[0].EndPeriod; //окончание периода тестирования
@@ -121,19 +121,19 @@ namespace ktradesystem.ViewModels
                         dateTimeEndStr += dateTimeEnd.Month.ToString().Length == 1 ? ".0" + dateTimeEnd.Month.ToString() : "." + dateTimeEnd.Month.ToString();
                         dateTimeEndStr += "." + dateTimeEnd.Year.ToString();
 
-                        OptimizationTestsInfo optimizationTestsInfo = new OptimizationTestsInfo { TradeWindow = dateTimeStartStr + "-" + dateTimeEndStr, AverageNetOnMargin = ModelFunctions.SplitDigitsDouble(averageNetOnMargin, 2, " ") + " " + currencyName, AverageMaxDropdown = ModelFunctions.SplitDigitsDouble(averageMaxDropdown, 2) + " " + currencyName, AverageTradesNumber = ModelFunctions.SplitDigitsDouble(averageTradesNumber, 1), AverageWinPercent = ModelFunctions.SplitDigitsDouble(averageWinPercent, 1) + " %" };
+                        OptimizationTestsInfo optimizationTestsInfo = new OptimizationTestsInfo { TradeWindow = dateTimeStartStr + "-" + dateTimeEndStr, AverageAnnualNetOnMargin = ModelFunctions.SplitDigitsDouble(averageAnnualNetOnMargin, 1, " ") + " %", AverageMaxDropdownPercent = ModelFunctions.SplitDigitsDouble(averageMaxDropdownPercent, 1) + " %", AverageAnnualTradesNumber = ModelFunctions.SplitDigitsDouble(averageAnnualTradesNumber, 1), AverageWinPercent = ModelFunctions.SplitDigitsDouble(averageWinPercent, 1) + " %" };
                         if (testBatch.IsTopModelWasFind)
                         {
                             isTopModelFind = true;
-                            optimizationTestsInfo.NetOnMarginTopModel = ModelFunctions.SplitDigitsDouble(netOnMarginTopModel, 2, " ") + " " + currencyName;
+                            optimizationTestsInfo.TopModelAnnualNetOnMargin = ModelFunctions.SplitDigitsDouble(topModelAnnualNetOnMargin, 1, " ") + " %";
                         }
                         OptimizationsTestsInfo.Add(optimizationTestsInfo);
                     }
                     //добавляем строку со средним значением
-                    OptimizationTestsInfo optimizationTestsInfo2 = new OptimizationTestsInfo { TradeWindow = "Среднее", AverageNetOnMargin = ModelFunctions.SplitDigitsDouble(totalNetOnMargin / numberTestBatches, 2, " ") + " " + currencyName, AverageMaxDropdown = ModelFunctions.SplitDigitsDouble(totalMaxDropdown / numberTestBatches, 2) + " " + currencyName, AverageTradesNumber = ModelFunctions.SplitDigitsDouble((double)totalTradesNumber / numberTestBatches, 1), AverageWinPercent = Math.Round(totalWinPercent / numberTestBatches, 1) + " %" };
+                    OptimizationTestsInfo optimizationTestsInfo2 = new OptimizationTestsInfo { TradeWindow = "СРЕДНЕЕ", AverageAnnualNetOnMargin = ModelFunctions.SplitDigitsDouble(totalAnnualNetOnMargin / numberTestBatches, 1, " ") + " %", AverageMaxDropdownPercent = ModelFunctions.SplitDigitsDouble(totalMaxDropdownPercent / numberTestBatches, 1) + " %", AverageAnnualTradesNumber = ModelFunctions.SplitDigitsDouble(totalAnnualTradesNumber / numberTestBatches, 1), AverageWinPercent = Math.Round(totalWinPercent / numberTestBatches, 1) + " %" };
                     if (isTopModelFind)
                     {
-                        optimizationTestsInfo2.NetOnMarginTopModel = ModelFunctions.SplitDigitsDouble(totalNetOnMarginTopModel / numberTestBatches, 2, " ") + " " + currencyName;
+                        optimizationTestsInfo2.TopModelAnnualNetOnMargin = ModelFunctions.SplitDigitsDouble(totalTopModelAnnualNetOnMargin / numberTestBatches, 1, " ") + " %";
                     }
                     OptimizationsTestsInfo.Add(optimizationTestsInfo2);
                 }

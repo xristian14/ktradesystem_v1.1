@@ -9,10 +9,10 @@ namespace ktradesystem.ViewModels
     class OptimizationTestsInfo
     {
         public string TradeWindow { get; set; }
-        public string AverageNetOnMargin { get; set; }
-        public string AverageMaxDropdown { get; set; }
-        public string AverageTradesNumber { get; set; }
+        public string AverageAnnualNetOnMargin { get; set; }
+        public string AverageMaxDropdownPercent { get; set; }
+        public string AverageAnnualTradesNumber { get; set; }
         public string AverageWinPercent { get; set; }
-        public string NetOnMarginTopModel { get; set; }
+        public string TopModelAnnualNetOnMargin { get; set; }
     }
 }

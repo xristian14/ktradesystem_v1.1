@@ -1727,8 +1727,9 @@ namespace ktradesystem.Models
                         approvedDataSources.Add(dataSourceCandles[i].DataSource);
                     }
                 }
+                
                 //проверяем заявки на исполнение
-                bool isWereDeals = CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, gaps, false, true, true); //были ли совершены сделки при проверке исполнения заявок
+                bool isWereDealsStopLimit = CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, gaps, false, true, true); //были ли совершены сделки при проверке исполнения стоп-лосс и лимитных заявок
 
                 //если были совершены сделки на текущей свечке, дважды выполняем алгоритм: первый раз обновляем заявки и проверяем на исполнение стоп-заявки (если была открыта позиция на текущей свечке, нужно выставить стоп и проверить мог ли он на этой же свечке исполнится), и если были сделки то выполняем алгоритм еще раз и обновляем заявки, после чего переходим на следующую свечку
 
@@ -1750,7 +1751,8 @@ namespace ktradesystem.Models
 
                 //если были сделки на этой свечке, то для того чтобы проверить мог ли исполниться стоп-лосс на текущей свечке, выполняем алгоритм (после чего для открытой позиции будет выставлен стоп-лосс) и проверяем исполнение стоп-заявок. Если в процессе выполнения стоп-заявок были совершены сделки, еще раз выполняем алгоритм, обновляем заявки и переходим на следующую свечку
                 int iteration = 0; //номер итерации
-                bool isWereDealsStopLoss = false; //были ли совешены сделки при проверки стоп-заявок на исполнение
+                bool isWereDealsStopAfterStopLimit = false; //были ли совешены сделки при проверки стоп-заявок на исполнение, после того как были совершены сделки стоп-лосс и лимит
+                bool isWereDealsMarket = false; //были ли совешены сделки при проверки рыночных заявок на исполнение
                 do
                 {
                     iteration++;
@@ -1805,14 +1807,24 @@ namespace ktradesystem.Models
 
                     if (IsOverIndex == false) //если не был превышен допустимый индекс при вычислении индикаторов и алгоритма, обрабатываем заявки
                     {
-                        //удаляем заявки, количество лотов в которых равно 0
+                        //удаляем заявки, количество лотов в которых равно 0, а так же если это 2-й проход, то удаляем рыночные заявки, т.к. заявки выставляются на следующую свеку, а рыночные заявки будут исполнены только после нового выставления заявок на следующем дне, то есть текущие рыночные заявки не имеют шанса быть исполненными
                         for (int i = algorithmCalculateResult.Orders.Count - 1; i >= 0; i--)
                         {
+                            bool isRemove = false;
                             if (algorithmCalculateResult.Orders[i].Count == 0)
+                            {
+                                isRemove = true;
+                            }
+                            if(iteration == 2 && algorithmCalculateResult.Orders[i].TypeOrder.Id == 2)
+                            {
+                                isRemove = true;
+                            }
+                            if (isRemove)
                             {
                                 algorithmCalculateResult.Orders.RemoveAt(i);
                             }
                         }
+                        
                         //если это не форвардное тестирование с торговлей депозитом, устанавливаем размер заявок в минимальное количество лотов, а так же устанавливаем DateTimeSubmit для заявок
                         foreach (Order order in algorithmCalculateResult.Orders)
                         {
@@ -1908,17 +1920,17 @@ namespace ktradesystem.Models
                         //проверяем исполнение рыночных заявок, выставленных на текущей свечке
                         if (iteration == 1)
                         {
-                            CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, gaps, true, false, false);
+                            isWereDealsMarket = CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, gaps, true, false, false);
                         }
 
-                        //если на текущей свечке были совершены сделки, проверяем стоп-заявки на исполнение (чтобы если на текущей свечке была открыта позиция, после выставления стоп-заявки проверить её на исполнение на текущей свечке)
-                        if (isWereDeals && iteration == 1)
+                        //если на текущей свечке были совершены сделки стоп-лосс или лимит, проверяем стоп-заявки на исполнение (чтобы если на текущей свечке была открыта позиция, после выставления стоп-заявки проверить её на исполнение на текущей свечке)
+                        if (isWereDealsStopLimit && iteration == 1)
                         {
-                            isWereDealsStopLoss = CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, gaps, false, true, false); //были ли совершены сделки при проверке исполнения стоп-заявок
+                            isWereDealsStopAfterStopLimit = CheckOrdersExecution(dataSourceCandles, testRun.Account, approvedDataSources, fileIndexes, candleIndexes, gaps, false, true, false); //были ли совершены сделки при проверке исполнения стоп-заявок
                         }
                     }
                 }
-                while (isWereDealsStopLoss && iteration == 1); //если этой первое исполнение алгоритма, и при проверке стоп-заявок были сделки, еще раз прогоняем алгоритм чтобы обновить заявки
+                while ((isWereDealsStopAfterStopLimit || isWereDealsMarket) && iteration == 1); //если этой первое исполнение алгоритма, и при проверке стоп-лосс или рыночных заявок были сделки, еще раз прогоняем алгоритм чтобы выставить новые заявки на следующую свечку
 
                 //находим среди следующих свечек, свечку с саммой ранней датой. Обновляем текущую дату на эту дату. Затем переходим на следующую свечку, если она раньше или равняется текущей дате, и переходим на следующий файл источника данных только если следующий файл имеется, т.к. мы будем обращаться по текущему индексу и свечки и файла к тем источникам данных которые закончились, во время прохода по тем источникам данных которые еще не закончились (например файл с недельными свечками закончился, а часовые еще есть, и мы еще 7 дней можем торговать на часовых свечках, обращаясь к информации последней недельной свечки)
                 //ищем среди следующих свечек самую раннюю дату

@@ -29,12 +29,12 @@
                         <GridViewColumn DisplayMemberBinding="{Binding Currency.Name}" Header="Валюта" Width="{Binding ElementName=helperDs3, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding MarginType.Name}" Header="Тип маржи" Width="{Binding ElementName=helperDs4, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding MarginCost}" Header="Фиксированная&#x0a;       маржа" Width="{Binding ElementName=helperDs5, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding MinLotCount}" Header="Минимальное&#x0a;кол-во лотов" Width="{Binding ElementName=helperDs6, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding MinLotMarginPartCost}" Header="Стоимость мин.&#x0a;кол-ва лотов&#x0a;относительно маржи" Width="{Binding ElementName=helperDs7, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding ComissionView}" Header="Комиссия за&#x0a;одну операцию" Width="{Binding ElementName=helperDs8, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding MinLotCount}" Header="Минимальное&#x0a; кол-во лотов" Width="{Binding ElementName=helperDs6, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding MinLotMarginPartCost}" Header="    Стоимость мин.&#x0a;      кол-ва лотов&#x0a;относительно маржи" Width="{Binding ElementName=helperDs7, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding ComissionView}" Header="  Комиссия за&#x0a;одну операцию" Width="{Binding ElementName=helperDs8, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding PriceStep}" Header="Шаг одного&#x0a;пункта цены" Width="{Binding ElementName=helperDs9, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding CostPriceStep}" Header="Стоимость&#x0a;одного&#x0a;пункта цены" Width="{Binding ElementName=helperDs10, Path=ActualWidth}"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding PointsSlippage}" Header="Базовое&#x0a;проскальзывание&#x0a;в пунктах" Width="{Binding ElementName=helperDs11, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding CostPriceStep}" Header="Стоимость одного&#x0a;    пункта цены&#x0a;       для мин.&#x0a;    кол-ва лотов" Width="{Binding ElementName=helperDs10, Path=ActualWidth}"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding PointsSlippage}" Header="       Базовое&#x0a;проскальзывание&#x0a;      в пунктах" Width="{Binding ElementName=helperDs11, Path=ActualWidth}"/>
                         <GridViewColumn DisplayMemberBinding="{Binding DatePeriod}" Header="Данные за период" Width="{Binding ElementName=helperDs12, Path=ActualWidth}"/>
                         <GridViewColumn Header="Файлы с котировками" Width="{Binding ElementName=helperDs13, Path=ActualWidth}">
                             <GridViewColumn.CellTemplate>
@@ -55,12 +55,12 @@
                     <ColumnDefinition Width="70"/>
                     <ColumnDefinition Width="47"/>
                     <ColumnDefinition Width="100"/>
-                    <ColumnDefinition Width="90"/>
-                    <ColumnDefinition Width="83"/>
-                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="91"/>
+                    <ColumnDefinition Width="85"/>
+                    <ColumnDefinition Width="122"/>
                     <ColumnDefinition Width="92"/>
                     <ColumnDefinition Width="74"/>
-                    <ColumnDefinition Width="80"/>
+                    <ColumnDefinition Width="105"/>
                     <ColumnDefinition Width="103"/>
                     <ColumnDefinition Width="150"/>
                     <ColumnDefinition Width="1.7*"/>

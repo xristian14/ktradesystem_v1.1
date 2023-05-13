@@ -611,17 +611,6 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        public ICommand IndicatorCheckScript_Click
-        {
-            get
-            {
-                return new DelegateCommand((obj) =>
-                {
-
-                }, (obj) => true );
-            }
-        }
-
         #endregion
 
 
@@ -3484,7 +3473,7 @@ namespace ktradesystem.ViewModels
             }
         }
 
-        private string _sizeNeighboursGroupPercent = "16";
+        private string _sizeNeighboursGroupPercent = "14";
         public string SizeNeighboursGroupPercent //размер группы соседних тестов от общей площади поисковой плоскости
         {
             get { return _sizeNeighboursGroupPercent; }

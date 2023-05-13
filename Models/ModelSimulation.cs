@@ -2323,6 +2323,174 @@ namespace ktradesystem.Models
             return slippage;
         }
 
+        private void TestBatchTopModelDeterminingNew(TestBatch testBatch, Testing testing)
+        {
+            if (testing.IsConsiderNeighbours)
+            {
+
+            }
+        }
+
+        // Находит и возвращает группу тестовых прогонов с наибольшим значением критерия оценки. Группа может содержать до определенного количества неподходящих по фильтру тестовых прогонов, указанного в настройках, при этом среднее значение группы будет равняться сумме значений тестовых прогонов прошедших фильтр, деленному на их количество.
+        private List<TestRun> FindBestTestRunsGroup(TestBatch testBatch, Testing testing)
+        {
+            int groupSize = (int)Math.Round(testBatch.OptimizationTestRuns.Count * (testing.SizeNeighboursGroupPercent / 100)); //количество тестовых прогонов в группе
+            if(groupSize < 2)
+            {
+                groupSize = 2;
+            }
+            int requiredFilteredCount = (int)Math.Round(groupSize * (1 - _modelData.Settings.Where(a => a.Id == 8).First().DoubleValue)); //обязательное количество прошедших фильтрацию тестовых прогонов в группе
+
+            int[] algorithmParametersValuesCount = new int[testing.Algorithm.AlgorithmParameters.Count]; //количество значений у параметров алгоритма
+            for (int i = 0; i < testing.Algorithm.AlgorithmParameters.Count; i++)
+            {
+                algorithmParametersValuesCount[i] = testing.AlgorithmParametersAllIntValues[i].Count > 0 ? testing.AlgorithmParametersAllIntValues[i].Count : testing.AlgorithmParametersAllDoubleValues[i].Count;
+            }
+
+            List<TestRun> res = new List<TestRun>();
+
+            // если есть хотя бы 2 комбинации, то можно работать с группами, т.к. минимальный размер группы равен 2
+            if (algorithmParametersValuesCount.Max() > 1)
+            {
+                //формируем список с индексами критериев оценки фильтров
+                List<int> filtersEvaluationCriteriaIndex = new List<int>();
+                for(int i = 0; i < testing.TopModelCriteria.TopModelFilters.Count; i++)
+                {
+                    filtersEvaluationCriteriaIndex.Add(testBatch.OptimizationTestRuns[0].EvaluationCriteriaValues.FindIndex(a => a.EvaluationCriteria.Id == testing.TopModelCriteria.TopModelFilters[i].EvaluationCriteria.Id));
+                }
+
+                List<int[]> algorithmParameterCombinations = new List<int[]>(); //комбинации значений параметров алгоритма, и для каждой существует testRun
+
+                //формируем комбинации значений параметров алгоритма
+                int[] currentCombination = new int[testing.Algorithm.AlgorithmParameters.Count];
+                bool isLastCombination = false;
+                do
+                {
+                    int[] addingCombination = new int[testing.Algorithm.AlgorithmParameters.Count];
+                    currentCombination.CopyTo(addingCombination, 0);
+                    algorithmParameterCombinations.Add(addingCombination);
+
+                    //переходим на следующую комбинацию
+                    bool isOverValue = false;
+                    int k = currentCombination.Length;
+                    do
+                    {
+                        if (isOverValue)
+                        {
+                            currentCombination[k] = 0;
+                        }
+                        k--;
+                        if (k >= 0)
+                        {
+                            currentCombination[k]++;
+                            isOverValue = currentCombination[k] > algorithmParametersValuesCount[k] - 1;
+                        }
+                    } while (isOverValue && k >= 0);
+
+                    isLastCombination = isOverValue; // isOverValue сохраняет информацию о том, последняя ли это комбинация
+                } while (!isLastCombination);
+
+
+                Dictionary<int[], int> testRunsDict = new Dictionary<int[], int>(); //ключ - массив с комбинацией параметров из algorithmParameterCombinations, значение - индекс testRun-а с соответствующими значениями параметров алгоритма
+
+                for(int i = 0; i < algorithmParameterCombinations.Count; i++)
+                {
+                    List<AlgorithmParameterValue> algorithmParameterValues = new List<AlgorithmParameterValue>();
+                    for (int k = 0; k < testing.Algorithm.AlgorithmParameters.Count; k++)
+                    {
+                        int valueIndex = algorithmParameterCombinations[i][k];
+                        algorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[k], IntValue = testing.Algorithm.AlgorithmParameters[k].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[k][valueIndex] : 0, DoubleValue = testing.Algorithm.AlgorithmParameters[k].ParameterValueType.Id == 2 ? testing.AlgorithmParametersAllDoubleValues[k][valueIndex] : 0 });
+                    }
+                    int testRunIndex = ModelFunctions.FindTestRunIndexByAlgorithmParameterValues(testBatch.OptimizationTestRuns, algorithmParameterValues);
+                    testRunsDict.Add(algorithmParameterCombinations[i], testRunIndex);
+                }
+
+                // проходим по всем комбинациям, и для каждой определяем группу, среднее значение критерия оценки группы, и имеет ли группа достаточное количество прошедших фильтрацию значений.
+                List<int[]> testRunGroups = new List<int[]>(); // индексы тестовых прогонов в группах
+                List<double> averageValueGroups = new List<double>(); // средние значения критерия оценки групп
+                List<bool> isFilteredGroups = new List<bool>(); // значение, отражащие, прошла ли каждая группа фильтрацию
+
+                for(int i = 0; i < algorithmParameterCombinations.Count; i++)
+                {
+                    // формируем массив со значениями расстояния до текущей комбинации
+                    List<Tuple<int, double>> combinationsDistance = new List<Tuple<int, double>>(); // список с расстояниями от текущей комбинации до всех остальных. 0-й элемент кортежа - индекс комбинации в algorithmParameterCombinations, 1-й элемент кортежа - значение расстояния
+                    for(int k = 0; k < algorithmParameterCombinations.Count; k++)
+                    {
+                        double distance = 0;
+                        for(int alg_par_index = 0; alg_par_index < testing.Algorithm.AlgorithmParameters.Count; alg_par_index++)
+                        {
+                            distance += Math.Pow(algorithmParameterCombinations[k][alg_par_index] - algorithmParameterCombinations[i][alg_par_index], 2);
+                        }
+                        distance = Math.Sqrt(distance);
+                        combinationsDistance.Add(new Tuple<int, double>(k, distance));
+                    }
+                    // сортируем расстояния в порядке возрастания
+                    combinationsDistance.Sort((a, b) => a.Item2.CompareTo(b.Item2));
+
+                    // формируем группу для текущей комбинации значений параметров алгоритма
+                    int[] testRunGroup = new int[groupSize];
+                    double totalValueGroup = 0;
+                    int filteredCount = 0;
+                    for (int k = 0; k < groupSize; k++)
+                    {
+                        int[] combination = algorithmParameterCombinations[combinationsDistance[k].Item1];
+                        testRunGroup[k] = testRunsDict[combination];
+                        totalValueGroup += testBatch.OptimizationTestRuns[testRunsDict[combination]].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue;
+                        // проверяем, проходит ли testRun фильтры
+                        bool isPassFilters = true;
+                        for(int f = 0; f < testing.TopModelCriteria.TopModelFilters.Count; f++)
+                        {
+                            if(testing.TopModelCriteria.TopModelFilters[f].CompareSign == CompareSign.GetMore()) // знак сравнения фильтра Больше
+                            {
+                                if(testBatch.OptimizationTestRuns[testRunsDict[combination]].EvaluationCriteriaValues[filtersEvaluationCriteriaIndex[f]].DoubleValue <= testing.TopModelCriteria.TopModelFilters[f].Value)
+                                {
+                                    isPassFilters = false;
+                                }
+                            }
+                            else // знак сравнения фильтра Меньше
+                            {
+                                if (testBatch.OptimizationTestRuns[testRunsDict[combination]].EvaluationCriteriaValues[filtersEvaluationCriteriaIndex[f]].DoubleValue >= testing.TopModelCriteria.TopModelFilters[f].Value)
+                                {
+                                    isPassFilters = false;
+                                }
+                            }
+                        }
+                        if (isPassFilters)
+                        {
+                            filteredCount++;
+                        }
+                    }
+                    double averageValueGroup = filteredCount > 0 ? totalValueGroup / filteredCount : 0;
+                    bool isFilteredGroup = filteredCount >= requiredFilteredCount && filteredCount > 0;
+
+                    testRunGroups.Add(testRunGroup);
+                    averageValueGroups.Add(averageValueGroup);
+                    isFilteredGroups.Add(isFilteredGroup);
+                }
+
+                //сортируем группы по среднему значению критерия оценки
+                testRunGroups.SortLike(averageValueGroups);
+                isFilteredGroups.SortLike(averageValueGroups);
+                averageValueGroups.Sort();
+
+                //проходим по группам с конца, т.к. они отсортированны по возрастанию, и записываем в res первую группу, прошедшую фильтрацию
+                int g = testRunGroups.Count - 1;
+                while(g >= 0 && res.Count == 0)
+                {
+                    if (isFilteredGroups[g])
+                    {
+                        for(int k = 0; k < testRunGroups[g].Length; k++)
+                        {
+                            res.Add(testBatch.OptimizationTestRuns[testRunGroups[g][k]]);
+                        }
+                    }
+                    g--;
+                }
+            }
+
+            return res;
+        }
+
         private void TestBatchTopModelDetermining(TestBatch testBatch, Testing testing) //определение топ-модели среди оптимизационных тестов тестовой связки
         {
             if (testing.AlgorithmParametersAllIntValues.Length == 0) //если параметров нет - оптимизационный тест всего один, топ модель - testBatch.OptimizationTestRuns[0]

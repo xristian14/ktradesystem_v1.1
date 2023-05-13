@@ -196,6 +196,7 @@ namespace ktradesystem.Models
     }
     public static class ICollectionExtensions
     {
+        // Возвращает новую отсортированную последовательность
         public static IEnumerable<TSource> SortLike<TSource, TKey>(this ICollection<TSource> source, IEnumerable<TKey> sortOrder)
         {
             var cloned = sortOrder.ToArray();

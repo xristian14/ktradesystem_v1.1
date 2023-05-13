@@ -11,6 +11,7 @@ namespace ktradesystem.Models
     public class TopModelFilter
     {
         public EvaluationCriteria EvaluationCriteria { get; set; }
+        public int EvaluationCriteriaIndex { get; set; }
         public string CompareSign { get; set; }
         public double Value { get; set; }
     }

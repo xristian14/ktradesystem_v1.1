@@ -107,6 +107,26 @@ namespace ktradesystem.ViewModels
                 OnPropertyChanged();
             }
         }
+        private string _zeroCount;
+        public string ZeroCount
+        {
+            get { return _zeroCount; }
+            private set
+            {
+                _zeroCount = value;
+                OnPropertyChanged();
+            }
+        }
+        private string _zeroCountPercent;
+        public string ZeroCountPercent
+        {
+            get { return _zeroCountPercent; }
+            private set
+            {
+                _zeroCountPercent = value;
+                OnPropertyChanged();
+            }
+        }
 
         private void CreateStatisticalSignificance() //обновляет статистическую значимость
         {
@@ -118,6 +138,8 @@ namespace ktradesystem.ViewModels
             int lossCount = (int)_testBatch.StatisticalSignificance[2];
             double lossCountPercent = Math.Round((double)lossCount / totalCount * 100.0, 1);
             double lossNet = _testBatch.StatisticalSignificance[3];
+            int zeroCount = (int)_testBatch.StatisticalSignificance[4];
+            double zeroCountPercent = Math.Round((double)zeroCount / totalCount * 100.0, 1);
 
             TotalCount = totalCount.ToString();
             TotalCountPercent = "100,0 %";
@@ -140,6 +162,14 @@ namespace ktradesystem.ViewModels
             }
             LossCountPercent += " %";
             LossNet = ModelFunctions.SplitDigitsDouble(lossNet, 0).ToString() + " " + _testing.DefaultCurrency.Name;
+
+            ZeroCount = zeroCount.ToString();
+            ZeroCountPercent = zeroCountPercent.ToString();
+            if (ZeroCountPercent.Contains(",") == false)
+            {
+                ZeroCountPercent += ",0";
+            }
+            ZeroCountPercent += " %";
         }
 
         public void UpdatePage()

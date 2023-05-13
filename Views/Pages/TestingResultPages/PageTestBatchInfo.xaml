@@ -5,10 +5,10 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:ktradesystem.Views.Pages.TestingResultPages"
       mc:Ignorable="d" 
-      d:DesignHeight="100" d:DesignWidth="600"
+      d:DesignHeight="110" d:DesignWidth="600"
       Title="PageTestBatchInfo">
 
-    <Grid Width="600" Height="100" Background="#FFF9F9F9">
+    <Grid Width="600" Height="110" Background="#FFF9F9F9">
         <Grid Margin="5" Background="White">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
@@ -29,16 +29,19 @@
                             <TextBlock Text="Общее число тестов:"/>
                             <TextBlock Text="Прибыльные тесты:"/>
                             <TextBlock Text="Убыточные тесты:"/>
+                            <TextBlock Text="Тесты нулевой доходности:"/>
                         </StackPanel>
                         <StackPanel Orientation="Vertical" Margin="5 0 0 0">
                             <TextBlock Text="{Binding TotalCount}"/>
                             <TextBlock Text="{Binding ProfitCount}"/>
                             <TextBlock Text="{Binding LossCount}"/>
+                            <TextBlock Text="{Binding ZeroCount}"/>
                         </StackPanel>
                         <StackPanel Orientation="Vertical" Margin="10 0 0 0">
                             <TextBlock Text="{Binding TotalCountPercent}"/>
                             <TextBlock Text="{Binding ProfitCountPercent}"/>
                             <TextBlock Text="{Binding LossCountPercent}"/>
+                            <TextBlock Text="{Binding ZeroCountPercent}"/>
                         </StackPanel>
                         <StackPanel Orientation="Vertical" Margin="10 0 0 0">
                             <TextBlock Text="{Binding TotalNet}"/>

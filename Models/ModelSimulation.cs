@@ -522,7 +522,12 @@ namespace ktradesystem.Models
             testing.TestBatches = new List<TestBatch>();
 
             //находим индекс критерия оценки топ-модели
-            testing.TopModelEvaluationCriteriaIndex = _modelData.EvaluationCriterias.IndexOf(testing.TopModelCriteria.EvaluationCriteria);
+            testing.TopModelCriteria.EvaluationCriteriaIndex = _modelData.EvaluationCriterias.IndexOf(testing.TopModelCriteria.EvaluationCriteria);
+            //находим индексы критериев оценки фильтров
+            for(int i = 0; i < testing.TopModelCriteria.TopModelFilters.Count; i++)
+            {
+                testing.TopModelCriteria.TopModelFilters[i].EvaluationCriteriaIndex = _modelData.EvaluationCriterias.IndexOf(testing.TopModelCriteria.TopModelFilters[i].EvaluationCriteria);
+            }
 
             //определяем списки со значениями параметров
             testing.AlgorithmParametersAllIntValues = new List<int>[testing.Algorithm.AlgorithmParameters.Count]; //массив со всеми возможными целочисленными значениями параметров алгоритма
@@ -1399,6 +1404,7 @@ namespace ktradesystem.Models
                                                 //определяем топ-модель и статистичекую значимость
                                                 TestBatch testBatch = testing.TestBatches[tasksExecutingTestRuns[taskIndex1][0]]; //tasksExecutingTestRuns[taskIndex1][0] - testBatchIndex
                                                 TestBatchTopModelDetermining(testBatch, testing); //определяем топ-модель
+                                                StatisticalSignificanceDetermining(testBatch); // определяем статистическую значимость
                                                 FindSurfaceAxes(testBatch, testing); //находим оси для тремхмерной поверхности
                                                 //если это форвардное тестирование, и топ-модель не найдена, отмечаем что форвардный тест имеет статус выполнен
                                                 if (testing.IsForwardTesting && testBatch.IsTopModelWasFind == false)
@@ -2323,12 +2329,66 @@ namespace ktradesystem.Models
             return slippage;
         }
 
-        private void TestBatchTopModelDeterminingNew(TestBatch testBatch, Testing testing)
+        // Определяет топ-модель среди оптимизационных тестов тестовой связки
+        private void TestBatchTopModelDetermining(TestBatch testBatch, Testing testing)
         {
+            List<TestRun> testRuns = testBatch.OptimizationTestRuns; // тестовые прогоны, в которых будем искать топ-модель
             if (testing.IsConsiderNeighbours)
             {
-
+                testRuns = FindBestTestRunsGroup(testBatch, testing);
             }
+
+            List<Tuple<int, double>> sortedTestRuns = new List<Tuple<int, double>>(); // кортежи: (индекс testRun-а, значение критерия оценки), для тестовых прогонов
+            for(int i = 0; i < testRuns.Count; i++)
+            {
+                sortedTestRuns.Add(new Tuple<int, double>(i, testRuns[i].EvaluationCriteriaValues[testing.TopModelCriteria.EvaluationCriteriaIndex].DoubleValue));
+            }
+            sortedTestRuns.Sort((a, b) => b.Item2.CompareTo(a.Item2)); // сортируем по критерию оценки в порядке убывания
+
+            // проходим по отсортированным тестовым прогонам, и выбираем первый, удовлетворяющий фильтрам
+            TestRun topModel = new TestRun();
+            bool isTopModelFind = false;
+            bool isPassFilters = false;
+            int k = 0;
+            do
+            {
+                isPassFilters = IsPassFilters(testRuns[sortedTestRuns[k].Item1], testing);
+                if (isPassFilters)
+                {
+                    isTopModelFind = true;
+                    topModel = testRuns[sortedTestRuns[k].Item1];
+                }
+                k++;
+            } while (!isPassFilters && k < sortedTestRuns.Count);
+
+            if (isTopModelFind)
+            {
+                testBatch.SetTopModel(topModel);
+
+                //записываем номера соседних тестов топ-модели
+                if (testing.IsConsiderNeighbours)
+                {
+                    for(int i = 0; i < testRuns.Count; i++)
+                    {
+                        if (testRuns[i].Number != testBatch.TopModelTestRunNumber)
+                        {
+                            testBatch.NeighboursTestRunNumbers.Add(testRuns[i].Number);
+                        }
+                    }
+                }
+            }
+
+            testBatch.IsTopModelDetermining = true; // отмечаем что определили топ-модель для данного testBatch
+
+            if (testing.IsForwardTesting && testBatch.IsTopModelWasFind) //если это форвардное тестирование и топ-модель была найдена, записываем параметры для форвардного теста
+            {
+                testBatch.ForwardTestRun.AlgorithmParameterValues = testBatch.TopModelTestRun.AlgorithmParameterValues;
+                if (testing.IsForwardDepositTrading) //если это форвардное тестирование с торговлей депозитом, записываем параметры для форвардного теста с торговлей депозитом
+                {
+                    testBatch.ForwardTestRunDepositTrading.AlgorithmParameterValues = testBatch.TopModelTestRun.AlgorithmParameterValues;
+                }
+            }
+
         }
 
         // Находит и возвращает группу тестовых прогонов с наибольшим значением критерия оценки. Группа может содержать до определенного количества неподходящих по фильтру тестовых прогонов, указанного в настройках, при этом среднее значение группы будет равняться сумме значений тестовых прогонов прошедших фильтр, деленному на их количество.
@@ -2352,13 +2412,6 @@ namespace ktradesystem.Models
             // если есть хотя бы 2 комбинации, то можно работать с группами, т.к. минимальный размер группы равен 2
             if (algorithmParametersValuesCount.Max() > 1)
             {
-                //формируем список с индексами критериев оценки фильтров
-                List<int> filtersEvaluationCriteriaIndex = new List<int>();
-                for(int i = 0; i < testing.TopModelCriteria.TopModelFilters.Count; i++)
-                {
-                    filtersEvaluationCriteriaIndex.Add(testBatch.OptimizationTestRuns[0].EvaluationCriteriaValues.FindIndex(a => a.EvaluationCriteria.Id == testing.TopModelCriteria.TopModelFilters[i].EvaluationCriteria.Id));
-                }
-
                 List<int[]> algorithmParameterCombinations = new List<int[]>(); //комбинации значений параметров алгоритма, и для каждой существует testRun
 
                 //формируем комбинации значений параметров алгоритма
@@ -2435,26 +2488,10 @@ namespace ktradesystem.Models
                     {
                         int[] combination = algorithmParameterCombinations[combinationsDistance[k].Item1];
                         testRunGroup[k] = testRunsDict[combination];
-                        totalValueGroup += testBatch.OptimizationTestRuns[testRunsDict[combination]].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue;
+                        totalValueGroup += testBatch.OptimizationTestRuns[testRunsDict[combination]].EvaluationCriteriaValues[testing.TopModelCriteria.EvaluationCriteriaIndex].DoubleValue;
                         // проверяем, проходит ли testRun фильтры
-                        bool isPassFilters = true;
-                        for(int f = 0; f < testing.TopModelCriteria.TopModelFilters.Count; f++)
-                        {
-                            if(testing.TopModelCriteria.TopModelFilters[f].CompareSign == CompareSign.GetMore()) // знак сравнения фильтра Больше
-                            {
-                                if(testBatch.OptimizationTestRuns[testRunsDict[combination]].EvaluationCriteriaValues[filtersEvaluationCriteriaIndex[f]].DoubleValue <= testing.TopModelCriteria.TopModelFilters[f].Value)
-                                {
-                                    isPassFilters = false;
-                                }
-                            }
-                            else // знак сравнения фильтра Меньше
-                            {
-                                if (testBatch.OptimizationTestRuns[testRunsDict[combination]].EvaluationCriteriaValues[filtersEvaluationCriteriaIndex[f]].DoubleValue >= testing.TopModelCriteria.TopModelFilters[f].Value)
-                                {
-                                    isPassFilters = false;
-                                }
-                            }
-                        }
+                        bool isPassFilters = IsPassFilters(testBatch.OptimizationTestRuns[testRunsDict[combination]], testing);
+
                         if (isPassFilters)
                         {
                             filteredCount++;
@@ -2469,8 +2506,8 @@ namespace ktradesystem.Models
                 }
 
                 //сортируем группы по среднему значению критерия оценки
-                testRunGroups.SortLike(averageValueGroups);
-                isFilteredGroups.SortLike(averageValueGroups);
+                testRunGroups = testRunGroups.SortLike(averageValueGroups).ToList();
+                isFilteredGroups = isFilteredGroups.SortLike(averageValueGroups).ToList();
                 averageValueGroups.Sort();
 
                 //проходим по группам с конца, т.к. они отсортированны по возрастанию, и записываем в res первую группу, прошедшую фильтрацию
@@ -2491,7 +2528,66 @@ namespace ktradesystem.Models
             return res;
         }
 
-        private void TestBatchTopModelDetermining(TestBatch testBatch, Testing testing) //определение топ-модели среди оптимизационных тестов тестовой связки
+        // Проверяет, проходит ли testRun фильтры или нет
+        private bool IsPassFilters(TestRun testRun, Testing testing)
+        {
+            bool isPassFilters = true;
+            for (int f = 0; f < testing.TopModelCriteria.TopModelFilters.Count; f++)
+            {
+                if (testing.TopModelCriteria.TopModelFilters[f].CompareSign == CompareSign.GetMore()) // знак сравнения фильтра Больше
+                {
+                    if (testRun.EvaluationCriteriaValues[testing.TopModelCriteria.TopModelFilters[f].EvaluationCriteriaIndex].DoubleValue <= testing.TopModelCriteria.TopModelFilters[f].Value)
+                    {
+                        isPassFilters = false;
+                    }
+                }
+                else // знак сравнения фильтра Меньше
+                {
+                    if (testRun.EvaluationCriteriaValues[testing.TopModelCriteria.TopModelFilters[f].EvaluationCriteriaIndex].DoubleValue >= testing.TopModelCriteria.TopModelFilters[f].Value)
+                    {
+                        isPassFilters = false;
+                    }
+                }
+            }
+            return isPassFilters;
+        }
+
+        // Определяет статистическую значимость для testBatch
+        private void StatisticalSignificanceDetermining(TestBatch testBatch)
+        {
+            int lossCount = 0;
+            double lossMoney = 0;
+            int profitCount = 0;
+            double profitMoney = 0;
+            int zeroCount = 0;
+            //проходим по всем testRun-ам
+            for (int i = 0; i < testBatch.OptimizationTestRuns.Count; i++)
+            {
+                double testRunProfit = testBatch.OptimizationTestRuns[i].EvaluationCriteriaValues.Find(a => a.EvaluationCriteria.Id == 1).DoubleValue; //EvaluationCriteria.Id == 1 - Чистая доходность
+                if (testRunProfit < 0)
+                {
+                    lossCount++;
+                    lossMoney += testRunProfit;
+                }
+                else if (testRunProfit > 0)
+                {
+                    profitCount++;
+                    profitMoney += testRunProfit;
+                }
+                else
+                {
+                    zeroCount++;
+                }
+            }
+            //записываем статистическую значимость
+            testBatch.StatisticalSignificance.Add(profitCount);
+            testBatch.StatisticalSignificance.Add(profitMoney);
+            testBatch.StatisticalSignificance.Add(lossCount);
+            testBatch.StatisticalSignificance.Add(lossMoney);
+            testBatch.StatisticalSignificance.Add(zeroCount);
+        }
+
+        private void TestBatchTopModelDeterminingOld(TestBatch testBatch, Testing testing) //определение топ-модели среди оптимизационных тестов тестовой связки
         {
             if (testing.AlgorithmParametersAllIntValues.Length == 0) //если параметров нет - оптимизационный тест всего один, топ модель - testBatch.OptimizationTestRuns[0]
             {
@@ -2632,7 +2728,7 @@ namespace ktradesystem.Models
                     double totalGroupValue = 0;
                     for (int k = 0; k < groups[i].Count; k++)
                     {
-                        totalGroupValue += groups[i][k].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue;
+                        totalGroupValue += groups[i][k].EvaluationCriteriaValues[testing.TopModelCriteria.EvaluationCriteriaIndex].DoubleValue;
                     }
                     averageGroupsValues.Add(totalGroupValue / groups[i].Count);
                 }
@@ -2667,7 +2763,7 @@ namespace ktradesystem.Models
                     {
                         for (int k = 0; k < groups[groupIndex].Count - 1; k++)
                         {
-                            if (groups[groupIndex][k].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue < groups[groupIndex][k + 1].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue)
+                            if (groups[groupIndex][k].EvaluationCriteriaValues[testing.TopModelCriteria.EvaluationCriteriaIndex].DoubleValue < groups[groupIndex][k + 1].EvaluationCriteriaValues[testing.TopModelCriteria.EvaluationCriteriaIndex].DoubleValue)
                             {
                                 TestRun saveTestRun = groups[groupIndex][k];
                                 groups[groupIndex][k] = groups[groupIndex][k + 1];
@@ -2751,15 +2847,15 @@ namespace ktradesystem.Models
                         if (isFirstTopModelFind == false) //если первая топ-модель еще не найдена, записываем текущий testRun как топ-модель
                         {
                             topModelTestRun = testRun;
-                            topModelValue = testRun.EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue;
+                            topModelValue = testRun.EvaluationCriteriaValues[testing.TopModelCriteria.EvaluationCriteriaIndex].DoubleValue;
                             isFirstTopModelFind = true;
                         }
                         else //если уже есть топ-модель с которой можно сравнивать, сравниваем текущий testRun с топ-моделью
                         {
-                            if (testRun.EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue > topModelValue)
+                            if (testRun.EvaluationCriteriaValues[testing.TopModelCriteria.EvaluationCriteriaIndex].DoubleValue > topModelValue)
                             {
                                 topModelTestRun = testRun;
-                                topModelValue = testRun.EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue;
+                                topModelValue = testRun.EvaluationCriteriaValues[testing.TopModelCriteria.EvaluationCriteriaIndex].DoubleValue;
                             }
                         }
                     }
@@ -2885,7 +2981,7 @@ namespace ktradesystem.Models
                             int valueIndex = topAxisAlgorithmParameterValuesCurrentCombination[i]; //индекс значения параметра
                             algorithmParameterValues.Add(new AlgorithmParameterValue { AlgorithmParameter = testing.Algorithm.AlgorithmParameters[parameterIndex], IntValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 1 ? testing.AlgorithmParametersAllIntValues[parameterIndex][valueIndex] : 0, DoubleValue = testing.Algorithm.AlgorithmParameters[parameterIndex].ParameterValueType.Id == 2 ? testing.AlgorithmParametersAllDoubleValues[parameterIndex][valueIndex] : 0 });
                         }
-                        currentDoubleValue = testBatch.OptimizationTestRuns[ModelFunctions.FindTestRunIndexByAlgorithmParameterValues(testBatch.OptimizationTestRuns, algorithmParameterValues)].EvaluationCriteriaValues[testing.TopModelEvaluationCriteriaIndex].DoubleValue;
+                        currentDoubleValue = testBatch.OptimizationTestRuns[ModelFunctions.FindTestRunIndexByAlgorithmParameterValues(testBatch.OptimizationTestRuns, algorithmParameterValues)].EvaluationCriteriaValues[testing.TopModelCriteria.EvaluationCriteriaIndex].DoubleValue;
 
                         string algorithmParameterValuesString = "";
                         foreach(AlgorithmParameterValue algorithmParameterValue in algorithmParameterValues)

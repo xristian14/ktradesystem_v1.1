@@ -65,7 +65,7 @@ namespace ktradesystem.Models
             //удаляем дублирующиеся пробелы
             StringBuilder script = ModelFunctions.RemoveDuplicateSpaces(algorithmIndicator.Indicator.Script);
             //добавляем приведение к double правой части операции деления, чтобы результат int/int был с дробной частью
-            script.Replace("/", "/(double)");
+            //script.Replace("/", "/(double)");
             //удаляем пробел между Candles и [
             script.Replace("Candles [", "Candles[");
             //определяем для всех обращений к Candles[]: индекс начала ключевого слова Candles[ и индекс закрывающей квардратной скобки, если внутри были еще квадратные скобки, их нужно пропустить и дойти до закрывающей
@@ -115,6 +115,8 @@ namespace ktradesystem.Models
             Microsoft.CSharp.CSharpCodeProvider provider = new Microsoft.CSharp.CSharpCodeProvider();
             System.CodeDom.Compiler.CompilerParameters param = new System.CodeDom.Compiler.CompilerParameters();
             param.ReferencedAssemblies.Add(Assembly.GetExecutingAssembly().Location);
+            param.ReferencedAssemblies.Add("System.dll");
+            param.ReferencedAssemblies.Add("System.Core.dll");
             param.GenerateExecutable = false;
             param.GenerateInMemory = true;
 
@@ -122,6 +124,9 @@ namespace ktradesystem.Models
             {
                     @"
                     using System;
+                    using System.Collections.Generic;
+                    using System.Collections.ObjectModel;
+                    using System.Linq;
                     using ktradesystem.Models;
                     public class CompiledIndicator_" + algorithmIndicator.Indicator.Name + "_" + algorithmIndicator.Ending +
                     @"{
@@ -216,7 +221,7 @@ namespace ktradesystem.Models
             //удаляем дублирующиеся пробелы
             StringBuilder scriptAlgorithm = ModelFunctions.RemoveDuplicateSpaces(scriptAlgorithmStr);
             //добавляем приведение к double правой части операции деления, чтобы результат int/int был с дробной частью
-            scriptAlgorithm.Replace("/", "/(double)");
+            //scriptAlgorithm.Replace("/", "/(double)");
             //заменяем все обращения к конкретному индикатору типа: Datasource_maket.Indicator_sma на Datasource_maket_Indicator_sma
             for (int i = 0; i < algorithm.DataSourceTemplates.Count; i++)
             {
@@ -2116,6 +2121,11 @@ namespace ktradesystem.Models
                             slippage += Slippage(dataSourcesCandles[dataSourcesCandlesIndex], fileIndexes[dataSourcesCandlesIndex], candleIndexes[dataSourcesCandlesIndex], order.Count); //добавляем проскальзывание
                             slippage = order.Direction == true ? slippage : -slippage; //для покупки проскальзывание идет вверх, для продажи вниз
                             double dealPrice = order.Price;
+                            // если цена стоп-заявки находится вне ценового диапазона свечки, устанавливаем цену закрытия свечки
+                            if ((order.Direction == true && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L > order.Price) || (order.Direction == false && dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H < order.Price))
+                            {
+                                dealPrice = dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].C;
+                            }
                             if (gaps[dataSourcesCandlesIndex]) //если текущая свечка - гэп, устанавливаем худшую цену
                             {
                                 dealPrice = order.Direction ? dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].H : dataSourcesCandles[dataSourcesCandlesIndex].Candles[fileIndexes[dataSourcesCandlesIndex]][candleIndexes[dataSourcesCandlesIndex]].L;
@@ -2333,7 +2343,7 @@ namespace ktradesystem.Models
         private void TestBatchTopModelDetermining(TestBatch testBatch, Testing testing)
         {
             List<TestRun> testRuns = testBatch.OptimizationTestRuns; // тестовые прогоны, в которых будем искать топ-модель
-            if (testing.IsConsiderNeighbours)
+            if (testing.IsConsiderNeighbours && testBatch.OptimizationTestRuns.Count > 1)
             {
                 testRuns = FindBestTestRunsGroup(testBatch, testing);
             }
@@ -2349,17 +2359,20 @@ namespace ktradesystem.Models
             TestRun topModel = new TestRun();
             bool isTopModelFind = false;
             bool isPassFilters = false;
-            int k = 0;
-            do
+            if(testRuns.Count > 0)
             {
-                isPassFilters = IsPassFilters(testRuns[sortedTestRuns[k].Item1], testing);
-                if (isPassFilters)
+                int k = 0;
+                do
                 {
-                    isTopModelFind = true;
-                    topModel = testRuns[sortedTestRuns[k].Item1];
-                }
-                k++;
-            } while (!isPassFilters && k < sortedTestRuns.Count);
+                    isPassFilters = IsPassFilters(testRuns[sortedTestRuns[k].Item1], testing);
+                    if (isPassFilters)
+                    {
+                        isTopModelFind = true;
+                        topModel = testRuns[sortedTestRuns[k].Item1];
+                    }
+                    k++;
+                } while (!isPassFilters && k < sortedTestRuns.Count);
+            }
 
             if (isTopModelFind)
             {

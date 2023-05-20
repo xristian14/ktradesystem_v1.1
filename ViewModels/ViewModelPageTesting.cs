@@ -4300,6 +4300,66 @@ namespace ktradesystem.ViewModels
             {
                 return new DelegateCommand((obj) =>
                 {
+                    /*double lastPrice = 100;
+                    int numCandles = 20;
+                    Candle[] Candles = new Candle[numCandles];
+                    Random random = new Random();
+                    for(int k = 0; k < numCandles; k++)
+                    {
+                        double open = lastPrice;
+                        double close = lastPrice + random.Next(-4, 4);
+                        double high = Math.Max(open + random.Next(10), close);
+                        double low = Math.Min(open - random.Next(10), close);
+                        Candles[k] = new Candle { O = open, H = high, L = low, C = close };
+                        lastPrice = close;
+                    }
+
+                    int Parameter_period = 12;
+                    int Parameter_periodMaPt = 2;
+
+                    double[] maPtValues = new double[Parameter_period];
+                    int i = Parameter_period - 1;
+                    while (i >= 0)
+                    {
+                        double maPtTotal = 0;
+                        int k = 0;
+                        while (k < Parameter_periodMaPt)
+                        {
+                            int i_c = i + k;
+                            double pt = (Candles[i_c].H + Candles[i_c].L + Candles[i_c].C) / 3;
+                            maPtTotal += pt;
+                            k++;
+                        }
+                        double maPt = maPtTotal / Parameter_periodMaPt;
+                        int reverseIndex = (int)(-(i - (Parameter_period / 2)) + Parameter_period / 2 - 1);
+                        maPtValues[reverseIndex] = maPt;
+                        i--;
+                    }
+
+                    double[] maPtValuesDifference = new double[Parameter_period - 1];
+                    i = 0;
+                    while (i < Parameter_period - 1)
+                    {
+                        maPtValuesDifference[i] = maPtValues[i + 1] - maPtValues[i];
+                        i++;
+                    }
+                    double averageDifference = maPtValuesDifference.Average();
+
+                    double[] maPtValuesDifferenceVolatility = new double[Parameter_period - 2];
+                    i = 0;
+                    while (i < Parameter_period - 2)
+                    {
+                        maPtValuesDifferenceVolatility[i] = Math.Abs(maPtValuesDifference[i + 1] - maPtValuesDifference[i]);
+                        i++;
+                    }
+                    double averageVolatility = maPtValuesDifferenceVolatility.Average();
+
+                    double res = averageVolatility / Math.Abs(averageDifference);*/
+
+
+
+
+
                     //DataSourceGroups
                     List<DataSourceGroup> dataSourceGroups = new List<DataSourceGroup>();
                     foreach(DataSourceGroupView dataSourceGroupView in DataSourceGroupsView)
